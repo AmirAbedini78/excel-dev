@@ -4,6 +4,7 @@ require_once __DIR__.'/app/Modules/V4Module.php';
 require_once __DIR__.'/app/Modules/ChoiceModule.php';
 require_once __DIR__.'/app/Modules/V5Module.php';
 require_once __DIR__.'/app/Modules/AccountingIndustrialModule.php';
+require_once __DIR__.'/app/Modules/AiModule.php';
 function q(string $sql, array $params=[]): array { $st=pdo()->prepare($sql); $st->execute($params); return $st->fetchAll(); }
 function one(string $sql, array $params=[]): ?array { $st=pdo()->prepare($sql); $st->execute($params); $r=$st->fetch(); return $r ?: null; }
 function scalarv(string $sql, array $params=[]): int { $st=pdo()->prepare($sql); $st->execute($params); return (int)$st->fetchColumn(); }
@@ -191,6 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (str_starts_with($action,'v4_')) V4Module::handle($action);
         if (str_starts_with($action,'choice_')) ChoiceModule::handle($action);
         if (str_starts_with($action,'acc_')) AccountingIndustrialModule::handle($action);
+        if (str_starts_with($action,'ai_')) AiModule::handle($action);
         if ($action === 'inline_update_batch') handle_inline_update_batch();
         if ($action === 'inline_update') handle_inline_update();
         if ($action === 'delete_record') handle_delete_record();
@@ -537,7 +539,8 @@ function render_header(string $title, string $subtitle=''): void
         'library'=>'لایبرری',
         'custom_fields'=>'فیلدهای اضافه',
         'choices'=>'مقادیر انتخابی',
-        'industrial'=>'حسابداری صنعتی',
+        'industrial'=>'حسابداری و مالی',
+        'ai'=>'دستیار هوشمند',
         'shares'=>'اشتراک داده‌ها',
         'access'=>'کاربران و دسترسی‌ها',
         'platform'=>'مدیریت SaaS',
@@ -546,18 +549,19 @@ function render_header(string $title, string $subtitle=''): void
     ];
     $navGroups = [
         'dashboard'=>'ماژول مدیریت امور حسابداران',
-        'industrial'=>'ماژول حسابداری صنعتی',
+        'industrial'=>'ماژول حسابداری و مالی',
+        'ai'=>'هوش مصنوعی و اتوماسیون',
         'shares'=>'مدیریت و زیرساخت',
     ];
     $navPerm=['dashboard'=>'dashboard.view','companies'=>'companies.view','systems'=>'systems.view','monthly'=>'monthly.view','daily'=>'daily.view','custom_fields'=>'custom_fields.manage',
-        'choices'=>'choices.manage','industrial'=>'accounting.view','kanban'=>'kanban.view','notes'=>'notes.view','phonebook'=>'phonebook.view','shares'=>'shares.view','library'=>'files.view','access'=>'members.view','performance'=>'cache.manage','settings'=>'settings.manage'];
+        'choices'=>'choices.manage','industrial'=>'accounting.view','ai'=>'ai.use','kanban'=>'kanban.view','notes'=>'notes.view','phonebook'=>'phonebook.view','shares'=>'shares.view','library'=>'files.view','access'=>'members.view','performance'=>'cache.manage','settings'=>'settings.manage'];
     foreach($navPerm as $nk=>$np) if(isset($nav[$nk]) && !Tenant::can($np)) unset($nav[$nk]);
     if(!Tenant::isPlatformAdmin()) unset($nav['platform']);
     if(!Tenant::isPlatformAdmin()) unset($nav['settings']);
     ?><!doctype html><html lang="fa" dir="rtl"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?=h($title)?> - Accounting CRM</title>
-    <link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=6.0">
+    <link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=7.0">
     </head><body><div class="app">
     <aside class="sidebar compact"><div class="brand">Accounting CRM<span>سامانه سبک حسابداران</span></div><nav>
     <?php foreach($nav as $k=>$v): ?><?php if(isset($navGroups[$k])):?><span class="v5-nav-group"><?=h($navGroups[$k])?></span><?php endif;?><a class="<?=($_GET['page']??'dashboard')===$k?'active':''?>" href="index.php?page=<?=$k?>"><?=h($v)?></a><?php endforeach; ?>
@@ -567,13 +571,13 @@ function render_header(string $title, string $subtitle=''): void
     <form method="post" class="inline-form"><?=csrf_field()?><input type="hidden" name="action" value="logout"><button class="btn tiny" type="submit">خروج</button></form></div></header>
     <?php foreach(flashes() as $f): ?><div class="alert <?=h($f['type'])?>"><?=h($f['msg'])?></div><?php endforeach; ?><?php
 }
-function render_footer(): void { ?></main></div><script>window.CSRF='<?=h(csrf_token())?>';window.JALALI_TODAY='<?=h(Jalali::today())?>';window.V4_WORKSPACE_ID=<?=Tenant::id()?>;window.V4_WORKSPACES=<?=json_encode(Tenant::workspaceOptions(),JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP)?>;</script><script src="assets/app.js?v=6.0"></script><script src="assets/v4.js?v=6.0"></script><script src="assets/v5.js?v=6.0"></script><script src="assets/accounting.js?v=6.0"></script></body></html><?php }
+function render_footer(): void { ?></main></div><script>window.CSRF='<?=h(csrf_token())?>';window.JALALI_TODAY='<?=h(Jalali::today())?>';window.V4_WORKSPACE_ID=<?=Tenant::id()?>;window.V4_WORKSPACES=<?=json_encode(Tenant::workspaceOptions(),JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP)?>;</script><script src="assets/app.js?v=6.0"></script><script src="assets/v4.js?v=6.0"></script><script src="assets/v5.js?v=6.0"></script><script src="assets/accounting.js?v=7.0"></script></body></html><?php }
 
 if ($page === 'login') { render_login(); exit; }
 Auth::require(); // Tenant already booted by bootstrap; V5 schema is migration-gated.
 if($_SERVER['REQUEST_METHOD']==='GET' && $page!=='login' && setting('audit_page_views','0')==='1') Audit::log('page.view','page',0,$page);
 $pagePermission=['dashboard'=>'dashboard.view','companies'=>'companies.view','systems'=>'systems.view','monthly'=>'monthly.view','daily'=>'daily.view','kanban'=>'kanban.view','custom_fields'=>'custom_fields.manage',
-        'choices'=>'choices.manage','industrial'=>'accounting.view','phonebook'=>'phonebook.view','shares'=>'shares.view','performance'=>'cache.manage','settings'=>'settings.manage'];
+        'choices'=>'choices.manage','industrial'=>'accounting.view','ai'=>'ai.use','phonebook'=>'phonebook.view','shares'=>'shares.view','performance'=>'cache.manage','settings'=>'settings.manage'];
 if(isset($pagePermission[$page])) Tenant::requirePermission($pagePermission[$page]);
 if($page==='settings' && !Tenant::isPlatformAdmin()) { http_response_code(403); throw new RuntimeException('تنظیمات زیرساخت فقط برای مدیر کل پلتفرم در دسترس است.'); }
 
@@ -587,6 +591,7 @@ elseif($page === 'choices') ChoiceModule::render();
 elseif($page === 'kanban') render_kanban();
 elseif($page === 'notes') V5Module::renderNotes();
 elseif($page === 'industrial') AccountingIndustrialModule::render();
+elseif($page === 'ai') AiModule::render();
 elseif($page === 'phonebook') V5Module::renderPhonebook();
 elseif($page === 'shares') V5Module::renderSharing();
 elseif($page === 'performance') V5Module::renderPerformance();
@@ -598,13 +603,13 @@ else render_calendar();
 
 function render_login(): void
 {
-    ?><!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ورود</title><link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=6.0"></head>
+    ?><!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ورود</title><link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=7.0"></head>
     <body class="login-page"><main class="login-card"><h1>ورود به سامانه حسابداران</h1><p>تقویم کاری، شرکت‌ها، سامانه‌ها و برنامه‌های حسابداری</p>
     <?php foreach(flashes() as $f): ?><div class="alert <?=h($f['type'])?>"><?=h($f['msg'])?></div><?php endforeach; ?>
     <form method="post" class="grid-form autosave" data-form-key="login"><?=csrf_field()?><input type="hidden" name="action" value="login">
     <label>ایمیل<input type="email" name="email" required></label><label>رمز عبور<input type="password" name="password" required></label>
     <button class="btn primary" type="submit">ورود</button><a class="btn google" href="index.php?page=google_start">ورود یا ثبت‌نام با گوگل</a></form></main>
-    <script src="assets/app.js?v=6.0"></script><script src="assets/v4.js?v=6.0"></script><script src="assets/v5.js?v=6.0"></script><script src="assets/accounting.js?v=6.0"></script></body></html><?php
+    <script src="assets/app.js?v=6.0"></script><script src="assets/v4.js?v=6.0"></script><script src="assets/v5.js?v=6.0"></script><script src="assets/accounting.js?v=7.0"></script></body></html><?php
 }
 function render_calendar(): void
 {

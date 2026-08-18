@@ -1,0 +1,202 @@
+<?php
+final class AiRepository
+{
+    public static function createConversation(?int $companyId,string $title=''): int
+    {
+        $uid=(int)Auth::user()['id'];$wid=Tenant::id();
+        if($companyId && !self::companyOwned($wid,$companyId))$companyId=null;
+        $st=pdo()->prepare("INSERT INTO ai_conversations (workspace_id,company_id,user_id,title,status,created_at,updated_at) VALUES (?,?,?,?, 'active',NOW(),NOW())");
+        $st->execute([$wid,$companyId,$uid,$title?:'گفت‌وگوی جدید']);
+        return (int)pdo()->lastInsertId();
+    }
+
+    public static function queueChat(string $prompt,?int $companyId=null,?int $conversationId=null): int
+    {
+        $prompt=trim($prompt);if($prompt==='')throw new RuntimeException('متن درخواست خالی است.');
+        if(mb_strlen($prompt)>12000)throw new RuntimeException('متن درخواست بیش از حد طولانی است.');
+        $wid=Tenant::id();$uid=(int)Auth::user()['id'];
+        if(!$companyId)$companyId=AccountingRepository::companyId()?:null;
+        if($companyId && !self::companyOwned($wid,$companyId))throw new RuntimeException('شرکت انتخاب‌شده معتبر نیست.');
+        if(!$conversationId)$conversationId=self::createConversation($companyId,mb_substr($prompt,0,80));
+        $context=AiToolRegistry::bootstrapContext($wid,$companyId);
+        $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at)
+            VALUES (?,?,?,?, 'agent_chat',?,'queued',100,'llm',?,NOW(),NOW())");
+        $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
+        $id=(int)pdo()->lastInsertId();
+        Audit::log('ai.job.queued','ai_jobs',$id,'ثبت درخواست برای موتور AI',null,null,['company_id'=>$companyId]);
+        return $id;
+    }
+
+    public static function userJobs(int $limit=30): array
+    {
+        $limit=max(1,min(100,$limit));
+        $st=pdo()->prepare("SELECT j.*,c.name company_name,n.node_name worker_name FROM ai_jobs j LEFT JOIN companies c ON c.id=j.company_id LEFT JOIN ai_worker_nodes n ON n.id=j.worker_node_id WHERE j.workspace_id=? AND j.requested_by=? ORDER BY j.id DESC LIMIT $limit");
+        $st->execute([Tenant::id(),(int)Auth::user()['id']]);return $st->fetchAll();
+    }
+
+    public static function jobForUser(int $id): ?array
+    {
+        $st=pdo()->prepare("SELECT * FROM ai_jobs WHERE id=? AND workspace_id=? AND requested_by=? LIMIT 1");
+        $st->execute([$id,Tenant::id(),(int)Auth::user()['id']]);$r=$st->fetch();return$r?:null;
+    }
+
+    public static function proposalsForJob(int $jobId): array
+    {
+        $st=pdo()->prepare("SELECT * FROM ai_action_proposals WHERE workspace_id=? AND job_id=? ORDER BY id");
+        $st->execute([Tenant::id(),$jobId]);return$st->fetchAll();
+    }
+
+    public static function suggestions(int $limit=30): array
+    {
+        $limit=max(1,min(100,$limit));$uid=(int)Auth::user()['id'];
+        $st=pdo()->prepare("SELECT s.*,c.name company_name FROM ai_suggestions s LEFT JOIN companies c ON c.id=s.company_id WHERE s.workspace_id=? AND (s.user_id IS NULL OR s.user_id=?) AND s.status='new' ORDER BY COALESCE(s.due_at,'2999-12-31'),s.id DESC LIMIT $limit");
+        $st->execute([Tenant::id(),$uid]);return$st->fetchAll();
+    }
+
+    public static function createWorkerToken(string $label,array $capabilities=['llm','rag','forecast']): string
+    {
+        Tenant::requirePermission('ai.workers.manage');$raw='aiw_'.bin2hex(random_bytes(24));
+        $prefix=substr($raw,0,12);$hash=hash('sha256',$raw);
+        $st=pdo()->prepare("INSERT INTO ai_worker_tokens (workspace_id,label,token_prefix,token_hash,capabilities_json,active,created_by,created_at) VALUES (?,?,?,?,?,1,?,NOW())");
+        $st->execute([Tenant::id(),trim($label)?:'Local AI Worker',$prefix,$hash,json_encode(array_values($capabilities)),(int)Auth::user()['id']]);
+        Audit::log('ai.worker_token.create','ai_worker_tokens',(int)pdo()->lastInsertId(),'ساخت توکن Worker AI');
+        return $raw;
+    }
+
+    public static function revokeWorkerToken(int $id): void
+    {
+        Tenant::requirePermission('ai.workers.manage');
+        $wid=Tenant::id();$pdo=pdo();$pdo->beginTransaction();
+        try{
+            $st=$pdo->prepare("UPDATE ai_worker_tokens SET active=0 WHERE id=? AND workspace_id=? AND active=1");
+            $st->execute([$id,$wid]);
+            if($st->rowCount()){
+                $pdo->prepare("UPDATE ai_worker_nodes SET status='offline',updated_at=NOW() WHERE workspace_id=? AND token_id=?")->execute([$wid,$id]);
+            }
+            $pdo->commit();
+            if($st->rowCount())Audit::log('ai.worker_token.revoke','ai_worker_tokens',$id,'لغو دسترسی توکن Worker AI');
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
+    }
+
+    public static function workerTokens(): array
+    {
+        $st=pdo()->prepare("SELECT id,label,token_prefix,capabilities_json,active,created_at,last_used_at FROM ai_worker_tokens WHERE workspace_id=? ORDER BY id DESC");
+        $st->execute([Tenant::id()]);return$st->fetchAll();
+    }
+
+    public static function workers(): array
+    {
+        $st=pdo()->prepare("SELECT * FROM ai_worker_nodes WHERE workspace_id=? ORDER BY last_seen_at DESC,id DESC");
+        $st->execute([Tenant::id()]);return$st->fetchAll();
+    }
+
+    public static function authenticateWorker(string $token): array
+    {
+        $hash=hash('sha256',$token);$st=pdo()->prepare("SELECT * FROM ai_worker_tokens WHERE token_hash=? AND active=1 LIMIT 1");$st->execute([$hash]);$r=$st->fetch();
+        if(!$r)throw new RuntimeException('worker_token_invalid');
+        pdo()->prepare("UPDATE ai_worker_tokens SET last_used_at=NOW() WHERE id=?")->execute([(int)$r['id']]);return$r;
+    }
+
+    public static function registerNode(array $token,array $payload): array
+    {
+        $wid=(int)$token['workspace_id'];$uid=trim((string)($payload['node_uid']??''));if($uid==='')throw new RuntimeException('node_uid_required');
+        $name=trim((string)($payload['node_name']??$uid));
+        $requestedCaps=array_values(array_unique(array_map('strval',(array)($payload['capabilities']??[]))));
+        $tokenCaps=json_decode((string)($token['capabilities_json']??'[]'),true)?:[];
+        $cap=$tokenCaps ? array_values(array_intersect($requestedCaps,array_map('strval',$tokenCaps))) : $requestedCaps;
+        $models=array_values(array_map('strval',(array)($payload['models']??[])));
+        $st=pdo()->prepare("INSERT INTO ai_worker_nodes (workspace_id,token_id,node_uid,node_name,status,os_name,cpu_model,cpu_cores,ram_mb,capabilities_json,models_json,metadata_json,current_jobs,last_seen_at,created_at,updated_at)
+            VALUES (?,?,?,?,'online',?,?,?,?,?,?,?,0,NOW(),NOW(),NOW())
+            ON DUPLICATE KEY UPDATE token_id=VALUES(token_id),node_name=VALUES(node_name),status='online',os_name=VALUES(os_name),cpu_model=VALUES(cpu_model),cpu_cores=VALUES(cpu_cores),ram_mb=VALUES(ram_mb),capabilities_json=VALUES(capabilities_json),models_json=VALUES(models_json),metadata_json=VALUES(metadata_json),last_seen_at=NOW(),updated_at=NOW()");
+        $st->execute([$wid,(int)$token['id'],$uid,$name,trim((string)($payload['os_name']??'')),trim((string)($payload['cpu_model']??'')),max(1,(int)($payload['cpu_cores']??1)),max(0,(int)($payload['ram_mb']??0)),json_encode($cap),json_encode($models),json_encode((array)($payload['metadata']??[]))]);
+        $q=pdo()->prepare("SELECT * FROM ai_worker_nodes WHERE workspace_id=? AND node_uid=? AND token_id=? LIMIT 1");$q->execute([$wid,$uid,(int)$token['id']]);$node=$q->fetch();
+        if(!$node)throw new RuntimeException('worker_node_not_found');
+        $c=pdo()->prepare("SELECT COUNT(*) FROM ai_jobs WHERE workspace_id=? AND worker_node_id=? AND status IN ('leased','running') AND (lease_expires_at IS NULL OR lease_expires_at>=NOW())");$c->execute([$wid,(int)$node['id']]);$jobs=(int)$c->fetchColumn();
+        if((int)$node['current_jobs']!==$jobs){pdo()->prepare("UPDATE ai_worker_nodes SET current_jobs=? WHERE id=?")->execute([$jobs,(int)$node['id']]);$node['current_jobs']=$jobs;}
+        return$node;
+    }
+
+    public static function leaseJob(array $token,array $node,int $seconds=180): ?array
+    {
+        $wid=(int)$token['workspace_id'];$nid=(int)$node['id'];$caps=json_decode($node['capabilities_json']??'[]',true)?:[];$seconds=max(30,min(900,$seconds));
+        $pdo=pdo();$pdo->beginTransaction();
+        try{
+            // Requeue expired work before leasing. A stale result cannot complete without its lease secret.
+            $pdo->prepare("UPDATE ai_jobs SET status='queued',worker_node_id=NULL,lease_hash=NULL,leased_at=NULL,lease_expires_at=NULL,updated_at=NOW() WHERE workspace_id=? AND status IN ('leased','running') AND lease_expires_at IS NOT NULL AND lease_expires_at<NOW()") ->execute([$wid]);
+            $params=[$wid];$where="workspace_id=? AND status='queued' AND (required_capability IS NULL OR required_capability='')";
+            if($caps){$ph=implode(',',array_fill(0,count($caps),'?'));$where="workspace_id=? AND status='queued' AND (required_capability IS NULL OR required_capability='' OR required_capability IN ($ph))";$params=array_merge([$wid],$caps);}
+            $st=$pdo->prepare("SELECT * FROM ai_jobs WHERE $where ORDER BY priority ASC,id ASC LIMIT 1 FOR UPDATE");$st->execute($params);$job=$st->fetch()?:null;
+            if(!$job){$pdo->commit();return null;}
+            $lease=bin2hex(random_bytes(24));$hash=hash('sha256',$lease);
+            $u=$pdo->prepare("UPDATE ai_jobs SET status='leased',worker_node_id=?,lease_hash=?,leased_at=NOW(),lease_expires_at=DATE_ADD(NOW(),INTERVAL ? SECOND),updated_at=NOW() WHERE id=? AND status='queued'");
+            $u->execute([$nid,$hash,$seconds,(int)$job['id']]);if($u->rowCount()!==1){$pdo->rollBack();return null;}
+            $pdo->prepare("UPDATE ai_worker_nodes SET current_jobs=current_jobs+1,last_seen_at=NOW(),updated_at=NOW() WHERE id=?")->execute([$nid]);$pdo->commit();
+            $job['lease_token']=$lease;$job['worker_node_id']=$nid;$job['status']='leased';return$job;
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
+    }
+
+    public static function validateLease(array $token,int $jobId,int $nodeId,string $lease): array
+    {
+        $st=pdo()->prepare("SELECT * FROM ai_jobs WHERE id=? AND workspace_id=? AND worker_node_id=? AND status IN ('leased','running') LIMIT 1");$st->execute([$jobId,(int)$token['workspace_id'],$nodeId]);$j=$st->fetch();
+        if(!$j||empty($j['lease_hash'])||!hash_equals($j['lease_hash'],hash('sha256',$lease)))throw new RuntimeException('lease_invalid');
+        if($j['lease_expires_at'] && strtotime($j['lease_expires_at'])<time())throw new RuntimeException('lease_expired');return$j;
+    }
+
+    public static function completeJob(array $token,array $node,int $jobId,string $lease,array $payload): void
+    {
+        $j=self::validateLease($token,$jobId,(int)$node['id'],$lease);$pdo=pdo();$pdo->beginTransaction();
+        try{
+            $text=trim((string)($payload['result_text']??''));$result=(array)($payload['result']??[]);
+            $pdo->prepare("UPDATE ai_jobs SET status='succeeded',result_text=?,result_json=?,completed_at=NOW(),updated_at=NOW(),lease_hash=NULL WHERE id=?")->execute([$text,json_encode($result,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$jobId]);
+            foreach((array)($payload['proposals']??[]) as $p){AiToolRegistry::storeProposal((int)$j['workspace_id'],$j['company_id']?(int)$j['company_id']:null,$jobId,(string)($p['tool_name']??''),(array)($p['arguments']??[]),(string)($p['summary']??''));}
+            foreach((array)($payload['suggestions']??[]) as $s){$pdo->prepare("INSERT INTO ai_suggestions (workspace_id,company_id,user_id,suggestion_type,title,body,evidence_json,score,status,due_at,source_job_id,created_at) VALUES (?,?,?,?,?,?,?,?, 'new',?,?,NOW())")
+                ->execute([(int)$j['workspace_id'],$j['company_id']?(int)$j['company_id']:null,(int)$j['requested_by'],substr((string)($s['type']??'general'),0,60),substr((string)($s['title']??'پیشنهاد هوشمند'),0,190),(string)($s['body']??''),json_encode((array)($s['evidence']??[])),isset($s['score'])?(float)$s['score']:null,$s['due_at']??null,$jobId]);}
+            $pdo->prepare("UPDATE ai_worker_nodes SET current_jobs=GREATEST(current_jobs-1,0),last_seen_at=NOW(),updated_at=NOW() WHERE id=?")->execute([(int)$node['id']]);$pdo->commit();
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
+    }
+
+    public static function failJob(array $token,array $node,int $jobId,string $lease,string $error): void
+    {
+        self::validateLease($token,$jobId,(int)$node['id'],$lease);
+        pdo()->prepare("UPDATE ai_jobs SET status='failed',error_text=?,completed_at=NOW(),updated_at=NOW(),lease_hash=NULL WHERE id=?")->execute([mb_substr($error,0,10000),$jobId]);
+        pdo()->prepare("UPDATE ai_worker_nodes SET current_jobs=GREATEST(current_jobs-1,0),last_seen_at=NOW(),updated_at=NOW() WHERE id=?")->execute([(int)$node['id']]);
+    }
+
+    public static function findNode(array $token,string $nodeUid): array
+    {
+        $st=pdo()->prepare("SELECT * FROM ai_worker_nodes WHERE workspace_id=? AND token_id=? AND node_uid=? LIMIT 1");
+        $st->execute([(int)$token['workspace_id'],(int)$token['id'],trim($nodeUid)]);$node=$st->fetch();
+        if(!$node)throw new RuntimeException('worker_node_not_found');
+        return $node;
+    }
+
+    public static function touchLease(array $token,array $node,int $jobId,string $lease,int $seconds=300): array
+    {
+        $job=self::validateLease($token,$jobId,(int)$node['id'],$lease);$seconds=max(60,min(900,$seconds));
+        pdo()->prepare("UPDATE ai_jobs SET status='running',started_at=COALESCE(started_at,NOW()),lease_expires_at=DATE_ADD(NOW(),INTERVAL ? SECOND),updated_at=NOW() WHERE id=?")
+            ->execute([$seconds,$jobId]);
+        pdo()->prepare("UPDATE ai_worker_nodes SET status='online',last_seen_at=NOW(),updated_at=NOW() WHERE id=?")->execute([(int)$node['id']]);
+        $job['status']='running';return$job;
+    }
+
+    public static function approveProposal(int $proposalId): array
+    {
+        Tenant::requirePermission('ai.actions.approve');$wid=Tenant::id();$pdo=pdo();$pdo->beginTransaction();
+        try{$st=$pdo->prepare("SELECT * FROM ai_action_proposals WHERE id=? AND workspace_id=? AND status='proposed' FOR UPDATE");$st->execute([$proposalId,$wid]);$p=$st->fetch();if(!$p)throw new RuntimeException('پیشنهاد در وضعیت قابل تایید نیست.');
+            $pdo->prepare("UPDATE ai_action_proposals SET status='approved',approved_by=?,approved_at=NOW() WHERE id=?")->execute([(int)Auth::user()['id'],$proposalId]);
+            $result=AiToolRegistry::executeProposal($p,(int)Auth::user()['id']);
+            $pdo->prepare("UPDATE ai_action_proposals SET status='executed',result_json=?,executed_by=?,executed_at=NOW() WHERE id=?")->execute([json_encode($result,JSON_UNESCAPED_UNICODE),(int)Auth::user()['id'],$proposalId]);$pdo->commit();
+            Audit::log('ai.action.execute','ai_action_proposals',$proposalId,'اجرای عملیات تاییدشده AI',null,null,['tool'=>$p['tool_name']]);return$result;
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
+    }
+
+    public static function rejectProposal(int $proposalId): void
+    {
+        Tenant::requirePermission('ai.actions.approve');$st=pdo()->prepare("UPDATE ai_action_proposals SET status='rejected',rejected_by=?,rejected_at=NOW() WHERE id=? AND workspace_id=? AND status='proposed'");$st->execute([(int)Auth::user()['id'],$proposalId,Tenant::id()]);
+    }
+
+    private static function companyOwned(int $wid,int $cid): bool
+    {
+        $st=pdo()->prepare("SELECT 1 FROM companies WHERE id=? AND workspace_id=? AND active=1 LIMIT 1");$st->execute([$cid,$wid]);return(bool)$st->fetchColumn();
+    }
+}

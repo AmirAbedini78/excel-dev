@@ -24,7 +24,12 @@ require_once APP_ROOT . '/app/Core/FileLibrary.php';
 require_once APP_ROOT . '/app/Core/Sharing.php';
 require_once APP_ROOT . '/app/Core/V5Schema.php';
 require_once APP_ROOT . '/app/Core/AccountingSchema.php';
+require_once APP_ROOT . '/app/Core/AccountingExtendedSchema.php';
 require_once APP_ROOT . '/app/Core/AccountingRepository.php';
+require_once APP_ROOT . '/app/Core/AiSchema.php';
+require_once APP_ROOT . '/app/Core/AiToolRegistry.php';
+require_once APP_ROOT . '/app/Core/AiRepository.php';
+require_once APP_ROOT . '/app/Core/AiSuggestionEngine.php';
 require_once APP_ROOT . '/app/Core/Xlsx.php';
 
 if (file_exists($configFile)) {
@@ -42,6 +47,8 @@ if (file_exists($configFile)) {
         FileLibrary::ensureSchema();
         V5Schema::migrate(pdo());
         AccountingSchema::migrate(pdo());
+        AccountingExtendedSchema::migrate(pdo());
+        AiSchema::migrate(pdo());
         RuntimeCache::markSchema(RuntimeCache::SCHEMA_VERSION);
     }
 

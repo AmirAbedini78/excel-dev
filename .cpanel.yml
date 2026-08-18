@@ -26,6 +26,7 @@ deployment:
     - /bin/cp install.php $DEPLOYPATH
     - /bin/cp cron.php $DEPLOYPATH
     - /bin/cp api.php $DEPLOYPATH
+    - /bin/cp ai_api.php $DEPLOYPATH
     - /bin/cp migrate_v2.php $DEPLOYPATH
     - /bin/cp README_FA.md $DEPLOYPATH
     - /bin/cp INSTALL_CPanel_FA.md $DEPLOYPATH

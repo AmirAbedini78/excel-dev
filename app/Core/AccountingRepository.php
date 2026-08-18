@@ -72,7 +72,7 @@ final class AccountingRepository
 
     public static function nextNumber(string $table,string $column,string $prefix): string
     {
-        $allowed=['acc_purchase_docs'=>'document_no','acc_vouchers'=>'voucher_no','acc_production_orders'=>'order_no'];
+        $allowed=['acc_purchase_docs'=>'document_no','acc_sales_docs'=>'document_no','acc_vouchers'=>'voucher_no','acc_production_orders'=>'order_no'];
         if(($allowed[$table]??'')!==$column)return $prefix.date('ymdHis');
         $st=pdo()->prepare("SELECT COUNT(*)+1 FROM `$table` WHERE workspace_id=? AND company_id=?");
         $st->execute([Tenant::id(),self::companyId()]);

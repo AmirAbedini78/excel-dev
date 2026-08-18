@@ -3,7 +3,7 @@ final class AccountingIndustrialModule
 {
     private static array $sections=[
         'overview'=>'داشبورد','profile'=>'مشخصات شرکت','master'=>'اطلاعات پایه','accounts'=>'کدینگ حساب‌ها',
-        'purchase'=>'خرید','vouchers'=>'اسناد حسابداری','production'=>'حسابداری صنعتی','treasury'=>'خزانه‌داری',
+        'purchase'=>'خرید','sales'=>'فروش','vouchers'=>'اسناد حسابداری','production'=>'حسابداری صنعتی','treasury'=>'خزانه‌داری',
         'reports'=>'گزارش‌ها','settings'=>'تنظیمات ماژول',
     ];
 
@@ -19,6 +19,8 @@ final class AccountingIndustrialModule
         if($action==='acc_delete_master')self::deleteMaster();
         if($action==='acc_save_purchase')self::savePurchase();
         if($action==='acc_delete_purchase')self::deletePurchase();
+        if($action==='acc_save_sale')self::saveSale();
+        if($action==='acc_delete_sale')self::deleteSale();
         if($action==='acc_save_voucher')self::saveVoucher();
         if($action==='acc_delete_voucher')self::deleteVoucher();
         if($action==='acc_save_bom')self::saveBom();
@@ -33,7 +35,7 @@ final class AccountingIndustrialModule
     {
         Tenant::requirePermission('accounting.view');
         $cid=AccountingRepository::companyId();
-        render_header('حسابداری صنعتی','');
+        render_header('حسابداری و مالی','');
         self::companyBar();
         if(!$cid){
             echo '<section class="card acc-empty"><h2>شرکتی برای عملیات حسابداری تعریف نشده است</h2><a class="btn primary" href="index.php?page=companies">تعریف شرکت</a></section>';
@@ -42,7 +44,7 @@ final class AccountingIndustrialModule
         self::tabs();
         $s=(string)($_GET['section']??'overview');if(!isset(self::$sections[$s]))$s='overview';
         match($s){
-            'profile'=>self::profile(),'master'=>self::master(),'accounts'=>self::accounts(),'purchase'=>self::purchase(),
+            'profile'=>self::profile(),'master'=>self::master(),'accounts'=>self::accounts(),'purchase'=>self::purchase(),'sales'=>self::sales(),
             'vouchers'=>self::vouchers(),'production'=>self::production(),'treasury'=>self::treasury(),
             'reports'=>self::reports(),'settings'=>self::settings(),default=>self::overview(),
         };
@@ -71,7 +73,7 @@ final class AccountingIndustrialModule
         $s=(string)($_GET['section']??'overview');echo '<nav class="acc-tabs">';
         foreach(self::$sections as $k=>$v){
             $perm=match($k){
-                'purchase'=>'accounting.purchase.view','vouchers'=>'accounting.vouchers.view',
+                'purchase'=>'accounting.purchase.view','sales'=>'accounting.sales.view','vouchers'=>'accounting.vouchers.view',
                 'production'=>'accounting.production.view','treasury'=>'accounting.treasury.view',
                 'reports'=>'accounting.reports.view','settings'=>'accounting.settings.manage',default=>'accounting.view'
             };
@@ -89,6 +91,7 @@ final class AccountingIndustrialModule
             'کالا/خدمت'=>self::scalar("SELECT COUNT(*) FROM acc_items WHERE workspace_id=? AND company_id=? AND active=1",[$wid,$cid]),
             'طرف حساب'=>self::scalar("SELECT COUNT(*) FROM acc_parties WHERE workspace_id=? AND company_id=? AND active=1",[$wid,$cid]),
             'اسناد خرید'=>self::scalar("SELECT COUNT(*) FROM acc_purchase_docs WHERE workspace_id=? AND company_id=?",[$wid,$cid]),
+            'اسناد فروش'=>self::scalar("SELECT COUNT(*) FROM acc_sales_docs WHERE workspace_id=? AND company_id=?",[$wid,$cid]),
             'اسناد حسابداری'=>self::scalar("SELECT COUNT(*) FROM acc_vouchers WHERE workspace_id=? AND company_id=?",[$wid,$cid]),
             'دستور تولید'=>self::scalar("SELECT COUNT(*) FROM acc_production_orders WHERE workspace_id=? AND company_id=?",[$wid,$cid]),
         ];
@@ -110,6 +113,9 @@ final class AccountingIndustrialModule
         }
         if(Tenant::can('accounting.purchase.manage')){
             echo '<a class="btn primary" href="index.php?page=industrial&section=purchase">ثبت سند خرید</a>';
+        }
+        if(Tenant::can('accounting.sales.manage')){
+            echo '<a class="btn primary" href="index.php?page=industrial&section=sales">ثبت فاکتور فروش</a>';
         }
         if(Tenant::can('accounting.vouchers.manage')){
             echo '<a class="btn primary" href="index.php?page=industrial&section=vouchers">ثبت سند حسابداری</a>';
@@ -280,6 +286,36 @@ final class AccountingIndustrialModule
         $st->execute([Tenant::id(),$id]);$lines=$st->fetchAll();
         echo '<section class="card"><div class="section-title"><div><h2>'.h(self::docTypeLabel($d['doc_type']).' '.$d['document_no']).'</h2><div class="muted">'.h($d['party_name']).' • '.h(AccountingRepository::faDate($d['document_date'])).'</div></div><b>'.number_format((float)$d['net_total']).'</b></div><div class="table-wrap"><table><thead><tr><th>#</th><th>کد</th><th>کالا/خدمت</th><th>مقدار</th><th>واحد</th><th>فی</th><th>تخفیف</th><th>جمع</th></tr></thead><tbody>';
         foreach($lines as $l)echo '<tr><td>'.(int)$l['line_no'].'</td><td>'.h($l['item_code']).'</td><td>'.h($l['item_name']).'</td><td>'.h($l['quantity']).'</td><td>'.h($l['unit_name']).'</td><td>'.number_format((float)$l['unit_price']).'</td><td>'.number_format((float)$l['discount_amount']).'</td><td>'.number_format((float)$l['line_total']).'</td></tr>';echo '</tbody></table></div></section>';
+    }
+
+    private static function sales(): void
+    {
+        Tenant::requirePermission('accounting.sales.view');
+        if(Tenant::can('accounting.sales.manage'))self::salesForm();
+        $st=pdo()->prepare("SELECT d.*,p.name party_name,w.name warehouse_name FROM acc_sales_docs d LEFT JOIN acc_parties p ON p.id=d.party_id LEFT JOIN acc_warehouses w ON w.id=d.warehouse_id WHERE d.workspace_id=? AND d.company_id=? ORDER BY d.document_date DESC,d.id DESC LIMIT 300");
+        $st->execute([Tenant::id(),AccountingRepository::companyId()]);$rows=$st->fetchAll();
+        echo '<section class="card table-card"><div class="section-title"><h2>فروش و صورتحساب</h2><span class="muted">پیش‌فاکتور، فاکتور، برگشت از فروش و پیش‌نویس‌های ساخته‌شده توسط ایجنت</span></div><div class="table-wrap"><table><thead><tr><th>نوع</th><th>شماره</th><th>تاریخ</th><th>مشتری</th><th>وضعیت</th><th>مودیان</th><th>خالص</th><th></th></tr></thead><tbody>';
+        foreach($rows as $r){echo '<tr><td>'.h(self::salesTypeLabel($r['doc_type'])).'</td><td>'.h($r['document_no']).'</td><td>'.h(AccountingRepository::faDate($r['document_date'])).'</td><td>'.h($r['party_name']??'—').'</td><td>'.h($r['workflow_status']).'</td><td>'.h($r['taxpayer_status']).'</td><td>'.number_format((float)$r['net_total']).'</td><td class="row-actions"><a class="btn tiny" href="index.php?page=industrial&section=sales&view='.(int)$r['id'].'">مشاهده</a>';
+            if(Tenant::can('accounting.sales.manage') && ($r['workflow_status']??'draft')==='draft')echo '<form method="post" class="inline-form" onsubmit="return confirm(\'پیش‌نویس حذف شود؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_delete_sale"><input type="hidden" name="id" value="'.(int)$r['id'].'"><button class="btn tiny danger">حذف</button></form>';echo '</td></tr>';}
+        if(!$rows)echo '<tr><td colspan="8" class="muted">هنوز سند فروشی ثبت نشده است.</td></tr>';
+        echo '</tbody></table></div></section>';if(($view=(int)($_GET['view']??0))>0)self::salesView($view);
+    }
+
+    private static function salesForm(): void
+    {
+        $parties=AccountingRepository::options('acc_parties');$warehouses=AccountingRepository::options('acc_warehouses');$cc=AccountingRepository::options('acc_cost_centers');$projects=AccountingRepository::options('acc_projects');$items=AccountingRepository::options('acc_items');$units=AccountingRepository::options('acc_units');
+        echo '<section class="card"><details><summary>+ سند فروش جدید</summary><form method="post" class="acc-sales-form">'.csrf_field().'<input type="hidden" name="action" value="acc_save_sale"><div class="grid-form compact">';
+        self::input('doc_type','نوع سند','','select',['invoice'=>'فاکتور فروش','preinvoice'=>'پیش‌فاکتور فروش','return'=>'برگشت از فروش']);self::input('document_no','شماره',AccountingRepository::nextNumber('acc_sales_docs','document_no','SAL-'));self::input('document_date','تاریخ',Jalali::today(),'date');self::input('due_date','سررسید','','date');self::selectRows('party_id','مشتری *',$parties,true);self::selectRows('warehouse_id','انبار',$warehouses);self::selectRows('cost_center_id','مرکز هزینه',$cc);self::selectRows('project_id','پروژه',$projects);self::input('workflow_status','وضعیت','','select',['draft'=>'موقت','approved'=>'تایید','final'=>'قطعی','void'=>'باطل']);self::input('taxpayer_status','وضعیت مودیان','','select',['not_sent'=>'ارسال نشده','waiting'=>'در انتظار','approved'=>'تایید شده','rejected'=>'رد شده','canceled'=>'ابطال']);echo '<label class="span2">توضیحات<textarea name="notes"></textarea></label></div>';
+        echo '<div class="acc-lines-head"><h3>اقلام فروش</h3><button type="button" class="btn tiny primary" data-acc-add-sale-line>+ ردیف</button></div><div class="table-wrap"><table class="acc-entry-table"><thead><tr><th>کالا/خدمت</th><th>واحد</th><th>شرح</th><th>مقدار</th><th>قیمت واحد</th><th>تخفیف</th><th>% مالیات</th><th>انبار</th><th>مرکز هزینه</th><th>پروژه</th><th>جمع</th><th></th></tr></thead><tbody data-acc-sale-lines></tbody></table></div>';
+        echo '<script type="application/json" id="accSalesMeta">'.json_encode(['items'=>$items,'units'=>$units,'warehouses'=>$warehouses,'cost_centers'=>$cc,'projects'=>$projects],JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP).'</script><div class="acc-form-total"><span>جمع: <b data-sale-gross>0</b></span><span>تخفیف: <b data-sale-discount>0</b></span><span>مالیات: <b data-sale-tax>0</b></span><span>خالص: <b data-sale-net>0</b></span></div><button class="btn primary">ذخیره پیش‌نویس فروش</button></form></details></section>';
+    }
+
+    private static function salesView(int $id): void
+    {
+        $st=pdo()->prepare("SELECT d.*,p.name party_name FROM acc_sales_docs d LEFT JOIN acc_parties p ON p.id=d.party_id WHERE d.id=? AND d.workspace_id=? AND d.company_id=? LIMIT 1");$st->execute([$id,Tenant::id(),AccountingRepository::companyId()]);$d=$st->fetch();if(!$d)return;
+        $st=pdo()->prepare("SELECT l.*,i.code item_code,i.name item_name,u.name unit_name FROM acc_sales_lines l LEFT JOIN acc_items i ON i.id=l.item_id LEFT JOIN acc_units u ON u.id=l.unit_id WHERE l.workspace_id=? AND l.sales_doc_id=? ORDER BY l.line_no");$st->execute([Tenant::id(),$id]);$lines=$st->fetchAll();
+        echo '<section class="card"><div class="section-title"><div><h2>'.h(self::salesTypeLabel($d['doc_type']).' '.$d['document_no']).'</h2><div class="muted">'.h($d['party_name']).' • '.h(AccountingRepository::faDate($d['document_date'])).' • '.h($d['workflow_status']).'</div></div><b>'.number_format((float)$d['net_total']).'</b></div><div class="table-wrap"><table><thead><tr><th>#</th><th>کد</th><th>کالا/خدمت</th><th>مقدار</th><th>واحد</th><th>فی</th><th>تخفیف</th><th>مالیات</th><th>جمع</th></tr></thead><tbody>';
+        foreach($lines as $l)echo '<tr><td>'.(int)$l['line_no'].'</td><td>'.h($l['item_code']).'</td><td>'.h($l['item_name']).'</td><td>'.h($l['quantity']).'</td><td>'.h($l['unit_name']).'</td><td>'.number_format((float)$l['unit_price']).'</td><td>'.number_format((float)$l['discount_amount']).'</td><td>'.number_format((float)$l['tax_amount']).'</td><td>'.number_format((float)$l['line_total']).'</td></tr>';echo '</tbody></table></div></section>';
     }
 
     private static function vouchers(): void
@@ -530,6 +566,23 @@ final class AccountingIndustrialModule
         self::audit('acc.purchase.delete','acc_purchase_docs',$id,'حذف سند خرید');self::back('purchase');
     }
 
+    private static function saveSale(): void
+    {
+        Tenant::requirePermission('accounting.sales.manage');$wid=Tenant::id();$cid=AccountingRepository::companyId();$type=trim((string)($_POST['doc_type']??'invoice'));$no=trim((string)($_POST['document_no']??''));$date=AccountingRepository::date($_POST['document_date']??'');$party=(int)($_POST['party_id']??0);$lines=$_POST['lines']??[];
+        if(!$no||!$date||!$party||!is_array($lines)||!$lines)throw new RuntimeException('شماره، تاریخ، مشتری و حداقل یک ردیف فروش الزامی است.');if(!AccountingRepository::owns('acc_parties',$party))throw new RuntimeException('مشتری متعلق به شرکت فعال نیست.');
+        $warehouse=self::scopedId('acc_warehouses',$_POST['warehouse_id']??0);$cc=self::scopedId('acc_cost_centers',$_POST['cost_center_id']??0);$project=self::scopedId('acc_projects',$_POST['project_id']??0);$pdo=pdo();$pdo->beginTransaction();
+        try{$pdo->prepare("INSERT INTO acc_sales_docs (workspace_id,company_id,doc_type,document_no,document_date,due_date,party_id,warehouse_id,cost_center_id,project_id,notes,workflow_status,taxpayer_status,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())")->execute([$wid,$cid,$type,$no,$date,AccountingRepository::date($_POST['due_date']??''),$party,$warehouse,$cc,$project,trim((string)($_POST['notes']??'')),trim((string)($_POST['workflow_status']??'draft')),trim((string)($_POST['taxpayer_status']??'not_sent')),(int)Auth::user()['id']]);$id=(int)$pdo->lastInsertId();$gross=0;$discount=0;$tax=0;$net=0;$n=1;
+            $ins=$pdo->prepare("INSERT INTO acc_sales_lines (workspace_id,sales_doc_id,line_no,item_id,unit_id,warehouse_id,cost_center_id,project_id,description,quantity,unit_price,discount_amount,tax_percent,tax_amount,line_total,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())");
+            foreach($lines as $l){$item=(int)($l['item_id']??0);$qty=(float)($l['quantity']??0);$price=max(0,(float)($l['unit_price']??0));if(!$item||$qty<=0)continue;if(!AccountingRepository::owns('acc_items',$item))throw new RuntimeException('کالا/خدمت متعلق به شرکت فعال نیست.');$base=$qty*$price;$disc=max(0,min($base,(float)($l['discount_amount']??0)));$taxPct=max(0,min(100,(float)($l['tax_percent']??0)));$taxAmt=max(0,($base-$disc)*$taxPct/100);$total=$base-$disc+$taxAmt;$ins->execute([$wid,$id,$n++,$item,self::scopedId('acc_units',$l['unit_id']??0),self::scopedId('acc_warehouses',$l['warehouse_id']??0)?:$warehouse,self::scopedId('acc_cost_centers',$l['cost_center_id']??0)?:$cc,self::scopedId('acc_projects',$l['project_id']??0)?:$project,trim((string)($l['description']??'')),$qty,$price,$disc,$taxPct,$taxAmt,$total]);$gross+=$base;$discount+=$disc;$tax+=$taxAmt;$net+=$total;}
+            if($n===1)throw new RuntimeException('ردیف معتبر فروش وجود ندارد.');$pdo->prepare("UPDATE acc_sales_docs SET total_before_discount=?,discount_total=?,tax_total=?,net_total=?,updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([$gross,$discount,$tax,$net,$id,$wid]);$pdo->commit();self::audit('acc.sale.create','acc_sales_docs',$id,'ایجاد سند فروش',['net_total'=>$net]);self::back('sales');
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
+    }
+
+    private static function deleteSale(): void
+    {
+        Tenant::requirePermission('accounting.sales.manage');$id=(int)($_POST['id']??0);$wid=Tenant::id();$cid=AccountingRepository::companyId();$st=pdo()->prepare("SELECT workflow_status FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1");$st->execute([$id,$wid,$cid]);$status=$st->fetchColumn();if($status===false)throw new RuntimeException('سند فروش پیدا نشد.');if($status!=='draft')throw new RuntimeException('فقط پیش‌نویس فروش قابل حذف است.');$pdo=pdo();$pdo->beginTransaction();try{$pdo->prepare("DELETE FROM acc_sales_lines WHERE workspace_id=? AND sales_doc_id=?")->execute([$wid,$id]);$pdo->prepare("DELETE FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=?")->execute([$id,$wid,$cid]);$pdo->commit();}catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}self::audit('acc.sale.delete','acc_sales_docs',$id,'حذف پیش‌نویس فروش');self::back('sales');
+    }
+
     private static function saveVoucher(): void
     {
         Tenant::requirePermission('accounting.vouchers.manage');$cid=AccountingRepository::companyId();$wid=Tenant::id();$no=trim((string)($_POST['voucher_no']??''));$date=AccountingRepository::date($_POST['voucher_date']??'');$lines=$_POST['lines']??[];if(!$no||!$date||!is_array($lines)||!$lines)throw new RuntimeException('شماره، تاریخ و آرتیکل‌ها الزامی است.');
@@ -591,6 +644,11 @@ final class AccountingIndustrialModule
     }
 
     private static function scalar(string $sql,array $p): int {$st=pdo()->prepare($sql);$st->execute($p);return(int)$st->fetchColumn();}
+
+    private static function salesTypeLabel(string $v): string
+    {
+        return ['invoice'=>'فاکتور فروش','preinvoice'=>'پیش‌فاکتور فروش','return'=>'برگشت از فروش'][$v]??$v;
+    }
 
     private static function docTypeLabel(string $v): string
     {
