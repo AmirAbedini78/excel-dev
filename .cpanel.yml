@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home3/zzflgmfd/excel.bcsrp/
+    - export DEPLOYPATH=/home3/zzflgmfd/excel2.bcsrp/
     - /bin/mkdir -p $DEPLOYPATH
     - /bin/cp -R app $DEPLOYPATH
     - /bin/cp -R assets $DEPLOYPATH
