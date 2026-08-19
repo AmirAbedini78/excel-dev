@@ -40,6 +40,44 @@ final class AiRepository
         $st->execute([$id,Tenant::id(),(int)Auth::user()['id']]);$r=$st->fetch();return$r?:null;
     }
 
+    public static function liveJobStateForUser(int $id): ?array
+    {
+        $st=pdo()->prepare(
+            "SELECT j.id,j.status,j.result_text,j.result_json,j.error_text,
+                    j.created_at,j.started_at,j.completed_at,j.updated_at,
+                    n.node_name worker_name,c.name company_name
+             FROM ai_jobs j
+             LEFT JOIN ai_worker_nodes n ON n.id=j.worker_node_id
+             LEFT JOIN companies c ON c.id=j.company_id
+             WHERE j.id=? AND j.workspace_id=? AND j.requested_by=?
+             LIMIT 1"
+        );
+        $st->execute([$id,Tenant::id(),(int)Auth::user()['id']]);
+        $row=$st->fetch();
+        if(!$row)return null;
+        $meta=json_decode((string)($row['result_json']??''),true);if(!is_array($meta))$meta=[];
+        $live=(array)($meta['live']??[]);
+        $trace=(array)($live['trace']??($meta['trace']??[]));
+        $details=(array)($live['details']??[]);
+        $status=(string)$row['status'];
+        if(empty($live['stage']))$live['stage']=$status;
+        if(empty($live['message'])){
+            $live['message']=match($status){
+                'queued'=>'در صف پردازش','leased'=>'Worker تخصیص داده شد','running'=>'در حال پردازش',
+                'succeeded'=>'پردازش با موفقیت پایان یافت','failed'=>'پردازش ناموفق بود',default=>$status,
+            };
+        }
+        $live['details']=$details;$live['trace']=array_slice($trace,-30);
+        return [
+            'id'=>(int)$row['id'],'status'=>$status,'worker_name'=>(string)($row['worker_name']??''),
+            'company_name'=>(string)($row['company_name']??''),'result_text'=>(string)($row['result_text']??''),
+            'error_text'=>(string)($row['error_text']??''),'created_at'=>(string)($row['created_at']??''),
+            'started_at'=>(string)($row['started_at']??''),'completed_at'=>(string)($row['completed_at']??''),
+            'updated_at'=>(string)($row['updated_at']??''),'live'=>$live,'metrics'=>(array)($meta['metrics']??[]),
+            'mode'=>(string)($meta['mode']??''),'terminal'=>in_array($status,['succeeded','failed'],true),
+        ];
+    }
+
     public static function proposalsForJob(int $jobId): array
     {
         $st=pdo()->prepare("SELECT * FROM ai_action_proposals WHERE workspace_id=? AND job_id=? ORDER BY id");
