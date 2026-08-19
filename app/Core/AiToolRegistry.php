@@ -11,6 +11,7 @@ final class AiToolRegistry
     {
         return [
             ['name'=>'company_snapshot','mode'=>'read','risk'=>'low','description'=>'خلاصه وضعیت شرکت شامل تعداد اسناد، فروش، خرید و مانده‌های کلیدی','parameters'=>['type'=>'object','properties'=>[]]],
+            ['name'=>'financial_analysis_bundle','mode'=>'read','risk'=>'low','description'=>'بسته فشرده تحلیل مالی برای گزارش مدیریتی خواندنی','parameters'=>['type'=>'object','properties'=>[]]],
             ['name'=>'search_parties','mode'=>'read','risk'=>'low','description'=>'جستجوی مشتری یا تامین‌کننده بر اساس نام، کد، شناسه ملی یا موبایل','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string']],'required'=>['query']]],
             ['name'=>'search_items','mode'=>'read','risk'=>'low','description'=>'جستجوی کالا یا خدمت بر اساس نام، کد یا بارکد','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string']],'required'=>['query']]],
             ['name'=>'trial_balance','mode'=>'read','risk'=>'low','description'=>'تراز آزمایشی حساب‌ها برای شرکت فعال','parameters'=>['type'=>'object','properties'=>[]]],
@@ -52,6 +53,7 @@ final class AiToolRegistry
         if(!$cid)throw new RuntimeException('company_context_required');
         return match($tool){
             'company_snapshot'=>self::companySnapshot($wid,$cid),
+            'financial_analysis_bundle'=>self::financialAnalysisBundle($wid,$cid),
             'search_parties'=>self::searchParties($wid,$cid,(string)($args['query']??'')),
             'search_items'=>self::searchItems($wid,$cid,(string)($args['query']??'')),
             'trial_balance'=>self::trialBalance($wid,$cid),
@@ -100,6 +102,57 @@ final class AiToolRegistry
         $sales=self::sum($wid,$cid,'acc_sales_docs','net_total');$purchases=self::sum($wid,$cid,'acc_purchase_docs','net_total');
         $q=pdo()->prepare("SELECT COALESCE(SUM(total_debit),0),COALESCE(SUM(total_credit),0) FROM acc_vouchers WHERE workspace_id=? AND company_id=? AND status IN ('approved','final')");$q->execute([$wid,$cid]);[$debit,$credit]=$q->fetch(PDO::FETCH_NUM)?:[0,0];
         return ['company'=>$company,'counts'=>$counts,'totals'=>['sales'=>(float)$sales,'purchases'=>(float)$purchases,'voucher_debit'=>(float)$debit,'voucher_credit'=>(float)$credit]];
+    }
+
+    private static function financialAnalysisBundle(int $wid,int $cid): array
+    {
+        $snapshot=self::companySnapshot($wid,$cid);
+        $sales=self::recentSales($wid,$cid,4);
+        $purchases=self::recentPurchases($wid,$cid,4);
+        $trial=self::trialBalance($wid,$cid);
+
+        $nonzero=array_values(array_filter($trial,static fn($r)=>
+            abs((float)($r['debit']??0))>0.01 ||
+            abs((float)($r['credit']??0))>0.01 ||
+            abs((float)($r['balance']??0))>0.01
+        ));
+        usort($nonzero,static fn($a,$b)=>abs((float)($b['balance']??0))<=>abs((float)($a['balance']??0)));
+        $top=array_slice($nonzero,0,8);
+
+        $totalDebit=0.0;$totalCredit=0.0;
+        foreach($trial as $row){$totalDebit+=(float)($row['debit']??0);$totalCredit+=(float)($row['credit']??0);}
+
+        $salesRows=array_map(static fn($r)=>[
+            $r['document_date']??null,$r['document_no']??null,$r['party_name']??null,
+            (float)($r['net_total']??0),$r['workflow_status']??null
+        ],$sales);
+        $purchaseRows=array_map(static fn($r)=>[
+            $r['document_date']??null,$r['document_no']??null,$r['party_name']??null,
+            (float)($r['net_total']??0),$r['workflow_status']??null
+        ],$purchases);
+        $accountRows=array_map(static fn($r)=>[
+            $r['code']??null,$r['name']??null,$r['account_type']??null,
+            (float)($r['debit']??0),(float)($r['credit']??0),(float)($r['balance']??0)
+        ],$top);
+
+        return [
+            'company'=>[
+                'name'=>$snapshot['company']['name']??null,
+                'counts'=>$snapshot['counts']??[],
+                'totals'=>$snapshot['totals']??[],
+            ],
+            'sales'=>['fields'=>['date','no','party','net','status'],'rows'=>$salesRows],
+            'purchases'=>['fields'=>['date','no','party','net','status'],'rows'=>$purchaseRows],
+            'trial_balance'=>[
+                'account_count'=>count($trial),
+                'nonzero_count'=>count($nonzero),
+                'total_debit'=>$totalDebit,
+                'total_credit'=>$totalCredit,
+                'difference'=>$totalDebit-$totalCredit,
+                'fields'=>['code','name','type','debit','credit','balance'],
+                'top_accounts'=>$accountRows,
+            ],
+        ];
     }
 
     private static function searchParties(int $wid,int $cid,string $query): array

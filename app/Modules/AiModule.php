@@ -43,18 +43,27 @@ final class AiModule
         $jobs=AiRepository::userJobs(25);
         $liveJobs=array_values(array_filter($jobs,fn($x)=>in_array((string)$x['status'],['queued','leased','running'],true)));
         if($liveJobs){
-            echo '<section class="card"><div class="section-title"><div><h2>Ú¯Ø²Ø§Ø±Ø´ Ø²Ù†Ø¯Ù‡ Ù…ÙˆØªÙˆØ± AI</h2><p class="muted">Ù‡Ø± Û³ Ø«Ø§Ù†ÛŒÙ‡ ØªØ§Ø²Ù‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯. Ù…Ø±Ø­Ù„Ù‡ Ø§Ø¬Ø±Ø§ØŒ Ø²Ù…Ø§Ù† Ùˆ ToolÙ‡Ø§ Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯Ø› Ù…ØªÙ† Thinking Ø®ØµÙˆØµÛŒ Ù…Ø¯Ù„ Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ù†Ù…ÛŒâ€ŒØ´ÙˆØ¯.</p></div></div>';
+            echo '<section class="card"><div class="section-title"><div><h2>گزارش زنده موتور AI</h2><p class="muted">هر ۳ ثانیه تازه می‌شود. مرحله اجرا، زمان و ابزارهای استفاده‌شده نمایش داده می‌شوند.</p></div></div>';
             foreach($liveJobs as $lj){
                 $meta=json_decode((string)($lj['result_json']??''),true);if(!is_array($meta))$meta=[];
-                $live=(array)($meta['live']??[]);$trace=(array)($live['trace']??[]);
-                echo '<article class="ai-suggestion"><div><b>Job #'.(int)$lj['id'].' â€” '.h(self::statusText((string)$lj['status'])).'</b>';
-                echo '<p>'.h((string)($live['message']??'Ø¯Ø± Ø§Ù†ØªØ¸Ø§Ø± Ú¯Ø²Ø§Ø±Ø´ Ø¨Ø¹Ø¯ÛŒ Worker...')).'</p>';
-                if(!empty($live['stage']))echo '<small>Ù…Ø±Ø­Ù„Ù‡: '.h((string)$live['stage']).' â€¢ Worker: '.h((string)($lj['worker_name']??'Ø¯Ø± Ø§Ù†ØªØ¸Ø§Ø± ØªØ®ØµÛŒØµ')).' â€¢ Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ: '.h((string)($lj['updated_at']??'')).'</small>';
-                if($trace){echo '<details><summary>Ø±Ø¯Ù¾Ø§ÛŒ Ø§Ø¬Ø±Ø§ÛŒ Ø§Ø®ÛŒØ±</summary><ol style="margin:10px 18px">';foreach($trace as $ev){echo '<li><code>'.h((string)($ev['stage']??'')).'</code> â€” '.h((string)($ev['message']??'')).'</li>';}echo '</ol></details>';}
+                $live=(array)($meta['live']??[]);$trace=(array)($live['trace']??[]);$details=(array)($live['details']??[]);
+                echo '<article class="ai-suggestion"><div><b>Job #'.(int)$lj['id'].' — '.h(self::statusText((string)$lj['status'])).'</b>';
+                echo '<p>'.h((string)($live['message']??'در انتظار گزارش بعدی Worker...')).'</p>';
+                if(!empty($live['stage'])){
+                    echo '<small>مرحله: <code>'.h((string)$live['stage']).'</code> • Worker: '.h((string)($lj['worker_name']??'در انتظار تخصیص')).' • بروزرسانی: '.h((string)($lj['updated_at']??''));
+                    if(isset($details['elapsed_seconds']))echo ' • زمان سپری‌شده: '.h((string)$details['elapsed_seconds']).'s';
+                    echo '</small>';
+                }
+                if($trace){
+                    echo '<details><summary>ردپای اجرای اخیر</summary><ol style="margin:10px 18px">';
+                    foreach($trace as $ev)echo '<li><code>'.h((string)($ev['stage']??'')).'</code> — '.h((string)($ev['message']??'')).'</li>';
+                    echo '</ol></details>';
+                }
                 echo '</div></article>';
             }
             echo '</section><script>setTimeout(function(){location.reload();},3000);</script>';
         }
+
         echo '<section class="ai-thread">';
         if(!$jobs)echo '<article class="card acc-empty"><h3>هنوز درخواستی برای ایجنت ثبت نشده است.</h3><p>بعد از اجرای Worker محلی، درخواست‌های این صفحه به یکی از سیستم‌های شما Lease می‌شوند.</p></article>';
         foreach($jobs as $j){$proposals=AiRepository::proposalsForJob((int)$j['id']);echo '<article class="card ai-message"><div class="ai-message-head"><div><b>'.h($j['company_name']??'بدون شرکت').'</b><small>#'.(int)$j['id'].' • '.h($j['status']).($j['worker_name']?' • '.h($j['worker_name']):'').'</small></div><time>'.h($j['created_at']).'</time></div><div class="ai-user-prompt">'.nl2br(h($j['prompt'])).'</div>';
