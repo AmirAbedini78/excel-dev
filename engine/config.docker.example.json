@@ -2,7 +2,7 @@
   "server_url": "https://excel2.bcsrp.ir/ai_api.php",
   "worker_token": "PASTE_TOKEN_FROM_WEB_PANEL",
   "provider": "ollama",
-  "ollama_url": "http://127.0.0.1:11434",
+  "ollama_url": "http://ollama:11434",
   "chat_model": "qwen3:1.7b",
   "capabilities": [
     "llm"
@@ -11,8 +11,8 @@
   "lease_seconds": 900,
   "max_tool_rounds": 8,
   "request_timeout_seconds": 900,
-  "node_uid": "",
-  "node_name": "",
+  "node_uid": "main-pc-01",
+  "node_name": "Main-PC-Accounting-AI",
   "rag_enabled": false,
   "rag_db": "data/rag.sqlite3",
   "embedding_model": "embeddinggemma",

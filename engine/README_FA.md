@@ -119,3 +119,64 @@ python synthetic_data.py --out data/synthetic --companies 20 --parties 1000 --it
 - یک درخواست Chat ثبت کنید.
 - Job باید از `queued` به `leased/running/succeeded` برود.
 - اگر Agent Tool تغییردهنده فراخوانی کند، Proposal باید در پنل منتظر تأیید بماند.
+
+## 8. اجرای پیشنهادی با Docker Compose
+
+برای Windows / Linux، اجرای موتور در Docker روش پیشنهادی MVP است. `Ollama` و `worker` در یک شبکه داخلی Compose اجرا می‌شوند و Worker با HTTPS به `ai_api.php` متصل می‌شود.
+
+### تنظیم فایل محرمانه
+
+```powershell
+Copy-Item config.docker.example.json config.json
+```
+
+در `config.json` مقدار `worker_token` را قرار دهید. برای هر سیستم یک `node_uid` ثابت و متفاوت انتخاب کنید؛ مثال:
+
+```json
+"node_uid": "main-pc-01",
+"node_name": "Main-PC-Accounting-AI"
+```
+
+### بالا آوردن Ollama و دریافت مدل
+
+```powershell
+docker compose up -d ollama
+docker compose exec ollama ollama pull qwen3:1.7b
+```
+
+### ساخت و اجرای Worker
+
+```powershell
+docker compose up -d --build worker
+```
+
+### مشاهده وضعیت و لاگ
+
+```powershell
+docker compose ps
+docker compose logs -f worker
+```
+
+### توقف
+
+```powershell
+docker compose stop worker ollama
+```
+
+### حذف Containerها بدون حذف مدل‌ها
+
+```powershell
+docker compose down
+```
+
+Volume `ollama_data` مدل‌ها را نگه می‌دارد. برای حذف کامل مدل‌های دانلودشده باید Volume را هم آگاهانه حذف کنید؛ در استفاده عادی `down -v` اجرا نکنید.
+
+### فعال‌سازی RAG در مرحله بعد
+
+ابتدا مدل embedding را دریافت کنید:
+
+```powershell
+docker compose exec ollama ollama pull embeddinggemma
+```
+
+سپس دانش متنی را داخل RAG index کنید و `rag_enabled` را `true` کنید. در اولین تست Agent، RAG را خاموش نگه می‌داریم تا Tool Calling و مسیر Approval مستقل تست شوند.

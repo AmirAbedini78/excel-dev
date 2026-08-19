@@ -103,7 +103,7 @@ class Worker:
     def __init__(self, cfg: dict[str, Any]):
         self.cfg = cfg
         self.api = Api(cfg)
-        self.uid = node_uid()
+        self.uid = str(cfg.get("node_uid") or node_uid()).strip()
         self.node_name = str(cfg.get("node_name") or socket.gethostname())
         self.models = ollama_models(str(cfg["ollama_url"]))
         self.capabilities = list(dict.fromkeys(str(x) for x in cfg.get("capabilities", ["llm"])))
