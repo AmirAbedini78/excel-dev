@@ -40,7 +40,22 @@ final class AiModule
         echo '<section class="card ai-hero"><div><span class="ai-kicker">Agent Control Plane</span><h2>به نرم‌افزار دستور بده، نه به منوها</h2><p>مثال: «برای مشتری فلانی از این سه کالا فاکتور پیش‌نویس بساز» یا «تراز آزمایشی را بررسی کن و مغایرت‌های مهم را بگو».</p></div><div class="ai-safety">عملیات نوشتنی → Proposal → تایید انسانی → اجرا</div></section>';
         echo '<section class="card"><form method="post" class="ai-chat-form">'.csrf_field().'<input type="hidden" name="action" value="ai_queue_chat"><div class="ai-chat-context"><label>شرکت<select name="company_id">';foreach($companies as $c)echo '<option value="'.(int)$c['id'].'" '.((int)$c['id']===$current?'selected':'').'>'.h($c['name']).'</option>';echo '</select></label><span class="muted">پردازش LLM/RAG بیرون از cPanel انجام می‌شود.</span></div><textarea name="prompt" rows="4" required placeholder="مثلاً: آخرین خرید و فروش شرکت را تحلیل کن و اگر لازم است پیش‌نویس اقدام پیشنهاد بده..."></textarea><button class="btn primary">ارسال به ایجنت</button></form></section>';
 
-        $jobs=AiRepository::userJobs(25);echo '<section class="ai-thread">';
+        $jobs=AiRepository::userJobs(25);
+        $liveJobs=array_values(array_filter($jobs,fn($x)=>in_array((string)$x['status'],['queued','leased','running'],true)));
+        if($liveJobs){
+            echo '<section class="card"><div class="section-title"><div><h2>Ú¯Ø²Ø§Ø±Ø´ Ø²Ù†Ø¯Ù‡ Ù…ÙˆØªÙˆØ± AI</h2><p class="muted">Ù‡Ø± Û³ Ø«Ø§Ù†ÛŒÙ‡ ØªØ§Ø²Ù‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯. Ù…Ø±Ø­Ù„Ù‡ Ø§Ø¬Ø±Ø§ØŒ Ø²Ù…Ø§Ù† Ùˆ ToolÙ‡Ø§ Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯Ø› Ù…ØªÙ† Thinking Ø®ØµÙˆØµÛŒ Ù…Ø¯Ù„ Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ù†Ù…ÛŒâ€ŒØ´ÙˆØ¯.</p></div></div>';
+            foreach($liveJobs as $lj){
+                $meta=json_decode((string)($lj['result_json']??''),true);if(!is_array($meta))$meta=[];
+                $live=(array)($meta['live']??[]);$trace=(array)($live['trace']??[]);
+                echo '<article class="ai-suggestion"><div><b>Job #'.(int)$lj['id'].' â€” '.h(self::statusText((string)$lj['status'])).'</b>';
+                echo '<p>'.h((string)($live['message']??'Ø¯Ø± Ø§Ù†ØªØ¸Ø§Ø± Ú¯Ø²Ø§Ø±Ø´ Ø¨Ø¹Ø¯ÛŒ Worker...')).'</p>';
+                if(!empty($live['stage']))echo '<small>Ù…Ø±Ø­Ù„Ù‡: '.h((string)$live['stage']).' â€¢ Worker: '.h((string)($lj['worker_name']??'Ø¯Ø± Ø§Ù†ØªØ¸Ø§Ø± ØªØ®ØµÛŒØµ')).' â€¢ Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ: '.h((string)($lj['updated_at']??'')).'</small>';
+                if($trace){echo '<details><summary>Ø±Ø¯Ù¾Ø§ÛŒ Ø§Ø¬Ø±Ø§ÛŒ Ø§Ø®ÛŒØ±</summary><ol style="margin:10px 18px">';foreach($trace as $ev){echo '<li><code>'.h((string)($ev['stage']??'')).'</code> â€” '.h((string)($ev['message']??'')).'</li>';}echo '</ol></details>';}
+                echo '</div></article>';
+            }
+            echo '</section><script>setTimeout(function(){location.reload();},3000);</script>';
+        }
+        echo '<section class="ai-thread">';
         if(!$jobs)echo '<article class="card acc-empty"><h3>هنوز درخواستی برای ایجنت ثبت نشده است.</h3><p>بعد از اجرای Worker محلی، درخواست‌های این صفحه به یکی از سیستم‌های شما Lease می‌شوند.</p></article>';
         foreach($jobs as $j){$proposals=AiRepository::proposalsForJob((int)$j['id']);echo '<article class="card ai-message"><div class="ai-message-head"><div><b>'.h($j['company_name']??'بدون شرکت').'</b><small>#'.(int)$j['id'].' • '.h($j['status']).($j['worker_name']?' • '.h($j['worker_name']):'').'</small></div><time>'.h($j['created_at']).'</time></div><div class="ai-user-prompt">'.nl2br(h($j['prompt'])).'</div>';
             if($j['result_text'])echo '<div class="ai-answer"><strong>پاسخ ایجنت</strong><div>'.nl2br(h($j['result_text'])).'</div></div>';elseif($j['error_text'])echo '<div class="alert danger">'.nl2br(h($j['error_text'])).'</div>';else echo '<div class="ai-pending">'.self::statusText((string)$j['status']).'</div>';

@@ -30,7 +30,7 @@ final class AiToolRegistry
 
     public static function bootstrapContext(int $wid,?int $cid): array
     {
-        $ctx=['workspace_id'=>$wid,'company_id'=>$cid,'today'=>date('Y-m-d'),'jalali_today'=>class_exists('Jalali')?Jalali::today():null,'tools'=>self::descriptors()];
+        $ctx=['workspace_id'=>$wid,'company_id'=>$cid,'today'=>date('Y-m-d'),'jalali_today'=>class_exists('Jalali')?Jalali::today():null];
         if($cid)$ctx['company']=self::companySnapshot($wid,$cid);
         $ctx['safety']=[
             'mutations'=>'proposal_only',

@@ -115,42 +115,173 @@ class Worker:
             "metadata": {"python": platform.python_version(), "machine": platform.machine(), "provider": cfg.get("provider", "ollama")}
         }
         self.stop_event = threading.Event()
+        self.progress_lock = threading.Lock()
+        self.current_progress: dict[str, Any] = {}
+        self.current_trace: list[dict[str, Any]] = []
 
     def register(self) -> None:
         out = self.api.post("register", self.base_payload, 30)
         print(f"[registered] {self.node_name} uid={self.uid} caps={out['node'].get('capabilities')} models={self.models}")
 
     def heartbeat_loop(self, job: dict[str, Any]) -> None:
-        interval = max(30, min(180, int(self.cfg.get("lease_seconds", 900)) // 3))
+        interval = max(5, min(15, int(self.cfg.get("progress_interval_seconds", 8))))
         while not self.stop_event.wait(interval):
             try:
                 payload = dict(self.base_payload)
                 payload.update({"job_id": job["id"], "lease_token": job["lease_token"], "lease_seconds": int(self.cfg.get("lease_seconds", 900))})
+                with self.progress_lock:
+                    payload["progress"] = {**self.current_progress, "trace": self.current_trace[-30:]}
                 self.api.post("heartbeat", payload, 30)
             except Exception as e:
-                print(f"[heartbeat warning] {e}", file=sys.stderr)
+                print(f"[heartbeat warning] {e}", file=sys.stderr, flush=True)
+
+    def trace(self, job: dict[str, Any], stage: str, message: str, details: dict[str, Any] | None = None) -> None:
+        event = {
+            "at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+            "stage": stage,
+            "message": message,
+            "details": details or {},
+        }
+        with self.progress_lock:
+            self.current_progress = event
+            self.current_trace.append(event)
+            if len(self.current_trace) > 100:
+                self.current_trace = self.current_trace[-100:]
+        print(f"[job {job['id']}][{stage}] {message}", flush=True)
 
     def lease(self) -> dict[str, Any] | None:
         payload = dict(self.base_payload)
         payload.update({"lease_seconds": int(self.cfg.get("lease_seconds", 900)), "idle_seconds": int(self.cfg.get("poll_seconds", 8))})
         return self.api.post("lease", payload, 45).get("job")
 
-    def ollama_chat(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]]) -> dict[str, Any]:
+    def ollama_chat(self, job: dict[str, Any], round_no: int, messages: list[dict[str, Any]], tools: list[dict[str, Any]]) -> dict[str, Any]:
         body = {
-            "model": self.cfg["chat_model"], "messages": messages, "tools": tools,
-            "stream": False, "options": {"temperature": 0.2}
+            "model": self.cfg["chat_model"],
+            "messages": messages,
+            "tools": tools,
+            "stream": True,
+            "think": bool(self.cfg.get("think", False)),
+            "options": {"temperature": 0.2},
         }
-        req = urllib.request.Request(str(self.cfg["ollama_url"]).rstrip("/") + "/api/chat",
-                                     data=json.dumps(body, ensure_ascii=False).encode("utf-8"), method="POST",
-                                     headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=int(self.cfg.get("request_timeout_seconds", 900))) as r:
-            return json.loads(r.read().decode("utf-8"))
+        timeout = max(30, min(900, int(self.cfg.get("ollama_timeout_seconds", 300))))
+        req = urllib.request.Request(
+            str(self.cfg["ollama_url"]).rstrip("/") + "/api/chat",
+            data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+            method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        started = time.monotonic()
+        content_parts: list[str] = []
+        thinking_chars = 0
+        tool_calls: list[dict[str, Any]] = []
+        final_chunk: dict[str, Any] = {}
+        last_progress = 0.0
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                for raw in r:
+                    raw = raw.strip()
+                    if not raw:
+                        continue
+                    chunk = json.loads(raw.decode("utf-8"))
+                    final_chunk = chunk
+                    msg = chunk.get("message") or {}
+                    if msg.get("thinking"):
+                        thinking_chars += len(str(msg["thinking"]))
+                    if msg.get("content"):
+                        content_parts.append(str(msg["content"]))
+                    if msg.get("tool_calls"):
+                        tool_calls.extend(msg.get("tool_calls") or [])
+                    elapsed = time.monotonic() - started
+                    if elapsed - last_progress >= 5:
+                        self.trace(job, "llm_stream", "Ù…Ø¯Ù„ Ø¯Ø± Ø­Ø§Ù„ Ù¾Ø±Ø¯Ø§Ø²Ø´ Ø§Ø³Øª", {
+                            "round": round_no + 1,
+                            "elapsed_seconds": round(elapsed, 1),
+                            "thinking_chars": thinking_chars,
+                            "content_chars": sum(len(x) for x in content_parts),
+                            "tool_calls": len(tool_calls),
+                        })
+                        last_progress = elapsed
+        except urllib.error.HTTPError as e:
+            body_text = e.read().decode("utf-8", "replace")
+            raise RuntimeError(f"Ollama HTTP {e.code}: {body_text[:3000]}") from e
+        except (TimeoutError, socket.timeout) as e:
+            raise RuntimeError(f"Ollama timeout after {timeout}s") from e
+
+        message: dict[str, Any] = {"role": "assistant", "content": "".join(content_parts)}
+        if tool_calls:
+            message["tool_calls"] = tool_calls
+        metrics = {
+            "round": round_no + 1,
+            "elapsed_seconds": round(time.monotonic() - started, 2),
+            "prompt_eval_count": final_chunk.get("prompt_eval_count"),
+            "eval_count": final_chunk.get("eval_count"),
+        }
+        self.trace(job, "llm_done", "Ù¾Ø§Ø³Ø® Ø§ÛŒÙ† Ù…Ø±Ø­Ù„Ù‡ Ø§Ø² Ù…Ø¯Ù„ Ø¯Ø±ÛŒØ§ÙØª Ø´Ø¯", metrics)
+        return {"message": message, "_metrics": metrics}
+
+    @staticmethod
+    def normalize_tool_schema(schema: Any) -> dict[str, Any]:
+        """Normalize JSON Schema received from PHP before sending it to Ollama."""
+        if not isinstance(schema, dict):
+            return {"type": "object", "properties": {}}
+
+        out: dict[str, Any] = {}
+        for key, value in schema.items():
+            if key == "properties":
+                if isinstance(value, dict):
+                    out[key] = {
+                        str(name): Worker.normalize_tool_schema(prop)
+                        if isinstance(prop, dict) else prop
+                        for name, prop in value.items()
+                    }
+                else:
+                    # PHP json_encode commonly turns an empty associative array into [].
+                    # Ollama requires JSON-Schema properties to be an object/map.
+                    out[key] = {}
+            elif key == "items" and isinstance(value, dict):
+                out[key] = Worker.normalize_tool_schema(value)
+            elif key == "required":
+                out[key] = [str(x) for x in value] if isinstance(value, list) else []
+            else:
+                out[key] = value
+
+        if out.get("type") == "object" and "properties" not in out:
+            out["properties"] = {}
+        return out
 
     @staticmethod
     def ollama_tools(descriptors: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return [{"type": "function", "function": {
-            "name": d["name"], "description": d.get("description", ""), "parameters": d.get("parameters", {"type": "object", "properties": {}})
+            "name": d["name"],
+            "description": d.get("description", ""),
+            "parameters": Worker.normalize_tool_schema(d.get("parameters"))
         }} for d in descriptors]
+
+    @staticmethod
+    def normalize_tool_calls(raw_calls: Any) -> list[dict[str, Any]]:
+        if not isinstance(raw_calls, list):
+            return []
+        normalized: list[dict[str, Any]] = []
+        for raw in raw_calls:
+            if not isinstance(raw, dict):
+                continue
+            call = dict(raw)
+            fn_raw = call.get("function")
+            if not isinstance(fn_raw, dict):
+                continue
+            fn = dict(fn_raw)
+            args = fn.get("arguments", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except Exception:
+                    args = {}
+            if not isinstance(args, dict):
+                args = {}
+            fn["arguments"] = args
+            call["function"] = fn
+            normalized.append(call)
+        return normalized
 
     def tool(self, job: dict[str, Any], name: str, arguments: Any, call_id: str) -> Any:
         if isinstance(arguments, str):
@@ -163,7 +294,14 @@ class Worker:
         return out.get("result")
 
     def process_agent(self, job: dict[str, Any], tools_desc: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
-        context = job.get("context") or {}
+        context = dict(job.get("context") or {})
+        # Tool descriptors are already sent through Ollama's official tools field.
+        # Removing the duplicate copy reduces prompt size and CPU work.
+        context.pop("tools", None)
+        self.trace(job, "prepare", "Context Ùˆ Ø§Ø¨Ø²Ø§Ø±Ù‡Ø§ÛŒ Ø­Ø³Ø§Ø¨Ø¯Ø§Ø±ÛŒ Ø¢Ù…Ø§Ø¯Ù‡ Ø´Ø¯Ù†Ø¯", {
+            "tools": len(tools_desc),
+            "prompt_chars": len(str(job.get("prompt", ""))),
+        })
         if bool(self.cfg.get("rag_enabled", False)):
             try:
                 from rag import RagIndex
@@ -189,13 +327,21 @@ class Worker:
         final = ""
         max_rounds = max(1, min(20, int(self.cfg.get("max_tool_rounds", 8))))
         for round_no in range(max_rounds):
-            response = self.ollama_chat(messages, tools)
+            self.trace(job, "llm_request", f"Ø§Ø±Ø³Ø§Ù„ Ù…Ø±Ø­Ù„Ù‡ {round_no + 1} Ø¨Ù‡ Ù…Ø¯Ù„ {self.cfg['chat_model']}", {
+                "round": round_no + 1,
+                "messages": len(messages),
+                "tools": len(tools),
+                "think": bool(self.cfg.get("think", False)),
+            })
+            response = self.ollama_chat(job, round_no, messages, tools)
             msg = response.get("message") or {}
-            assistant_msg = {k: v for k, v in msg.items() if k in ("role", "content", "tool_calls")}
+            calls = self.normalize_tool_calls(msg.get("tool_calls") or [])
+            assistant_msg = {k: v for k, v in msg.items() if k in ("role", "content")}
             assistant_msg.setdefault("role", "assistant")
             assistant_msg.setdefault("content", "")
+            if calls:
+                assistant_msg["tool_calls"] = calls
             messages.append(assistant_msg)
-            calls = msg.get("tool_calls") or []
             if not calls:
                 final = str(msg.get("content") or "").strip()
                 break
@@ -205,16 +351,38 @@ class Worker:
                 args = fn.get("arguments") or {}
                 stable = json.dumps(args, sort_keys=True, ensure_ascii=False) if isinstance(args, dict) else str(args)
                 call_id = f"job{job['id']}-r{round_no}-i{idx}-" + hashlib.sha256((name + stable).encode()).hexdigest()[:16]
+                self.trace(job, "tool_call", f"Ø§Ø¬Ø±Ø§ÛŒ Ø§Ø¨Ø²Ø§Ø± {name}", {
+                    "round": round_no + 1,
+                    "argument_keys": sorted(args.keys()) if isinstance(args, dict) else [],
+                })
                 result = self.tool(job, name, args, call_id)
+                self.trace(job, "tool_result", f"Ù†ØªÛŒØ¬Ù‡ Ø§Ø¨Ø²Ø§Ø± {name} Ø¯Ø±ÛŒØ§ÙØª Ø´Ø¯", {
+                    "round": round_no + 1,
+                    "result_type": type(result).__name__,
+                })
                 used.append(name)
                 messages.append({"role": "tool", "tool_name": name, "content": json.dumps(result, ensure_ascii=False, default=str)})
         if not final:
             final = "پردازش ابزارها انجام شد. اگر عملیات نوشتنی پیشنهاد شده باشد، برای اجرا منتظر تایید انسانی است."
-        return final, {"provider": "ollama", "model": self.cfg["chat_model"], "tools_used": used, "rounds": min(max_rounds, len(used) + 1)}
+        with self.progress_lock:
+            trace_copy = list(self.current_trace[-50:])
+        return final, {
+            "provider": "ollama",
+            "model": self.cfg["chat_model"],
+            "tools_used": used,
+            "rounds": min(max_rounds, len(used) + 1),
+            "trace": trace_copy,
+        }
 
     def run_job(self, job: dict[str, Any], tools: list[dict[str, Any]]) -> None:
-        print(f"[job {job['id']}] {job.get('prompt','')[:120]}")
         self.stop_event.clear()
+        with self.progress_lock:
+            self.current_progress = {}
+            self.current_trace = []
+        self.trace(job, "start", "Job Ø§Ø² ØµÙ Ø¯Ø±ÛŒØ§ÙØª Ø´Ø¯", {
+            "job_type": job.get("job_type"),
+            "company_id": job.get("company_id"),
+        })
         hb = threading.Thread(target=self.heartbeat_loop, args=(job,), daemon=True); hb.start()
         try:
             if job.get("job_type") != "agent_chat":
@@ -222,9 +390,10 @@ class Worker:
             text, meta = self.process_agent(job, tools)
             self.api.post("complete", {"node_uid": self.uid, "job_id": job["id"], "lease_token": job["lease_token"],
                                        "result_text": text, "result": meta})
-            print(f"[job {job['id']}] completed")
+            self.trace(job, "completed", "Ù¾Ø±Ø¯Ø§Ø²Ø´ Job Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª ØªÙ…Ø§Ù… Ø´Ø¯", {"tools_used": meta.get("tools_used", [])})
         except Exception as e:
-            print(f"[job {job['id']}] failed: {e}", file=sys.stderr)
+            self.trace(job, "failed", f"Ù¾Ø±Ø¯Ø§Ø²Ø´ Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯: {e}")
+            print(f"[job {job['id']}] failed: {e}", file=sys.stderr, flush=True)
             try:
                 self.api.post("fail", {"node_uid": self.uid, "job_id": job["id"], "lease_token": job["lease_token"], "error": repr(e)}, 30)
             except Exception as e2:

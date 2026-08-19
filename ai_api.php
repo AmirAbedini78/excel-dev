@@ -80,7 +80,8 @@ try {
     if($action==='heartbeat'){
         $node=AiRepository::registerNode($token,$body);
         if(!empty($body['job_id']) && !empty($body['lease_token'])){
-            AiRepository::touchLease($token,$node,(int)$body['job_id'],(string)$body['lease_token'],(int)($body['lease_seconds']??300));
+            $progress=$body['progress']??[];if(!is_array($progress))$progress=[];
+            AiRepository::touchLease($token,$node,(int)$body['job_id'],(string)$body['lease_token'],(int)($body['lease_seconds']??300),$progress);
         }
         ai_json(['ok'=>true,'server_time'=>date(DATE_ATOM)]);
     }

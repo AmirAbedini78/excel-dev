@@ -170,11 +170,24 @@ final class AiRepository
         return $node;
     }
 
-    public static function touchLease(array $token,array $node,int $jobId,string $lease,int $seconds=300): array
+    public static function touchLease(array $token,array $node,int $jobId,string $lease,int $seconds=300,array $progress=[]): array
     {
         $job=self::validateLease($token,$jobId,(int)$node['id'],$lease);$seconds=max(60,min(900,$seconds));
-        pdo()->prepare("UPDATE ai_jobs SET status='running',started_at=COALESCE(started_at,NOW()),lease_expires_at=DATE_ADD(NOW(),INTERVAL ? SECOND),updated_at=NOW() WHERE id=?")
-            ->execute([$seconds,$jobId]);
+        if($progress){
+            $safe=[
+                'stage'=>mb_substr((string)($progress['stage']??''),0,80),
+                'message'=>mb_substr((string)($progress['message']??''),0,500),
+                'at'=>mb_substr((string)($progress['at']??''),0,80),
+                'details'=>(array)($progress['details']??[]),
+                'trace'=>array_slice((array)($progress['trace']??[]),-30),
+            ];
+            $live=json_encode(['live'=>$safe],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+            pdo()->prepare("UPDATE ai_jobs SET status='running',started_at=COALESCE(started_at,NOW()),lease_expires_at=DATE_ADD(NOW(),INTERVAL ? SECOND),result_json=?,updated_at=NOW() WHERE id=?")
+                ->execute([$seconds,$live,$jobId]);
+        }else{
+            pdo()->prepare("UPDATE ai_jobs SET status='running',started_at=COALESCE(started_at,NOW()),lease_expires_at=DATE_ADD(NOW(),INTERVAL ? SECOND),updated_at=NOW() WHERE id=?")
+                ->execute([$seconds,$jobId]);
+        }
         pdo()->prepare("UPDATE ai_worker_nodes SET status='online',last_seen_at=NOW(),updated_at=NOW() WHERE id=?")->execute([(int)$node['id']]);
         $job['status']='running';return$job;
     }
