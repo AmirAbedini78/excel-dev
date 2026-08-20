@@ -978,6 +978,8 @@ class Worker:
 # ERPSMART v8.2C.4.1 safe deep-analysis runtime patch
 from deep_safe import install_worker_patch as _install_worker_patch
 _install_worker_patch(Worker)
+from agent_guard import install_agent_guard as _install_agent_guard
+_install_agent_guard(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()
