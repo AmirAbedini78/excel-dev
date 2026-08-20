@@ -73,6 +73,7 @@ final class AiModule
         $modeLabels=[
             'deterministic_financial_report'=>'گزارش سریع قطعی',
             'deep_financial_analysis'=>'تحلیل عمیق محلی',
+            'deep_financial_analysis_fallback'=>'گزارش قطعی؛ تحلیل عمیق تکمیل نشد',
             'tool_agent'=>'ایجنت ابزارمحور',
             'fast_read_analysis'=>'تحلیل سریع',
         ];

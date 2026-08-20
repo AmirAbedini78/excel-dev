@@ -7,8 +7,8 @@
   "fast_model": "qwen3.5:0.8b",
   "agent_model": "qwen3.5:0.8b",
   "analysis_model": "gemma3:4b",
-  "deep_num_ctx": 1024,
-  "deep_num_predict": 160,
+  "deep_num_ctx": 640,
+  "deep_num_predict": 96,
   "deep_temperature": 0.1,
   "capabilities": [
     "llm"
@@ -22,5 +22,8 @@
   "rag_enabled": false,
   "rag_db": "data/rag.sqlite3",
   "embedding_model": "embeddinggemma",
-  "rag_top_k": 5
+  "rag_top_k": 5,
+  "deep_timeout_seconds": 210,
+  "api_retry_attempts": 4,
+  "api_retry_base_seconds": 1.0
 }

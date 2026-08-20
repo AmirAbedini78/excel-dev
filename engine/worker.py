@@ -76,28 +76,89 @@ def ollama_models(base: str, timeout: int = 8) -> list[str]:
 
 
 class Api:
+    TRANSIENT_HTTP = {408, 425, 429, 500, 502, 503, 504}
+
     def __init__(self, cfg: dict[str, Any]):
         self.url = str(cfg["server_url"])
         self.token = str(cfg["worker_token"])
         self.timeout = int(cfg.get("request_timeout_seconds", 900))
+        self.retry_attempts = max(1, min(6, int(cfg.get("api_retry_attempts", 4))))
+        self.retry_base_seconds = max(0.2, min(10.0, float(cfg.get("api_retry_base_seconds", 1.0))))
+
+    @staticmethod
+    def _safe_preview(raw: bytes, limit: int = 500) -> str:
+        text = raw.decode("utf-8", "replace").replace("\r", "\\r").replace("\n", "\\n")
+        return text[:limit]
 
     def post(self, action: str, payload: dict[str, Any], timeout: int | None = None) -> dict[str, Any]:
         url = self.url + ("&" if "?" in self.url else "?") + "action=" + action
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        req = urllib.request.Request(url, data=data, method="POST", headers={
-            "Content-Type": "application/json", "Accept": "application/json",
-            "X-AI-Worker-Token": self.token, "User-Agent": "AccountingAIWorker/1.0"
-        })
-        try:
-            with urllib.request.urlopen(req, timeout=timeout or self.timeout) as r:
-                out = json.loads(r.read().decode("utf-8"))
-        except urllib.error.HTTPError as e:
-            body = e.read().decode("utf-8", "replace")
-            raise RuntimeError(f"Server HTTP {e.code}: {body[:1000]}") from e
-        if not out.get("ok"):
-            raise RuntimeError(str(out.get("error", "server_error")))
-        return out
+        request_timeout = int(timeout or self.timeout)
+        last_error: Exception | None = None
 
+        for attempt in range(1, self.retry_attempts + 1):
+            req = urllib.request.Request(url, data=data, method="POST", headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-AI-Worker-Token": self.token,
+                "User-Agent": "AccountingAIWorker/1.1",
+            })
+            try:
+                with urllib.request.urlopen(req, timeout=request_timeout) as r:
+                    raw = r.read()
+                    status = int(getattr(r, "status", 200))
+                    content_type = str(r.headers.get("Content-Type") or "")
+
+                if not raw.strip():
+                    raise RuntimeError(
+                        f"Server empty response action={action} status={status} content_type={content_type or 'unknown'}"
+                    )
+
+                try:
+                    out = json.loads(raw.decode("utf-8"))
+                except json.JSONDecodeError as e:
+                    raise RuntimeError(
+                        f"Server non-JSON response action={action} status={status} "
+                        f"content_type={content_type or 'unknown'} body={self._safe_preview(raw)}"
+                    ) from e
+
+                if not isinstance(out, dict):
+                    raise RuntimeError(f"Server JSON root is not object action={action}")
+                if not out.get("ok"):
+                    raise RuntimeError(str(out.get("error", "server_error")))
+                return out
+
+            except urllib.error.HTTPError as e:
+                raw = e.read()
+                preview = self._safe_preview(raw)
+                last_error = RuntimeError(f"Server HTTP {e.code} action={action}: {preview}")
+                if e.code not in self.TRANSIENT_HTTP or attempt >= self.retry_attempts:
+                    raise last_error from e
+
+            except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as e:
+                last_error = e
+                if attempt >= self.retry_attempts:
+                    raise RuntimeError(
+                        f"Server network error action={action} after {attempt} attempts: {e}"
+                    ) from e
+
+            except RuntimeError as e:
+                last_error = e
+                transient_text = str(e).lower()
+                transient = ("empty response" in transient_text or "non-json response" in transient_text)
+                if not transient or attempt >= self.retry_attempts:
+                    raise
+
+            delay = min(12.0, self.retry_base_seconds * (2 ** (attempt - 1)))
+            print(
+                f"[api retry] action={action} attempt={attempt}/{self.retry_attempts} "
+                f"delay={delay:.1f}s reason={type(last_error).__name__}",
+                file=sys.stderr,
+                flush=True,
+            )
+            time.sleep(delay)
+
+        raise RuntimeError(f"Server request failed action={action}: {last_error}")
 
 class Worker:
     def __init__(self, cfg: dict[str, Any]):
@@ -199,6 +260,7 @@ class Worker:
         num_ctx: int | None = None,
         num_predict: int | None = None,
         temperature: float | None = None,
+        timeout_seconds: int | None = None,
     ) -> dict[str, Any]:
         model_name = str(model or self.model_for("fallback"))
 
@@ -227,7 +289,10 @@ class Worker:
         if tools:
             body["tools"] = tools
 
-        timeout = max(30, min(900, int(self.cfg.get("ollama_timeout_seconds", 300))))
+        timeout = max(30, min(900, int(
+            timeout_seconds if timeout_seconds is not None
+            else self.cfg.get("ollama_timeout_seconds", 300)
+        )))
         req = urllib.request.Request(
             str(self.cfg["ollama_url"]).rstrip("/") + "/api/chat",
             data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
@@ -563,6 +628,61 @@ class Worker:
         }
         return "\n".join(lines), structured
 
+    @staticmethod
+    def build_deep_facts(bundle: Any, structured: dict[str, Any]) -> dict[str, Any]:
+        data = bundle if isinstance(bundle, dict) else {}
+        trial = data.get("trial_balance") if isinstance(data.get("trial_balance"), dict) else {}
+        sales = data.get("sales") if isinstance(data.get("sales"), dict) else {}
+        purchases = data.get("purchases") if isinstance(data.get("purchases"), dict) else {}
+
+        top_accounts = []
+        for row in (trial.get("top_accounts") or [])[:3]:
+            if not isinstance(row, list):
+                continue
+            top_accounts.append({
+                "code": row[0] if len(row) > 0 else None,
+                "name": row[1] if len(row) > 1 else None,
+                "type": row[2] if len(row) > 2 else None,
+                "balance_rial": row[5] if len(row) > 5 else 0,
+            })
+
+        def recent(rows: Any) -> list[dict[str, Any]]:
+            out: list[dict[str, Any]] = []
+            if not isinstance(rows, list):
+                return out
+            for row in rows[:2]:
+                if not isinstance(row, list):
+                    continue
+                out.append({
+                    "date": row[0] if len(row) > 0 else None,
+                    "no": row[1] if len(row) > 1 else None,
+                    "party": row[2] if len(row) > 2 else None,
+                    "net_rial": row[3] if len(row) > 3 else 0,
+                    "status": row[4] if len(row) > 4 else None,
+                })
+            return out
+
+        return {
+            "company": structured.get("company"),
+            "sales_total_rial": structured.get("sales_total"),
+            "purchase_total_rial": structured.get("purchase_total"),
+            "sales_minus_purchases_rial": structured.get("sales_minus_purchases"),
+            "trial_debit_rial": structured.get("trial_debit"),
+            "trial_credit_rial": structured.get("trial_credit"),
+            "trial_difference_rial": structured.get("trial_difference"),
+            "trial_balanced": structured.get("trial_balanced"),
+            "account_count": trial.get("account_count"),
+            "nonzero_account_count": trial.get("nonzero_count"),
+            "top_accounts": top_accounts,
+            "recent_sales": recent(sales.get("rows")),
+            "recent_purchases": recent(purchases.get("rows")),
+            "interpretation_limits": [
+                "خرید بیشتر از فروش به‌تنهایی اثبات‌کننده زیان یا کسری نقدینگی نیست.",
+                "توازن بدهکار و بستانکار فقط توازن حسابداری را نشان می‌دهد، نه سلامت کامل مالی.",
+                "بدون بهای تمام‌شده، هزینه‌ها، جریان نقد و دوره مقایسه، نتیجه‌گیری سودآوری محدود است.",
+            ],
+        }
+
     def process_fast_analysis(self, job: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         started = time.monotonic()
         prompt = str(job.get("prompt", ""))
@@ -571,14 +691,14 @@ class Worker:
         self.trace(job, "route", f"Read-only financial analysis -> {depth} hybrid path")
         self.trace(job, "analysis_bundle_request", "Collecting compact financial data from cPanel")
 
-        call_id = f"job{job['id']}-financial-analysis-bundle-v2"
+        call_id = f"job{job['id']}-financial-analysis-bundle-v3"
         bundle = self.tool(job, "financial_analysis_bundle", {}, call_id)
 
-        data_json = json.dumps(bundle, ensure_ascii=False, separators=(",", ":"), default=str)
         report_text, structured = self.build_financial_report(bundle)
 
+        data_chars = len(json.dumps(bundle, ensure_ascii=False, separators=(",", ":"), default=str))
         self.trace(job, "analysis_bundle_ready", "Compact financial data is ready", {
-            "data_chars": len(data_json),
+            "data_chars": data_chars,
             "depth": depth,
         })
 
@@ -587,10 +707,8 @@ class Worker:
             self.trace(job, "deterministic_report", "Deterministic financial report generated without LLM", {
                 "elapsed_seconds": elapsed,
             })
-
             with self.progress_lock:
                 trace_copy = list(self.current_trace[-50:])
-
             return report_text, {
                 "provider": "deterministic",
                 "model": "none",
@@ -603,71 +721,91 @@ class Worker:
             }
 
         analysis_model = self.model_for("analysis")
-        self.trace(job, "deep_analysis", f"Deep Persian analysis selected: {analysis_model}")
+        deep_facts = self.build_deep_facts(bundle, structured)
+        deep_json = json.dumps(deep_facts, ensure_ascii=False, separators=(",", ":"), default=str)
+
+        self.trace(job, "deep_analysis", f"Deep Persian analysis selected: {analysis_model}", {
+            "deep_fact_chars": len(deep_json),
+            "source_data_chars": data_chars,
+        })
 
         system = (
             "تو تحلیلگر مالی ERP ایرانی هستی. فقط فارسی روان و حرفه‌ای بنویس. "
-            "فقط از داده‌های داده‌شده نتیجه بگیر و هیچ عددی نساز. "
-            "بیشتر بودن خرید از فروش را به‌تنهایی زیان، هزینه یا کسری نقدینگی تلقی نکن. "
-            "جمع برابر بدهکار و بستانکار فقط توازن حسابداری را نشان می‌دهد، نه سلامت مالی. "
-            "حداکثر در 6 نکته کوتاه، ریسک‌ها، محدودیت داده و اقدام‌های قابل بررسی را توضیح بده. "
-            "واحد اعداد مالی ریال است و هرگز آن را به تومان تبدیل نکن."
+            "FACTS_JSON تنها منبع واقعیت مالی این پاسخ است. هیچ عددی نساز و واحد ریال را تغییر نده. "
+            "خرید بیشتر از فروش را به‌تنهایی زیان یا کسری نقدینگی تلقی نکن. "
+            "توازن بدهکار و بستانکار فقط توازن حسابداری است. "
+            "حداکثر 5 نکته کوتاه بنویس: برداشت مدیریتی، ریسک‌های قابل استنباط، محدودیت داده و اقدام‌های پیگیری. "
+            "اگر داده برای نتیجه‌ای کافی نیست صریحاً بگو کافی نیست."
         )
 
-        user = (
-            "درخواست کاربر:\n" + prompt
-            + "\n\nگزارش قطعی استخراج‌شده از ERP:\n" + report_text
-            + "\n\nDATA_JSON:\n" + data_json
-        )
+        user = "درخواست کاربر:\n" + prompt + "\n\nFACTS_JSON:\n" + deep_json
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
-        messages = [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ]
-
-        self.trace(job, "llm_request", f"Sending deep analysis to {analysis_model}", {
+        self.trace(job, "llm_request", f"Sending compact deep analysis to {analysis_model}", {
             "round": 1,
             "messages": len(messages),
             "tools": 0,
-            "data_chars": len(data_json),
-            "fast_path": False,
+            "deep_fact_chars": len(deep_json),
             "analysis_depth": "deep",
             "model": analysis_model,
             "started_epoch": time.time(),
         })
 
-        response = self.ollama_chat(
-            job,
-            0,
-            messages,
-            [],
-            fast=False,
-            model=analysis_model,
-            num_ctx=int(self.cfg.get("deep_num_ctx", 1024)),
-            num_predict=int(self.cfg.get("deep_num_predict", 160)),
-            temperature=float(self.cfg.get("deep_temperature", 0.1)),
-        )
-
-        msg = response.get("message") or {}
-        deep_text = str(msg.get("content") or "").strip()
-        if not deep_text:
-            raise RuntimeError("deep_analysis_empty_response")
-
-        final = report_text + "\n\nتحلیل تکمیلی هوش مصنوعی\n" + deep_text
-
-        with self.progress_lock:
-            trace_copy = list(self.current_trace[-50:])
-
-        return final, {
-            "provider": "ollama",
-            "model": analysis_model,
-            "mode": "deep_financial_analysis",
-            "tools_used": ["financial_analysis_bundle"],
-            "rounds": 1,
-            "structured_report": structured,
-            "metrics": response.get("_metrics") or {},
-            "trace": trace_copy,
-        }
+        deep_started = time.monotonic()
+        try:
+            response = self.ollama_chat(
+                job, 0, messages, [], fast=False, model=analysis_model,
+                num_ctx=int(self.cfg.get("deep_num_ctx", 640)),
+                num_predict=int(self.cfg.get("deep_num_predict", 96)),
+                temperature=float(self.cfg.get("deep_temperature", 0.1)),
+                timeout_seconds=int(self.cfg.get("deep_timeout_seconds", 210)),
+            )
+            msg = response.get("message") or {}
+            deep_text = str(msg.get("content") or "").strip()
+            if not deep_text:
+                raise RuntimeError("deep_analysis_empty_response")
+            final = report_text + "\n\nتحلیل تکمیلی هوش مصنوعی\n" + deep_text
+            with self.progress_lock:
+                trace_copy = list(self.current_trace[-50:])
+            return final, {
+                "provider": "ollama",
+                "model": analysis_model,
+                "mode": "deep_financial_analysis",
+                "tools_used": ["financial_analysis_bundle"],
+                "rounds": 1,
+                "structured_report": structured,
+                "deep_fact_chars": len(deep_json),
+                "metrics": response.get("_metrics") or {},
+                "trace": trace_copy,
+            }
+        except Exception as e:
+            elapsed = round(time.monotonic() - deep_started, 2)
+            reason = type(e).__name__ + ": " + str(e)
+            self.trace(job, "deep_fallback", "Deep model unavailable; returning deterministic report", {
+                "model": analysis_model,
+                "elapsed_seconds": elapsed,
+                "reason": reason[:300],
+            })
+            warning = (
+                "\n\nتحلیل عمیق محلی در این اجرا تکمیل نشد\n"
+                "مدل محلی در محدوده زمانی تعیین‌شده پاسخ کامل نداد یا موقتاً در دسترس نبود. "
+                "گزارش قطعی بالا از داده‌های ERP استخراج شده و همچنان قابل استفاده است. "
+                "برای تحلیل عمیق می‌توان درخواست را دوباره اجرا کرد."
+            )
+            with self.progress_lock:
+                trace_copy = list(self.current_trace[-50:])
+            return report_text + warning, {
+                "provider": "deterministic_fallback",
+                "model": analysis_model,
+                "mode": "deep_financial_analysis_fallback",
+                "tools_used": ["financial_analysis_bundle"],
+                "rounds": 1,
+                "structured_report": structured,
+                "deep_fact_chars": len(deep_json),
+                "fallback_reason": reason[:500],
+                "metrics": {"elapsed_seconds": elapsed},
+                "trace": trace_copy,
+            }
 
     def process_agent(self, job: dict[str, Any], tools_desc: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
         prompt = str(job.get("prompt", ""))
