@@ -4,6 +4,12 @@
   "provider": "ollama",
   "ollama_url": "http://127.0.0.1:11434",
   "chat_model": "qwen3:1.7b",
+  "fast_model": "qwen3.5:0.8b",
+  "agent_model": "qwen3.5:0.8b",
+  "analysis_model": "gemma3:4b",
+  "deep_num_ctx": 1024,
+  "deep_num_predict": 160,
+  "deep_temperature": 0.1,
   "capabilities": [
     "llm"
   ],

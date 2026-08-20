@@ -63,11 +63,35 @@ final class AiModule
 
     private static function metricsHtml(array $job): string
     {
-        $meta=json_decode((string)($job['result_json']??''),true);if(!is_array($meta))return'';$m=(array)($meta['metrics']??[]);if(!$m)return'';$parts=[];
+        $meta=json_decode((string)($job['result_json']??''),true);
+        if(!is_array($meta))return'';
+
+        $m=(array)($meta['metrics']??[]);
+        $parts=[];
+
+        $mode=(string)($meta['mode']??'');
+        $modeLabels=[
+            'deterministic_financial_report'=>'گزارش سریع قطعی',
+            'deep_financial_analysis'=>'تحلیل عمیق محلی',
+            'tool_agent'=>'ایجنت ابزارمحور',
+            'fast_read_analysis'=>'تحلیل سریع',
+        ];
+        if($mode!=='')$parts[]='مسیر: '.($modeLabels[$mode]??$mode);
+
+        $model=(string)($meta['model']??'');
+        if($model!=='')$parts[]='مدل: '.($model==='none'?'بدون LLM':$model);
+
         if(isset($m['first_chunk_seconds'])&&is_numeric($m['first_chunk_seconds']))$parts[]='اولین خروجی: '.number_format((float)$m['first_chunk_seconds'],1).'s';
-        if(isset($m['elapsed_seconds'])&&is_numeric($m['elapsed_seconds']))$parts[]='زمان مدل: '.number_format((float)$m['elapsed_seconds'],1).'s';
-        $pc=(float)($m['prompt_eval_count']??0);$pd=(float)($m['prompt_eval_duration']??0);if($pc>0&&$pd>0)$parts[]='Prompt: '.number_format($pc/($pd/1000000000),1).' tok/s';
-        $ec=(float)($m['eval_count']??0);$ed=(float)($m['eval_duration']??0);if($ec>0&&$ed>0)$parts[]='Generation: '.number_format($ec/($ed/1000000000),1).' tok/s';
+        if(isset($m['elapsed_seconds'])&&is_numeric($m['elapsed_seconds']))$parts[]='زمان پردازش: '.number_format((float)$m['elapsed_seconds'],1).'s';
+
+        $pc=(float)($m['prompt_eval_count']??0);
+        $pd=(float)($m['prompt_eval_duration']??0);
+        if($pc>0&&$pd>0)$parts[]='Prompt: '.number_format($pc/($pd/1000000000),1).' tok/s';
+
+        $ec=(float)($m['eval_count']??0);
+        $ed=(float)($m['eval_duration']??0);
+        if($ec>0&&$ed>0)$parts[]='Generation: '.number_format($ec/($ed/1000000000),1).' tok/s';
+
         return $parts?'<div class="muted" style="margin-top:10px">'.h(implode(' • ',$parts)).'</div>':'';
     }
 
