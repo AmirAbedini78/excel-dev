@@ -975,6 +975,10 @@ class Worker:
                 time.sleep(min(60, idle * 2))
 
 
+# ERPSMART v8.2C.4.1 safe deep-analysis runtime patch
+from deep_safe import install_worker_patch as _install_worker_patch
+_install_worker_patch(Worker)
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config.json")
