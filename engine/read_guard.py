@@ -9,7 +9,7 @@ from __future__ import annotations
 import json,re,time
 from typing import Any
 
-PATCH_VERSION="v8.5.0"
+PATCH_VERSION="v8.6.0.1"
 DIGITS=str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩","01234567890123456789")
 WRITE=("بساز","ایجاد کن","ثبت کن","حذف کن","ویرایش کن","تغییر بده","نهایی کن","تایید کن","تأیید کن","create","delete","update","approve")
 MONTHS={"فروردین":1,"اردیبهشت":2,"خرداد":3,"تیر":4,"مرداد":5,"شهریور":6,"مهر":7,"آبان":8,"آذر":9,"دی":10,"بهمن":11,"اسفند":12}
@@ -52,6 +52,63 @@ def status_of(p:str)->str:
     if "approved" in n or "تایید شده" in n or "تأیید شده" in n:return "approved"
     return "all"
 
+def semantic_scope_of(p:str)->str:
+    n=norm(p)
+    if any(x in n for x in ("قطعی","confirmed","تاییدشده و نهایی","تأییدشده و نهایی","تایید شده و نهایی","تأیید شده و نهایی")):
+        return "confirmed"
+    if "draft" in n or "پیش نویس" in n or "پیش‌نویس" in n:
+        return "draft"
+    if "final" in n or "نهایی" in n:
+        return "final"
+    if "approved" in n or "تایید شده" in n or "تأیید شده" in n or "تاییدشده" in n or "تأییدشده" in n:
+        return "approved"
+    return "all"
+
+def scope_label(scope:str)->str:
+    return {
+        "all":"همه وضعیت‌ها (draft + approved + final)",
+        "confirmed":"قطعی (approved + final)",
+        "draft":"فقط پیش‌نویس (draft)",
+        "approved":"فقط تاییدشده (approved)",
+        "final":"فقط نهایی (final)",
+    }.get(str(scope),"همه وضعیت‌ها")
+
+def entity_queries(p:str)->dict[str,str]:
+    text=str(p or "")
+    out={"party_query":"","item_query":""}
+    party_patterns=(
+        r"(?:مشتری|طرف\s*حساب|خریدار)\s*[«\"']([^»\"'\r\n]{2,160})[»\"']",
+        r"(?:برای|به)\s+مشتری\s*[«\"']([^»\"'\r\n]{2,160})[»\"']",
+    )
+    item_patterns=(
+        r"(?:کالا|محصول|آیتم|کالای|محصولِ)\s*[«\"']([^»\"'\r\n]{2,160})[»\"']",
+        r"(?:فروش|خرید)\s+(?:کالا|محصول)\s*[«\"']([^»\"'\r\n]{2,160})[»\"']",
+    )
+    for pat in party_patterns:
+        m=re.search(pat,text,flags=re.I)
+        if m: out["party_query"]=m.group(1).strip(); break
+    for pat in item_patterns:
+        m=re.search(pat,text,flags=re.I)
+        if m: out["item_query"]=m.group(1).strip(); break
+
+    qs=re.findall(r"[«\"']([^»\"'\r\n]{2,160})[»\"']",text)
+    n=norm(text)
+    if len(qs)==2:
+        if out["party_query"] and not out["item_query"] and any(x in n for x in ("کالا","محصول","آیتم")):
+            other=[q for q in qs if norm(q)!=norm(out["party_query"])]
+            if len(other)==1: out["item_query"]=other[0].strip()
+        elif out["item_query"] and not out["party_query"] and any(x in n for x in ("مشتری","طرف حساب","خریدار")):
+            other=[q for q in qs if norm(q)!=norm(out["item_query"])]
+            if len(other)==1: out["party_query"]=other[0].strip()
+    return out
+
+def needs_entity_parse(p:str,entities:dict[str,str])->bool:
+    n=norm(p);group=group_of(p)
+    party_hint=("مشتری" in n or "طرف حساب" in n or "خریدار" in n) and group!="party"
+    item_hint=("کالا" in n or "محصول" in n or "آیتم" in n) and group!="item"
+    latin_tokens=[x for x in re.findall(r"\b[A-Za-z][A-Za-z0-9_.\-/]{2,}\b",str(p or "")) if x.lower() not in {"draft","final","approved","confirmed"}]
+    return (party_hint and not entities.get("party_query")) or (item_hint and not entities.get("item_query")) or (bool(latin_tokens) and not entities.get("item_query") and group!="item")
+
 def period_of(p:str)->dict[str,Any]:
     s=str(p or "").translate(DIGITS);n=norm(s)
     # explicit Jalali/Gregorian date range
@@ -75,18 +132,25 @@ def period_of(p:str)->dict[str,Any]:
 
 def group_of(p:str)->str:
     n=norm(p)
-    if any(x in n for x in ("تفکیک مشتری","به تفکیک مشتری","بر اساس مشتری","به ازای مشتری","مشتری برتر","بیشترین مشتری","برترین مشتری")):return "party"
-    if any(x in n for x in ("تفکیک کالا","به تفکیک کالا","بر اساس کالا","به ازای کالا","کالای برتر","بیشترین کالا","برترین کالا","محصول")) and "پیدا" not in n:return "item"
+    if any(x in n for x in ("تفکیک مشتری","به تفکیک مشتری","بر اساس مشتری","به ازای مشتری","مشتری برتر","بیشترین مشتری","برترین مشتری","پرفروش ترین مشتری","پرفروش‌ترین مشتری")):return "party"
+    if any(x in n for x in ("تفکیک کالا","به تفکیک کالا","بر اساس کالا","به ازای کالا","کالای برتر","بیشترین کالا","برترین کالا","پرفروش ترین کالا","پرفروش‌ترین کالا","محصول")) and "پیدا" not in n:return "item"
     if any(x in n for x in ("تفکیک وضعیت","بر اساس وضعیت","draft و final","final و draft","پیش نویس و نهایی","پیش‌نویس و نهایی")):return "status"
     if any(x in n for x in ("ماه به ماه","ماه‌به‌ماه","تفکیک ماه","بر اساس ماه")):return "jalali_month"
     return "none"
 
 def analytics_plan(p:str,kind:str)->dict[str,Any]:
     n=norm(p)
-    top=any(x in n for x in ("بیشترین مشتری","برترین مشتری","مشتری برتر","بیشترین کالا","برترین کالا","کالای برتر"))
+    top=any(x in n for x in ("بیشترین مشتری","برترین مشتری","مشتری برتر","پرفروش ترین مشتری","پرفروش‌ترین مشتری",
+                              "بیشترین کالا","برترین کالا","کالای برتر","پرفروش ترین کالا","پرفروش‌ترین کالا"))
     group=group_of(p)
-    status="all" if group=="status" else status_of(p)
-    x={"intent":"document_analytics","kind":kind,"group_by":group,"workflow_status":status,"limit":1 if top else limit_of(p,10)}
+    scope="all" if group=="status" else semantic_scope_of(p)
+    entities=entity_queries(p)
+    explicit_limit=limit_of(p,0)
+    ranking_limit=explicit_limit if explicit_limit>0 else (1 if top else 10)
+    x={"intent":"document_analytics","kind":kind,"group_by":group,"status_scope":scope,
+       "limit":ranking_limit,
+       "party_query":entities.get("party_query",""),"item_query":entities.get("item_query",""),
+       "needs_entity_parse":needs_entity_parse(p,entities)}
     x.update(period_of(p))
     return x
 
@@ -112,16 +176,20 @@ def route(p:str):
     if "مقایسه" in n and (sales or buys) and (("این ماه" in n and ("ماه قبل" in n or "ماه گذشته" in n))):
         return {"intent":"compare_periods","kind":"sales" if sales else "purchases",
                 "left_period":"current_jalali_month","right_period":"previous_jalali_month",
-                "workflow_status":status_of(p)}
+                "status_scope":semantic_scope_of(p),
+                **entity_queries(p)}
 
     # Analytics cases: period, grouping, top customer/item, month trend, status split.
+    entities=entity_queries(p)
     analytical_hint=(
-        period_of(p).get("period")!="all" or group_of(p)!="none" or
-        any(x in n for x in ("بیشترین مشتری","برترین مشتری","مشتری برتر","بیشترین کالا","برترین کالا","کالای برتر"))
+        period_of(p).get("period")!="all" or group_of(p)!="none" or bool(entities.get("party_query")) or bool(entities.get("item_query")) or
+        any(x in n for x in ("بیشترین مشتری","برترین مشتری","مشتری برتر","پرفروش ترین مشتری","پرفروش‌ترین مشتری",
+                             "بیشترین کالا","برترین کالا","کالای برتر","پرفروش ترین کالا","پرفروش‌ترین کالا","قطعی"))
     )
     if sales and analytical_hint:return analytics_plan(p,"sales")
     if buys and analytical_hint:return analytics_plan(p,"purchases")
-    if not sales and not buys and any(x in n for x in ("بیشترین مشتری","برترین مشتری","مشتری برتر")):
+    if not sales and not buys and any(x in n for x in ("بیشترین مشتری","برترین مشتری","مشتری برتر","پرفروش ترین مشتری","پرفروش‌ترین مشتری",
+                                                          "بیشترین کالا","برترین کالا","کالای برتر","پرفروش ترین کالا","پرفروش‌ترین کالا")):
         return analytics_plan(p,"sales")
 
     recent=any(x in n for x in ("آخرین","اخیر","جدیدترین"))
@@ -140,18 +208,61 @@ def route(p:str):
 def split_multi(prompt:str)->list[str]:
     text=str(prompt or "").strip()
     if not text:return []
-    # Numbered lines such as "1) ..." / "2- ...".
     matches=list(re.finditer(r"(?m)^\s*\d{1,2}\s*[\)\.\-]\s*",text))
     if len(matches)>=2:
         out=[]
         for i,m in enumerate(matches):
-            start=m.end();end=matches[i+1].start() if i+1<len(matches) else len(text)
-            part=text[start:end].strip()
+            a=m.end();b=matches[i+1].start() if i+1<len(matches) else len(text)
+            part=text[a:b].strip()
             if part:out.append(part)
         return out
-    # Bullet lines only when at least two non-empty bullet entries exist.
-    parts=[re.sub(r"^\s*[-•]\s*","",x).strip() for x in text.splitlines() if re.match(r"^\s*[-•]\s*\S",x)]
-    return parts if len(parts)>=2 else [text]
+
+    bullets=[re.sub(r"^\s*[-•]\s*","",x).strip() for x in text.splitlines() if re.match(r"^\s*[-•]\s*\S",x)]
+    if len(bullets)>=2:return bullets
+
+    semis=[x.strip() for x in re.split(r"[؛;]+",text) if x.strip()]
+    if len(semis)>=2:return semis
+
+    lines=[x.strip() for x in text.splitlines() if x.strip()]
+    if len(lines)>=2 and all(len(x)<300 for x in lines):
+        return lines
+    return [text]
+
+def contextualize_parts(parts:list[str])->list[str]:
+    out=[];kind="";period_phrase="";scope_phrase=""
+    for raw in parts:
+        part=raw.strip();n=norm(part);previous_period=period_phrase
+        if "فروش" in n:kind="فروش"
+        elif "خرید" in n:kind="خرید"
+
+        explicit_scope=semantic_scope_of(part)
+        if explicit_scope=="confirmed":scope_phrase="قطعی"
+        elif explicit_scope=="draft":scope_phrase="draft"
+        elif explicit_scope=="approved":scope_phrase="approved"
+        elif explicit_scope=="final":scope_phrase="final"
+
+        if "این ماه" in n:
+            period_phrase="این ماه"
+        elif ("ماه قبل" in n or "ماه گذشته" in n) and "مقایسه" not in n:
+            period_phrase="ماه قبل"
+
+        if kind and "فروش" not in n and "خرید" not in n:
+            part=kind+" "+part
+            n=norm(part)
+
+        if "مقایسه" in n and ("ماه قبل" in n or "ماه گذشته" in n) and "این ماه" not in n and previous_period=="این ماه":
+            part=part.replace("ماه قبل","این ماه را با ماه قبل",1).replace("ماه گذشته","این ماه را با ماه قبل",1)
+            n=norm(part)
+            period_phrase="این ماه"
+        elif period_phrase and not any(x in n for x in ("این ماه","ماه قبل","ماه گذشته","این سال","سال قبل","سال گذشته","ماه اخیر")):
+            if any(x in n for x in ("مشتری برتر","برترین مشتری","پرفروش","تفکیک","کالا","مشتری")):
+                part=part+" "+period_phrase
+                n=norm(part)
+
+        if scope_phrase and semantic_scope_of(part)=="all" and group_of(part)!="status":
+            part=part+" "+scope_phrase
+        out.append(part)
+    return out
 
 def rows(x):
     if isinstance(x,list):return [r for r in x if isinstance(r,dict)]
@@ -201,6 +312,22 @@ def llm_plan(worker,job,prompt):
     except:lim=5
     return {"intent":intent,"query":q,"limit":lim},dict(r.get("_metrics") or {}),model
 
+def llm_entity_hints(worker,job,prompt:str)->dict[str,str]:
+    model=worker.model_for("agent")
+    system=("Extract only entity search phrases from this ERP analytics request. Return ONLY JSON with keys party_query and item_query. "
+            "Each non-empty value MUST be copied verbatim from the user prompt. Never output database IDs, prices, dates, totals or explanations. "
+            "Use empty string when no specific party/item is requested. Schema: {\"party_query\":\"\",\"item_query\":\"\"}.")
+    worker.trace(job,"entity_parse",f"Parsing entity hints with {model}",{"model":model,"started_epoch":time.time()})
+    r=worker.ollama_chat(job,0,[{"role":"system","content":system},{"role":"user","content":prompt}],[],fast=True,model=model,num_ctx=1024,num_predict=80,temperature=0.0,timeout_seconds=90)
+    x=parse_json((r.get("message") or {}).get("content"))
+    out={}
+    for key in ("party_query","item_query"):
+        q=str(x.get(key) or "").strip()
+        if q and norm(q) not in norm(prompt):raise ValueError("entity_query_not_grounded:"+key)
+        out[key]=q
+    return out
+
+
 def snapshot_text(d,mode):
     d=d if isinstance(d,dict) else {};c=d.get("company") or {};cnt=d.get("counts") or {};t=d.get("totals") or {};name=c.get("name") or "شرکت انتخاب‌شده"
     if mode=="sales_total":return f"فروش ثبت‌شده {name}: {money(t.get('sales'))}"
@@ -225,20 +352,29 @@ def trial_text(rs):
     return "\n".join(out)
 
 def analytics_args(plan:dict[str,Any])->dict[str,Any]:
-    allowed={"kind","period","months","date_from","date_to","jalali_year","jalali_month","workflow_status","group_by","limit"}
+    allowed={"kind","period","months","date_from","date_to","jalali_year","jalali_month",
+             "workflow_status","status_scope","group_by","limit","party_id","item_id"}
     return {k:v for k,v in plan.items() if k in allowed and v not in (None,"")}
 
 def analytics_text(d:Any)->str:
     x=d if isinstance(d,dict) else {};kind=str(x.get("kind") or "sales")
     title="فروش" if kind=="sales" else "خرید";period=x.get("period") if isinstance(x.get("period"),dict) else {}
     summary=x.get("summary") if isinstance(x.get("summary"),dict) else {};groups=x.get("groups") if isinstance(x.get("groups"),list) else []
+    filters=x.get("filters") if isinstance(x.get("filters"),dict) else {}
     label=str(period.get("label") or "همه دوره‌ها")
+    scope=str(filters.get("status_scope") or "all")
     out=[f"گزارش {title} — {label}",
+         f"• دامنه اسناد: {scope_label(scope)}"]
+    if filters.get("party_name"):out.append(f"• طرف‌حساب: {filters.get('party_name')}")
+    if filters.get("item_name"):out.append(f"• کالا/خدمت: {filters.get('item_name')}")
+    out.extend([
          f"• تعداد اسناد: {int(summary.get('document_count') or 0)}",
          f"• مبلغ قبل از تخفیف: {money(summary.get('total_before_discount'))}",
          f"• تخفیف: {money(summary.get('discount_total'))}",
          f"• مالیات: {money(summary.get('tax_total'))}",
-         f"• مبلغ خالص: {money(summary.get('net_total'))}"]
+         f"• مبلغ خالص: {money(summary.get('net_total'))}"])
+    if "quantity_total" in summary:
+        out.append(f"• تعداد/مقدار کل ردیف‌های منطبق: {float(summary.get('quantity_total') or 0):g}")
     if groups:
         out.append("تفکیک:")
         for g in groups:
@@ -249,9 +385,11 @@ def analytics_text(d:Any)->str:
                 out.append(f"• {name}: {money(g.get('net_total'))} | {int(g.get('document_count') or 0)} سند")
     return "\n".join(out)
 
+
 def compare_text(left:Any,right:Any,kind:str)->str:
     l=left if isinstance(left,dict) else {};r=right if isinstance(right,dict) else {}
     ls=l.get("summary") if isinstance(l.get("summary"),dict) else {};rs=r.get("summary") if isinstance(r.get("summary"),dict) else {}
+    lf=l.get("filters") if isinstance(l.get("filters"),dict) else {}
     lv=float(ls.get("net_total") or 0);rv=float(rs.get("net_total") or 0);diff=lv-rv
     lp=(l.get("period") or {}).get("label") if isinstance(l.get("period"),dict) else "دوره اول"
     rp=(r.get("period") or {}).get("label") if isinstance(r.get("period"),dict) else "دوره دوم"
@@ -261,8 +399,40 @@ def compare_text(left:Any,right:Any,kind:str)->str:
         change=f"{abs(pct):.1f}٪ {'افزایش' if diff>0 else 'کاهش' if diff<0 else 'بدون تغییر'} نسبت به دوره قبل"
     else:
         change="در دوره مبنا مبلغ صفر است؛ درصد تغییر قابل محاسبه نیست."
-    return (f"مقایسه {metric}\n• {lp}: {money(lv)}\n• {rp}: {money(rv)}\n"
-            f"• اختلاف: {money(abs(diff))} {'بیشتر' if diff>0 else 'کمتر' if diff<0 else ''}\n• نتیجه: {change}")
+    out=[f"مقایسه {metric}",f"• دامنه اسناد: {scope_label(str(lf.get('status_scope') or 'all'))}"]
+    if lf.get("party_name"):out.append(f"• طرف‌حساب: {lf.get('party_name')}")
+    if lf.get("item_name"):out.append(f"• کالا/خدمت: {lf.get('item_name')}")
+    out.extend([f"• {lp}: {money(lv)}",f"• {rp}: {money(rv)}",
+                f"• اختلاف: {money(abs(diff))} {'بیشتر' if diff>0 else 'کمتر' if diff<0 else ''}",
+                f"• نتیجه: {change}"])
+    return "\n".join(out)
+
+def resolve_plan_entities(worker,job,prompt:str,plan:dict[str,Any])->tuple[dict[str,Any],list[str],str]:
+    work=dict(plan);used=[];notes=[]
+    if work.get("needs_entity_parse"):
+        hints=llm_entity_hints(worker,job,prompt)
+        for key in ("party_query","item_query"):
+            if hints.get(key) and not work.get(key):work[key]=hints[key]
+
+    pq=str(work.get("party_query") or "").strip()
+    if pq:
+        data=worker.tool(job,"search_parties",{"query":pq},f"job{job['id']}-scope-party")
+        used.append("search_parties");party,reason=unique_entity(rows(data),pq)
+        if party is None:
+            return work,used,(f"طرف‌حساب «{pq}» به‌صورت یکتا پیدا نشد؛ گزارش محدود به طرف‌حساب اجرا نشد." if reason=="ambiguous"
+                              else f"طرف‌حساب «{pq}» پیدا نشد؛ گزارش محدود به طرف‌حساب اجرا نشد.")
+        work["party_id"]=int(party["id"]);notes.append(str(party.get("name") or pq))
+
+    iq=str(work.get("item_query") or "").strip()
+    if iq:
+        data=worker.tool(job,"search_items",{"query":iq},f"job{job['id']}-scope-item")
+        used.append("search_items");item,reason=unique_entity(rows(data),iq)
+        if item is None:
+            return work,used,(f"کالا/خدمت «{iq}» به‌صورت یکتا پیدا نشد؛ گزارش محدود به کالا اجرا نشد." if reason=="ambiguous"
+                              else f"کالا/خدمت «{iq}» پیدا نشد؛ گزارش محدود به کالا اجرا نشد.")
+        work["item_id"]=int(item["id"]);notes.append(str(item.get("name") or iq))
+    return work,used,""
+
 
 def meta(worker,mode,used,source="deterministic",model="none",metrics=None,extra=None):
     with worker.progress_lock:trace=list(worker.current_trace[-50:])
@@ -304,12 +474,22 @@ def execute_one(worker,job,plan,source="deterministic",model="none",metrics=None
                 for r in rr[-8:]:out.append(f"• {r.get('voucher_date') or '-'} | {r.get('voucher_no') or '-'} | بدهکار {money(r.get('debit'))} | بستانکار {money(r.get('credit'))} | مانده جاری {money(r.get('running_balance'))}")
                 text="\n".join(out)
     elif intent=="document_analytics":
-        args=analytics_args(plan);d=worker.tool(job,"document_analytics",args,f"job{job['id']}-analytics-"+hashlib_stub(args));used.append("document_analytics");text=analytics_text(d)
+        work,entity_used,blocked=resolve_plan_entities(worker,job,str(job.get("prompt") or ""),plan);used+=entity_used
+        if blocked:
+            text=blocked
+        else:
+            args=analytics_args(work);d=worker.tool(job,"document_analytics",args,f"job{job['id']}-analytics-"+hashlib_stub(args));used.append("document_analytics");text=analytics_text(d)
     elif intent=="compare_periods":
-        base={"kind":plan["kind"],"workflow_status":plan.get("workflow_status","all"),"group_by":"none","limit":5}
-        left=worker.tool(job,"document_analytics",{**base,"period":plan["left_period"]},f"job{job['id']}-compare-left")
-        right=worker.tool(job,"document_analytics",{**base,"period":plan["right_period"]},f"job{job['id']}-compare-right")
-        used+=["document_analytics","document_analytics"];text=compare_text(left,right,plan["kind"])
+        work,entity_used,blocked=resolve_plan_entities(worker,job,str(job.get("prompt") or ""),plan);used+=entity_used
+        if blocked:
+            text=blocked
+        else:
+            base={"kind":work["kind"],"status_scope":work.get("status_scope","all"),"group_by":"none","limit":5}
+            if work.get("party_id"):base["party_id"]=work["party_id"]
+            if work.get("item_id"):base["item_id"]=work["item_id"]
+            left=worker.tool(job,"document_analytics",{**base,"period":work["left_period"]},f"job{job['id']}-compare-left")
+            right=worker.tool(job,"document_analytics",{**base,"period":work["right_period"]},f"job{job['id']}-compare-right")
+            used+=["document_analytics","document_analytics"];text=compare_text(left,right,work["kind"])
     else:raise RuntimeError("unsupported_grounded_read_intent:"+intent)
     worker.trace(job,"grounded_read_complete","Grounded ERP read completed",{"tools_used":used})
     return text,meta(worker,"grounded_read",used,source,model,metrics,{"intent":intent})
@@ -320,6 +500,7 @@ def hashlib_stub(args:dict[str,Any])->str:
     return str(abs(sum((i+1)*ord(ch) for i,ch in enumerate(s)))%100000000)
 
 def process_multi(worker,job,parts:list[str]):
+    parts=contextualize_parts(parts)
     texts=[];all_used=[];intents=[]
     for idx,part in enumerate(parts,1):
         plan=route(part)
@@ -333,11 +514,11 @@ def process_multi(worker,job,parts:list[str]):
     return "\n\n".join(texts),meta(worker,"grounded_multi_read",all_used,extra={"intents":intents,"subtasks":len(parts)})
 
 def install_read_guard(cls:type)->None:
-    if getattr(cls,"_read_guard_v2_installed",False):return
+    if getattr(cls,"_read_guard_v3_installed",False):return
     # v8.4 wrapper is currently the public method. Restore its original delegate
     # so v8.5 replaces it cleanly rather than wrapping v8.4 period blocking.
     previous=cls.process_agent
-    base=getattr(cls,"_read_guard_original_process_agent",previous)
+    base=getattr(cls,"_read_guard_v2_original_process_agent",getattr(cls,"_read_guard_original_process_agent",previous))
 
     def patched(self,job,tools_desc):
         prompt=str(job.get("prompt") or "")
@@ -358,5 +539,5 @@ def install_read_guard(cls:type)->None:
         return execute_one(self,job,plan,source,model,metrics)
 
     cls.process_agent=patched
-    cls._read_guard_v2_installed=True
-    cls._read_guard_v2_original_process_agent=base
+    cls._read_guard_v3_installed=True
+    cls._read_guard_v3_original_process_agent=base

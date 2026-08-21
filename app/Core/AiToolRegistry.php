@@ -18,13 +18,15 @@ final class AiToolRegistry
             ['name'=>'party_ledger','mode'=>'read','risk'=>'low','description'=>'گردش و مانده یک طرف حساب بر اساس آرتیکل‌های حسابداری','parameters'=>['type'=>'object','properties'=>['party_id'=>['type'=>'integer']],'required'=>['party_id']]],
             ['name'=>'recent_sales','mode'=>'read','risk'=>'low','description'=>'آخرین صورتحساب‌های فروش','parameters'=>['type'=>'object','properties'=>['limit'=>['type'=>'integer']]]],
             ['name'=>'recent_purchases','mode'=>'read','risk'=>'low','description'=>'آخرین اسناد خرید','parameters'=>['type'=>'object','properties'=>['limit'=>['type'=>'integer']]]],
-            ['name'=>'document_analytics','mode'=>'read','risk'=>'low','description'=>'گزارش پارامتریک امن فروش/خرید با بازه جلالی، وضعیت و تفکیک محدود','parameters'=>['type'=>'object','properties'=>[
+            ['name'=>'document_analytics','mode'=>'read','risk'=>'low','description'=>'گزارش پارامتریک امن فروش/خرید با بازه، دامنه معنایی وضعیت و فیلتر Entity','parameters'=>['type'=>'object','properties'=>[
                 'kind'=>['type'=>'string','enum'=>['sales','purchases']],
                 'period'=>['type'=>'string','enum'=>['all','current_jalali_month','previous_jalali_month','current_jalali_year','previous_jalali_year','rolling_jalali_months','custom','custom_jalali_month']],
                 'months'=>['type'=>'integer'],
                 'date_from'=>['type'=>'string'],'date_to'=>['type'=>'string'],
                 'jalali_year'=>['type'=>'integer'],'jalali_month'=>['type'=>'integer'],
                 'workflow_status'=>['type'=>'string','enum'=>['all','draft','approved','final']],
+                'status_scope'=>['type'=>'string','enum'=>['all','confirmed','draft','approved','final']],
+                'party_id'=>['type'=>'integer'],'item_id'=>['type'=>'integer'],
                 'group_by'=>['type'=>'string','enum'=>['none','party','item','jalali_month','status']],
                 'limit'=>['type'=>'integer']
             ],'required'=>['kind']]],
@@ -203,11 +205,22 @@ final class AiToolRegistry
         if(!in_array($kind,['sales','purchases'],true))throw new RuntimeException('analytics_kind_invalid');
 
         $period=self::resolveAnalyticsPeriod($args);
-        $status=(string)($args['workflow_status']??'all');
-        if(!in_array($status,['all','draft','approved','final'],true))throw new RuntimeException('analytics_status_invalid');
+        $scope=self::analyticsStatusScope($args);
         $group=(string)($args['group_by']??'none');
         if(!in_array($group,['none','party','item','jalali_month','status'],true))throw new RuntimeException('analytics_group_invalid');
         $limit=max(1,min(50,(int)($args['limit']??10)));
+
+        $partyId=(int)($args['party_id']??0);
+        $itemId=(int)($args['item_id']??0);
+        $partyName=null;$itemName=null;
+        if($partyId>0){
+            self::assertOwned($wid,$cid,'acc_parties',$partyId);
+            $partyName=self::ownedEntityName($wid,$cid,'acc_parties',$partyId);
+        }
+        if($itemId>0){
+            self::assertOwned($wid,$cid,'acc_items',$itemId);
+            $itemName=self::ownedEntityName($wid,$cid,'acc_items',$itemId);
+        }
 
         $isSales=$kind==='sales';
         $docTable=$isSales?'acc_sales_docs':'acc_purchase_docs';
@@ -217,15 +230,37 @@ final class AiToolRegistry
         $where=['d.workspace_id=?','d.company_id=?'];$params=[$wid,$cid];
         if(!empty($period['start_date'])){$where[]='d.document_date>=?';$params[]=$period['start_date'];}
         if(!empty($period['end_date'])){$where[]='d.document_date<=?';$params[]=$period['end_date'];}
-        if($status!=='all'){$where[]='d.workflow_status=?';$params[]=$status;}
+        if($scope==='confirmed'){
+            $where[]="d.workflow_status IN ('approved','final')";
+        }elseif($scope!=='all'){
+            $where[]='d.workflow_status=?';$params[]=$scope;
+        }
+        if($partyId>0){$where[]='d.party_id=?';$params[]=$partyId;}
+
+        $from="`$docTable` d";
+        if($itemId>0){
+            $from.=" JOIN `$lineTable` l ON l.`$lineFk`=d.id AND l.workspace_id=d.workspace_id";
+            $where[]='l.item_id=?';$params[]=$itemId;
+        }
         $whereSql=implode(' AND ',$where);
 
-        $st=pdo()->prepare("SELECT COUNT(*) document_count,
-            COALESCE(SUM(d.total_before_discount),0) total_before_discount,
-            COALESCE(SUM(d.discount_total),0) discount_total,
-            COALESCE(SUM(d.tax_total),0) tax_total,
-            COALESCE(SUM(d.net_total),0) net_total
-            FROM `$docTable` d WHERE $whereSql");
+        if($itemId>0){
+            $taxExpr=$isSales?'COALESCE(SUM(l.tax_amount),0)':'0';
+            $st=pdo()->prepare("SELECT COUNT(DISTINCT d.id) document_count,
+                COALESCE(SUM(l.quantity*l.unit_price),0) total_before_discount,
+                COALESCE(SUM(l.discount_amount),0) discount_total,
+                $taxExpr tax_total,
+                COALESCE(SUM(l.line_total),0) net_total,
+                COALESCE(SUM(l.quantity),0) quantity_total
+                FROM $from WHERE $whereSql");
+        }else{
+            $st=pdo()->prepare("SELECT COUNT(*) document_count,
+                COALESCE(SUM(d.total_before_discount),0) total_before_discount,
+                COALESCE(SUM(d.discount_total),0) discount_total,
+                COALESCE(SUM(d.tax_total),0) tax_total,
+                COALESCE(SUM(d.net_total),0) net_total
+                FROM $from WHERE $whereSql");
+        }
         $st->execute($params);$summary=$st->fetch()?:[];
         $summary=[
             'document_count'=>(int)($summary['document_count']??0),
@@ -233,11 +268,12 @@ final class AiToolRegistry
             'discount_total'=>(float)($summary['discount_total']??0),
             'tax_total'=>(float)($summary['tax_total']??0),
             'net_total'=>(float)($summary['net_total']??0),
-        ];
+        ]+($itemId>0?['quantity_total'=>(float)($summary['quantity_total']??0)]:[]);
 
         $recentLimit=max(1,min(20,$limit));
-        $st=pdo()->prepare("SELECT d.id,d.document_no,d.document_date,d.net_total,d.workflow_status,p.name party_name
-            FROM `$docTable` d LEFT JOIN acc_parties p
+        $distinct=$itemId>0?'DISTINCT ':'';
+        $st=pdo()->prepare("SELECT {$distinct}d.id,d.document_no,d.document_date,d.net_total,d.workflow_status,p.name party_name
+            FROM $from LEFT JOIN acc_parties p
               ON p.id=d.party_id AND p.workspace_id=d.workspace_id AND p.company_id=d.company_id
             WHERE $whereSql ORDER BY d.document_date DESC,d.id DESC LIMIT $recentLimit");
         $st->execute($params);$recent=$st->fetchAll();
@@ -248,8 +284,9 @@ final class AiToolRegistry
 
         $groups=[];
         if($group==='party'){
-            $st=pdo()->prepare("SELECT d.party_id,p.name label,COUNT(*) document_count,COALESCE(SUM(d.net_total),0) net_total
-                FROM `$docTable` d LEFT JOIN acc_parties p
+            $amountExpr=$itemId>0?'COALESCE(SUM(l.line_total),0)':'COALESCE(SUM(d.net_total),0)';
+            $st=pdo()->prepare("SELECT d.party_id,p.name label,COUNT(DISTINCT d.id) document_count,$amountExpr net_total
+                FROM $from LEFT JOIN acc_parties p
                   ON p.id=d.party_id AND p.workspace_id=d.workspace_id AND p.company_id=d.company_id
                 WHERE $whereSql
                 GROUP BY d.party_id,p.name
@@ -257,16 +294,17 @@ final class AiToolRegistry
             $st->execute($params);$groups=$st->fetchAll();
             foreach($groups as &$r){$r['party_id']=(int)$r['party_id'];$r['document_count']=(int)$r['document_count'];$r['net_total']=(float)$r['net_total'];}unset($r);
         }elseif($group==='status'){
-            $st=pdo()->prepare("SELECT d.workflow_status `key`,d.workflow_status label,COUNT(*) document_count,COALESCE(SUM(d.net_total),0) net_total
-                FROM `$docTable` d WHERE $whereSql
+            $amountExpr=$itemId>0?'COALESCE(SUM(l.line_total),0)':'COALESCE(SUM(d.net_total),0)';
+            $st=pdo()->prepare("SELECT d.workflow_status `key`,d.workflow_status label,COUNT(DISTINCT d.id) document_count,$amountExpr net_total
+                FROM $from WHERE $whereSql
                 GROUP BY d.workflow_status ORDER BY net_total DESC");
             $st->execute($params);$groups=$st->fetchAll();
             foreach($groups as &$r){$r['document_count']=(int)$r['document_count'];$r['net_total']=(float)$r['net_total'];}unset($r);
         }elseif($group==='item'){
+            $groupFrom="`$docTable` d JOIN `$lineTable` l ON l.`$lineFk`=d.id AND l.workspace_id=d.workspace_id";
             $st=pdo()->prepare("SELECT l.item_id,i.name label,i.code,COUNT(DISTINCT d.id) document_count,
                     COALESCE(SUM(l.quantity),0) quantity,COALESCE(SUM(l.line_total),0) line_total
-                FROM `$docTable` d
-                JOIN `$lineTable` l ON l.`$lineFk`=d.id AND l.workspace_id=d.workspace_id
+                FROM $groupFrom
                 LEFT JOIN acc_items i ON i.id=l.item_id AND i.workspace_id=d.workspace_id AND i.company_id=d.company_id
                 WHERE $whereSql
                 GROUP BY l.item_id,i.name,i.code
@@ -277,14 +315,17 @@ final class AiToolRegistry
                 $r['quantity']=(float)$r['quantity'];$r['line_total']=(float)$r['line_total'];
             }unset($r);
         }elseif($group==='jalali_month'){
-            $st=pdo()->prepare("SELECT d.document_date,d.net_total FROM `$docTable` d
+            $amountExpr=$itemId>0?'l.line_total':'d.net_total';
+            $st=pdo()->prepare("SELECT d.id,d.document_date,$amountExpr metric_amount FROM $from
                 WHERE $whereSql ORDER BY d.document_date,d.id");
             $st->execute($params);$bucket=[];
             foreach($st->fetchAll() as $r){
                 $j=Jalali::fromGregorian((string)$r['document_date']);$key=substr($j,0,7);
-                if(!isset($bucket[$key]))$bucket[$key]=['key'=>$key,'label'=>$key,'document_count'=>0,'net_total'=>0.0];
-                $bucket[$key]['document_count']++;$bucket[$key]['net_total']+=(float)$r['net_total'];
+                if(!isset($bucket[$key]))$bucket[$key]=['key'=>$key,'label'=>$key,'document_count'=>0,'net_total'=>0.0,'_docs'=>[]];
+                $bucket[$key]['_docs'][(int)$r['id']]=1;
+                $bucket[$key]['net_total']+=(float)$r['metric_amount'];
             }
+            foreach($bucket as &$b){$b['document_count']=count($b['_docs']);unset($b['_docs']);}unset($b);
             ksort($bucket,SORT_STRING);$groups=array_values($bucket);
             if(count($groups)>$limit)$groups=array_slice($groups,-$limit);
         }
@@ -292,16 +333,53 @@ final class AiToolRegistry
         return [
             'kind'=>$kind,
             'period'=>$period,
-            'filters'=>['workflow_status'=>$status,'group_by'=>$group],
+            'filters'=>[
+                'status_scope'=>$scope,
+                'status_label'=>self::analyticsScopeLabel($scope),
+                'group_by'=>$group,
+                'party_id'=>$partyId?:null,'party_name'=>$partyName,
+                'item_id'=>$itemId?:null,'item_name'=>$itemName,
+            ],
             'summary'=>$summary,
             'groups'=>$groups,
             'recent'=>$recent,
             'notes'=>[
                 'amount_unit'=>'IRR',
-                'item_group_amount'=>'برای تفکیک کالا، line_total ردیف‌ها جمع می‌شود؛ مبلغ سند در summary از net_total سند است.',
-                'safety'=>'همه جداول و ستون‌ها در سرور allowlist شده‌اند و ورودی کاربر به SQL identifier تبدیل نمی‌شود.',
+                'scope_semantics'=>'all شامل draft/approved/final است؛ confirmed فقط approved+final است.',
+                'item_scope'=>'در فیلتر کالا، summary از ردیف‌های همان کالا محاسبه می‌شود نه کل مبلغ فاکتور.',
+                'safety'=>'Entityها با مالکیت workspace/company اعتبارسنجی می‌شوند و SQL identifiers از allowlist ثابت هستند.',
             ],
         ];
+    }
+
+    private static function analyticsStatusScope(array $args): string
+    {
+        $legacy=(string)($args['workflow_status']??'all');
+        if(!in_array($legacy,['all','draft','approved','final'],true))throw new RuntimeException('analytics_status_invalid');
+        $scope=trim((string)($args['status_scope']??''));
+        if($scope==='')$scope=$legacy;
+        if(!in_array($scope,['all','confirmed','draft','approved','final'],true))throw new RuntimeException('analytics_status_scope_invalid');
+        if($legacy!=='all' && $scope!==$legacy)throw new RuntimeException('analytics_status_conflict');
+        return $scope;
+    }
+
+    private static function analyticsScopeLabel(string $scope): string
+    {
+        return match($scope){
+            'confirmed'=>'قطعی (approved + final)',
+            'draft'=>'فقط draft',
+            'approved'=>'فقط approved',
+            'final'=>'فقط final',
+            default=>'همه وضعیت‌ها (draft + approved + final)',
+        };
+    }
+
+    private static function ownedEntityName(int $wid,int $cid,string $table,int $id): ?string
+    {
+        if(!in_array($table,['acc_parties','acc_items'],true))throw new RuntimeException('analytics_entity_table_invalid');
+        $st=pdo()->prepare("SELECT name FROM `$table` WHERE workspace_id=? AND company_id=? AND id=? LIMIT 1");
+        $st->execute([$wid,$cid,$id]);$name=$st->fetchColumn();
+        return $name!==false?(string)$name:null;
     }
 
     private static function resolveAnalyticsPeriod(array $args): array
