@@ -7,6 +7,9 @@
  */
 final class AiToolRegistry
 {
+    public const AI_ROUTE_CONTRACT_VERSION='erp-read-v86.1';
+    public const AI_ROUTE_PLANNER_VERSION='adaptive-read-v1';
+
     public static function descriptors(): array
     {
         return [
@@ -43,7 +46,8 @@ final class AiToolRegistry
 
     public static function bootstrapContext(int $wid,?int $cid): array
     {
-        $ctx=['workspace_id'=>$wid,'company_id'=>$cid,'today'=>date('Y-m-d'),'jalali_today'=>class_exists('Jalali')?Jalali::today():null];
+        $ctx=['workspace_id'=>$wid,'company_id'=>$cid,'today'=>date('Y-m-d'),'jalali_today'=>class_exists('Jalali')?Jalali::today():null,
+            'ai_route_contract_version'=>self::AI_ROUTE_CONTRACT_VERSION];
         if($cid)$ctx['company']=self::companySnapshot($wid,$cid);
         $ctx['safety']=[
             'mutations'=>'proposal_only',
@@ -62,6 +66,14 @@ final class AiToolRegistry
             $id=self::storeProposal($wid,$cid,(int)$job['id'],$tool,$args,self::proposalSummary($tool,$args),$idempotencyKey);
             return ['proposal_id'=>$id,'status'=>'awaiting_human_approval','tool'=>$tool];
         }
+        if(($d['mode']??'')==='internal'){
+            return match($tool){
+                'semantic_route_lookup'=>self::semanticRouteLookup($wid,$args),
+                'semantic_route_remember'=>self::semanticRouteRemember($wid,$args),
+                'semantic_route_feedback'=>self::semanticRouteFeedback($wid,$args),
+                default=>throw new RuntimeException('internal_tool_not_implemented')
+            };
+        }
         if(!$cid)throw new RuntimeException('company_context_required');
         return match($tool){
             'company_snapshot'=>self::companySnapshot($wid,$cid),
@@ -75,6 +87,160 @@ final class AiToolRegistry
             'document_analytics'=>self::documentAnalytics($wid,$cid,$args),
             default=>throw new RuntimeException('tool_not_implemented')
         };
+    }
+
+    private static function semanticRouteIdentity(array $args): array
+    {
+        $key=strtolower(trim((string)($args['route_key']??'')));
+        $planner=trim((string)($args['planner_version']??''));
+        $contract=trim((string)($args['contract_version']??''));
+        if(!preg_match('/^[a-f0-9]{64}$/',$key))throw new RuntimeException('semantic_route_key_invalid');
+        if(!preg_match('/^[A-Za-z0-9._-]{1,80}$/',$planner))throw new RuntimeException('semantic_route_planner_invalid');
+        if(!preg_match('/^[A-Za-z0-9._-]{1,80}$/',$contract))throw new RuntimeException('semantic_route_contract_invalid');
+        return [$key,$planner,$contract];
+    }
+
+    private static function validateSemanticPlan(array $plan): array
+    {
+        $allowedIntents=[
+            'company_snapshot','sales_total','purchase_total','totals',
+            'recent_sales','recent_purchases','recent_both','trial_balance',
+            'party_search','party_ledger','item_search','document_analytics','compare_periods'
+        ];
+        $allowedKeys=[
+            'intent','query','limit','kind','period','months','date_from','date_to',
+            'jalali_year','jalali_month','status_scope','group_by',
+            'party_query','item_query','left_period','right_period','needs_entity_parse'
+        ];
+        foreach(array_keys($plan) as $k){
+            if(!in_array((string)$k,$allowedKeys,true))throw new RuntimeException('semantic_plan_key_not_allowed');
+            if(str_ends_with((string)$k,'_id'))throw new RuntimeException('semantic_plan_id_forbidden');
+        }
+        $intent=trim((string)($plan['intent']??''));
+        if(!in_array($intent,$allowedIntents,true))throw new RuntimeException('semantic_plan_intent_invalid');
+        $out=['intent'=>$intent];
+
+        if(in_array($intent,['party_search','party_ledger','item_search'],true)){
+            $q=trim((string)($plan['query']??''));
+            if($q===''||mb_strlen($q)>190)throw new RuntimeException('semantic_plan_query_invalid');
+            $out['query']=$q;$out['limit']=max(1,min(20,(int)($plan['limit']??5)));
+            return $out;
+        }
+        if(in_array($intent,['recent_sales','recent_purchases','recent_both'],true)){
+            $out['query']='';$out['limit']=max(1,min(20,(int)($plan['limit']??5)));return$out;
+        }
+        if(in_array($intent,['company_snapshot','sales_total','purchase_total','totals','trial_balance'],true)){
+            return $out+['query'=>'','limit'=>5];
+        }
+
+        $kind=trim((string)($plan['kind']??''));
+        if(!in_array($kind,['sales','purchases'],true))throw new RuntimeException('semantic_plan_kind_invalid');
+        $out['kind']=$kind;
+        $scope=trim((string)($plan['status_scope']??'all'));
+        if(!in_array($scope,['all','confirmed','draft','approved','final'],true))throw new RuntimeException('semantic_plan_scope_invalid');
+        $out['status_scope']=$scope;
+        $period=trim((string)($plan['period']??'all'));
+        $periods=['all','current_jalali_month','previous_jalali_month','current_jalali_year','previous_jalali_year','rolling_jalali_months','custom','custom_jalali_month'];
+        if(!in_array($period,$periods,true))throw new RuntimeException('semantic_plan_period_invalid');
+        $out['period']=$period;
+
+        foreach(['party_query','item_query'] as $k){
+            $q=trim((string)($plan[$k]??''));
+            if(mb_strlen($q)>190)throw new RuntimeException('semantic_plan_entity_too_long');
+            $out[$k]=$q;
+        }
+
+        if($period==='rolling_jalali_months')$out['months']=max(1,min(24,(int)($plan['months']??3)));
+        if($period==='custom'){
+            $a=trim((string)($plan['date_from']??''));$b=trim((string)($plan['date_to']??''));
+            if($a===''||$b===''||mb_strlen($a)>20||mb_strlen($b)>20)throw new RuntimeException('semantic_plan_custom_dates_invalid');
+            $out['date_from']=$a;$out['date_to']=$b;
+        }
+        if($period==='custom_jalali_month'){
+            $y=(int)($plan['jalali_year']??0);$m=(int)($plan['jalali_month']??0);
+            if($y<1300||$y>1499||$m<1||$m>12)throw new RuntimeException('semantic_plan_jalali_month_invalid');
+            $out['jalali_year']=$y;$out['jalali_month']=$m;
+        }
+
+        if($intent==='document_analytics'){
+            $group=trim((string)($plan['group_by']??'none'));
+            if(!in_array($group,['none','party','item','jalali_month','status'],true))throw new RuntimeException('semantic_plan_group_invalid');
+            $out['group_by']=$group;$out['limit']=max(1,min(50,(int)($plan['limit']??10)));
+            $out['needs_entity_parse']=false;
+            return$out;
+        }
+
+        $left=trim((string)($plan['left_period']??''));$right=trim((string)($plan['right_period']??''));
+        if(!in_array($left,$periods,true)||!in_array($right,$periods,true)||$left==='all'||$right==='all')throw new RuntimeException('semantic_plan_compare_period_invalid');
+        $out['left_period']=$left;$out['right_period']=$right;
+        return$out;
+    }
+
+    private static function semanticRouteLookup(int $wid,array $args): array
+    {
+        [$key,$planner,$contract]=self::semanticRouteIdentity($args);
+        if($contract!==self::AI_ROUTE_CONTRACT_VERSION)return ['hit'=>false,'reason'=>'contract_mismatch'];
+        $st=pdo()->prepare("SELECT id,plan_json,confidence,hit_count,success_count,failure_count
+            FROM ai_semantic_routes
+            WHERE workspace_id=? AND route_key=? AND planner_version=? AND contract_version=? AND status='active'
+            LIMIT 1");
+        $st->execute([$wid,$key,$planner,$contract]);$r=$st->fetch();
+        if(!$r)return ['hit'=>false];
+        $plan=json_decode((string)$r['plan_json'],true);
+        if(!is_array($plan)){
+            pdo()->prepare("UPDATE ai_semantic_routes SET status='disabled',updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([(int)$r['id'],$wid]);
+            return ['hit'=>false,'reason'=>'invalid_plan_json'];
+        }
+        try{$plan=self::validateSemanticPlan($plan);}
+        catch(Throwable $e){
+            pdo()->prepare("UPDATE ai_semantic_routes SET status='disabled',failure_count=failure_count+1,updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([(int)$r['id'],$wid]);
+            return ['hit'=>false,'reason'=>'invalid_plan'];
+        }
+        pdo()->prepare("UPDATE ai_semantic_routes SET hit_count=hit_count+1,last_used_at=NOW(),updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([(int)$r['id'],$wid]);
+        return ['hit'=>true,'route_id'=>(int)$r['id'],'plan'=>$plan,'confidence'=>(float)$r['confidence'],
+            'hit_count'=>(int)$r['hit_count']+1,'success_count'=>(int)$r['success_count'],'failure_count'=>(int)$r['failure_count']];
+    }
+
+    private static function semanticRouteRemember(int $wid,array $args): array
+    {
+        [$key,$planner,$contract]=self::semanticRouteIdentity($args);
+        if($contract!==self::AI_ROUTE_CONTRACT_VERSION)throw new RuntimeException('semantic_route_contract_mismatch');
+        $plan=$args['plan']??null;if(!is_array($plan))throw new RuntimeException('semantic_route_plan_required');
+        $plan=self::validateSemanticPlan($plan);
+        $source=trim((string)($args['source']??'llm_validated'));
+        if(!in_array($source,['llm_validated','admin'],true))throw new RuntimeException('semantic_route_source_invalid');
+        $confidence=max(0.50,min(0.99,(float)($args['confidence']??0.90)));
+        $json=json_encode($plan,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
+        $st=pdo()->prepare("INSERT INTO ai_semantic_routes
+            (workspace_id,route_key,planner_version,contract_version,plan_json,source,status,confidence,hit_count,success_count,failure_count,last_used_at,created_at,updated_at)
+            VALUES (?,?,?,?,?,?,'active',?,0,1,0,NOW(),NOW(),NOW())
+            ON DUPLICATE KEY UPDATE success_count=success_count+1,last_used_at=NOW(),updated_at=NOW()");
+        $st->execute([$wid,$key,$planner,$contract,$json,$source,$confidence]);
+        $q=pdo()->prepare("SELECT id,status,confidence,success_count,failure_count FROM ai_semantic_routes
+            WHERE workspace_id=? AND route_key=? AND planner_version=? AND contract_version=? LIMIT 1");
+        $q->execute([$wid,$key,$planner,$contract]);$r=$q->fetch()?:[];
+        return ['stored'=>true,'route_id'=>(int)($r['id']??0),'status'=>(string)($r['status']??'active'),
+            'confidence'=>(float)($r['confidence']??$confidence),'success_count'=>(int)($r['success_count']??1),'failure_count'=>(int)($r['failure_count']??0)];
+    }
+
+    private static function semanticRouteFeedback(int $wid,array $args): array
+    {
+        [$key,$planner,$contract]=self::semanticRouteIdentity($args);
+        if($contract!==self::AI_ROUTE_CONTRACT_VERSION)return ['updated'=>false,'reason'=>'contract_mismatch'];
+        $success=filter_var($args['success']??false,FILTER_VALIDATE_BOOLEAN);
+        if($success){
+            $st=pdo()->prepare("UPDATE ai_semantic_routes SET success_count=success_count+1,
+                confidence=LEAST(0.99900,confidence+0.01000),last_used_at=NOW(),updated_at=NOW()
+                WHERE workspace_id=? AND route_key=? AND planner_version=? AND contract_version=? AND status='active'");
+        }else{
+            $st=pdo()->prepare("UPDATE ai_semantic_routes SET failure_count=failure_count+1,
+                confidence=GREATEST(0.00000,confidence-0.20000),
+                status=IF(failure_count+1>=3 OR confidence-0.20000<0.50000,'disabled',status),
+                last_used_at=NOW(),updated_at=NOW()
+                WHERE workspace_id=? AND route_key=? AND planner_version=? AND contract_version=?");
+        }
+        $st->execute([$wid,$key,$planner,$contract]);
+        return ['updated'=>$st->rowCount()>0,'success'=>$success];
     }
 
     public static function storeProposal(int $wid,?int $cid,int $jobId,string $tool,array $args,string $summary='',string $idempotencyKey=''): int
@@ -104,7 +270,18 @@ final class AiToolRegistry
 
     private static function descriptor(string $name): ?array
     {
-        foreach(self::descriptors() as $d)if($d['name']===$name)return$d;return null;
+        foreach(self::descriptors() as $d)if($d['name']===$name)return$d;
+        foreach(self::internalDescriptors() as $d)if($d['name']===$name)return$d;
+        return null;
+    }
+
+    private static function internalDescriptors(): array
+    {
+        return [
+            ['name'=>'semantic_route_lookup','mode'=>'internal','risk'=>'low'],
+            ['name'=>'semantic_route_remember','mode'=>'internal','risk'=>'low'],
+            ['name'=>'semantic_route_feedback','mode'=>'internal','risk'=>'low'],
+        ];
     }
 
     private static function companySnapshot(int $wid,int $cid): array

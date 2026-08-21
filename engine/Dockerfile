@@ -9,7 +9,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY worker.py rag.py synthetic_data.py deep_safe.py agent_guard.py read_guard.py ./
+COPY worker.py rag.py synthetic_data.py deep_safe.py agent_guard.py read_guard.py adaptive_router.py ./
 RUN mkdir -p /app/data
 
 CMD ["python", "worker.py", "--config", "/app/config.json"]

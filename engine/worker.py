@@ -982,6 +982,8 @@ from agent_guard import install_agent_guard as _install_agent_guard
 _install_agent_guard(Worker)
 from read_guard import install_read_guard as _install_read_guard
 _install_read_guard(Worker)
+from adaptive_router import install_adaptive_router as _install_adaptive_router
+_install_adaptive_router(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()

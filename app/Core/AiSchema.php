@@ -1,7 +1,7 @@
 <?php
 final class AiSchema
 {
-    public const VERSION='1.0.0';
+    public const VERSION='1.1.0';
 
     public static function migrate(PDO $pdo): void
     {
@@ -150,6 +150,27 @@ final class AiSchema
                 comment TEXT NULL,
                 created_at DATETIME NULL,
                 INDEX idx_ai_feedback_job (workspace_id,job_id,created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            "CREATE TABLE IF NOT EXISTS ai_semantic_routes (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                workspace_id INT NOT NULL,
+                route_key CHAR(64) NOT NULL,
+                planner_version VARCHAR(80) NOT NULL,
+                contract_version VARCHAR(80) NOT NULL,
+                plan_json JSON NOT NULL,
+                source VARCHAR(40) NOT NULL DEFAULT 'llm_validated',
+                status VARCHAR(30) NOT NULL DEFAULT 'active',
+                confidence DECIMAL(6,5) NOT NULL DEFAULT 0.90000,
+                hit_count INT NOT NULL DEFAULT 0,
+                success_count INT NOT NULL DEFAULT 0,
+                failure_count INT NOT NULL DEFAULT 0,
+                last_used_at DATETIME NULL,
+                created_at DATETIME NULL,
+                updated_at DATETIME NULL,
+                UNIQUE KEY uniq_ai_semantic_route (workspace_id,route_key,planner_version,contract_version),
+                INDEX idx_ai_semantic_route_active (workspace_id,status,last_used_at),
+                INDEX idx_ai_semantic_route_quality (workspace_id,status,confidence,success_count,failure_count)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
             "CREATE TABLE IF NOT EXISTS ai_rag_sources (
