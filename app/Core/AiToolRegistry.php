@@ -18,6 +18,16 @@ final class AiToolRegistry
             ['name'=>'party_ledger','mode'=>'read','risk'=>'low','description'=>'گردش و مانده یک طرف حساب بر اساس آرتیکل‌های حسابداری','parameters'=>['type'=>'object','properties'=>['party_id'=>['type'=>'integer']],'required'=>['party_id']]],
             ['name'=>'recent_sales','mode'=>'read','risk'=>'low','description'=>'آخرین صورتحساب‌های فروش','parameters'=>['type'=>'object','properties'=>['limit'=>['type'=>'integer']]]],
             ['name'=>'recent_purchases','mode'=>'read','risk'=>'low','description'=>'آخرین اسناد خرید','parameters'=>['type'=>'object','properties'=>['limit'=>['type'=>'integer']]]],
+            ['name'=>'document_analytics','mode'=>'read','risk'=>'low','description'=>'گزارش پارامتریک امن فروش/خرید با بازه جلالی، وضعیت و تفکیک محدود','parameters'=>['type'=>'object','properties'=>[
+                'kind'=>['type'=>'string','enum'=>['sales','purchases']],
+                'period'=>['type'=>'string','enum'=>['all','current_jalali_month','previous_jalali_month','current_jalali_year','previous_jalali_year','rolling_jalali_months','custom','custom_jalali_month']],
+                'months'=>['type'=>'integer'],
+                'date_from'=>['type'=>'string'],'date_to'=>['type'=>'string'],
+                'jalali_year'=>['type'=>'integer'],'jalali_month'=>['type'=>'integer'],
+                'workflow_status'=>['type'=>'string','enum'=>['all','draft','approved','final']],
+                'group_by'=>['type'=>'string','enum'=>['none','party','item','jalali_month','status']],
+                'limit'=>['type'=>'integer']
+            ],'required'=>['kind']]],
             ['name'=>'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پیش‌نویس فاکتور فروش؛ بدون تایید انسانی ثبت نهایی نمی‌شود','parameters'=>['type'=>'object','properties'=>[
                 'party_id'=>['type'=>'integer'],'document_date'=>['type'=>'string'],'due_date'=>['type'=>'string'],'notes'=>['type'=>'string'],
                 'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['item_id'=>['type'=>'integer'],'quantity'=>['type'=>'number'],'unit_price'=>['type'=>'number'],'discount_amount'=>['type'=>'number'],'tax_percent'=>['type'=>'number'],'description'=>['type'=>'string']],'required'=>['item_id','quantity','unit_price']]]
@@ -60,6 +70,7 @@ final class AiToolRegistry
             'party_ledger'=>self::partyLedger($wid,$cid,(int)($args['party_id']??0)),
             'recent_sales'=>self::recentSales($wid,$cid,(int)($args['limit']??20)),
             'recent_purchases'=>self::recentPurchases($wid,$cid,(int)($args['limit']??20)),
+            'document_analytics'=>self::documentAnalytics($wid,$cid,$args),
             default=>throw new RuntimeException('tool_not_implemented')
         };
     }
@@ -183,6 +194,178 @@ final class AiToolRegistry
     private static function recentPurchases(int $wid,int $cid,int $limit): array
     {
         $limit=max(1,min(100,$limit));$st=pdo()->prepare("SELECT d.id,d.doc_type,d.document_no,d.document_date,d.net_total,d.workflow_status,d.taxpayer_status,p.name party_name FROM acc_purchase_docs d LEFT JOIN acc_parties p ON p.id=d.party_id WHERE d.workspace_id=? AND d.company_id=? ORDER BY d.document_date DESC,d.id DESC LIMIT $limit");$st->execute([$wid,$cid]);return$st->fetchAll();
+    }
+
+    private static function documentAnalytics(int $wid,int $cid,array $args): array
+    {
+        self::assertCompany($wid,$cid);
+        $kind=(string)($args['kind']??'');
+        if(!in_array($kind,['sales','purchases'],true))throw new RuntimeException('analytics_kind_invalid');
+
+        $period=self::resolveAnalyticsPeriod($args);
+        $status=(string)($args['workflow_status']??'all');
+        if(!in_array($status,['all','draft','approved','final'],true))throw new RuntimeException('analytics_status_invalid');
+        $group=(string)($args['group_by']??'none');
+        if(!in_array($group,['none','party','item','jalali_month','status'],true))throw new RuntimeException('analytics_group_invalid');
+        $limit=max(1,min(50,(int)($args['limit']??10)));
+
+        $isSales=$kind==='sales';
+        $docTable=$isSales?'acc_sales_docs':'acc_purchase_docs';
+        $lineTable=$isSales?'acc_sales_lines':'acc_purchase_lines';
+        $lineFk=$isSales?'sales_doc_id':'purchase_doc_id';
+
+        $where=['d.workspace_id=?','d.company_id=?'];$params=[$wid,$cid];
+        if(!empty($period['start_date'])){$where[]='d.document_date>=?';$params[]=$period['start_date'];}
+        if(!empty($period['end_date'])){$where[]='d.document_date<=?';$params[]=$period['end_date'];}
+        if($status!=='all'){$where[]='d.workflow_status=?';$params[]=$status;}
+        $whereSql=implode(' AND ',$where);
+
+        $st=pdo()->prepare("SELECT COUNT(*) document_count,
+            COALESCE(SUM(d.total_before_discount),0) total_before_discount,
+            COALESCE(SUM(d.discount_total),0) discount_total,
+            COALESCE(SUM(d.tax_total),0) tax_total,
+            COALESCE(SUM(d.net_total),0) net_total
+            FROM `$docTable` d WHERE $whereSql");
+        $st->execute($params);$summary=$st->fetch()?:[];
+        $summary=[
+            'document_count'=>(int)($summary['document_count']??0),
+            'total_before_discount'=>(float)($summary['total_before_discount']??0),
+            'discount_total'=>(float)($summary['discount_total']??0),
+            'tax_total'=>(float)($summary['tax_total']??0),
+            'net_total'=>(float)($summary['net_total']??0),
+        ];
+
+        $recentLimit=max(1,min(20,$limit));
+        $st=pdo()->prepare("SELECT d.id,d.document_no,d.document_date,d.net_total,d.workflow_status,p.name party_name
+            FROM `$docTable` d LEFT JOIN acc_parties p
+              ON p.id=d.party_id AND p.workspace_id=d.workspace_id AND p.company_id=d.company_id
+            WHERE $whereSql ORDER BY d.document_date DESC,d.id DESC LIMIT $recentLimit");
+        $st->execute($params);$recent=$st->fetchAll();
+        foreach($recent as &$r){
+            $r['id']=(int)$r['id'];$r['net_total']=(float)$r['net_total'];
+            $r['jalali_date']=Jalali::fromGregorian((string)$r['document_date']);
+        }unset($r);
+
+        $groups=[];
+        if($group==='party'){
+            $st=pdo()->prepare("SELECT d.party_id,p.name label,COUNT(*) document_count,COALESCE(SUM(d.net_total),0) net_total
+                FROM `$docTable` d LEFT JOIN acc_parties p
+                  ON p.id=d.party_id AND p.workspace_id=d.workspace_id AND p.company_id=d.company_id
+                WHERE $whereSql
+                GROUP BY d.party_id,p.name
+                ORDER BY net_total DESC,document_count DESC LIMIT $limit");
+            $st->execute($params);$groups=$st->fetchAll();
+            foreach($groups as &$r){$r['party_id']=(int)$r['party_id'];$r['document_count']=(int)$r['document_count'];$r['net_total']=(float)$r['net_total'];}unset($r);
+        }elseif($group==='status'){
+            $st=pdo()->prepare("SELECT d.workflow_status `key`,d.workflow_status label,COUNT(*) document_count,COALESCE(SUM(d.net_total),0) net_total
+                FROM `$docTable` d WHERE $whereSql
+                GROUP BY d.workflow_status ORDER BY net_total DESC");
+            $st->execute($params);$groups=$st->fetchAll();
+            foreach($groups as &$r){$r['document_count']=(int)$r['document_count'];$r['net_total']=(float)$r['net_total'];}unset($r);
+        }elseif($group==='item'){
+            $st=pdo()->prepare("SELECT l.item_id,i.name label,i.code,COUNT(DISTINCT d.id) document_count,
+                    COALESCE(SUM(l.quantity),0) quantity,COALESCE(SUM(l.line_total),0) line_total
+                FROM `$docTable` d
+                JOIN `$lineTable` l ON l.`$lineFk`=d.id AND l.workspace_id=d.workspace_id
+                LEFT JOIN acc_items i ON i.id=l.item_id AND i.workspace_id=d.workspace_id AND i.company_id=d.company_id
+                WHERE $whereSql
+                GROUP BY l.item_id,i.name,i.code
+                ORDER BY line_total DESC,quantity DESC LIMIT $limit");
+            $st->execute($params);$groups=$st->fetchAll();
+            foreach($groups as &$r){
+                $r['item_id']=(int)$r['item_id'];$r['document_count']=(int)$r['document_count'];
+                $r['quantity']=(float)$r['quantity'];$r['line_total']=(float)$r['line_total'];
+            }unset($r);
+        }elseif($group==='jalali_month'){
+            $st=pdo()->prepare("SELECT d.document_date,d.net_total FROM `$docTable` d
+                WHERE $whereSql ORDER BY d.document_date,d.id");
+            $st->execute($params);$bucket=[];
+            foreach($st->fetchAll() as $r){
+                $j=Jalali::fromGregorian((string)$r['document_date']);$key=substr($j,0,7);
+                if(!isset($bucket[$key]))$bucket[$key]=['key'=>$key,'label'=>$key,'document_count'=>0,'net_total'=>0.0];
+                $bucket[$key]['document_count']++;$bucket[$key]['net_total']+=(float)$r['net_total'];
+            }
+            ksort($bucket,SORT_STRING);$groups=array_values($bucket);
+            if(count($groups)>$limit)$groups=array_slice($groups,-$limit);
+        }
+
+        return [
+            'kind'=>$kind,
+            'period'=>$period,
+            'filters'=>['workflow_status'=>$status,'group_by'=>$group],
+            'summary'=>$summary,
+            'groups'=>$groups,
+            'recent'=>$recent,
+            'notes'=>[
+                'amount_unit'=>'IRR',
+                'item_group_amount'=>'برای تفکیک کالا، line_total ردیف‌ها جمع می‌شود؛ مبلغ سند در summary از net_total سند است.',
+                'safety'=>'همه جداول و ستون‌ها در سرور allowlist شده‌اند و ورودی کاربر به SQL identifier تبدیل نمی‌شود.',
+            ],
+        ];
+    }
+
+    private static function resolveAnalyticsPeriod(array $args): array
+    {
+        $period=(string)($args['period']??'all');
+        $allowed=['all','current_jalali_month','previous_jalali_month','current_jalali_year','previous_jalali_year','rolling_jalali_months','custom','custom_jalali_month'];
+        if(!in_array($period,$allowed,true))throw new RuntimeException('analytics_period_invalid');
+
+        [$jy,$jm,$jd]=Jalali::toJalali((int)date('Y'),(int)date('n'),(int)date('j'));
+        $start=null;$end=null;$label='همه دوره‌ها';
+
+        if($period==='current_jalali_month'){
+            $start=self::jalaliDate($jy,$jm,1);$end=date('Y-m-d');
+            $label=Jalali::monthName($jm).' '.$jy.' (تا '.Jalali::today().')';
+        }elseif($period==='previous_jalali_month'){
+            [$y,$m]=self::shiftJalaliMonth($jy,$jm,-1);
+            $start=self::jalaliDate($y,$m,1);$end=self::jalaliDate($y,$m,Jalali::monthLength($y,$m));
+            $label=Jalali::monthName($m).' '.$y;
+        }elseif($period==='current_jalali_year'){
+            $start=self::jalaliDate($jy,1,1);$end=date('Y-m-d');$label='سال '.$jy.' (تا '.Jalali::today().')';
+        }elseif($period==='previous_jalali_year'){
+            $y=$jy-1;$start=self::jalaliDate($y,1,1);$end=self::jalaliDate($y,12,Jalali::monthLength($y,12));$label='سال '.$y;
+        }elseif($period==='rolling_jalali_months'){
+            $months=max(1,min(24,(int)($args['months']??3)));[$y,$m]=self::shiftJalaliMonth($jy,$jm,-($months-1));
+            $start=self::jalaliDate($y,$m,1);$end=date('Y-m-d');$label=$months.' ماه اخیر تا '.Jalali::today();
+        }elseif($period==='custom_jalali_month'){
+            $y=(int)($args['jalali_year']??0);$m=(int)($args['jalali_month']??0);
+            if($y<1300||$y>1499||$m<1||$m>12)throw new RuntimeException('analytics_jalali_month_invalid');
+            $start=self::jalaliDate($y,$m,1);$end=self::jalaliDate($y,$m,Jalali::monthLength($y,$m));$label=Jalali::monthName($m).' '.$y;
+        }elseif($period==='custom'){
+            $start=AccountingRepository::date((string)($args['date_from']??''));$end=AccountingRepository::date((string)($args['date_to']??''));
+            if(!$start||!$end)throw new RuntimeException('analytics_custom_dates_required');
+            if(!self::validIsoDate($start)||!self::validIsoDate($end))throw new RuntimeException('analytics_custom_date_invalid');
+            if($start>$end)throw new RuntimeException('analytics_date_order_invalid');
+            $days=(int)floor((strtotime($end)-strtotime($start))/86400);
+            if($days>3660)throw new RuntimeException('analytics_range_too_large');
+            $label='از '.Jalali::fromGregorian($start).' تا '.Jalali::fromGregorian($end);
+        }
+
+        return [
+            'key'=>$period,'start_date'=>$start,'end_date'=>$end,'label'=>$label,
+            'jalali_start'=>$start?Jalali::fromGregorian($start):null,
+            'jalali_end'=>$end?Jalali::fromGregorian($end):null,
+        ];
+    }
+
+    private static function validIsoDate(string $date): bool
+    {
+        $dt=DateTime::createFromFormat('!Y-m-d',$date);
+        return $dt instanceof DateTime && $dt->format('Y-m-d')===$date;
+    }
+
+    private static function shiftJalaliMonth(int $y,int $m,int $delta): array
+    {
+        $index=$y*12+($m-1)+$delta;
+        $ny=intdiv($index,12);$nm=($index%12)+1;
+        if($nm<=0){$nm+=12;$ny--;}
+        return [$ny,$nm];
+    }
+
+    private static function jalaliDate(int $y,int $m,int $d): string
+    {
+        [$gy,$gm,$gd]=Jalali::toGregorian($y,$m,$d);
+        return sprintf('%04d-%02d-%02d',$gy,$gm,$gd);
     }
 
     private static function validateProposalArgs(int $wid,?int $cid,string $tool,array $args): void
