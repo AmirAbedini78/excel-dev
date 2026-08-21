@@ -980,6 +980,8 @@ from deep_safe import install_worker_patch as _install_worker_patch
 _install_worker_patch(Worker)
 from agent_guard import install_agent_guard as _install_agent_guard
 _install_agent_guard(Worker)
+from read_guard import install_read_guard as _install_read_guard
+_install_read_guard(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()
