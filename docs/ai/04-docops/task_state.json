@@ -1,0 +1,26 @@
+{
+  "project": "ERPSMART",
+  "canonical_scope": "Accounting/Financial AI MVP",
+  "baseline_commit": "da02e416de1e7dccb4456e78e9b2c6f7cd3547be",
+  "current_milestone": "v8.7 Adaptive Semantic Router",
+  "milestone_status": "FROZEN",
+  "next_phase": "v8.8 Accounting Constrained Workflow Planner",
+  "next_phase_mode": "read-only multi-step first",
+  "active_task": null,
+  "frozen_subsystems": [
+    "adaptive plan cache expansion",
+    "large regex/dictionary expansion"
+  ],
+  "deferred": [
+    "full accounting application completeness",
+    "non-accounting module AI expansion",
+    "Practice OS expansion",
+    "advanced RAG stack",
+    "multi-agent/framework migration without proven need"
+  ],
+  "known_issues": [
+    "adaptive_llm_read UI can show model none although planner_model was Qwen",
+    "legacy root docs contain older broader roadmap"
+  ],
+  "updated_at": "2026-08-22"
+}

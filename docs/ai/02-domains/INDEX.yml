@@ -1,0 +1,30 @@
+domains:
+  accounting_financial:
+    title: Accounting & Financial MVP Domain
+    doc: docs/ai/02-domains/accounting-financial.md
+    aliases: ["accounting", "financial", "حسابداری", "مالی", "فروش", "خرید", "تراز", "دفتر"]
+
+  ai_engine:
+    title: AI Engine & Worker
+    doc: docs/ai/02-domains/ai-engine.md
+    aliases: ["ai engine", "worker", "ollama", "queue", "model", "موتور", "ورکر"]
+
+  agent_actions:
+    title: Accounting Agent Actions
+    doc: docs/ai/02-domains/agent-actions.md
+    aliases: ["agent", "proposal", "approval", "invoice", "voucher", "ایجنت", "ثبت"]
+
+  analytics_forecast:
+    title: Analytics, Risk & Forecast
+    doc: docs/ai/02-domains/analytics-forecast.md
+    aliases: ["analysis", "forecast", "risk", "anomaly", "تحلیل", "پیش بینی", "ریسک"]
+
+  rag_knowledge:
+    title: RAG & Knowledge
+    doc: docs/ai/02-domains/rag-knowledge.md
+    aliases: ["rag", "embedding", "document", "knowledge", "قانون", "قرارداد"]
+
+  documentation:
+    title: SmartDocs & Development Governance
+    doc: docs/ai/00-GOVERNANCE.md
+    aliases: ["docs", "documentation", "roadmap", "handoff", "مستند", "رودمپ"]
