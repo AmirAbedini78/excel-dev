@@ -245,6 +245,10 @@ def decorate(meta:dict[str,Any],mode:str,cache_state:str,model:str="none",metric
         "planner_metrics":metrics or {},
         "patch_version":PATCH_VERSION,
     })
+    # UI historically reads meta.model. Preserve deterministic "none" but expose
+    # the real adaptive planner model whenever one actually ran.
+    if model and model!="none":
+        out["model"]=model
     return out
 
 def install_adaptive_router(cls:type)->None:

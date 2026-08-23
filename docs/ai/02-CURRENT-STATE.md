@@ -2,14 +2,16 @@
 
 > این فایل باید بعد از هر Milestone معتبر به‌روزرسانی شود.
 
-## Baseline
+## Baseline / Working Milestone
 
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Snapshot SHA: da02e416de1e7dccb4456e78e9b2c6f7cd3547be
-Commit: Add adaptive semantic ERP plan router
-Milestone: v8.7
+v8.8 source baseline: cd13fae227f18229ee734958ea465b41885e78e2
+Baseline commit: Add canonical AI development smartdocs
+Working milestone: v8.8.0.4 — Grounded Candidate-ID Accounting Workflow Planner
+Validation state after installer: LOCAL-VALIDATED
+Live validation: LIVE-VALIDATED — Jobs #37/#38
 ```
 
 ## Scope فعال
@@ -100,6 +102,17 @@ qwen3:1.7b   → fallback/legacy candidate
 - route contract/versioning
 - confidence/feedback lifecycle
 - only read plans are learned
+- status: FROZEN optimization
+
+### Constrained accounting workflow planner — v8.8
+- read-only multi-step workflow planning
+- max 8 sequential validated steps
+- document analytics + deterministic compare + party ledger dependency
+- later steps can consume `party_id`/`item_id` only from earlier Tool results
+- no IDs/SQL/financial values may originate from LLM plan
+- old deterministic multi-read remains preferred when sufficient
+- invalid planner output is rejected; canonical dependency-safe recovery exists for proven patterns
+- planner model/metrics are exposed correctly in job metadata
 
 ## Live evidence milestones
 
@@ -109,17 +122,28 @@ qwen3:1.7b   → fallback/legacy candidate
 - v8.5 parameterized analytics: live totals/groupings reconciled.
 - v8.6 entity/status-scoped reads: live customer/item/combined queries validated.
 - v8.7 Job #31: adaptive cache MISS → Qwen plan → grounded `sales_total` → successful result.
+- v8.8 package tests: core 19/19 + actual guard-stack integration 7/7 locally validated before repository mutation.
+- v8.8 Job #32 live test exposed plan-shape rejection + empty current-month ranking.
+- v8.8.0.1 Job #33 validated partial no-data semantics on real cPanel data.
+- v8.8.0.1 Job #34 exposed invalid JSON and delegation to old `party_search`.
+- v8.8.0.2 Jobs #35/#36 proved partial semantics and real `document_analytics → party_id → party_ledger` execution, but both still rejected the LLM plan.
+- Direct Ollama diagnostics showed three distinct planner limits: thinking exhaustion, oversized tool-schema reproduction, and semantic drift when the 0.8B model was allowed to construct tool-step objects.
+- Candidate-ID model selection then showed the operational trade-off: qwen3.5:0.8b passed both refined goal-selection cases in ~12–28s; qwen3:1.7b timed out on Case A; gemma3:4b passed but was ~57–171s. v8.8.0.4 therefore keeps 0.8B only as a grounded goal selector while the server owns dependencies and all tool arguments.
+- v8.8.0.4 repeated real-Ollama preflight passed 6/6 before mutation and 6/6 after Worker rebuild.
+- Live Job #37: direct Candidate-ID LLM plan validated into 5 steps with no `workflow_plan_rejected`/fallback; current confirmed Shahrivar sales were 0 vs Mordad 1,985,720,000 IRR, so ranking returned no rows and the dependent ledger was safely skipped. Route: `accounting_workflow_partial`; model time 7.7s.
+- Live Job #38: direct Candidate-ID LLM plan validated into 2 steps (`document_analytics → party_ledger`) with no fallback. Top confirmed-sales customer for Mordad was کارخانه بهین بسته‌بندی at 518,100,000 IRR; the real Tool-derived party dependency produced current balance 727,100,000 IRR. Route: `accounting_workflow_read`; model time 5.2s.
+- v8.8 Grounded Candidate-ID Accounting Workflow Planner is therefore `LIVE-VALIDATED` for the two canonical dependent accounting workflows.
 
 ## Known non-blocking issues
 
-1. UI may display `model=none` for `adaptive_llm_read` even when Qwen Planner ran; planner model is stored separately. Fix with next observability-touching phase.
-2. Adaptive exact-prompt cache is **FROZEN** as an optimization; no large dictionary/template project now.
-3. Old root docs under `docs/*.md` contain an earlier broader roadmap and must not override this SmartDocs set.
-4. Full accounting application completeness is intentionally deferred until AI MVP is proven.
+1. Adaptive exact-prompt cache is **FROZEN** as an optimization; no large dictionary/template project now.
+2. Old root docs under `docs/*.md` contain an earlier broader roadmap and must not override this SmartDocs set.
+3. Full accounting application completeness is intentionally deferred until AI MVP is proven.
+4. v8.8.0.4 اکنون با repeated real-Ollama preflight و Live Jobs #37/#38 `LIVE-VALIDATED` است؛ baseline Git نهایی هنوز باید با Commit دقیق 13 فایل ثبت شود.
+5. در Workflow وابسته، نبود داده برای رتبه‌بندی باید `partial` برگرداند و نتایج معتبر مراحل قبلی را دور نریزد.
 
 ## Not yet implemented as production capability
 
-- General multi-step constrained Planner
 - General financial Action Orchestrator
 - Risk-based auto-execution matrix
 - production-grade financial KPI/trend layer

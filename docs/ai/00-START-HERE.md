@@ -61,8 +61,8 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 ## Current snapshot
 
 - Repository: `AmirAbedini78/excel-dev`
-- Canonical snapshot at creation of this SmartDocs set:
-  `da02e416de1e7dccb4456e78e9b2c6f7cd3547be`
-- Milestone: `v8.7 — Adaptive Semantic Router & Plan Cache`
-- Next development target: `v8.8 — Accounting Constrained Workflow Planner`
+- SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
+- Current implementation milestone: `v8.8.0.4 — Grounded Candidate-ID Accounting Workflow Planner`
+- Validation state: `LIVE-VALIDATED` on real cPanel data with Jobs #37/#38; direct grounded Candidate-ID LLM plans validated without planner fallback.
+- Next development target: `v8.9 — Accounting Action Orchestrator` after freezing/committing the exact v8.8 13-file set.
 - Scope: **Accounting/Financial AI MVP only**

@@ -261,6 +261,8 @@ class Worker:
         num_predict: int | None = None,
         temperature: float | None = None,
         timeout_seconds: int | None = None,
+        response_format: Any | None = None,
+        think_override: bool | None = None,
     ) -> dict[str, Any]:
         model_name = str(model or self.model_for("fallback"))
 
@@ -284,10 +286,19 @@ class Worker:
         }
 
         if model_name.lower().startswith("qwen"):
-            body["think"] = bool(self.cfg.get("think", False))
+            body["think"] = bool(
+                self.cfg.get("think", False)
+                if think_override is None
+                else think_override
+            )
 
         if tools:
             body["tools"] = tools
+
+        # Ollama structured-output mode. Callers may request "json" (or a
+        # supported schema object) without changing behavior for existing calls.
+        if response_format is not None:
+            body["format"] = response_format
 
         timeout = max(30, min(900, int(
             timeout_seconds if timeout_seconds is not None
@@ -984,6 +995,8 @@ from read_guard import install_read_guard as _install_read_guard
 _install_read_guard(Worker)
 from adaptive_router import install_adaptive_router as _install_adaptive_router
 _install_adaptive_router(Worker)
+from workflow_planner import install_workflow_planner as _install_workflow_planner
+_install_workflow_planner(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()

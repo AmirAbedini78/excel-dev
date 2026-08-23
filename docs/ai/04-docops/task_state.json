@@ -1,12 +1,13 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Accounting/Financial AI MVP",
-  "baseline_commit": "da02e416de1e7dccb4456e78e9b2c6f7cd3547be",
-  "current_milestone": "v8.7 Adaptive Semantic Router",
-  "milestone_status": "FROZEN",
-  "next_phase": "v8.8 Accounting Constrained Workflow Planner",
-  "next_phase_mode": "read-only multi-step first",
-  "active_task": null,
+  "baseline_commit": "cd13fae227f18229ee734958ea465b41885e78e2",
+  "current_milestone": "v8.8.0.4 Grounded Candidate-ID Accounting Workflow Planner",
+  "milestone_status": "LIVE-VALIDATED",
+  "live_validation_pending": false,
+  "next_phase": "v8.9 Accounting Action Orchestrator",
+  "next_phase_mode": "multi-step proposal/approval actions after v8.8 freeze commit",
+  "active_task": "Freeze v8.8.0.4: exact 13-file stage/commit/push, capture commit SHA, then start v8.9",
   "frozen_subsystems": [
     "adaptive plan cache expansion",
     "large regex/dictionary expansion"
@@ -19,8 +20,17 @@
     "multi-agent/framework migration without proven need"
   ],
   "known_issues": [
-    "adaptive_llm_read UI can show model none although planner_model was Qwen",
+    "Git baseline is still cd13fae until the exact v8.8 13-file set is committed",
+    "qwen3:1.7b timed out on the complex planner diagnostic; gemma3:4b is too slow for this planner path on current CPU",
     "legacy root docs contain older broader roadmap"
   ],
-  "updated_at": "2026-08-22"
+  "updated_at": "2026-08-23",
+  "live_validation_jobs": [
+    37,
+    38
+  ],
+  "live_validation_summary": {
+    "job_37": "direct 5-step Candidate-ID LLM workflow; partial on real empty current-month ranking; no planner fallback",
+    "job_38": "direct 2-step Candidate-ID LLM workflow; document_analytics to party_ledger with Tool-derived party dependency; no planner fallback"
+  }
 }

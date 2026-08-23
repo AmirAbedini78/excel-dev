@@ -1,6 +1,6 @@
 # 04-ROADMAP — Roadmap Canonical فعلی
 
-> این Roadmap بر «AI-first Accounting MVP» قفل شده است.  
+> این Roadmap بر «AI-first Accounting MVP» قفل شده است.
 > Full Accounting Product expansion بعد از اثبات MVP انجام می‌شود.
 
 ## Completed foundation
@@ -80,8 +80,8 @@ Status: `IMPLEMENTED / FROZEN`
 
 ## Next core phases
 
-### v8.8 — Accounting Constrained Workflow Planner
-Status: `NEXT`
+### v8.8 / v8.8.0.1 / v8.8.0.2 / v8.8.0.3 / v8.8.0.4 — Accounting Constrained Workflow Planner
+Status: `LIVE-VALIDATED`
 
 هدف: یک Prompt مالی چندمرحله‌ای را به Plan قابل اعتبارسنجی تبدیل کند.
 
@@ -114,13 +114,43 @@ Plan:
 6 grounded summary
 ```
 
-Success gate:
-- multi-step correctness
+Implemented contract:
+- Read-only, max 8 sequential steps
+- `document_analytics`
+- deterministic `compare`
+- `party_ledger`
+- `party_from` / `item_from` references to prior grouped Tool results
+- server-produced IDs only
+- old deterministic fast paths preserved
+- planner model/metrics observability fixed
+- Ollama planner call uses structured JSON output
+- planner call explicitly disables Qwen thinking
+- v8.8.0.4 no longer asks the model to construct Tool-step objects or arguments
+- deterministic grounding builds a bounded candidate goal set
+- LLM selects only candidate goal IDs through JSON Schema enums
+- server expands goal dependencies and owns every Tool argument/date/period/ID
+- harmless internal planner-shape drift → safe canonicalization
+- invalid/unsafe LLM plan → reject; limited deterministic dependency-safe recovery
+- empty dependent ranking → partial grounded answer, not loss of prior valid results
+
+Local success gate:
+- v8.8.0.4 core planner tests 30/30
+- v8.8.0.4 actual guard-stack integration 11/11
+- actual Worker transport tests 2/2
+- repeated real-Ollama candidate-plan gate is required before mutation
+- worker think-override patch LF/CRLF + reapply rejection
 - no invented IDs/numbers
 - no direct SQL
 - deterministic dependency resolution
-- timeout/retry safety
-- existing v8.3–v8.7 regressions pass
+- v8.3/v8.6/v8.7 paths preserved
+
+Live gate completed:
+- repeated real-Ollama Candidate-ID preflight: 6/6 before mutation + 6/6 after rebuild
+- Job #37: direct LLM plan → 5-step validated workflow; safe partial result on empty current-month ranking
+- Job #38: direct LLM plan → 2-step `document_analytics → party_ledger`; Tool-derived party dependency reconciled
+- no planner rejection/fallback/delegation in Jobs #37/#38
+- no hidden write; read-only contract preserved
+- observed model times: ~7.7s (Job #37) and ~5.2s (Job #38)
 
 ### v8.9 — Accounting Action Orchestrator
 Status: `PLANNED`

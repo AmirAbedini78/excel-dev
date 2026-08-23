@@ -42,6 +42,35 @@ Compute plane محلی و قابل انتقال به VPS/GPU.
 
 Adaptive exact-route cache حفظ می‌شود ولی توسعه Template dictionary بزرگ فعلاً ممنوع است.
 
+## Current v8.8 planner layer
+
+Guard stack مفهومی:
+
+```text
+Safe Deep
+→ Guarded Invoice Agent
+→ Grounded Read
+→ Adaptive Single-Plan Router
+→ Accounting Constrained Workflow Planner
+```
+
+Workflow Planner فقط complex read-only requestهای وابسته را می‌گیرد. درخواست ساده، Deep و Write به مسیرهای قبلی delegate می‌شوند.
+
 ## Future
 
-v8.8 Planner باید روی همین Worker یا abstraction قابل تعویض سوار شود. Tool API نباید به LangGraph/Hermes وابسته شود.
+v8.9 همین قرارداد برنامه‌ریزی را به Action Orchestrator با Proposal/Approval متصل می‌کند. Tool API همچنان نباید به LangGraph/Hermes وابسته شود.
+
+## v8.8.0.4 live planner result
+
+Planner role is now a bounded Candidate-ID selector on `qwen3.5:0.8b`.
+
+Live evidence:
+
+```text
+pre-mutation real Ollama: 6/6
+post-rebuild real Ollama: 6/6
+Job #37: direct LLM candidate selection → workflow_plan_validated (5 steps)
+Job #38: direct LLM candidate selection → workflow_plan_validated (2 steps)
+```
+
+No planner fallback was used in Jobs #37/#38. Server-side grounding and compilation remain authoritative; the model does not emit Tool arguments or ERP IDs.

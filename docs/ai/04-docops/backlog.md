@@ -2,14 +2,12 @@
 
 ## P0 — Current
 
-- v8.8 Accounting Constrained Workflow Planner
-- planner dependency model
-- plan validator
-- read-only multi-step executor
-- observability fix for planner model display
-- regression across Deep / Invoice / Read / Adaptive
+- Repeated-preflight + Live-validate v8.8.0.4 Grounded Candidate-ID Accounting Workflow Planner
+- reconcile compare/rank/ledger dependency on real cPanel data
+- measure planner latency and trace
+- confirm no regression in Deep / Invoice / Read / Adaptive
 
-## P1
+## P0 — Next after v8.8 live validation
 
 - v8.9 Accounting Action Orchestrator
 - account resolver/search capability as needed

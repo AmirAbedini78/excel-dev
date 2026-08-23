@@ -58,3 +58,38 @@ smoke_checks:
 - item analytics باید line-level semantics را از document-level total جدا نگه دارد.
 - Trial Balance balance به معنی سلامت مالی کامل نیست.
 - Sales minus purchases = profit نیست.
+
+## v8.8 workflow use
+
+v8.8 روی primitiveهای مالی موجود ساخته شده و **Accounting schema جدیدی اضافه نمی‌کند**.
+
+Dependencyهای مجاز:
+
+```text
+document_analytics group_by=party → Tool result party_id → party_ledger
+document_analytics group_by=item  → Tool result item_id  → scoped document_analytics
+```
+
+این IDها از خروجی واقعی server می‌آیند و هرگز از LLM Plan پذیرفته نمی‌شوند.
+
+## v8.8 live validation
+
+Grounded dependent accounting reads are Live-validated:
+
+```text
+Job #37
+current-vs-previous confirmed sales
+→ compare
+→ current-period top party
+→ no rows
+→ dependent ledger safely skipped
+→ accounting_workflow_partial
+
+Job #38
+previous-period confirmed sales grouped by party
+→ top real party from Tool result
+→ party_ledger(real party_id)
+→ accounting_workflow_read
+```
+
+The LLM selects only server-grounded goal IDs; accounting periods, Tool args, DB IDs, financial values, dependency expansion, and execution remain server-owned/deterministic.
