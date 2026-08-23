@@ -153,21 +153,30 @@ Live gate completed:
 - observed model times: ~7.7s (Job #37) and ~5.2s (Job #38)
 
 ### v8.9 — Accounting Action Orchestrator
-Status: `PLANNED`
+Status: `LIVE-VALIDATED`
 
-Planner به عملیات مالی Proposal-based وصل می‌شود.
+Validated first vertical slice:
 
-- multi-step action plans
-- resolve accounts/parties/items
-- invoice/voucher flows
-- prerequisites
-- proposal chain
-- resume after approval
-- post-action verification
-- audit trail
-- risk classification
+```text
+named customer
+→ search_parties
+→ party_ledger
+→ deterministic condition: debtor?
+→ trial_balance account resolution
+→ balanced create_voucher_draft Proposal
+→ human approval
+→ server-side validation
+→ draft voucher
+→ post-action grounded verification
+```
 
-در صورت نیاز فقط Accounting primitive لازم ساخته می‌شود؛ نه کل زیرسیستم.
+Live evidence:
+- Job #41: ambiguous bank account failed closed; no Proposal.
+- Job #42: Proposal #2 created from real customer/account IDs and 100,000,000 IRR grounded amount.
+- Human approval created `AI-VCH-20260823-193339-D278`, status `draft`, debit = credit = 100,000,000 IRR.
+- Job #43: confirmed/final party balance stayed 727,100,000 IRR.
+- Job #44: confirmed/final trial balance stayed 17,821,580,000 / 17,821,580,000 IRR, difference 0.
+- no automatic approval/finalization is allowed by the v8.9 Worker.
 
 ### v9.0 — Financial Intelligence Core
 Status: `PLANNED`

@@ -1,15 +1,10 @@
 # SmartDocs Backlog
 
 ## P0 — Current
+- Freeze v8.9.0 after end-to-end Live validation: exact runtime + SmartDocs stage/commit/push and capture final SHA
+## P0 — Next
+- v9.0 Financial Intelligence Core
 
-- Repeated-preflight + Live-validate v8.8.0.4 Grounded Candidate-ID Accounting Workflow Planner
-- reconcile compare/rank/ledger dependency on real cPanel data
-- measure planner latency and trace
-- confirm no regression in Deep / Invoice / Read / Adaptive
-
-## P0 — Next after v8.8 live validation
-
-- v8.9 Accounting Action Orchestrator
 - account resolver/search capability as needed
 - safe resume after approval
 - verification steps

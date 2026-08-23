@@ -93,3 +93,34 @@ previous-period confirmed sales grouped by party
 ```
 
 The LLM selects only server-grounded goal IDs; accounting periods, Tool args, DB IDs, financial values, dependency expansion, and execution remain server-owned/deterministic.
+
+## v8.9 live action boundary
+
+The first controlled accounting action is now Live-validated.
+
+```text
+READ real customer/ledger
+→ CONDITION balance > 0
+→ resolve real debit/credit accounts
+→ PROPOSE balanced receipt voucher
+→ HUMAN APPROVAL
+→ create draft voucher
+→ VERIFY approved/final facts unchanged
+```
+
+Live grounded example:
+
+```text
+party: کارخانه بهین بسته‌بندی
+confirmed/final balance before action: 727,100,000 IRR
+requested receipt: 100,000,000 IRR
+debit account: 10101 بانک ملت - جاری
+credit account: 11001 حساب‌های دریافتنی تجاری
+proposal: #2
+executed voucher: AI-VCH-20260823-193339-D278
+voucher status: draft
+debit total: 100,000,000 IRR
+credit total: 100,000,000 IRR
+```
+
+Because the created voucher remains `draft`, it does not alter confirmed/final party ledger or trial-balance facts. Jobs #43/#44 verified this invariant after execution.

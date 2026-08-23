@@ -30,11 +30,11 @@ DEFER:
 ## Current baseline / phase
 
 ```text
-v8.8 source baseline: cd13fae227f18229ee734958ea465b41885e78e2
-Milestone: v8.8.0.4 Grounded Candidate-ID Accounting Workflow Planner
-Status: LIVE-VALIDATED — Jobs #37/#38
-Live Jobs #37/#38 completed the v8.8 gate: qwen3.5:0.8b directly selected grounded Candidate IDs, both plans reached `workflow_plan_validated` without planner fallback, Job #37 safely returned partial on empty ranking, and Job #38 executed `document_analytics → party_ledger` with a real Tool-derived party dependency. v8.8 is LIVE-VALIDATED; next operational step is exact 13-file commit/push, then v8.9.
-Next after live validation: v8.9 Accounting Action Orchestrator
+v8.9 source baseline: b442fe3b556c32bcea3b40b8bff1b70de76ce4cd
+Milestone: v8.9.0 Accounting Action Orchestrator
+Status: LIVE-VALIDATED — Jobs #41–#44 + human approval
+v8.9 Live validation completed the first controlled financial action lifecycle. Job #41 proved fail-closed account ambiguity; Job #42 created Proposal #2 from real Tool-derived party/account IDs; explicit human approval created draft voucher `AI-VCH-20260823-193339-D278`; Jobs #43/#44 proved approved/final customer balance and trial balance remained unchanged. v8.9 is LIVE-VALIDATED; next operational step is exact runtime + SmartDocs commit/push, then v9.0 Financial Intelligence Core.
+Next after v8.9 freeze: v9.0 Financial Intelligence Core
 ```
 
 ## Architecture

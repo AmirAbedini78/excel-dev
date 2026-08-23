@@ -538,3 +538,120 @@ The validated boundary is intentionally narrow:
 - empty real data produces a partial grounded result rather than invented entities
 - real Tool-derived party IDs can safely feed later ledger steps
 - write/Deep/legacy grounded-read paths remain separate
+
+## v8.9.0 — Accounting Action Orchestrator Live Validation
+
+Starting frozen baseline:
+
+```text
+b442fe3b556c32bcea3b40b8bff1b70de76ce4cd
+```
+
+Installer validation:
+
+```text
+core action tests: 24/24 PASS
+actual-like integration: 6/6 PASS
+real Ollama action-goal preflight before mutation: 3/3 PASS
+real Ollama action-goal after Worker rebuild: 3/3 PASS
+full guard stack: PASS
+Worker startup/registration: PASS
+```
+
+### Job #41 — ambiguity must fail closed
+
+Prompt used generic debit account `بانک`.
+
+The workflow reached:
+
+```text
+action_candidate
+→ action_plan_llm
+→ action_plan_validated
+→ search_parties
+→ party_ledger
+→ debtor condition
+→ trial_balance
+→ action_blocked
+```
+
+Real candidate accounts returned:
+
+```text
+10101 بانک ملت - جاری
+10102 بانک پاسارگاد - جاری
+```
+
+No Proposal was created.
+
+### Job #42 — grounded receipt Proposal
+
+Exact debit account code `10101` was supplied.
+
+Live facts:
+
+```text
+party: کارخانه بهین بسته‌بندی
+real balance: 727,100,000 IRR
+condition: debtor = true
+requested amount: 100,000,000 IRR
+debit: 10101 بانک ملت - جاری
+credit: 11001 حساب‌های دریافتنی تجاری
+proposal: #2
+```
+
+Proposal payload was balanced:
+
+```text
+line 1: debit 100,000,000 / credit 0
+line 2: debit 0 / credit 100,000,000
+difference: 0
+```
+
+The Proposal waited for human approval.
+
+### Human approval / execution
+
+After explicit UI approval, server-side validation/execution created:
+
+```text
+voucher: AI-VCH-20260823-193339-D278
+date: 1405/06/01
+type: general
+status: draft
+debit: 100,000,000 IRR
+credit: 100,000,000 IRR
+```
+
+No automatic `approved` or `final` accounting state was created.
+
+### Jobs #43/#44 — post-action verification
+
+Job #43:
+
+```text
+party ledger balance (approved/final only): 727,100,000 IRR
+```
+
+Job #44:
+
+```text
+trial debit: 17,821,580,000 IRR
+trial credit: 17,821,580,000 IRR
+difference: 0
+```
+
+Therefore the newly created draft did not alter approved/final financial facts.
+
+### v8.9 conclusion
+
+The first full controlled accounting action lifecycle is `LIVE-VALIDATED`:
+
+```text
+READ
+→ CONDITION
+→ PROPOSAL
+→ HUMAN APPROVAL
+→ SERVER EXECUTION AS DRAFT
+→ VERIFY
+```

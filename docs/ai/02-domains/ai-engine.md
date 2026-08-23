@@ -74,3 +74,31 @@ Job #38: direct LLM candidate selection → workflow_plan_validated (2 steps)
 ```
 
 No planner fallback was used in Jobs #37/#38. Server-side grounding and compilation remain authoritative; the model does not emit Tool arguments or ERP IDs.
+
+## v8.9.0 Accounting Action Orchestrator
+
+The local model remains deliberately bounded.
+
+Model responsibility:
+
+```text
+select one server-grounded action Goal ID
+```
+
+The model does not own:
+
+```text
+party_id
+account_id
+voucher_id
+Tool names
+voucher lines
+approval decision
+DB execution
+```
+
+The orchestrator parses the explicit user amount/account phrases, resolves entities through server Tools, evaluates the debtor condition deterministically, constructs a balanced Proposal, and then stops for human approval.
+
+Live Jobs #41/#42 proved both fail-closed ambiguity and successful grounded Proposal creation. Human approval then exercised the existing Control Plane validator/executor. Jobs #43/#44 proved the resulting `draft` does not contaminate approved/final read facts.
+
+Known observability cleanup: a post-LLM blocked path can currently show `model=none` in final UI metadata even though trace events record the real model. Safety/execution are unaffected.

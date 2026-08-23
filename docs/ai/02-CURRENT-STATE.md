@@ -134,12 +134,27 @@ qwen3:1.7b   → fallback/legacy candidate
 - Live Job #38: direct Candidate-ID LLM plan validated into 2 steps (`document_analytics → party_ledger`) with no fallback. Top confirmed-sales customer for Mordad was کارخانه بهین بسته‌بندی at 518,100,000 IRR; the real Tool-derived party dependency produced current balance 727,100,000 IRR. Route: `accounting_workflow_read`; model time 5.2s.
 - v8.8 Grounded Candidate-ID Accounting Workflow Planner is therefore `LIVE-VALIDATED` for the two canonical dependent accounting workflows.
 
+### Accounting Action Orchestrator — v8.9.0
+
+The first write/action vertical slice is now Live-proven:
+
+- Job #41: ambiguous debit account phrase `بانک` correctly failed closed after real `trial_balance`, offering real choices `10101 بانک ملت - جاری` and `10102 بانک پاسارگاد - جاری`; no Proposal was created.
+- Job #42: exact account code `10101` produced a grounded receipt Proposal after `search_parties → party_ledger → deterministic debtor condition → trial_balance`.
+- Real grounded facts for Job #42: کارخانه بهین بسته‌بندی balance `727,100,000 IRR`; requested receipt `100,000,000 IRR`; debit `10101 بانک ملت - جاری`; credit `11001 حساب‌های دریافتنی تجاری`.
+- Proposal #2 was generated with two balanced lines: `100,000,000` debit and `100,000,000` credit, using Tool-derived `account_id`/`party_id`.
+- Human approval executed the existing server-side validator and created `AI-VCH-20260823-193339-D278` as `general / draft`, totals `100,000,000 / 100,000,000`.
+- Job #43 proved approved/final party ledger facts were unaffected: balance remained `727,100,000 IRR`.
+- Job #44 proved approved/final trial balance facts were unaffected: debit = credit = `17,821,580,000 IRR`, difference `0`.
+- Therefore the first full `READ → CONDITION → PROPOSAL → HUMAN APPROVAL → DRAFT EXECUTION → VERIFY` workflow is `LIVE-VALIDATED`.
+
+Known low-severity observability issue: when a v8.9 action is blocked after the LLM goal-selection step (Job #41), the final UI meta currently reports `model: none` even though the trace proves `qwen3.5:0.8b` ran. This does not affect financial grounding or safety and is deferred to a later observability cleanup.
+
 ## Known non-blocking issues
 
 1. Adaptive exact-prompt cache is **FROZEN** as an optimization; no large dictionary/template project now.
 2. Old root docs under `docs/*.md` contain an earlier broader roadmap and must not override this SmartDocs set.
 3. Full accounting application completeness is intentionally deferred until AI MVP is proven.
-4. v8.8.0.4 اکنون با repeated real-Ollama preflight و Live Jobs #37/#38 `LIVE-VALIDATED` است؛ baseline Git نهایی هنوز باید با Commit دقیق 13 فایل ثبت شود.
+4. v8.9.0 اکنون با Live Jobs #41–#44 و human approval `LIVE-VALIDATED` است؛ baseline Git نهایی v8.9 هنوز باید با Commit دقیق runtime + SmartDocs ثبت شود.
 5. در Workflow وابسته، نبود داده برای رتبه‌بندی باید `partial` برگرداند و نتایج معتبر مراحل قبلی را دور نریزد.
 
 ## Not yet implemented as production capability

@@ -997,6 +997,8 @@ from adaptive_router import install_adaptive_router as _install_adaptive_router
 _install_adaptive_router(Worker)
 from workflow_planner import install_workflow_planner as _install_workflow_planner
 _install_workflow_planner(Worker)
+from action_orchestrator import install_action_orchestrator as _install_action_orchestrator
+_install_action_orchestrator(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()

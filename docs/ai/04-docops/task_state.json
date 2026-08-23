@@ -1,13 +1,13 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Accounting/Financial AI MVP",
-  "baseline_commit": "cd13fae227f18229ee734958ea465b41885e78e2",
-  "current_milestone": "v8.8.0.4 Grounded Candidate-ID Accounting Workflow Planner",
+  "baseline_commit": "b442fe3b556c32bcea3b40b8bff1b70de76ce4cd",
+  "current_milestone": "v8.9.0 Accounting Action Orchestrator",
   "milestone_status": "LIVE-VALIDATED",
   "live_validation_pending": false,
-  "next_phase": "v8.9 Accounting Action Orchestrator",
-  "next_phase_mode": "multi-step proposal/approval actions after v8.8 freeze commit",
-  "active_task": "Freeze v8.8.0.4: exact 13-file stage/commit/push, capture commit SHA, then start v8.9",
+  "next_phase": "v9.0 Financial Intelligence Core",
+  "next_phase_mode": "financial intelligence using deterministic facts plus bounded model interpretation",
+  "active_task": "Freeze v8.9.0: exact runtime + SmartDocs stage/commit/push, capture final v8.9 SHA, then start v9.0",
   "frozen_subsystems": [
     "adaptive plan cache expansion",
     "large regex/dictionary expansion"
@@ -20,17 +20,22 @@
     "multi-agent/framework migration without proven need"
   ],
   "known_issues": [
-    "Git baseline is still cd13fae until the exact v8.8 13-file set is committed",
-    "qwen3:1.7b timed out on the complex planner diagnostic; gemma3:4b is too slow for this planner path on current CPU",
+    "Blocked v8.9 action after LLM selection can show model=none in final UI meta even though trace records qwen3.5:0.8b; observability-only, not financial safety",
+    "qwen3:1.7b timed out on the v8.8 complex planner diagnostic; gemma3:4b is too slow for that planner path on current CPU",
     "legacy root docs contain older broader roadmap"
   ],
   "updated_at": "2026-08-23",
   "live_validation_jobs": [
-    37,
-    38
+    41,
+    42,
+    43,
+    44
   ],
   "live_validation_summary": {
-    "job_37": "direct 5-step Candidate-ID LLM workflow; partial on real empty current-month ranking; no planner fallback",
-    "job_38": "direct 2-step Candidate-ID LLM workflow; document_analytics to party_ledger with Tool-derived party dependency; no planner fallback"
+    "job_41": "generic bank account ambiguous; real trial-balance candidates returned; fail-closed with no Proposal",
+    "job_42": "grounded debtor receipt action created Proposal #2 for 100,000,000 IRR using real customer/account IDs",
+    "human_approval": "Proposal #2 approved in UI; server created AI-VCH-20260823-193339-D278 as balanced draft voucher",
+    "job_43": "approved/final party balance remained 727,100,000 IRR after draft execution",
+    "job_44": "approved/final trial balance remained 17,821,580,000 debit/credit, difference 0"
   }
 }

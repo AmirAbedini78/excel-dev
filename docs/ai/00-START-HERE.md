@@ -62,7 +62,7 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 
 - Repository: `AmirAbedini78/excel-dev`
 - SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
-- Current implementation milestone: `v8.8.0.4 — Grounded Candidate-ID Accounting Workflow Planner`
-- Validation state: `LIVE-VALIDATED` on real cPanel data with Jobs #37/#38; direct grounded Candidate-ID LLM plans validated without planner fallback.
-- Next development target: `v8.9 — Accounting Action Orchestrator` after freezing/committing the exact v8.8 13-file set.
+- Current implementation milestone: `v8.9.0 — Accounting Action Orchestrator`
+- Validation state: `LIVE-VALIDATED` end-to-end through Jobs #41–#44 plus human approval: grounded read → deterministic condition → approval-only Proposal → human approval → draft voucher → post-action verification.
+- Next development target: `v9.0 — Financial Intelligence Core` after freezing/committing the exact v8.9 runtime + SmartDocs set.
 - Scope: **Accounting/Financial AI MVP only**
