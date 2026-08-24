@@ -76,6 +76,25 @@ final class AiModule
             'deep_financial_analysis_fallback'=>'گزارش قطعی؛ تحلیل عمیق تکمیل نشد',
             'tool_agent'=>'ایجنت ابزارمحور',
             'fast_read_analysis'=>'تحلیل سریع',
+            'grounded_multi_read'=>'خواندن چندبخشی Grounded',
+            'accounting_workflow_read'=>'Workflow حسابداری Grounded',
+            'accounting_workflow_partial'=>'Workflow حسابداری با نتیجه جزئی',
+            'accounting_workflow_blocked'=>'Workflow حسابداری مسدودشده',
+            'accounting_action_proposal'=>'Proposal اقدام حسابداری',
+            'accounting_action_noop'=>'اقدام حسابداری؛ شرط برقرار نبود',
+            'accounting_action_blocked'=>'اقدام حسابداری مسدودشده',
+            'accounting_action_rejected'=>'اقدام حسابداری ردشده',
+            'guarded_sales_invoice_proposal'=>'Proposal فاکتور فروش',
+            'guarded_sales_invoice_blocked'=>'فاکتور فروش مسدودشده',
+            'financial_intelligence'=>'هوشمندی مالی',
+            'financial_intelligence_blocked'=>'هوشمندی مالی مسدودشده',
+            'forecast_risk_anomaly'=>'پیش‌بینی، ریسک و ناهنجاری',
+            'forecast_risk_blocked'=>'پیش‌بینی مسدودشده',
+            'proactive_accounting'=>'پایش پیش‌دستانه حسابداری',
+            'proactive_accounting_no_action'=>'پایش پیش‌دستانه؛ اقدام مهمی نبود',
+            'proactive_accounting_blocked'=>'پایش پیش‌دستانه مسدودشده',
+            'adaptive_cache_read'=>'خواندن تطبیقی از Plan معتبر',
+            'adaptive_llm_read'=>'خواندن تطبیقی با Planner',
         ];
         if($mode!=='')$parts[]='مسیر: '.($modeLabels[$mode]??$mode);
 
@@ -93,13 +112,20 @@ final class AiModule
         $ed=(float)($m['eval_duration']??0);
         if($ec>0&&$ed>0)$parts[]='Generation: '.number_format($ec/($ed/1000000000),1).' tok/s';
 
+        $hard=(array)($meta['commercial_hardening']??[]);
+        if(isset($hard['end_to_end_seconds'])&&is_numeric($hard['end_to_end_seconds']))$parts[]='زمان کل: '.number_format((float)$hard['end_to_end_seconds'],1).'s';
+        if(!empty($hard['latency_status']))$parts[]='بودجه زمان: '.($hard['latency_status']==='within_budget'?'پاس':'بیش‌ازحد');
+        $riskLabels=['low'=>'کم','medium'=>'متوسط','high'=>'بالا'];$risk=(string)($hard['risk_class']??'');
+        if($risk!=='')$parts[]='ریسک مسیر: '.($riskLabels[$risk]??$risk);
+
         return $parts?'<div class="muted" style="margin-top:10px">'.h(implode(' • ',$parts)).'</div>':'';
     }
 
     private static function proposalCard(array $p): void
     {
-        $args=json_decode((string)$p['arguments_json'],true)?:[];echo '<div class="ai-proposal"><div><span class="badge">'.h($p['risk_level']).'</span><b>'.h($p['summary']).'</b><small>Tool: '.h($p['tool_name']).'</small></div><details><summary>پارامترهای پیشنهادی</summary><pre>'.h(json_encode($args,JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)).'</pre></details>';
-        if($p['status']==='proposed' && Tenant::can('ai.actions.approve'))echo '<div class="row-actions"><form method="post">'.csrf_field().'<input type="hidden" name="action" value="ai_approve_proposal"><input type="hidden" name="proposal_id" value="'.(int)$p['id'].'"><button class="btn tiny primary" onclick="return confirm(\'این عملیات پس از تایید روی دیتابیس اجرا شود؟\')">تایید و اجرا</button></form><form method="post">'.csrf_field().'<input type="hidden" name="action" value="ai_reject_proposal"><input type="hidden" name="proposal_id" value="'.(int)$p['id'].'"><button class="btn tiny danger">رد</button></form></div>';else echo '<small>وضعیت: '.h($p['status']).'</small>';
+        $args=json_decode((string)$p['arguments_json'],true)?:[];$risk=(string)$p['risk_level'];$riskLabels=['low'=>'کم','medium'=>'متوسط','high'=>'بالا'];$statusLabels=['proposed'=>'منتظر تایید انسانی','approved'=>'تاییدشده','executed'=>'اجراشده','rejected'=>'ردشده'];
+        echo '<div class="ai-proposal"><div><span class="badge">ریسک '.h($riskLabels[$risk]??$risk).'</span><b>Proposal #'.(int)$p['id'].' — '.h($p['summary']).'</b><small>وضعیت: '.h($statusLabels[$p['status']]??$p['status']).' • Tool: '.h($p['tool_name']).'</small></div><details><summary>پارامترهای پیشنهادی Grounded</summary><pre>'.h(json_encode($args,JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)).'</pre></details>';
+        if($p['status']==='proposed' && Tenant::can('ai.actions.approve'))echo '<div class="row-actions"><form method="post">'.csrf_field().'<input type="hidden" name="action" value="ai_approve_proposal"><input type="hidden" name="proposal_id" value="'.(int)$p['id'].'"><button class="btn tiny primary" onclick="return confirm(\'Proposal #'.(int)$p['id'].' با ریسک '.h($riskLabels[$risk]??$risk).' پس از تایید روی دیتابیس اجرا شود؟\')">تایید انسانی و اجرا</button></form><form method="post">'.csrf_field().'<input type="hidden" name="action" value="ai_reject_proposal"><input type="hidden" name="proposal_id" value="'.(int)$p['id'].'"><button class="btn tiny danger">رد Proposal</button></form></div>';else echo '<small>این Proposal قابل اجرا نیست یا مجوز تایید در دسترس نیست.</small>';
         echo '</div>';
     }
 
@@ -121,5 +147,5 @@ final class AiModule
         echo '<section class="card table-card"><h2>توکن‌ها</h2><div class="table-wrap"><table><thead><tr><th>عنوان</th><th>Prefix</th><th>قابلیت‌ها</th><th>آخرین استفاده</th><th>وضعیت</th></tr></thead><tbody>';foreach(AiRepository::workerTokens() as $t){echo '<tr><td>'.h($t['label']).'</td><td><code>'.h($t['token_prefix']).'…</code></td><td>'.h(implode(', ',json_decode($t['capabilities_json']??'[]',true)?:[])).'</td><td>'.h($t['last_used_at']).'</td><td>'.((int)$t['active']?'فعال':'غیرفعال');if((int)$t['active'])echo '<form method="post" class="inline-form" style="margin-top:6px">'.csrf_field().'<input type="hidden" name="action" value="ai_revoke_worker_token"><input type="hidden" name="token_id" value="'.(int)$t['id'].'"><button class="btn tiny danger" onclick="return confirm(\'دسترسی این Worker Token لغو شود؟\')">لغو دسترسی</button></form>';echo '</td></tr>';}echo '</tbody></table></div></section>';
     }
 
-    private static function statusText(string $s): string{return match($s){'queued'=>'در صف؛ منتظر Worker آنلاین','leased'=>'به Worker اختصاص داده شد','running'=>'در حال پردازش','failed'=>'ناموفق',default=>'در حال پردازش'};}
+    private static function statusText(string $s): string{return match($s){'queued'=>'در صف؛ منتظر Worker آنلاین','leased'=>'به Worker اختصاص داده شد','running'=>'در حال پردازش','succeeded'=>'موفق','failed'=>'ناموفق',default=>$s};}
 }

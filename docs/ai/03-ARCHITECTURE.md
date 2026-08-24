@@ -106,16 +106,24 @@ Prompt
 
 ## 4. Current Worker guard stack
 
-در Snapshot v8.7 ترتیب مفهومی Guardها:
+در Snapshot v9.3 ترتیب نصب Runtime:
 
 ```text
 Safe Deep
 → Guarded Invoice Agent
 → Grounded/Parameterized Read
 → Adaptive Read Plan Cache
+→ Constrained Workflow Planner
+→ Accounting Action Orchestrator
+→ Financial Intelligence
+→ Forecast/Risk/Anomaly
+→ Proactive Accounting Agent
+→ Commercial Hardening (last wrapper)
 ```
 
-این Guardها Proof-of-Architecture هستند. هدف v8.8+ این است که منطق چندمرحله‌ای Accounting به یک Planner/Orchestrator عمومی‌تر تبدیل شود، بدون حذف safety contracts.
+Commercial Hardening هیچ منطق مالی جدیدی ندارد. وظیفه آن enforce کردن قرارداد release روی نتیجه همه مسیرهاست: read-only/proposal-only، secret redaction، end-to-end latency، actual Tool/model observability و fail-closed metadata contract.
+
+Proposal descriptorها به generic LLM loop داده نمی‌شوند. فقط Guarded Invoice Agent و Accounting Action Orchestrator پس از grounding قطعی می‌توانند Proposal Tool مشخص را مستقیم فراخوانی کنند.
 
 ## 5. Tool contract
 
@@ -129,6 +137,18 @@ Server باید:
 - dates را normalize/validate کند.
 - idempotency را enforce کند.
 - audit بنویسد.
+
+### Terminal recovery contract
+
+```text
+Worker complete/fail
+→ server transaction commits once
+→ lost response may retry with same node + lease secret
+→ same terminal state acknowledged as replay for 24h
+→ opposite terminal state rejected
+```
+
+Proposal insert نیز با unique idempotency key و atomic upsert انجام می‌شود. Retry هرگز مجوز Approval را bypass نمی‌کند و اجرای Proposal همچنان با row lock و transaction است.
 
 ## 6. RAG boundary
 

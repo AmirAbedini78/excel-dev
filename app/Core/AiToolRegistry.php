@@ -248,11 +248,16 @@ final class AiToolRegistry
         $d=self::descriptor($tool);if(!$d||($d['mode']??'')!=='proposal')throw new RuntimeException('proposal_tool_not_allowed');
         self::validateProposalArgs($wid,$cid,$tool,$args);
         $summary=trim($summary)?:self::proposalSummary($tool,$args);$idempotencyKey=trim($idempotencyKey);
+        $key=$idempotencyKey!==''?mb_substr($idempotencyKey,0,190):null;
+        $values=[$wid,$cid,$jobId,$tool,$key,json_encode($args,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),mb_substr($summary,0,500),(string)$d['risk']];
         if($idempotencyKey!==''){
-            $chk=pdo()->prepare("SELECT id FROM ai_action_proposals WHERE workspace_id=? AND job_id=? AND idempotency_key=? LIMIT 1");$chk->execute([$wid,$jobId,mb_substr($idempotencyKey,0,190)]);$existing=(int)$chk->fetchColumn();if($existing)return$existing;
+            // Atomic under concurrent worker/API retries. LAST_INSERT_ID(id) makes
+            // PDO return the existing Proposal id on the duplicate-key branch.
+            $st=pdo()->prepare("INSERT INTO ai_action_proposals (workspace_id,company_id,job_id,tool_name,idempotency_key,arguments_json,summary,risk_level,requires_approval,status,proposed_at) VALUES (?,?,?,?,?,?,?,?,1,'proposed',NOW()) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)");
+            $st->execute($values);return(int)pdo()->lastInsertId();
         }
         $st=pdo()->prepare("INSERT INTO ai_action_proposals (workspace_id,company_id,job_id,tool_name,idempotency_key,arguments_json,summary,risk_level,requires_approval,status,proposed_at) VALUES (?,?,?,?,?,?,?,?,1,'proposed',NOW())");
-        $st->execute([$wid,$cid,$jobId,$tool,$idempotencyKey!==''?mb_substr($idempotencyKey,0,190):null,json_encode($args,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),mb_substr($summary,0,500),(string)$d['risk']]);
+        $st->execute($values);
         return (int)pdo()->lastInsertId();
     }
 

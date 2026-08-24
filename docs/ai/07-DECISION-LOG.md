@@ -74,3 +74,8 @@ Status: ACCEPTED
 Status: ACCEPTED
 
 هدف فعلی اثبات و تجاری‌سازی مغز AI روی ماژول مالی موجود است. Full accounting product expansion بعد از MVP تصمیم‌گیری و اجرا می‌شود.
+
+## ADR-016 — Commercial release guard and idempotent terminal delivery
+Status: ACCEPTED
+
+v9.3 یک Wrapper نهایی cross-cutting روی Guard Stack دارد تا بدون تغییر محاسبات مالی، contractهای latency/observability/redaction/read-only/proposal-only را یکجا enforce کند. Proposal creation باید atomic idempotent باشد و retry پاسخ گمشده `complete/fail` باید همان terminal state را بدون side effect دوم acknowledge کند. این recovery هرگز Proposal Approval یا domain validation را bypass نمی‌کند.

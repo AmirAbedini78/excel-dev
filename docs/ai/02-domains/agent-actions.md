@@ -1,18 +1,23 @@
 ---
 id: agent_actions
-status: active
+status: LOCAL-VALIDATED
 touches_code:
   - app/Core/AiToolRegistry.php
   - app/Core/AiRepository.php
   - engine/agent_guard.py
+  - engine/action_orchestrator.py
+  - engine/commercial_hardening.py
   - engine/worker.py
 ---
 
 # Accounting Agent Actions
 
-## Current proven action
+## Current proven actions
 
-Sales invoice Draft proposal.
+- Sales invoice Draft Proposal؛
+- conditional grounded receipt → balanced voucher Draft Proposal؛
+- Human Approval → deterministic Draft creation؛
+- post-action confirmed/final verification.
 
 ## Invariants
 
@@ -22,17 +27,19 @@ Sales invoice Draft proposal.
 - proposal must exist before UI says proposal created
 - approval is server-side
 - final/post is not direct LLM action
+- concurrent retry returns the same Proposal ID
+- terminal response retry cannot execute completion side effects twice
 
-## Next
+## v9.3 commercial hardening
 
-Generalize orchestration after v8.8 read planner:
+- sales-invoice Proposal = medium risk؛
+- voucher Proposal = high risk؛
+- both require `ai.actions.approve` and explicit Human Approval؛
+- atomic idempotency key prevents duplicate Proposal؛
+- same terminal response can be replayed for delivery recovery؛
+- UI shows Proposal ID, localized risk/status and explicit confirmation.
 
-- action plan
-- prerequisites
-- dependency outputs
-- proposal checkpoint
-- resume
-- verify
+General financial orchestration beyond the proven receipt slice remains deferred until after Commercial MVP freeze decision.
 
 ## Target examples
 

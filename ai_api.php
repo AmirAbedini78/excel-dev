@@ -12,8 +12,18 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 
+function ai_request_id(): string
+{
+    static $id=null;if($id!==null)return$id;
+    $candidate=trim((string)($_SERVER['HTTP_X_AI_REQUEST_ID']??''));
+    $id=preg_match('/^[A-Za-z0-9._-]{8,80}$/',$candidate)?$candidate:bin2hex(random_bytes(8));
+    return$id;
+}
+
 function ai_json(array $payload, int $status=200): never
 {
+    $payload['request_id']=$payload['request_id']??ai_request_id();
+    header('X-Request-ID: '.ai_request_id());
     http_response_code($status);
     echo json_encode($payload, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
     exit;
@@ -98,20 +108,28 @@ try {
 
     if($action==='complete'){
         $node=ai_node($token,$body);
-        AiRepository::completeJob($token,$node,(int)($body['job_id']??0),(string)($body['lease_token']??''),$body);
-        ai_json(['ok'=>true]);
+        $replayed=AiRepository::completeJob($token,$node,(int)($body['job_id']??0),(string)($body['lease_token']??''),$body);
+        ai_json(['ok'=>true,'replayed'=>$replayed]);
     }
 
     if($action==='fail'){
         $node=ai_node($token,$body);
-        AiRepository::failJob($token,$node,(int)($body['job_id']??0),(string)($body['lease_token']??''),(string)($body['error']??'worker_failed'));
-        ai_json(['ok'=>true]);
+        $replayed=AiRepository::failJob($token,$node,(int)($body['job_id']??0),(string)($body['lease_token']??''),(string)($body['error']??'worker_failed'));
+        ai_json(['ok'=>true,'replayed'=>$replayed]);
     }
 
     if($action==='tools') ai_json(['ok'=>true,'tools'=>AiToolRegistry::descriptors()]);
     ai_json(['ok'=>false,'error'=>'unknown_action'],404);
 } catch(Throwable $e) {
-    $msg=$e->getMessage();
-    $status=in_array($msg,['worker_token_invalid','worker_token_required'],true)?401:400;
-    ai_json(['ok'=>false,'error'=>$msg],$status);
+    $msg=trim($e->getMessage());$requestId=ai_request_id();
+    $sensitive=$msg===''||preg_match('/SQLSTATE|PDOException|stack trace|unknown column|base table|duplicate entry|\/home\d*\//i',$msg);
+    if($sensitive){error_log('[ai_api '.$requestId.'] '.get_class($e).': '.$e->getMessage());$msg='server_error';}
+    $status=match(true){
+        in_array($msg,['worker_token_invalid','worker_token_required'],true)=>401,
+        $msg==='payload_too_large'=>413,
+        in_array($msg,['lease_invalid','lease_expired','lease_retry_window_expired','job_terminal_conflict'],true)=>409,
+        $msg==='server_error'=>500,
+        default=>400
+    };
+    ai_json(['ok'=>false,'error'=>$msg,'request_id'=>$requestId],$status);
 }

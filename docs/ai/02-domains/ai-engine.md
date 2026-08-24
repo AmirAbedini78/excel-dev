@@ -1,6 +1,6 @@
 ---
 id: ai_engine
-status: active
+status: LOCAL-VALIDATED
 touches_code:
   - engine/worker.py
   - engine/deep_safe.py
@@ -168,3 +168,18 @@ server post-gate:
 The proactive module never calls Proposal/write tools. Its action bridge is descriptive and points to existing guarded action flows only after explicit user parameters are supplied.
 
 If the bounded priority selector fails, deterministic severity/impact ordering still renders the proactive report.
+
+## v9.3.0 Commercial Hardening execution contract
+
+`commercial_hardening.py` آخرین Wrapper نصب‌شده روی Worker است و منطق مالی قبلی را تغییر نمی‌دهد.
+
+```text
+existing guarded route
+→ actual Tool/model evidence
+→ read/proposal invariant check
+→ latency budget classification
+→ secret-redacted trace/meta
+→ commercial-mvp-v1 result contract
+```
+
+Remote Control Plane بدون HTTPS (به‌جز loopback test) و Worker token خارج از قالب server-issued قبل از register رد می‌شوند. `tools_attempted`, `model_attempted`, end-to-end latency و risk/mutation boundary در metadata خروجی پایدار می‌شوند.

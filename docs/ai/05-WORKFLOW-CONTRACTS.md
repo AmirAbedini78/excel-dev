@@ -150,3 +150,18 @@ POST/FINALIZE/HIGH-RISK      → strict approval
 EXTERNAL SEND                → separate permission/approval policy
 DELETE/REVERSAL              → strict lifecycle + approval
 ```
+
+## Workflow I — Commercial failure recovery
+
+```text
+same Tool call ID + retry
+→ atomic Proposal upsert
+→ same Proposal ID
+
+same lease + repeated terminal request within 24h
+→ same terminal state: replay acknowledgement
+→ opposite terminal state: conflict
+→ no second side effect / no second worker-counter decrement
+```
+
+Recovery فقط delivery را idempotent می‌کند؛ Approval و domain validation را دور نمی‌زند.

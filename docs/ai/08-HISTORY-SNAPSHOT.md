@@ -919,3 +919,44 @@ Conclusion:
 ```text
 v9.2.0 Proactive Accounting Agent = LIVE-VALIDATED
 ```
+
+## v9.3.0 — Commercial MVP Hardening candidate
+
+Frozen input baseline:
+
+```text
+a9a8c0259f4e7eaca248f9d9a912817fd1e23c92
+v9.2.0 LIVE-VALIDATED — Job #48
+```
+
+Architecture/code review found two release-blocking retry races and one observability gap:
+
+```text
+1. Proposal SELECT-then-INSERT could race under concurrent identical requests.
+2. complete response could be committed then lost; retry saw lease_invalid and Worker reported false failure.
+3. blocked v8.9 action could hide the actually attempted model/tools in final metadata.
+```
+
+v9.3 candidate changes:
+
+```text
+atomic Proposal upsert → same Proposal ID on concurrent retry
+24h idempotent terminal replay → no second side effect/counter decrement
+X-AI-Request-ID → correlated retries/errors
+secret-redacted persisted metadata/trace
+last commercial guard → read/proposal invariants + risk + end-to-end latency budget
+generic LLM tool loop → read-only descriptors; dedicated grounded guards own Proposal calls
+permanent tests + dependency-free release gate + GitHub CI/PHP lint
+localized route/risk/Proposal/latency UX
+```
+
+Validation level at this snapshot:
+
+```text
+LOCAL-VALIDATED
+PHP lint/CI: pending outside local builder
+cPanel deploy: pending
+rebuilt Worker live jobs: pending
+```
+
+No accounting Feature, numeric formula, direct mutation or auto-approval was added.

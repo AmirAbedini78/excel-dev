@@ -1,6 +1,6 @@
 ---
 id: accounting_financial
-status: active_mvp
+status: LOCAL-VALIDATED
 reads:
   - docs/ai/01-NORTH-STAR.md
   - docs/ai/04-ROADMAP.md
@@ -198,3 +198,14 @@ severity: informational
 The AR/AP ratios are management heuristics, not accounting standards or cash-flow forecasts.
 
 The proactive route is recommendation-only. It can point to the existing receipt Proposal flow, but it cannot invent customer, amount or accounts and cannot create a financial mutation without explicit user inputs + human approval.
+
+## v9.3.0 commercial release boundary
+
+Financial calculations and v9.0–v9.2 route semantics are unchanged. v9.3 adds release enforcement around them:
+
+- read/intelligence/forecast/proactive routes fail closed if a Proposal tool is observed؛
+- Proposal routes require a real ID and `awaiting_human_approval`؛
+- invoice Draft Proposal is medium risk and voucher Draft Proposal is high risk؛
+- Proposal insert is atomic-idempotent؛
+- complete/fail delivery retry has no second accounting side effect؛
+- post/finalize/delete/reversal remain unexposed.

@@ -14,6 +14,7 @@
 6. Domain مرتبط از `02-domains/INDEX.yml`
 7. در صورت عملیات/تحلیل AI: `05-WORKFLOW-CONTRACTS.md`
 8. قبل از تحویل: `06-TEST-RELEASE-PROTOCOL.md`
+9. برای Commercial MVP: `09-COMMERCIAL-MVP-RELEASE.md`
 
 برای انتقال سریع Context به AI جدید، بعد از موارد بالا این فایل را بخوان:
 
@@ -62,7 +63,9 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 
 - Repository: `AmirAbedini78/excel-dev`
 - SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
-- Current implementation milestone: `v9.2.0 — Proactive Accounting Agent`
-- Validation state: `LIVE-VALIDATED` through Job #48: 9 grounded accounting datasets → deterministic next-best-action candidates → bounded Qwen action-ID priority → deterministic severity/impact gate → recommendation-only safe action bridge.
-- Next development target: `v9.3 — Commercial MVP Hardening` after freezing/committing v9.2.0.
+- Frozen runtime baseline: `a9a8c0259f4e7eaca248f9d9a912817fd1e23c92` (`v9.2.0`, `LIVE-VALIDATED` through Job #48)
+- Current implementation milestone: `v9.3.0 — Commercial MVP Hardening`
+- Validation state: `LOCAL-VALIDATED`; cPanel/Worker live validation is pending.
+- Release contract: `09-COMMERCIAL-MVP-RELEASE.md`
+- Next target: complete v9.3 live checklist, freeze the Commercial MVP, then move to market/customer/pricing/positioning/GTM work.
 - Scope: **Accounting/Financial AI MVP only**

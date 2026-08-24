@@ -25,5 +25,12 @@
   "rag_top_k": 5,
   "deep_timeout_seconds": 210,
   "api_retry_attempts": 4,
-  "api_retry_base_seconds": 1.0
+  "api_retry_base_seconds": 1.0,
+  "latency_budgets_seconds": {
+    "deterministic": 5,
+    "read_model": 45,
+    "action": 45,
+    "deep": 240,
+    "fallback": 90
+  }
 }

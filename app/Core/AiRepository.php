@@ -180,24 +180,54 @@ final class AiRepository
         if($j['lease_expires_at'] && strtotime($j['lease_expires_at'])<time())throw new RuntimeException('lease_expired');return$j;
     }
 
-    public static function completeJob(array $token,array $node,int $jobId,string $lease,array $payload): void
+    private static function lockJobForTerminalWrite(array $token,int $jobId,int $nodeId,string $lease): array
     {
-        $j=self::validateLease($token,$jobId,(int)$node['id'],$lease);$pdo=pdo();$pdo->beginTransaction();
+        $st=pdo()->prepare("SELECT * FROM ai_jobs WHERE id=? AND workspace_id=? AND worker_node_id=? LIMIT 1 FOR UPDATE");
+        $st->execute([$jobId,(int)$token['workspace_id'],$nodeId]);$j=$st->fetch();
+        if(!$j||empty($j['lease_hash'])||!hash_equals((string)$j['lease_hash'],hash('sha256',$lease)))throw new RuntimeException('lease_invalid');
+        $status=(string)$j['status'];
+        if(in_array($status,['succeeded','failed'],true)){
+            $completed=strtotime((string)($j['completed_at']??''));
+            if(!$completed||$completed<time()-86400)throw new RuntimeException('lease_retry_window_expired');
+            return$j;
+        }
+        if(!in_array($status,['leased','running'],true))throw new RuntimeException('lease_invalid');
+        if($j['lease_expires_at']&&strtotime((string)$j['lease_expires_at'])<time())throw new RuntimeException('lease_expired');
+        return$j;
+    }
+
+    public static function completeJob(array $token,array $node,int $jobId,string $lease,array $payload): bool
+    {
+        $pdo=pdo();$pdo->beginTransaction();
         try{
+            $j=self::lockJobForTerminalWrite($token,$jobId,(int)$node['id'],$lease);
+            if((string)$j['status']==='succeeded'){$pdo->commit();return true;}
+            if((string)$j['status']==='failed')throw new RuntimeException('job_terminal_conflict');
             $text=trim((string)($payload['result_text']??''));$result=(array)($payload['result']??[]);
-            $pdo->prepare("UPDATE ai_jobs SET status='succeeded',result_text=?,result_json=?,completed_at=NOW(),updated_at=NOW(),lease_hash=NULL WHERE id=?")->execute([$text,json_encode($result,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$jobId]);
+            $done=$pdo->prepare("UPDATE ai_jobs SET status='succeeded',result_text=?,result_json=?,completed_at=NOW(),updated_at=NOW() WHERE id=? AND status IN ('leased','running')");
+            $done->execute([$text,json_encode($result,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$jobId]);
+            if($done->rowCount()!==1)throw new RuntimeException('job_terminal_conflict');
             foreach((array)($payload['proposals']??[]) as $p){AiToolRegistry::storeProposal((int)$j['workspace_id'],$j['company_id']?(int)$j['company_id']:null,$jobId,(string)($p['tool_name']??''),(array)($p['arguments']??[]),(string)($p['summary']??''));}
             foreach((array)($payload['suggestions']??[]) as $s){$pdo->prepare("INSERT INTO ai_suggestions (workspace_id,company_id,user_id,suggestion_type,title,body,evidence_json,score,status,due_at,source_job_id,created_at) VALUES (?,?,?,?,?,?,?,?, 'new',?,?,NOW())")
                 ->execute([(int)$j['workspace_id'],$j['company_id']?(int)$j['company_id']:null,(int)$j['requested_by'],substr((string)($s['type']??'general'),0,60),substr((string)($s['title']??'پیشنهاد هوشمند'),0,190),(string)($s['body']??''),json_encode((array)($s['evidence']??[])),isset($s['score'])?(float)$s['score']:null,$s['due_at']??null,$jobId]);}
             $pdo->prepare("UPDATE ai_worker_nodes SET current_jobs=GREATEST(current_jobs-1,0),last_seen_at=NOW(),updated_at=NOW() WHERE id=?")->execute([(int)$node['id']]);$pdo->commit();
+            return false;
         }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
     }
 
-    public static function failJob(array $token,array $node,int $jobId,string $lease,string $error): void
+    public static function failJob(array $token,array $node,int $jobId,string $lease,string $error): bool
     {
-        self::validateLease($token,$jobId,(int)$node['id'],$lease);
-        pdo()->prepare("UPDATE ai_jobs SET status='failed',error_text=?,completed_at=NOW(),updated_at=NOW(),lease_hash=NULL WHERE id=?")->execute([mb_substr($error,0,10000),$jobId]);
-        pdo()->prepare("UPDATE ai_worker_nodes SET current_jobs=GREATEST(current_jobs-1,0),last_seen_at=NOW(),updated_at=NOW() WHERE id=?")->execute([(int)$node['id']]);
+        $pdo=pdo();$pdo->beginTransaction();
+        try{
+            $j=self::lockJobForTerminalWrite($token,$jobId,(int)$node['id'],$lease);
+            if((string)$j['status']==='failed'){$pdo->commit();return true;}
+            if((string)$j['status']==='succeeded')throw new RuntimeException('job_terminal_conflict');
+            $done=$pdo->prepare("UPDATE ai_jobs SET status='failed',error_text=?,completed_at=NOW(),updated_at=NOW() WHERE id=? AND status IN ('leased','running')");
+            $done->execute([mb_substr($error,0,10000),$jobId]);
+            if($done->rowCount()!==1)throw new RuntimeException('job_terminal_conflict');
+            $pdo->prepare("UPDATE ai_worker_nodes SET current_jobs=GREATEST(current_jobs-1,0),last_seen_at=NOW(),updated_at=NOW() WHERE id=?")->execute([(int)$node['id']]);
+            $pdo->commit();return false;
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
     }
 
     public static function findNode(array $token,string $nodeUid): array

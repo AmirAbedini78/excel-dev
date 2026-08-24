@@ -1,0 +1,23 @@
+name: Commercial MVP Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify PHP runtime
+        run: php --version
+      - name: Run commercial MVP release gate
+        run: python scripts/release_gate.py --require-php

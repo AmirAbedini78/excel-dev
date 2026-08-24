@@ -30,11 +30,12 @@ DEFER:
 ## Current baseline / phase
 
 ```text
-v9.2 source baseline: 55437edddaf464dea969a556b362037ac6fbae11
-Milestone: v9.2.0 Proactive Accounting Agent
-Status: LIVE-VALIDATED — Job #48
-v9.2 Proactive Accounting Agent is Live-validated. Job #48 proved the fixed 9-read proactive review, deterministic next-best-action creation, severity/impact-safe prioritization and recommendation-only bridge to guarded financial actions. No Proposal/write was created by the proactive path. Next operational step is exact runtime + SmartDocs commit/push, then v9.3 Commercial MVP Hardening.
-Next after v9.2 freeze: v9.3 Commercial MVP Hardening
+Frozen source baseline: a9a8c0259f4e7eaca248f9d9a912817fd1e23c92
+Baseline: v9.2.0 Proactive Accounting Agent — LIVE-VALIDATED, Job #48
+Working milestone: v9.3.0 Commercial MVP Hardening
+Working status: LOCAL-VALIDATED; GitHub CI + cPanel + rebuilt Worker live validation pending
+Release contract: docs/ai/09-COMMERCIAL-MVP-RELEASE.md
+Next: install exact v9.3 candidate, pass CI/PHP lint, deploy cPanel, rebuild Worker, execute live checklist, then freeze Commercial MVP.
 ```
 
 ## Architecture
@@ -72,10 +73,16 @@ Python + Ollama
 - entity/status analytics
 - multi-intent
 - adaptive unknown-read planning
+- constrained multi-step accounting workflows
+- conditional receipt Proposal + Human Approval + Draft verification
+- financial intelligence
+- deterministic forecast/risk/anomaly
+- proactive next-best-action recommendation
+- commercial runtime/recovery/release guard (local candidate)
 
 ## Current implementation philosophy
 
-v8.8 فقط Read multi-step است و Write را intercept نمی‌کند.
+Planner read multi-step است و Write را intercept نمی‌کند؛ write فقط از Guarded Proposal routes عبور می‌کند.
 
 Example:
 
@@ -88,7 +95,7 @@ Prompt
 → grounded response
 ```
 
-v8.9 مرحله بعدی write/action orchestration با Proposal/Approval است.
+v9.3 Feature جدید نیست؛ هدفش freeze کردن رفتارهای اثبات‌شده با regression، recovery، security، observability و release gates است.
 
 ## Development workflow
 

@@ -253,19 +253,19 @@ Out of scope for v9.2:
 - background auto-execution without a user action/approval boundary
 
 ### v9.3 — Commercial MVP Hardening
-Status: `PLANNED`
+Status: `LOCAL-VALIDATED`; live checklist pending
 
-- end-to-end evaluation suite
-- permission/risk matrix
-- idempotency/rollback tests
-- concurrency
-- performance/latency budgets
-- observability
-- backup/restore
-- security review
-- UX polish
-- failure recovery
-- documentation freeze/release checklist
+- permanent end-to-end regression/release suite + GitHub CI
+- canonical permission/risk matrix
+- atomic Proposal idempotency under concurrent retry
+- idempotent complete/fail response-loss recovery
+- route-class performance/latency budgets
+- actual Tool/model/request observability
+- metadata/trace secret redaction + remote HTTPS guard
+- Proposal/mode/risk/latency UX polish
+- rollback, demo and live release checklist
+
+No new accounting/AI feature is part of v9.3. Completion requires the live checklist in `09-COMMERCIAL-MVP-RELEASE.md`; only then does the Commercial MVP become `FROZEN`.
 
 ## Post-MVP — فقط بعد از تصمیم جداگانه
 

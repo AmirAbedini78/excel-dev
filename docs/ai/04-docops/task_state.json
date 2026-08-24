@@ -1,40 +1,56 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Accounting/Financial AI MVP",
-  "baseline_commit": "55437edddaf464dea969a556b362037ac6fbae11",
-  "current_milestone": "v9.2.0 Proactive Accounting Agent",
-  "milestone_status": "LIVE-VALIDATED",
-  "live_validation_pending": false,
-  "next_phase": "v9.3 Commercial MVP Hardening",
-  "next_phase_mode": "evaluation/security/performance/observability/failure-recovery/UX/release freeze for commercial MVP; no scope expansion",
-  "active_task": "Freeze v9.2.0: exact runtime + SmartDocs stage/commit/push, capture final v9.2 SHA, then start v9.3 Commercial MVP Hardening",
+  "baseline_commit": "a9a8c0259f4e7eaca248f9d9a912817fd1e23c92",
+  "baseline_milestone": "v9.2.0 Proactive Accounting Agent",
+  "baseline_status": "LIVE-VALIDATED",
+  "current_milestone": "v9.3.0 Commercial MVP Hardening",
+  "milestone_status": "LOCAL-VALIDATED",
+  "live_validation_pending": true,
+  "release_contract": "commercial-mvp-v1",
+  "active_task": "Install exact v9.3 candidate, pass GitHub CI/PHP lint, deploy cPanel, rebuild Worker, run live recovery/Proposal/read checks, then freeze Commercial MVP",
+  "in_scope": [
+    "permanent regression and release gate",
+    "permission and risk matrix",
+    "atomic Proposal idempotency",
+    "terminal response-loss recovery",
+    "latency budgets and observability",
+    "metadata and error redaction",
+    "AI route and Proposal UX polish",
+    "release and demo checklist"
+  ],
+  "out_of_scope": [
+    "new accounting or AI feature",
+    "automatic financial execution",
+    "non-accounting AI",
+    "production RAG expansion",
+    "multi-agent or framework migration"
+  ],
   "frozen_subsystems": [
     "adaptive plan cache expansion",
-    "large regex/dictionary expansion"
-  ],
-  "deferred": [
-    "full accounting application completeness",
-    "non-accounting module AI expansion",
-    "Practice OS expansion",
-    "advanced RAG stack",
-    "multi-agent/framework migration without proven need"
+    "large regex/dictionary expansion",
+    "v9.0-v9.2 financial formulas and routing semantics"
   ],
   "known_issues": [
-    "v9.2 live proactive model time was ~16.7s on the observed run; revisit latency in v9.3 Commercial MVP Hardening",
-    "AR/AP months-equivalent signals are management heuristics, not accounting standards or cash-flow forecasts",
+    "PHP CLI is unavailable in the local build environment; mandatory PHP lint remains a GitHub CI and pre-cPanel-deploy gate",
+    "v9.3 cPanel and rebuilt Worker live validation is pending",
     "v9.1 forecast confidence remains low with only 3 complete historical months in demo data",
-    "Blocked v8.9 action after LLM selection can show model=none in final UI meta even though trace records qwen3.5:0.8b; observability-only",
+    "medium and high Proposal risks currently share ai.actions.approve; both remain human-only and never auto-approved",
     "Legacy root docs contain older broader roadmap"
   ],
+  "release_gates": {
+    "local_regression": "PASS",
+    "secret_scan": "PASS",
+    "python_syntax": "PASS",
+    "php_lint": "PENDING_CI",
+    "github_ci": "PENDING",
+    "cpanel_live": "PENDING",
+    "worker_live": "PENDING"
+  },
   "updated_at": "2026-08-24",
-  "live_validation_jobs": [
-    48
-  ],
+  "last_live_validation_job": 48,
   "live_validation_summary": {
-    "job_48": "9 grounded reads; proactive next-best actions; deterministic severity/impact gate; recommendation-only action bridge; no Proposal/write created",
-    "payables_burden": "4,579,500,000 / 1,466,300,000 ≈ 3.12x; critical",
-    "receivables_burden": "3,330,880,000 / 1,985,720,000 ≈ 1.68x; warning",
-    "purchase_decline": "-31.9%; warning",
-    "action_bridge": "v8.9 receipt action; explicit customer/amount/debit_account/credit_account + human approval required"
+    "job_48": "v9.2 baseline: 9 grounded reads; proactive next-best actions; no Proposal/write",
+    "v9_3_required": "read metadata/latency; blocked-action model/tools; Proposal retry; terminal replay; human-approved balanced draft; redaction"
   }
 }

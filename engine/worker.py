@@ -95,12 +95,14 @@ class Api:
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         request_timeout = int(timeout or self.timeout)
         last_error: Exception | None = None
+        request_id = uuid.uuid4().hex
 
         for attempt in range(1, self.retry_attempts + 1):
             req = urllib.request.Request(url, data=data, method="POST", headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
                 "X-AI-Worker-Token": self.token,
+                "X-AI-Request-ID": request_id,
                 "User-Agent": "AccountingAIWorker/1.1",
             })
             try:
@@ -131,7 +133,7 @@ class Api:
             except urllib.error.HTTPError as e:
                 raw = e.read()
                 preview = self._safe_preview(raw)
-                last_error = RuntimeError(f"Server HTTP {e.code} action={action}: {preview}")
+                last_error = RuntimeError(f"Server HTTP {e.code} action={action} request_id={request_id}: {preview}")
                 if e.code not in self.TRANSIENT_HTTP or attempt >= self.retry_attempts:
                     raise last_error from e
 
@@ -473,14 +475,18 @@ class Worker:
     @staticmethod
     def select_tool_descriptors(prompt: str, descriptors: list[dict[str, Any]]) -> list[dict[str, Any]]:
         p = prompt.lower()
+        # Proposal tools are never exposed to the generic LLM loop. Supported
+        # writes are executed only by agent_guard/action_orchestrator after
+        # deterministic grounding; unsupported writes must fail closed.
+        safe_descriptors = [d for d in descriptors if str(d.get("mode") or "read") != "proposal"]
 
         def has(*terms: str) -> bool:
             return any(term in p for term in terms)
 
         if has("فاکتور", "invoice"):
-            wanted = {"search_parties", "search_items", "create_sales_invoice_draft"}
+            wanted = {"search_parties", "search_items"}
         elif has("سند حسابداری", "voucher"):
-            wanted = {"create_voucher_draft"}
+            wanted = {"trial_balance"}
         elif has("مشتری", "تامین", "طرف حساب", "party"):
             wanted = {"search_parties", "party_ledger"}
         elif has("کالا", "خدمت", "item"):
@@ -494,8 +500,8 @@ class Worker:
         else:
             wanted = {"company_snapshot", "search_parties", "search_items", "recent_sales", "recent_purchases"}
 
-        selected = [d for d in descriptors if str(d.get("name")) in wanted]
-        return selected or descriptors[:4]
+        selected = [d for d in safe_descriptors if str(d.get("name")) in wanted]
+        return selected or safe_descriptors[:4]
 
     @staticmethod
     def analysis_depth(prompt: str) -> str:
@@ -1005,13 +1011,18 @@ from forecast_risk import install_forecast_risk as _install_forecast_risk
 _install_forecast_risk(Worker)
 from proactive_agent import install_proactive_agent as _install_proactive_agent
 _install_proactive_agent(Worker)
+from commercial_hardening import install_commercial_hardening as _install_commercial_hardening
+from commercial_hardening import validate_runtime_config as _validate_runtime_config
+_install_commercial_hardening(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config.json")
     ap.add_argument("--once", action="store_true", help="Process at most one leased job")
     args = ap.parse_args()
-    Worker(load_config(args.config)).run(args.once)
+    cfg = load_config(args.config)
+    _validate_runtime_config(cfg)
+    Worker(cfg).run(args.once)
 
 
 if __name__ == "__main__":

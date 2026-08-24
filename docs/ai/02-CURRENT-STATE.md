@@ -7,11 +7,11 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-v8.8 source baseline: cd13fae227f18229ee734958ea465b41885e78e2
-Baseline commit: Add canonical AI development smartdocs
-Working milestone: v8.8.0.4 — Grounded Candidate-ID Accounting Workflow Planner
-Validation state after installer: LOCAL-VALIDATED
-Live validation: LIVE-VALIDATED — Jobs #37/#38
+Frozen source baseline: a9a8c0259f4e7eaca248f9d9a912817fd1e23c92
+Baseline milestone: v9.2.0 — Proactive Accounting Agent
+Baseline live validation: LIVE-VALIDATED — Job #48
+Working milestone: v9.3.0 — Commercial MVP Hardening
+Working validation: LOCAL-VALIDATED; cPanel/Worker live validation pending
 ```
 
 ## Scope فعال
@@ -191,6 +191,23 @@ The first proactive accounting recommendation workflow is now Live-proven:
 - Job #48 explicitly confirmed `proposal_created=false`; no voucher/payment/receipt/invoice was created.
 - v9.2.0 therefore completes the first `proactive grounded review → next-best-action ranking → safe human-controlled action handoff` lifecycle as `LIVE-VALIDATED`.
 
+### Commercial MVP Hardening — v9.3.0 candidate
+
+Status: `LOCAL-VALIDATED`
+
+- permanent dependency-free regression/release suite added under `tests/` + `scripts/release_gate.py`;
+- GitHub CI release gate added with mandatory PHP lint;
+- last Worker guard adds end-to-end latency budgets, actual Tool attempts, attempted-model correction, secret redaction and fail-closed route contracts;
+- generic LLM Tool Agent is read-only; Proposal descriptors are available only to dedicated grounded write guards؛
+- remote Control Plane requires HTTPS; placeholder/invalid Worker tokens fail before registration;
+- Proposal idempotency is atomic under concurrent retry with `ON DUPLICATE KEY ... LAST_INSERT_ID`;
+- `complete/fail` response-loss retry is idempotently acknowledged for 24 hours without duplicate terminal side effects;
+- request correlation and server error redaction added to `ai_api.php`;
+- AI UI now localizes all proven routes, shows total latency/budget/risk and gives clearer Proposal review/confirmation;
+- detailed permission/risk/recovery/security/demo/release contract is canonical in `09-COMMERCIAL-MVP-RELEASE.md`.
+
+No financial feature, forecast formula, accounting number, Tool capability or auto-execution scope was added in v9.3.
+
 
 
 Live grounded facts from Job #46:
@@ -209,16 +226,16 @@ Known low-severity observability issue: when a v8.9 action is blocked after the 
 1. Adaptive exact-prompt cache is **FROZEN** as an optimization; no large dictionary/template project now.
 2. Old root docs under `docs/*.md` contain an earlier broader roadmap and must not override this SmartDocs set.
 3. Full accounting application completeness is intentionally deferred until AI MVP is proven.
-4. v8.9.0 اکنون با Live Jobs #41–#44 و human approval `LIVE-VALIDATED` است؛ baseline Git نهایی v8.9 هنوز باید با Commit دقیق runtime + SmartDocs ثبت شود.
-5. در Workflow وابسته، نبود داده برای رتبه‌بندی باید `partial` برگرداند و نتایج معتبر مراحل قبلی را دور نریزد.
+4. PHP CLI در محیط ساخت محلی در دسترس نبود؛ PHP lint در CI و قبل از cPanel deploy اجباری است.
+5. v9.3 هنوز cPanel/Worker live validation نشده و تا تکمیل checklist سند 09 نباید `LIVE-VALIDATED` نامیده شود.
+6. در Workflow وابسته، نبود داده برای رتبه‌بندی باید `partial` برگرداند و نتایج معتبر مراحل قبلی را دور نریزد.
 
 ## Not yet implemented as production capability
 
 - General financial Action Orchestrator
 - Risk-based auto-execution matrix
-- production-grade financial KPI/trend layer
-- real forecasting models
-- anomaly/collections prediction
+- statistically backtested production forecasting beyond the current deterministic baseline
+- collections outcome prediction and learned policy
 - learned proactive ranking
 - production RAG corpus and retrieval evaluation
 - full accounting application completeness

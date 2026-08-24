@@ -133,3 +133,25 @@ LIVE-VALIDATED
 ```
 
 برای Milestone مالی مهم، `LIVE-VALIDATED` هدف است.
+
+## I. Commercial MVP gate — v9.3+
+
+قبل از staging:
+
+```bash
+python scripts/release_gate.py
+```
+
+در CI یا محیط دارای PHP:
+
+```bash
+python scripts/release_gate.py --require-php
+```
+
+برای تغییر هم‌زمان Worker + Control Plane، هر سه سطح اجباری‌اند:
+
+1. local candidate regression/contract suite؛
+2. GitHub CI شامل PHP lint؛
+3. cPanel deploy + Docker rebuild + Live recovery/Proposal verification.
+
+نبود PHP CLI محلی فقط به‌عنوان warning پذیرفته می‌شود و اجازه حذف Gate اجباری CI/cPanel را نمی‌دهد. Checklist دقیق در `09-COMMERCIAL-MVP-RELEASE.md` است.

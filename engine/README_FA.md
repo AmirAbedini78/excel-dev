@@ -15,13 +15,14 @@ Worker از داخل سیستم شما با HTTPS به `ai_api.php` روی وب�
 
 ## 1. مدل محلی
 
-برای شروع روی سخت‌افزار کم‌رم، یک مدل کوچک tool-capable انتخاب کنید. نمونه config فعلی:
+مدل‌های baseline فعلی:
 
 ```bash
-ollama pull qwen3:1.7b
+ollama pull qwen3.5:0.8b
+ollama pull gemma3:4b
 ```
 
-انتخاب نهایی باید با benchmark همان سیستم انجام شود. اندازه context و مدل بزرگ‌تر RAM و latency را زیاد می‌کند.
+`qwen3.5:0.8b` برای parser/planner/ID selection محدود و `gemma3:4b` برای enhancement عمیق اختیاری است. `qwen3:1.7b` فقط fallback/legacy است. انتخاب نهایی باید با benchmark همان سیستم انجام شود.
 
 ## 2. تنظیمات
 
@@ -38,6 +39,9 @@ Copy-Item config.example.json config.json
   "provider": "ollama",
   "ollama_url": "http://127.0.0.1:11434",
   "chat_model": "qwen3:1.7b",
+  "fast_model": "qwen3.5:0.8b",
+  "agent_model": "qwen3.5:0.8b",
+  "analysis_model": "gemma3:4b",
   "capabilities": ["llm"],
   "poll_seconds": 8,
   "lease_seconds": 900,
@@ -46,7 +50,14 @@ Copy-Item config.example.json config.json
   "rag_enabled": false,
   "rag_db": "data/rag.sqlite3",
   "embedding_model": "embeddinggemma",
-  "rag_top_k": 5
+  "rag_top_k": 5,
+  "latency_budgets_seconds": {
+    "deterministic": 5,
+    "read_model": 45,
+    "action": 45,
+    "deep": 240,
+    "fallback": 90
+  }
 }
 ```
 
@@ -141,7 +152,8 @@ Copy-Item config.docker.example.json config.json
 
 ```powershell
 docker compose up -d ollama
-docker compose exec ollama ollama pull qwen3:1.7b
+docker compose exec ollama ollama pull qwen3.5:0.8b
+docker compose exec ollama ollama pull gemma3:4b
 ```
 
 ### ساخت و اجرای Worker
@@ -170,6 +182,16 @@ docker compose down
 ```
 
 Volume `ollama_data` مدل‌ها را نگه می‌دارد. برای حذف کامل مدل‌های دانلودشده باید Volume را هم آگاهانه حذف کنید؛ در استفاده عادی `down -v` اجرا نکنید.
+
+### Gate نسخه تجاری
+
+از root پروژه:
+
+```powershell
+python scripts/release_gate.py
+```
+
+Remote `server_url` باید HTTPS باشد و metadata/trace قبل از ارسال نهایی از secretها پاک می‌شود. وضعیت latency/risk/Proposal در metadata و پنل نمایش داده می‌شود.
 
 ### فعال‌سازی RAG در مرحله بعد
 

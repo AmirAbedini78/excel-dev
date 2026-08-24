@@ -1,26 +1,24 @@
 # SmartDocs Backlog
 
 ## P0 — Current
-- Freeze v9.2.0 after Job #48: exact runtime + SmartDocs stage/commit/push and capture final SHA
-## P0 — Next
-- v9.3 Commercial MVP Hardening
+- Install/validate v9.3.0 Commercial MVP Hardening candidate
+- GitHub CI + PHP lint
+- cPanel deploy + Worker rebuild
+- execute all live checks in `09-COMMERCIAL-MVP-RELEASE.md`
+- freeze Commercial MVP after exact final SHA
 
-- account resolver/search capability as needed
-- safe resume after approval
-- verification steps
-- risk policy foundation
+## P1 — After Commercial MVP freeze
 
-## P1 Intelligence
-
-- KPI/time-series contract
-- trend engine
-- anomaly baseline
-- forecast baseline + backtest
+- market/customer/competitor analysis
+- pricing and positioning
+- demo/pitch/GTM
+- backlog prioritization from real customer evidence
 
 ## P2
 
-- proactive suggestion/behavior feedback loop
-- commercial MVP hardening
+- longer real datasets + forecast backtest/calibration
+- proactive feedback/outcome loop
+- permission split for high-risk Approval only if product evidence requires it
 
 ## Deferred until after MVP
 
