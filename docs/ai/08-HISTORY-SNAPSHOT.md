@@ -769,3 +769,71 @@ grounded facts
 → deterministic severity gate
 → management report
 ```
+
+## v9.1.0 — Forecast / Risk / Anomaly Live Validation
+
+Frozen baseline:
+
+```text
+2c32c3bf7316bb29c206ccbbc0f69cd4b9ba406c
+```
+
+Installer:
+
+```text
+core: 64/64 PASS
+actual-like integration: 7/7 PASS
+candidate full guard stack: PASS
+real Ollama pre-install: 3/3 PASS
+Docker rebuild + full compile: PASS
+rebuilt core/integration: 64/64 + 7/7 PASS
+real Ollama post-rebuild: 3/3 PASS
+Worker startup/registration: PASS
+```
+
+Job #47:
+
+```text
+forecast_risk_candidate
+→ forecast_risk_tool × 9
+→ forecast_risk_llm
+→ llm_done
+→ forecast_risk_prioritized
+→ forecast_risk_complete
+```
+
+Live outputs:
+
+```text
+1405/06 sales forecast:
+2,387,880,000 IRR
+approx range: 1,910,304,000–2,865,456,000 IRR
+confidence: low / 3 complete months
+
+1405/06 purchase forecast:
+1,164,533,333 IRR
+approx range: 908,844,444–1,420,222,222 IRR
+confidence: low / 3 complete months
+
+purchase warning:
+1405/04 2,151,600,000 → 1405/05 1,466,300,000 IRR
+-31.9%
+
+customer concentration: 26.1%
+vendor concentration: 59.4%
+non-final sales: 784,300,000 IRR / 14.2%
+```
+
+Model:
+
+```text
+qwen3.5:0.8b
+first output: ~14.0s
+model time: ~24.6s
+```
+
+Conclusion:
+
+```text
+v9.1.0 Forecast / Risk / Anomaly = LIVE-VALIDATED
+```

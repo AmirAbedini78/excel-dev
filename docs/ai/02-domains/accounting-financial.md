@@ -151,3 +151,22 @@ trial difference: 0
 ```
 
 Primary monthly trends use the last two complete Jalali months, not an incomplete current month.
+
+## v9.1.0 live predictive accounting intelligence
+
+The accounting AI now supports a read-only predictive layer over confirmed accounting history.
+
+```text
+target month: 1405/06
+sales forecast: 2,387,880,000 IRR
+sales approximate range: 1,910,304,000–2,865,456,000 IRR
+purchase forecast: 1,164,533,333 IRR
+purchase approximate range: 908,844,444–1,420,222,222 IRR
+confidence: low / 3 complete months
+purchase shift: -31.9% [warning]
+customer concentration: 26.1%
+vendor concentration: 59.4%
+non-final sales exposure: 784,300,000 IRR / 14.2%
+```
+
+Incomplete current month is excluded from training; forecast bands are planning/error ranges, not formal statistical confidence intervals.

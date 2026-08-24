@@ -129,3 +129,17 @@ critical > warning > info
 ```
 
 LLM preference is only advisory within the same severity tier. If priority selection fails, deterministic severity ordering still produces the report.
+
+## v9.1.0 predictive execution contract
+
+The server owns datasets, periods, forecasts, error ranges, risk/anomaly findings and severity.
+
+The LLM only returns grounded finding IDs for prioritization.
+
+```text
+server facts/statistics
+→ bounded Qwen ID priority
+→ server severity gate: critical > warning > info
+```
+
+The v9.1 path is read-only. It does not call Proposal/write tools, and deterministic fallback remains available if the priority selector fails.

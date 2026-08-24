@@ -201,17 +201,27 @@ Live evidence:
 - unsupported profit/cash-flow metrics are explicitly not guessed.
 
 ### v9.1 — Forecast / Risk / Anomaly
-Status: `PLANNED`
+Status: `LIVE-VALIDATED`
 
-- forecast datasets
-- backtesting
-- baseline statistical models
-- error/confidence
-- anomaly detection
-- late-payment/collection model در صورت داده کافی
-- LLM explanation
+Validated architecture:
 
-Synthetic data برای pipeline/load/testing؛ ادعای accuracy فقط با real validation.
+```text
+grounded accounting time series
+→ exclude incomplete current Jalali month
+→ deterministic full-month forecast
+→ approximate error/planning range
+→ deterministic risk/anomaly findings
+→ bounded Qwen finding-ID priority
+→ critical > warning > info gate
+→ management predictive report
+```
+
+Live evidence:
+- Job #47: fixed 9-read predictive plan completed successfully.
+- sales 1405/06 forecast: 2,387,880,000 IRR; approximate range 1,910,304,000–2,865,456,000 IRR; low confidence.
+- purchases 1405/06 forecast: 1,164,533,333 IRR; approximate range 908,844,444–1,420,222,222 IRR; low confidence.
+- confirmed purchase decline -31.9% remained warning priority #1.
+- unsupported profit/cash-flow/bankruptcy/credit-risk claims are not generated.
 
 ### v9.2 — Proactive Accounting Agent
 Status: `PLANNED`

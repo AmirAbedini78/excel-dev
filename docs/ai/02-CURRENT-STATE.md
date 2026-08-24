@@ -160,6 +160,22 @@ The first management-level financial intelligence workflow is now Live-proven:
 - Job #46 model latency improved to ~5.5s with first output ~1.1s after warmup.
 - v9.0.1 therefore completes the first `grounded facts → deterministic findings → bounded model prioritization → severity-safe management report` lifecycle as `LIVE-VALIDATED`.
 
+### Forecast / Risk / Anomaly — v9.1.0
+
+The first predictive accounting intelligence workflow is now Live-proven:
+
+- Installer: core `64/64`, actual-like integration `7/7`, real Ollama bounded priority `3/3` before mutation and `3/3` after rebuild, full guard stack PASS.
+- Job #47 executed the fixed 9-read predictive plan with no write/proposal tool.
+- Current partial Jalali month is excluded from trend training.
+- Sales full-month 1405/06 forecast: `2,387,880,000 IRR`, approximate range `1,910,304,000–2,865,456,000 IRR`, low confidence with 3 complete months.
+- Purchase full-month 1405/06 forecast: `1,164,533,333 IRR`, approximate range `908,844,444–1,420,222,222 IRR`, low confidence with 3 complete months.
+- Confirmed purchase decline `-31.9%` remained management warning #1.
+- Customer concentration `26.1%`; vendor concentration `59.4%`; non-final sales exposure `784,300,000 IRR / 14.2%`.
+- Report explicitly says the forecast band is an approximate MAE-based planning range, not a formal confidence interval.
+- Unsupported net profit, cash-flow, bankruptcy and credit-risk claims are not guessed.
+- v9.1.0 is `LIVE-VALIDATED` for the first `forecast → risk/anomaly → severity-safe management report` vertical slice.
+
+
 Live grounded facts from Job #46:
 - confirmed sales: 1405/04 `1,570,360,000 IRR` → 1405/05 `1,985,720,000 IRR` (`+26.4%`)
 - confirmed purchases: 1405/04 `2,151,600,000 IRR` → 1405/05 `1,466,300,000 IRR` (`-31.9%`, warning)

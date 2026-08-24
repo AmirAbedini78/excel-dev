@@ -30,11 +30,11 @@ DEFER:
 ## Current baseline / phase
 
 ```text
-v9.0 source baseline: 6f5d6c4b8400a8df023011896ff204e0c3c28b09
-Milestone: v9.0.1 Financial Intelligence Core + Management Priority Hardening
-Status: LIVE-VALIDATED — Jobs #45/#46
-v9.0 Financial Intelligence is Live-validated. Job #45 proved the 10-dataset grounded management report; v9.0.1 added a deterministic `critical → warning → info` priority gate after Job #45 exposed Info-over-Warning ordering; Job #46 verified the real -31.9% purchase warning is now management priority #1. Next operational step is exact runtime + SmartDocs commit/push, then v9.1 Forecast / Risk / Anomaly.
-Next after v9.0.1 freeze: v9.1 Forecast / Risk / Anomaly
+v9.1 source baseline: 2c32c3bf7316bb29c206ccbbc0f69cd4b9ba406c
+Milestone: v9.1.0 Forecast / Risk / Anomaly
+Status: LIVE-VALIDATED — Job #47
+v9.1 Forecast / Risk / Anomaly is Live-validated. Job #47 proved the fixed 9-read predictive workflow, full-month 1405/06 sales/purchase forecasts, severity-safe risk ordering and explicit uncertainty limitations. Next operational step is exact runtime + SmartDocs commit/push, then v9.2 Proactive Accounting Agent.
+Next after v9.1 freeze: v9.2 Proactive Accounting Agent
 ```
 
 ## Architecture

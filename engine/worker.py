@@ -1001,6 +1001,8 @@ from action_orchestrator import install_action_orchestrator as _install_action_o
 _install_action_orchestrator(Worker)
 from financial_intelligence import install_financial_intelligence as _install_financial_intelligence
 _install_financial_intelligence(Worker)
+from forecast_risk import install_forecast_risk as _install_forecast_risk
+_install_forecast_risk(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()
