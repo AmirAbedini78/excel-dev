@@ -143,3 +143,28 @@ server facts/statistics
 ```
 
 The v9.1 path is read-only. It does not call Proposal/write tools, and deterministic fallback remains available if the priority selector fails.
+
+## v9.2.0 Proactive Agent execution contract
+
+The proactive model boundary remains constrained:
+
+```text
+server:
+  grounded financial facts
+  deterministic findings
+  recommendation candidates
+  severity
+  impact score
+  action prerequisites
+
+LLM:
+  recommendation IDs only
+
+server post-gate:
+  critical > warning > info
+  higher deterministic impact first
+```
+
+The proactive module never calls Proposal/write tools. Its action bridge is descriptive and points to existing guarded action flows only after explicit user parameters are supplied.
+
+If the bounded priority selector fails, deterministic severity/impact ordering still renders the proactive report.

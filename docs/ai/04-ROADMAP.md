@@ -224,13 +224,33 @@ Live evidence:
 - unsupported profit/cash-flow/bankruptcy/credit-risk claims are not generated.
 
 ### v9.2 — Proactive Accounting Agent
-Status: `PLANNED`
+Status: `LIVE-VALIDATED`
 
-- rule-based suggestions
-- behavior mining
-- next-best-action ranking
-- precomputed drafts
-- user feedback/outcome learning
+Validated architecture:
+
+```text
+grounded accounting datasets
+→ reuse deterministic forecast/risk findings
+→ deterministic AR/AP burden heuristics
+→ server-built next-best-action candidates
+→ bounded Qwen recommendation-ID priority
+→ deterministic severity + impact gate
+→ recommendation-only safe action bridge
+```
+
+Live evidence:
+- Job #48: fixed 9-read proactive review completed successfully.
+- commercial payables burden ≈ 3.12× latest complete-month purchases → critical.
+- commercial receivables burden ≈ 1.68× latest complete-month sales → warning.
+- confirmed purchase decline -31.9% → warning.
+- non-final sales review 14.2% → informational.
+- no Proposal, voucher, payment, receipt or invoice was created.
+- bridge to v8.9 receipt Action requires explicit customer/amount/accounts + human approval.
+
+Out of scope for v9.2:
+- autonomous financial mutation
+- model-generated account/party IDs or amounts
+- background auto-execution without a user action/approval boundary
 
 ### v9.3 — Commercial MVP Hardening
 Status: `PLANNED`

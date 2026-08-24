@@ -62,7 +62,7 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 
 - Repository: `AmirAbedini78/excel-dev`
 - SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
-- Current implementation milestone: `v9.1.0 — Forecast / Risk / Anomaly`
-- Validation state: `LIVE-VALIDATED` through Job #47: 9 grounded predictive datasets → complete-month forecast → deterministic risk/anomaly findings → bounded Qwen priority → deterministic severity gate.
-- Next development target: `v9.2 — Proactive Accounting Agent` after freezing/committing v9.1.0.
+- Current implementation milestone: `v9.2.0 — Proactive Accounting Agent`
+- Validation state: `LIVE-VALIDATED` through Job #48: 9 grounded accounting datasets → deterministic next-best-action candidates → bounded Qwen action-ID priority → deterministic severity/impact gate → recommendation-only safe action bridge.
+- Next development target: `v9.3 — Commercial MVP Hardening` after freezing/committing v9.2.0.
 - Scope: **Accounting/Financial AI MVP only**

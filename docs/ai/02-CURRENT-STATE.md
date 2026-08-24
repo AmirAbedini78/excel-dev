@@ -175,6 +175,23 @@ The first predictive accounting intelligence workflow is now Live-proven:
 - Unsupported net profit, cash-flow, bankruptcy and credit-risk claims are not guessed.
 - v9.1.0 is `LIVE-VALIDATED` for the first `forecast → risk/anomaly → severity-safe management report` vertical slice.
 
+### Proactive Accounting Agent — v9.2.0
+
+The first proactive accounting recommendation workflow is now Live-proven:
+
+- Installer: static safety PASS, core `60/60`, actual-like integration `8/8`, full guard stack PASS, real Ollama bounded priority `3/3` pre-install and `3/3` post-rebuild.
+- Job #48 executed 9 grounded accounting reads with no Proposal/write tool.
+- Server-built next-best actions were prioritized by deterministic severity + impact; Qwen only selected existing recommendation IDs.
+- Management priority #1: commercial payables burden ≈ `3.12×` latest complete-month purchases → `critical`.
+- Priority #2: commercial receivables burden ≈ `1.68×` latest complete-month sales → `warning`.
+- Priority #3: confirmed purchase decline `-31.9%` → `warning`.
+- Non-final sales review: `2` documents / `14.2%` of recorded sales amount.
+- Forecast-history quality follow-up remains informational because demo history is still short.
+- Safe bridge to the existing v8.9 receipt Action Orchestrator is recommendation-only: customer, amount, debit account and credit account must be explicitly supplied by the user; human approval remains mandatory.
+- Job #48 explicitly confirmed `proposal_created=false`; no voucher/payment/receipt/invoice was created.
+- v9.2.0 therefore completes the first `proactive grounded review → next-best-action ranking → safe human-controlled action handoff` lifecycle as `LIVE-VALIDATED`.
+
+
 
 Live grounded facts from Job #46:
 - confirmed sales: 1405/04 `1,570,360,000 IRR` → 1405/05 `1,985,720,000 IRR` (`+26.4%`)

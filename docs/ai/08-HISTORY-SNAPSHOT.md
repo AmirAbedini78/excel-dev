@@ -837,3 +837,85 @@ Conclusion:
 ```text
 v9.1.0 Forecast / Risk / Anomaly = LIVE-VALIDATED
 ```
+
+## v9.2.0 — Proactive Accounting Agent Live Validation
+
+Frozen baseline:
+
+```text
+55437edddaf464dea969a556b362037ac6fbae11
+```
+
+Installer:
+
+```text
+static proactive accounting safety: PASS
+candidate compile: PASS
+core: 60/60 PASS
+actual-like integration: 8/8 PASS
+candidate full guard stack: PASS
+real Ollama pre-install: 3/3 PASS
+Docker rebuild + full compile: PASS
+rebuilt core/integration: 60/60 + 8/8 PASS
+real Ollama post-rebuild: 3/3 PASS
+Worker startup/registration: PASS
+exact 3-file runtime set retained
+```
+
+Job #48:
+
+```text
+proactive_candidate
+→ proactive_tool × 9
+→ proactive_recommendations_built
+→ proactive_llm
+→ llm_done
+→ proactive_prioritized
+→ proactive_complete
+```
+
+Live management priorities:
+
+```text
+1. [critical] review commercial payables schedule
+   4.5795B / 1.4663B ≈ 3.12× latest complete-month purchases
+
+2. [warning] prioritize receivables collection review
+   3.33088B / 1.98572B ≈ 1.68× latest complete-month sales
+
+3. [warning] investigate confirmed purchase decline
+   -31.9%
+
+4. [info] review 2 non-final sales documents
+   14.2%
+
+5. [info] collect more complete-month history for Forecast
+```
+
+Safe action bridge:
+
+```text
+existing bridge: v8.9 receipt action orchestrator
+required explicit inputs:
+customer
+amount_rial
+debit_account
+credit_account
+
+human approval required: true
+proposal_created by proactive path: false
+```
+
+Model:
+
+```text
+qwen3.5:0.8b
+first output: ~9.9s
+model time: ~16.7s
+```
+
+Conclusion:
+
+```text
+v9.2.0 Proactive Accounting Agent = LIVE-VALIDATED
+```

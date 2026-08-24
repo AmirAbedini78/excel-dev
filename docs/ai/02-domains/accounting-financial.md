@@ -170,3 +170,31 @@ non-final sales exposure: 784,300,000 IRR / 14.2%
 ```
 
 Incomplete current month is excluded from training; forecast bands are planning/error ranges, not formal statistical confidence intervals.
+
+## v9.2.0 live proactive accounting
+
+The accounting AI can now perform a broad proactive review and produce grounded next-best actions without an explicit problem statement.
+
+Live Job #48:
+
+```text
+payables burden:
+4,579,500,000 / 1,466,300,000 ≈ 3.12×
+severity: critical
+
+receivables burden:
+3,330,880,000 / 1,985,720,000 ≈ 1.68×
+severity: warning
+
+confirmed purchase decline:
+-31.9%
+severity: warning
+
+non-final sales:
+2 docs / 14.2%
+severity: informational
+```
+
+The AR/AP ratios are management heuristics, not accounting standards or cash-flow forecasts.
+
+The proactive route is recommendation-only. It can point to the existing receipt Proposal flow, but it cannot invent customer, amount or accounts and cannot create a financial mutation without explicit user inputs + human approval.

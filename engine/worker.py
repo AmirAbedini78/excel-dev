@@ -1003,6 +1003,8 @@ from financial_intelligence import install_financial_intelligence as _install_fi
 _install_financial_intelligence(Worker)
 from forecast_risk import install_forecast_risk as _install_forecast_risk
 _install_forecast_risk(Worker)
+from proactive_agent import install_proactive_agent as _install_proactive_agent
+_install_proactive_agent(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()

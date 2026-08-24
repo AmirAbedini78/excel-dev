@@ -1,13 +1,13 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Accounting/Financial AI MVP",
-  "baseline_commit": "2c32c3bf7316bb29c206ccbbc0f69cd4b9ba406c",
-  "current_milestone": "v9.1.0 Forecast / Risk / Anomaly",
+  "baseline_commit": "55437edddaf464dea969a556b362037ac6fbae11",
+  "current_milestone": "v9.2.0 Proactive Accounting Agent",
   "milestone_status": "LIVE-VALIDATED",
   "live_validation_pending": false,
-  "next_phase": "v9.2 Proactive Accounting Agent",
-  "next_phase_mode": "proactive accounting findings and recommendations with controlled Proposal/Approval boundary; no autonomous financial mutation",
-  "active_task": "Freeze v9.1.0: exact runtime + SmartDocs stage/commit/push, capture final v9.1 SHA, then start v9.2",
+  "next_phase": "v9.3 Commercial MVP Hardening",
+  "next_phase_mode": "evaluation/security/performance/observability/failure-recovery/UX/release freeze for commercial MVP; no scope expansion",
+  "active_task": "Freeze v9.2.0: exact runtime + SmartDocs stage/commit/push, capture final v9.2 SHA, then start v9.3 Commercial MVP Hardening",
   "frozen_subsystems": [
     "adaptive plan cache expansion",
     "large regex/dictionary expansion"
@@ -20,18 +20,21 @@
     "multi-agent/framework migration without proven need"
   ],
   "known_issues": [
-    "v9.1 live forecast latency was ~24.6s on the observed run; acceptable for prototype, revisit in commercial hardening",
-    "Forecast confidence is low with only 3 complete historical months in demo data; range is approximate planning error, not a formal confidence interval",
+    "v9.2 live proactive model time was ~16.7s on the observed run; revisit latency in v9.3 Commercial MVP Hardening",
+    "AR/AP months-equivalent signals are management heuristics, not accounting standards or cash-flow forecasts",
+    "v9.1 forecast confidence remains low with only 3 complete historical months in demo data",
     "Blocked v8.9 action after LLM selection can show model=none in final UI meta even though trace records qwen3.5:0.8b; observability-only",
     "Legacy root docs contain older broader roadmap"
   ],
   "updated_at": "2026-08-24",
   "live_validation_jobs": [
-    47
+    48
   ],
   "live_validation_summary": {
-    "job_47": "9 grounded predictive datasets; 1405/06 sales/purchase forecasts; purchase -31.9% warning priority #1; uncertainty limitations explicitly disclosed",
-    "sales_forecast": "2,387,880,000 IRR; approximate range 1,910,304,000–2,865,456,000; low confidence / 3 complete months",
-    "purchase_forecast": "1,164,533,333 IRR; approximate range 908,844,444–1,420,222,222; low confidence / 3 complete months"
+    "job_48": "9 grounded reads; proactive next-best actions; deterministic severity/impact gate; recommendation-only action bridge; no Proposal/write created",
+    "payables_burden": "4,579,500,000 / 1,466,300,000 ≈ 3.12x; critical",
+    "receivables_burden": "3,330,880,000 / 1,985,720,000 ≈ 1.68x; warning",
+    "purchase_decline": "-31.9%; warning",
+    "action_bridge": "v8.9 receipt action; explicit customer/amount/debit_account/credit_account + human approval required"
   }
 }

@@ -1,9 +1,9 @@
 # SmartDocs Backlog
 
 ## P0 — Current
-- Freeze v9.1.0 after Job #47: exact runtime + SmartDocs stage/commit/push and capture final SHA
+- Freeze v9.2.0 after Job #48: exact runtime + SmartDocs stage/commit/push and capture final SHA
 ## P0 — Next
-- v9.2 Proactive Accounting Agent
+- v9.3 Commercial MVP Hardening
 
 - account resolver/search capability as needed
 - safe resume after approval

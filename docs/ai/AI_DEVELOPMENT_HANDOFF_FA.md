@@ -30,11 +30,11 @@ DEFER:
 ## Current baseline / phase
 
 ```text
-v9.1 source baseline: 2c32c3bf7316bb29c206ccbbc0f69cd4b9ba406c
-Milestone: v9.1.0 Forecast / Risk / Anomaly
-Status: LIVE-VALIDATED — Job #47
-v9.1 Forecast / Risk / Anomaly is Live-validated. Job #47 proved the fixed 9-read predictive workflow, full-month 1405/06 sales/purchase forecasts, severity-safe risk ordering and explicit uncertainty limitations. Next operational step is exact runtime + SmartDocs commit/push, then v9.2 Proactive Accounting Agent.
-Next after v9.1 freeze: v9.2 Proactive Accounting Agent
+v9.2 source baseline: 55437edddaf464dea969a556b362037ac6fbae11
+Milestone: v9.2.0 Proactive Accounting Agent
+Status: LIVE-VALIDATED — Job #48
+v9.2 Proactive Accounting Agent is Live-validated. Job #48 proved the fixed 9-read proactive review, deterministic next-best-action creation, severity/impact-safe prioritization and recommendation-only bridge to guarded financial actions. No Proposal/write was created by the proactive path. Next operational step is exact runtime + SmartDocs commit/push, then v9.3 Commercial MVP Hardening.
+Next after v9.2 freeze: v9.3 Commercial MVP Hardening
 ```
 
 ## Architecture
