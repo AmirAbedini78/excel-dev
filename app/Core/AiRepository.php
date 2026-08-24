@@ -74,7 +74,9 @@ final class AiRepository
             'error_text'=>(string)($row['error_text']??''),'created_at'=>(string)($row['created_at']??''),
             'started_at'=>(string)($row['started_at']??''),'completed_at'=>(string)($row['completed_at']??''),
             'updated_at'=>(string)($row['updated_at']??''),'live'=>$live,'metrics'=>(array)($meta['metrics']??[]),
-            'mode'=>(string)($meta['mode']??''),'model'=>(string)($meta['model']??''),'terminal'=>in_array($status,['succeeded','failed'],true),
+            'mode'=>(string)($meta['mode']??''),'model'=>(string)($meta['model']??''),
+            'commercial_hardening'=>(array)($meta['commercial_hardening']??[]),
+            'terminal'=>in_array($status,['succeeded','failed'],true),
         ];
     }
 

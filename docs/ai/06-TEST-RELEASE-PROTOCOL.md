@@ -30,6 +30,7 @@ patch کوچک
 
 - Python `compile`/`py_compile`
 - PHP lint برای فایل‌های PHP
+- JavaScript syntax check برای تمام assetهای JS
 - static safety guards
 - unit tests
 - integration test روی actual Worker class
@@ -66,6 +67,7 @@ patch کوچک
 - actual prompt
 - reconciliation against deterministic source
 - scope/date/status check
+- terminal metadata parity در SSE/Polling بدون refresh و رندر PHP پس از refresh
 
 ### Deep
 - deterministic core retained
@@ -140,12 +142,13 @@ LIVE-VALIDATED
 
 ```bash
 python scripts/release_gate.py
+python scripts/release_gate.py --require-node
 ```
 
 در CI یا محیط دارای PHP:
 
 ```bash
-python scripts/release_gate.py --require-php
+python scripts/release_gate.py --require-php --require-node
 ```
 
 برای تغییر هم‌زمان Worker + Control Plane، هر سه سطح اجباری‌اند:
@@ -154,4 +157,4 @@ python scripts/release_gate.py --require-php
 2. GitHub CI شامل PHP lint؛
 3. cPanel deploy + Docker rebuild + Live recovery/Proposal verification.
 
-نبود PHP CLI محلی فقط به‌عنوان warning پذیرفته می‌شود و اجازه حذف Gate اجباری CI/cPanel را نمی‌دهد. Checklist دقیق در `09-COMMERCIAL-MVP-RELEASE.md` است.
+در installer ویندوز هیچ runtime میزبان استفاده نمی‌شود: Python/PHP/Node validation باید داخل Docker اجرا شود. نبود runtime محلی فقط برای توسعه موقت warning است و اجازه حذف Gate اجباری CI/release را نمی‌دهد. Checklist دقیق در `09-COMMERCIAL-MVP-RELEASE.md` است.

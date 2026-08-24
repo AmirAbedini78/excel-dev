@@ -19,6 +19,8 @@ touches_code:
 - v9.2 Proactive Accounting: grounded next-best actions + deterministic severity/impact gate؛
 - v9.3 regression/latency/release contract around all three routes.
 
+Live Job #49 on deployed v9.3.0 repeated the 9-read forecast/risk route successfully and produced the expected deterministic ranges/findings with no Proposal/write. Because the prompt explicitly requested risks, selection of `forecast_risk_anomaly` was expected. The Job exposed only a web observability transport defect (missing hardening metadata in no-refresh UI), addressed by v9.3.0.1; predictive formulas/routing are unchanged.
+
 همه اعداد از Tool/engine deterministic می‌آیند؛ LLM فقط IDهای موجود را اولویت‌بندی می‌کند.
 
 ## Missing

@@ -58,7 +58,7 @@ final class AiModule
             if($j['result_text'])echo '<div class="ai-answer"><strong>پاسخ ایجنت</strong><div>'.nl2br(h($j['result_text'])).'</div>'.self::metricsHtml($j).'</div>';elseif($j['error_text'])echo '<div class="alert danger">'.nl2br(h($j['error_text'])).'</div>';else echo '<div class="ai-pending">'.self::statusText((string)$j['status']).'</div>';
             echo '</div>';foreach($proposals as $p)self::proposalCard($p);echo '</article>';
         }
-        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=8.0.0"></script>';
+        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=9.3.0.1"></script>';
     }
 
     private static function metricsHtml(array $job): string

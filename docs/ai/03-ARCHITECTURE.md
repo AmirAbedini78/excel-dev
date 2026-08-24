@@ -123,6 +123,17 @@ Safe Deep
 
 Commercial Hardening هیچ منطق مالی جدیدی ندارد. وظیفه آن enforce کردن قرارداد release روی نتیجه همه مسیرهاست: read-only/proposal-only، secret redaction، end-to-end latency، actual Tool/model observability و fail-closed metadata contract.
 
+### Live terminal metadata boundary
+
+```text
+redacted terminal result_json
+→ authenticated liveJobStateForUser
+→ same normalized fields for SSE and Polling
+→ browser final renderer
+```
+
+در v9.3.0.1 فیلد redacted `commercial_hardening` همراه `mode/model/metrics` از endpoint زنده عبور می‌کند. SSE و Polling هر دو از یک renderer استفاده می‌کنند و باید بدون refresh با رندر PHP پس از refresh از نظر route، model، latency budget و risk هم‌معنا باشند.
+
 Proposal descriptorها به generic LLM loop داده نمی‌شوند. فقط Guarded Invoice Agent و Accounting Action Orchestrator پس از grounding قطعی می‌توانند Proposal Tool مشخص را مستقیم فراخوانی کنند.
 
 ## 5. Tool contract

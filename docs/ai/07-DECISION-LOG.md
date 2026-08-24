@@ -79,3 +79,8 @@ Status: ACCEPTED
 Status: ACCEPTED
 
 v9.3 یک Wrapper نهایی cross-cutting روی Guard Stack دارد تا بدون تغییر محاسبات مالی، contractهای latency/observability/redaction/read-only/proposal-only را یکجا enforce کند. Proposal creation باید atomic idempotent باشد و retry پاسخ گمشده `complete/fail` باید همان terminal state را بدون side effect دوم acknowledge کند. این recovery هرگز Proposal Approval یا domain validation را bypass نمی‌کند.
+
+## ADR-017 — Live and reload observability must be contract-equivalent
+Status: ACCEPTED
+
+Job #49 نشان داد persistence صحیح metadata کافی نیست؛ اگر endpoint یا browser renderer آن را در SSE/Polling حذف کند، Commercial observability در تجربه اصلی کاربر شکست خورده است. از v9.3.0.1، terminal live payload باید redacted `commercial_hardening` را حمل کند و renderer مشترک SSE/Polling با رندر PHP از نظر route/model/latency/risk هم‌معنا باشد. JavaScript syntax نیز release gate اجباری است.

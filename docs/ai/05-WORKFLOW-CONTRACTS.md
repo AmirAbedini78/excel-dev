@@ -165,3 +165,20 @@ same lease + repeated terminal request within 24h
 ```
 
 Recovery فقط delivery را idempotent می‌کند؛ Approval و domain validation را دور نمی‌زند.
+
+## Workflow J — Live terminal observability parity
+
+```text
+Worker terminal result
+→ persisted redacted metadata
+→ authenticated ai_live state
+→ SSE or Polling
+→ same terminal answer + route/model/metrics/hardening fields
+```
+
+Success:
+- بدون refresh، `mode`, `model`, model metrics, end-to-end time, latency budget status و risk class دیده شوند؛
+- SSE و Polling payload/renderer مشترک داشته باشند؛
+- refresh بعدی همان معنی را در server-rendered UI نشان دهد؛
+- endpoint فقط برای user/workspace مالک Job قابل خواندن بماند؛
+- هیچ token، authorization، Tool argument یا Tool result حساس به UI نرسد.

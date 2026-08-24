@@ -16,6 +16,8 @@ class ServerBoundaryTests(unittest.TestCase):
         cls.registry = (ROOT / "app/Core/AiToolRegistry.php").read_text(encoding="utf-8")
         cls.schema = (ROOT / "app/Core/AiSchema.php").read_text(encoding="utf-8")
         cls.api = (ROOT / "ai_api.php").read_text(encoding="utf-8")
+        cls.module = (ROOT / "app/Modules/AiModule.php").read_text(encoding="utf-8")
+        cls.live_asset = (ROOT / "assets/ai-live.js").read_text(encoding="utf-8")
 
     def test_proposal_tools_are_explicitly_risk_classified(self):
         self.assertRegex(self.registry, r"'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium'")
@@ -52,6 +54,33 @@ class ServerBoundaryTests(unittest.TestCase):
         for path in (ROOT / "engine").glob("*.py"):
             text = path.read_text(encoding="utf-8")
             self.assertNotRegex(text, r"(?i)\b(?:pymysql|mysql\.connector|psycopg|DB_PASSWORD)\b", path.name)
+
+    def test_live_payload_exposes_redacted_commercial_metadata(self):
+        self.assertIn("'commercial_hardening'=>(array)($meta['commercial_hardening']??[])", self.repository)
+
+    def test_live_renderer_has_v9301_metadata_contract(self):
+        self.assertIn('assets/ai-live.js?v=9.3.0.1', self.module)
+        self.assertNotIn('assets/ai-live.js?v=8.0.0', self.module)
+        self.assertIn("hardeningText(job?.commercial_hardening)", self.live_asset)
+        self.assertIn('forecast_risk_anomaly: "پیش‌بینی، ریسک و ناهنجاری"', self.live_asset)
+        self.assertIn('commercial_hardening_complete: "تأیید قرارداد تجاری"', self.live_asset)
+        self.assertIn('within_budget: "پاس"', self.live_asset)
+        self.assertIn('exceeded: "بیش‌ازحد"', self.live_asset)
+
+    def test_live_stage_labels_cover_every_worker_trace_stage(self):
+        trace_pattern = re.compile(r'(?:self|worker)\.trace\(\s*job\s*,\s*"([a-z0-9_]+)"')
+        stages = set()
+        for path in (ROOT / "engine").glob("*.py"):
+            stages.update(trace_pattern.findall(path.read_text(encoding="utf-8")))
+        missing = sorted(stage for stage in stages if f'{stage}: "' not in self.live_asset)
+        self.assertEqual(missing, [])
+
+    def test_release_gate_requires_javascript_in_ci(self):
+        workflow = (ROOT / ".github/workflows/commercial-mvp-gate.yml").read_text(encoding="utf-8")
+        gate = (ROOT / "scripts/release_gate.py").read_text(encoding="utf-8")
+        self.assertIn("actions/setup-node@v4", workflow)
+        self.assertIn("--require-php --require-node", workflow)
+        self.assertIn('node, "--check"', gate)
 
 
 class ReleaseArtifactTests(unittest.TestCase):

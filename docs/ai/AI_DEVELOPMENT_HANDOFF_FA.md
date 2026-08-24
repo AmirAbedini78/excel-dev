@@ -30,12 +30,13 @@ DEFER:
 ## Current baseline / phase
 
 ```text
-Frozen source baseline: a9a8c0259f4e7eaca248f9d9a912817fd1e23c92
-Baseline: v9.2.0 Proactive Accounting Agent — LIVE-VALIDATED, Job #48
-Working milestone: v9.3.0 Commercial MVP Hardening
-Working status: LOCAL-VALIDATED; GitHub CI + cPanel + rebuilt Worker live validation pending
+Deployed source baseline: 27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c
+Baseline: v9.3.0 Commercial MVP Hardening — CI/PHP/cPanel/Worker startup passed
+Latest live evidence: Job #49 grounded/read-only PASS; no Proposal/write; no-refresh hardening metadata UI failed
+Working milestone: v9.3.0.1 Live Observability Hotfix
+Working status: LOCAL-VALIDATED; GitHub CI + cPanel/browser validation pending
 Release contract: docs/ai/09-COMMERCIAL-MVP-RELEASE.md
-Next: install exact v9.3 candidate, pass CI/PHP lint, deploy cPanel, rebuild Worker, execute live checklist, then freeze Commercial MVP.
+Next: install exact hotfix on `27e34a9`, pass CI with PHP+Node, deploy cPanel, repeat the no-refresh read check, finish the remaining live checklist, then freeze Commercial MVP. Worker rebuild is not required for this web-only hotfix.
 ```
 
 ## Architecture
@@ -95,7 +96,7 @@ Prompt
 → grounded response
 ```
 
-v9.3 Feature جدید نیست؛ هدفش freeze کردن رفتارهای اثبات‌شده با regression، recovery، security، observability و release gates است.
+v9.3 Feature جدید نیست؛ هدفش freeze کردن رفتارهای اثبات‌شده با regression، recovery، security، observability و release gates است. v9.3.0.1 فقط parity متادیتای terminal بین persistence، SSE/Polling و رندر مرورگر را اصلاح می‌کند.
 
 ## Development workflow
 

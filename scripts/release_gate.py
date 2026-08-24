@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free commercial MVP release gate."""
+"""Commercial MVP release gate; only standard runtimes are required."""
 from __future__ import annotations
 
 import argparse
@@ -73,31 +73,47 @@ def php_lint(root: Path, required: bool) -> tuple[int, str]:
     return count, "PASS"
 
 
+def javascript_syntax(root: Path, required: bool) -> tuple[int, str]:
+    node = shutil.which("node")
+    if not node:
+        if required:
+            raise RuntimeError("node_runtime_required_but_missing")
+        return 0, "SKIPPED (Node unavailable; CI/release JavaScript syntax check is still mandatory)"
+    count = 0
+    for path in files(root, {".js"}):
+        run([node, "--check", str(path)], root)
+        count += 1
+    return count, "PASS"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument("--require-php", action="store_true")
+    parser.add_argument("--require-node", action="store_true")
     args = parser.parse_args()
     root = Path(args.root).resolve()
     if not (root / "engine/worker.py").is_file():
         raise SystemExit("release root is invalid")
 
-    print("ERPSMART AI v9.3.0 — Commercial MVP Release Gate")
+    print("ERPSMART AI v9.3.0.1 — Commercial MVP Release Gate")
     py_count = python_syntax(root)
-    print(f"[1/5] Python syntax: PASS ({py_count} files)")
+    print(f"[1/6] Python syntax: PASS ({py_count} files)")
     json_count = json_syntax(root)
-    print(f"[2/5] JSON syntax: PASS ({json_count} files)")
+    print(f"[2/6] JSON syntax: PASS ({json_count} files)")
     scanned = secret_scan(root)
-    print(f"[3/5] Secret scan: PASS ({scanned} text files)")
+    print(f"[3/6] Secret scan: PASS ({scanned} text files)")
 
     env = dict(os.environ)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py", "-v"], root, env)
-    print("[4/5] Regression + contract suite: PASS")
+    print("[4/6] Regression + contract suite: PASS")
 
     php_count, php_state = php_lint(root, args.require_php)
-    print(f"[5/5] PHP lint: {php_state}" + (f" ({php_count} files)" if php_count else ""))
-    print("ALL V9.3.0 COMMERCIAL MVP RELEASE GATES PASSED.")
+    print(f"[5/6] PHP lint: {php_state}" + (f" ({php_count} files)" if php_count else ""))
+    js_count, js_state = javascript_syntax(root, args.require_node)
+    print(f"[6/6] JavaScript syntax: {js_state}" + (f" ({js_count} files)" if js_count else ""))
+    print("ALL V9.3.0.1 COMMERCIAL MVP RELEASE GATES PASSED.")
     return 0
 
 

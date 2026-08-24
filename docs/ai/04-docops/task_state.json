@@ -1,14 +1,14 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Accounting/Financial AI MVP",
-  "baseline_commit": "a9a8c0259f4e7eaca248f9d9a912817fd1e23c92",
-  "baseline_milestone": "v9.2.0 Proactive Accounting Agent",
-  "baseline_status": "LIVE-VALIDATED",
-  "current_milestone": "v9.3.0 Commercial MVP Hardening",
+  "baseline_commit": "27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c",
+  "baseline_milestone": "v9.3.0 Commercial MVP Hardening deployed baseline",
+  "baseline_status": "LIVE-VALIDATION-IN-PROGRESS",
+  "current_milestone": "v9.3.0.1 Live Observability Hotfix",
   "milestone_status": "LOCAL-VALIDATED",
   "live_validation_pending": true,
   "release_contract": "commercial-mvp-v1",
-  "active_task": "Install exact v9.3 candidate, pass GitHub CI/PHP lint, deploy cPanel, rebuild Worker, run live recovery/Proposal/read checks, then freeze Commercial MVP",
+  "active_task": "Install exact v9.3.0.1 hotfix, pass CI including JavaScript, deploy cPanel, repeat no-refresh metadata check, finish recovery/Proposal/Approval checks, then freeze Commercial MVP",
   "in_scope": [
     "permanent regression and release gate",
     "permission and risk matrix",
@@ -17,6 +17,8 @@
     "latency budgets and observability",
     "metadata and error redaction",
     "AI route and Proposal UX polish",
+    "SSE/Polling terminal metadata parity",
+    "mandatory JavaScript syntax release gate",
     "release and demo checklist"
   ],
   "out_of_scope": [
@@ -32,8 +34,8 @@
     "v9.0-v9.2 financial formulas and routing semantics"
   ],
   "known_issues": [
-    "PHP CLI is unavailable in the local build environment; mandatory PHP lint remains a GitHub CI and pre-cPanel-deploy gate",
-    "v9.3 cPanel and rebuilt Worker live validation is pending",
+    "Job #49 proved the grounded read-only Worker path but v9.3.0 live UI omitted commercial_hardening metadata until refresh",
+    "v9.3.0.1 hotfix CI/cPanel/browser validation is pending; Worker rebuild is not required",
     "v9.1 forecast confidence remains low with only 3 complete historical months in demo data",
     "medium and high Proposal risks currently share ai.actions.approve; both remain human-only and never auto-approved",
     "Legacy root docs contain older broader roadmap"
@@ -42,15 +44,21 @@
     "local_regression": "PASS",
     "secret_scan": "PASS",
     "python_syntax": "PASS",
-    "php_lint": "PENDING_CI",
-    "github_ci": "PENDING",
-    "cpanel_live": "PENDING",
-    "worker_live": "PENDING"
+    "php_lint_v9_3_0": "PASS",
+    "javascript_syntax_hotfix": "PASS_LOCAL",
+    "github_ci_v9_3_0": "PASS",
+    "github_ci_hotfix": "PENDING",
+    "cpanel_v9_3_0": "PASS",
+    "cpanel_hotfix": "PENDING",
+    "worker_startup_v9_3_0": "PASS",
+    "read_worker_job_49": "PASS",
+    "read_live_metadata": "FAILED_V9_3_0_HOTFIX_PENDING"
   },
-  "updated_at": "2026-08-24",
-  "last_live_validation_job": 48,
+  "updated_at": "2026-08-25",
+  "last_live_validation_job": 49,
   "live_validation_summary": {
     "job_48": "v9.2 baseline: 9 grounded reads; proactive next-best actions; no Proposal/write",
-    "v9_3_required": "read metadata/latency; blocked-action model/tools; Proposal retry; terminal replay; human-approved balanced draft; redaction"
+    "job_49": "v9.3.0: 9 grounded forecast reads; commercial hardening complete; no Proposal/write; live UI omitted total/budget/risk due endpoint/renderer parity defect",
+    "v9_3_0_1_required": "deploy hotfix and repeat no-refresh read metadata, then blocked-action model/tools, Proposal retry, terminal replay, human-approved balanced draft and redaction"
   }
 }

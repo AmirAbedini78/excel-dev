@@ -10,6 +10,8 @@ touches_code:
   - engine/Dockerfile
   - engine/compose.yaml
   - ai_api.php
+  - app/Core/AiRepository.php
+  - assets/ai-live.js
 smoke_checks:
   - docker compose ps
   - worker registered
@@ -183,3 +185,7 @@ existing guarded route
 ```
 
 Remote Control Plane بدون HTTPS (به‌جز loopback test) و Worker token خارج از قالب server-issued قبل از register رد می‌شوند. `tools_attempted`, `model_attempted`, end-to-end latency و risk/mutation boundary در metadata خروجی پایدار می‌شوند.
+
+## v9.3.0.1 live metadata transport
+
+Job #49 ثابت کرد Worker قرارداد hardening را می‌سازد، اما v9.3.0 endpoint/renderer زنده آن را بدون refresh نشان نمی‌دهد. Hotfix فیلد redacted `commercial_hardening` را از `liveJobStateForUser` عبور می‌دهد و یک renderer مشترک برای SSE/Polling دارد. Route/stageهای کل Guard Stack، total time، budget status و risk در terminal event محلی‌سازی می‌شوند. Worker bootstrap و مدل‌ها تغییر نکرده‌اند.

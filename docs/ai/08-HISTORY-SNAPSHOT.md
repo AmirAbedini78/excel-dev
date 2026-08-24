@@ -960,3 +960,46 @@ rebuilt Worker live jobs: pending
 ```
 
 No accounting Feature, numeric formula, direct mutation or auto-approval was added.
+
+## v9.3.0 deployment and Job #49 live observability incident
+
+Commit/deploy evidence:
+
+```text
+commit: 27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c
+GitHub Commercial MVP Gate: PASS
+mandatory PHP lint: PASS
+cPanel deployed HEAD: PASS
+Docker Worker rebuild/config/guard bootstrap/registration: PASS
+```
+
+Job #49 used the broad financial prompt with explicit risk language, so the existing router correctly selected `forecast_risk_anomaly`. The Worker executed 9 Grounded predictive reads, returned a deterministic forecast/risk report, created no Proposal or mutation, and traced `commercial_hardening_complete` before terminal success.
+
+The live page nevertheless showed raw `forecast_risk_anomaly` and omitted total end-to-end time, latency budget status and route risk. Source inspection confirmed a two-sided presentation defect:
+
+```text
+persisted terminal result_json: commercial_hardening present
+liveJobStateForUser: commercial_hardening omitted
+ai-live.js: old v8 route map; no hardening renderer
+PHP reload renderer: new metadata supported
+```
+
+Safety and financial correctness passed, but the Commercial no-refresh observability gate failed. v9.3.0 therefore remains live-validation-in-progress.
+
+## v9.3.0.1 — Live Observability Hotfix candidate
+
+- authenticated live payload now exposes only the already-redacted `commercial_hardening` object with existing mode/model/metrics؛
+- SSE and Polling use one terminal metrics renderer including total time, budget status and risk؛
+- all current guard-stack route/stage codes have Persian labels؛
+- asset version changed to `9.3.0.1` to invalidate stale browser cache؛
+- CI/release gate now requires Node JavaScript syntax checking؛
+- Worker/financial logic/schema remain unchanged, so no Worker rebuild or migration is required.
+
+Candidate validation:
+
+```text
+Python unit/contract suite: 37/37 PASS
+JavaScript syntax: 6/6 PASS
+secret scan/Python/JSON: PASS
+PHP lint + GitHub CI + cPanel/browser live proof: pending package install
+```

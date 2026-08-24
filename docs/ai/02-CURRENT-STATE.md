@@ -7,11 +7,12 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Frozen source baseline: a9a8c0259f4e7eaca248f9d9a912817fd1e23c92
-Baseline milestone: v9.2.0 — Proactive Accounting Agent
-Baseline live validation: LIVE-VALIDATED — Job #48
-Working milestone: v9.3.0 — Commercial MVP Hardening
-Working validation: LOCAL-VALIDATED; cPanel/Worker live validation pending
+Deployed source baseline: 27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c
+Deployed milestone: v9.3.0 — Commercial MVP Hardening
+Validated deployment: GitHub CI + PHP lint + cPanel HEAD + rebuilt Docker Worker
+Latest live evidence: Job #49 — Grounded/read-only Worker path PASS; no Proposal/write
+Working milestone: v9.3.0.1 — Live Observability Hotfix
+Working validation: LOCAL-VALIDATED; cPanel/browser revalidation pending
 ```
 
 ## Scope فعال
@@ -191,7 +192,7 @@ The first proactive accounting recommendation workflow is now Live-proven:
 - Job #48 explicitly confirmed `proposal_created=false`; no voucher/payment/receipt/invoice was created.
 - v9.2.0 therefore completes the first `proactive grounded review → next-best-action ranking → safe human-controlled action handoff` lifecycle as `LIVE-VALIDATED`.
 
-### Commercial MVP Hardening — v9.3.0 candidate
+### Commercial MVP Hardening — v9.3.0 deployed / v9.3.0.1 hotfix
 
 Status: `LOCAL-VALIDATED`
 
@@ -203,10 +204,14 @@ Status: `LOCAL-VALIDATED`
 - Proposal idempotency is atomic under concurrent retry with `ON DUPLICATE KEY ... LAST_INSERT_ID`;
 - `complete/fail` response-loss retry is idempotently acknowledged for 24 hours without duplicate terminal side effects;
 - request correlation and server error redaction added to `ai_api.php`;
-- AI UI now localizes all proven routes, shows total latency/budget/risk and gives clearer Proposal review/confirmation;
+- server-rendered AI UI localizes all proven routes and shows total latency/budget/risk؛
 - detailed permission/risk/recovery/security/demo/release contract is canonical in `09-COMMERCIAL-MVP-RELEASE.md`.
 
-No financial feature, forecast formula, accounting number, Tool capability or auto-execution scope was added in v9.3.
+Commit `27e34a9` passed the GitHub release gate، PHP lint، cPanel deployment and rebuilt Worker registration. Live Job #49 completed a fixed 9-read forecast/risk plan, ended with `commercial_hardening_complete`, created no Proposal/write and kept the response Grounded.
+
+Job #49 also exposed a release-blocking browser parity gap: the authenticated live endpoint did not include `commercial_hardening`, and the SSE/Polling renderer still used the old v8 route/stage map. Therefore the no-refresh result omitted total latency/budget/risk and showed raw route/stage codes. v9.3.0.1 fixes the endpoint payload, both live transports, current route/stage localization, asset cache-busting and mandatory JavaScript syntax validation.
+
+No financial feature, forecast formula, accounting number, Tool capability or auto-execution scope was added in v9.3 or this hotfix.
 
 
 
@@ -219,15 +224,15 @@ Live grounded facts from Job #46:
 - trial balance: debit = credit = `17,821,580,000 IRR`, difference `0`
 
 
-Known low-severity observability issue: when a v8.9 action is blocked after the LLM goal-selection step (Job #41), the final UI meta currently reports `model: none` even though the trace proves `qwen3.5:0.8b` ran. This does not affect financial grounding or safety and is deferred to a later observability cleanup.
+The earlier blocked-action model-attempt observability gap is covered by the v9.3 commercial wrapper; its live UI proof remains part of the pending blocked-action checklist.
 
 ## Known non-blocking issues
 
 1. Adaptive exact-prompt cache is **FROZEN** as an optimization; no large dictionary/template project now.
 2. Old root docs under `docs/*.md` contain an earlier broader roadmap and must not override this SmartDocs set.
 3. Full accounting application completeness is intentionally deferred until AI MVP is proven.
-4. PHP CLI در محیط ساخت محلی در دسترس نبود؛ PHP lint در CI و قبل از cPanel deploy اجباری است.
-5. v9.3 هنوز cPanel/Worker live validation نشده و تا تکمیل checklist سند 09 نباید `LIVE-VALIDATED` نامیده شود.
+4. v9.3.0 PHP lint/CI/deploy/startup پاس است؛ v9.3.0.1 باید دوباره CI و cPanel deploy شود.
+5. تا تکمیل hotfix و همه checklist سند 09، v9.3 نباید `LIVE-VALIDATED` نامیده شود.
 6. در Workflow وابسته، نبود داده برای رتبه‌بندی باید `partial` برگرداند و نتایج معتبر مراحل قبلی را دور نریزد.
 
 ## Not yet implemented as production capability

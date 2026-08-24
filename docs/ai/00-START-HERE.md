@@ -63,9 +63,9 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 
 - Repository: `AmirAbedini78/excel-dev`
 - SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
-- Frozen runtime baseline: `a9a8c0259f4e7eaca248f9d9a912817fd1e23c92` (`v9.2.0`, `LIVE-VALIDATED` through Job #48)
-- Current implementation milestone: `v9.3.0 — Commercial MVP Hardening`
-- Validation state: `LOCAL-VALIDATED`; cPanel/Worker live validation is pending.
+- Deployed runtime baseline: `27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c` (`v9.3.0`)
+- Current implementation milestone: `v9.3.0.1 — Live Observability Hotfix`
+- Validation state: v9.3.0 CI/cPanel/Worker startup passed; Job #49 proved the Grounded read path but exposed missing hardening metadata in the no-refresh UI. Hotfix is `LOCAL-VALIDATED` and deploy validation is pending.
 - Release contract: `09-COMMERCIAL-MVP-RELEASE.md`
-- Next target: complete v9.3 live checklist, freeze the Commercial MVP, then move to market/customer/pricing/positioning/GTM work.
+- Next target: deploy v9.3.0.1, repeat the live read-metadata check without refresh, complete the remaining v9.3 checklist, then freeze the Commercial MVP.
 - Scope: **Accounting/Financial AI MVP only**

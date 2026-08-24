@@ -17,7 +17,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - name: Verify PHP runtime
         run: php --version
       - name: Run commercial MVP release gate
-        run: python scripts/release_gate.py --require-php
+        run: python scripts/release_gate.py --require-php --require-node

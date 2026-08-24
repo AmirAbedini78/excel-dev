@@ -1,14 +1,14 @@
 # 09-COMMERCIAL-MVP-RELEASE — قرارداد انتشار MVP تجاری
 
-Status: `LOCAL-VALIDATED`
+Status: `LIVE-VALIDATION-IN-PROGRESS`; v9.3.0.1 hotfix `LOCAL-VALIDATED`
 
 این سند Gate نهایی خروج از توسعه Feature و ورود به Commercial MVP است.
 
 ## Task contract
 
 ```text
-Current baseline: a9a8c0259f4e7eaca248f9d9a912817fd1e23c92
-Current phase: v9.3.0 Commercial MVP Hardening
+Current deployed baseline: 27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c
+Current phase: v9.3.0.1 Live Observability Hotfix inside the v9.3 Commercial MVP gate
 Requirement: بستن قراردادهای release، recovery، idempotency، latency، security، observability و UX
 In scope: Worker + Control Plane + tests + CI + SmartDocs
 Out of scope: Feature مالی جدید، auto-execution، RAG، multi-agent، ماژول غیرمالی
@@ -98,25 +98,27 @@ Control Plane اکنون lease hash را برای recovery نگه می‌دار�
 
 ```bash
 python scripts/release_gate.py
-python scripts/release_gate.py --require-php  # CI / release
+python scripts/release_gate.py --require-php --require-node  # CI / release
 ```
 
-Gate شامل Python syntax، JSON، secret scan، financial regression، runtime contract، static server boundary و PHP lint است.
+Gate شامل Python syntax، JSON، secret scan، financial regression، runtime contract، static server boundary، PHP lint و JavaScript syntax است. Installer ویندوز هر سه runtime را فقط داخل Docker فراهم می‌کند.
 
 ## Live validation checklist
 
 تا قبل از تکمیل موارد زیر، وضعیت v9.3 فقط `LOCAL-VALIDATED` است:
 
-- [ ] GitHub CI release gate سبز
-- [ ] PHP lint روی candidate/CI پاس
-- [ ] cPanel Update from Remote + Deploy HEAD
-- [ ] Docker Worker rebuild و startup/registration سالم
+- [x] GitHub CI release gate برای commit `27e34a9` سبز
+- [x] PHP lint برای v9.3.0 candidate/CI پاس
+- [x] cPanel Update from Remote + Deploy HEAD روی `27e34a9`
+- [x] Docker Worker rebuild و startup/registration سالم
 - [ ] Read job: metadata و latency budget دیده شود
 - [ ] Blocked action: مدل و Tool واقعی در UI دیده شود؛ Proposal صفر
 - [ ] Proposal retry: یک idempotency key → دقیقاً یک Proposal ID
 - [ ] Complete-response replay: retry → `ok=true`, `replayed=true`, counter بدون کاهش دوباره
 - [ ] Approved draft: human approval، balanced draft، Audit و post-action verification
 - [ ] Logs/metadata فاقد token/authorization
+
+Job #49 بخش Worker/financial این Read gate را پاس کرد: 9 read Grounded، `commercial_hardening_complete` و Proposal صفر. بخش no-refresh UI شکست خورد چون v9.3.0 live payload/renderer فیلدهای hardening را منتقل نمی‌کرد؛ پس checkbox تا deploy و اثبات v9.3.0.1 باز می‌ماند.
 
 ## Commercial demo script
 
@@ -131,8 +133,8 @@ Gate شامل Python syntax، JSON، secret scan، financial regression، runtim
 ## Rollback
 
 - قبل از نصب، backup خارجی از exact changed-file set.
-- cPanel: deploy commit قبلی `a9a8c02`.
-- Worker: بازگرداندن `engine/*` و `docker compose up -d --build worker`.
+- rollback خود hotfix: cPanel را به commit `27e34a9` برگردان؛ Worker نیاز به تغییر ندارد.
+- rollback کل v9.3: commit `a9a8c02` و سپس بازسازی Worker از `engine/*` همان baseline.
 - این milestone Schema migration جدید ندارد؛ rollback نیازمند rollback دیتابیس نیست.
 - Proposal/Draft ساخته‌شده در Live test باید طبق lifecycle حسابداری و Audit مدیریت شود، نه با حذف مستقیم DB.
 
