@@ -1,14 +1,14 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Accounting/Financial AI MVP",
-  "baseline_commit": "27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c",
-  "baseline_milestone": "v9.3.0 Commercial MVP Hardening deployed baseline",
+  "baseline_commit": "2f196868c9f27c719cf0165fd541656a2e5f11d4",
+  "baseline_milestone": "v9.3.0.1 Live Observability Hotfix deployed baseline",
   "baseline_status": "LIVE-VALIDATION-IN-PROGRESS",
-  "current_milestone": "v9.3.0.1 Live Observability Hotfix",
+  "current_milestone": "v9.3.0.2 Safe Attempt Observability Hotfix",
   "milestone_status": "LOCAL-VALIDATED",
   "live_validation_pending": true,
   "release_contract": "commercial-mvp-v1",
-  "active_task": "Install exact v9.3.0.1 hotfix, pass CI including JavaScript, deploy cPanel, repeat no-refresh metadata check, finish recovery/Proposal/Approval checks, then freeze Commercial MVP",
+  "active_task": "Install exact v9.3.0.2 hotfix, pass CI, deploy cPanel, repeat Job #51 with attempted-model metrics and bounded Tool names in live/reload UI, then finish recovery/Proposal/Approval/redaction checks and freeze Commercial MVP",
   "in_scope": [
     "permanent regression and release gate",
     "permission and risk matrix",
@@ -18,6 +18,7 @@
     "metadata and error redaction",
     "AI route and Proposal UX polish",
     "SSE/Polling terminal metadata parity",
+    "bounded Tool-name and attempted-model metric observability",
     "mandatory JavaScript syntax release gate",
     "release and demo checklist"
   ],
@@ -34,8 +35,9 @@
     "v9.0-v9.2 financial formulas and routing semantics"
   ],
   "known_issues": [
-    "Job #49 proved the grounded read-only Worker path but v9.3.0 live UI omitted commercial_hardening metadata until refresh",
-    "v9.3.0.1 hotfix CI/cPanel/browser validation is pending; Worker rebuild is not required",
+    "Job #50 passed no-refresh route/model/latency/budget/risk parity; read_model latency was 47.5s versus the initial 45s SLO",
+    "Job #51 passed blocked action safety/model-name observability but actual Tool names and attempted-model metrics remained absent from v9.3.0.1 UI",
+    "v9.3.0.2 safe attempt hotfix CI/cPanel/browser validation is pending; Worker rebuild is not required",
     "v9.1 forecast confidence remains low with only 3 complete historical months in demo data",
     "medium and high Proposal risks currently share ai.actions.approve; both remain human-only and never auto-approved",
     "Legacy root docs contain older broader roadmap"
@@ -45,20 +47,31 @@
     "secret_scan": "PASS",
     "python_syntax": "PASS",
     "php_lint_v9_3_0": "PASS",
-    "javascript_syntax_hotfix": "PASS_LOCAL",
+    "javascript_syntax_v9_3_0_2": "PASS_LOCAL",
     "github_ci_v9_3_0": "PASS",
-    "github_ci_hotfix": "PENDING",
+    "github_ci_v9_3_0_1": "PASS",
+    "github_ci_v9_3_0_2": "PENDING",
     "cpanel_v9_3_0": "PASS",
-    "cpanel_hotfix": "PENDING",
+    "cpanel_v9_3_0_1": "PASS",
+    "cpanel_v9_3_0_2": "PENDING",
     "worker_startup_v9_3_0": "PASS",
     "read_worker_job_49": "PASS",
-    "read_live_metadata": "FAILED_V9_3_0_HOTFIX_PENDING"
+    "read_live_metadata_job_50": "PASS",
+    "blocked_action_safety_model_job_51": "PASS",
+    "blocked_action_model_metrics": "FAILED_V9_3_0_1_V9_3_0_2_PENDING",
+    "blocked_action_tool_names": "FAILED_V9_3_0_1_V9_3_0_2_PENDING",
+    "proposal_idempotency_live": "PENDING",
+    "terminal_replay_live": "PENDING",
+    "approval_draft_verification_live": "PENDING",
+    "secret_redaction_live": "PENDING"
   },
   "updated_at": "2026-08-25",
-  "last_live_validation_job": 49,
+  "last_live_validation_job": 51,
   "live_validation_summary": {
     "job_48": "v9.2 baseline: 9 grounded reads; proactive next-best actions; no Proposal/write",
     "job_49": "v9.3.0: 9 grounded forecast reads; commercial hardening complete; no Proposal/write; live UI omitted total/budget/risk due endpoint/renderer parity defect",
-    "v9_3_0_1_required": "deploy hotfix and repeat no-refresh read metadata, then blocked-action model/tools, Proposal retry, terminal replay, human-approved balanced draft and redaction"
+    "job_50": "v9.3.0.1: no-refresh forecast route/model/latency/budget/risk parity passed; Proposal/write zero",
+    "job_51": "v9.3.0.1: ambiguous-account action blocked with real model, high risk, passing budget and zero Proposal; Tool names and attempted-model metrics not rendered",
+    "v9_3_0_2_required": "deploy safe bounded Tool names plus allowlisted attempted-model metrics and repeat Job #51, then Proposal retry, terminal replay, human-approved balanced draft and redaction"
   }
 }

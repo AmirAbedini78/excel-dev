@@ -58,7 +58,7 @@ final class AiModule
             if($j['result_text'])echo '<div class="ai-answer"><strong>پاسخ ایجنت</strong><div>'.nl2br(h($j['result_text'])).'</div>'.self::metricsHtml($j).'</div>';elseif($j['error_text'])echo '<div class="alert danger">'.nl2br(h($j['error_text'])).'</div>';else echo '<div class="ai-pending">'.self::statusText((string)$j['status']).'</div>';
             echo '</div>';foreach($proposals as $p)self::proposalCard($p);echo '</article>';
         }
-        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=9.3.0.1"></script>';
+        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=9.3.0.2"></script>';
     }
 
     private static function metricsHtml(array $job): string
@@ -66,7 +66,7 @@ final class AiModule
         $meta=json_decode((string)($job['result_json']??''),true);
         if(!is_array($meta))return'';
 
-        $m=(array)($meta['metrics']??[]);
+        $m=array_replace(AiRepository::safeModelMetrics($meta['attempted_metrics']??[]),AiRepository::safeModelMetrics($meta['metrics']??[]));
         $parts=[];
 
         $mode=(string)($meta['mode']??'');
@@ -101,8 +101,19 @@ final class AiModule
         $model=(string)($meta['model']??'');
         if($model!=='')$parts[]='مدل: '.($model==='none'?'بدون LLM':$model);
 
+        $toolsUsed=AiRepository::safeToolNames($meta['tools_used']??[]);
+        $toolsAttempted=AiRepository::safeToolNames($meta['tools_attempted']??[]);
+        if($toolsAttempted){
+            $same=count($toolsAttempted)===count($toolsUsed) && !array_diff($toolsAttempted,$toolsUsed);
+            if($same)$parts[]='ابزارها: '.implode('، ',$toolsAttempted);
+            else{
+                $parts[]='ابزارهای تلاش‌شده: '.implode('، ',$toolsAttempted);
+                if($toolsUsed)$parts[]='ابزارهای موفق: '.implode('، ',$toolsUsed);
+            }
+        }elseif($toolsUsed)$parts[]='ابزارهای موفق: '.implode('، ',$toolsUsed);
+
         if(isset($m['first_chunk_seconds'])&&is_numeric($m['first_chunk_seconds']))$parts[]='اولین خروجی: '.number_format((float)$m['first_chunk_seconds'],1).'s';
-        if(isset($m['elapsed_seconds'])&&is_numeric($m['elapsed_seconds']))$parts[]='زمان پردازش: '.number_format((float)$m['elapsed_seconds'],1).'s';
+        if(isset($m['elapsed_seconds'])&&is_numeric($m['elapsed_seconds']))$parts[]='زمان مدل: '.number_format((float)$m['elapsed_seconds'],1).'s';
 
         $pc=(float)($m['prompt_eval_count']??0);
         $pd=(float)($m['prompt_eval_duration']??0);

@@ -70,6 +70,9 @@ def php_lint(root: Path, required: bool) -> tuple[int, str]:
     for path in files(root, {".php"}):
         run([php, "-l", str(path)], root)
         count += 1
+    behavior_test = root / "tests/php_live_observability_test.php"
+    if behavior_test.is_file():
+        run([php, "-n", str(behavior_test)], root)
     return count, "PASS"
 
 
@@ -96,7 +99,7 @@ def main() -> int:
     if not (root / "engine/worker.py").is_file():
         raise SystemExit("release root is invalid")
 
-    print("ERPSMART AI v9.3.0.1 — Commercial MVP Release Gate")
+    print("ERPSMART AI v9.3.0.2 — Commercial MVP Release Gate")
     py_count = python_syntax(root)
     print(f"[1/6] Python syntax: PASS ({py_count} files)")
     json_count = json_syntax(root)
@@ -113,7 +116,7 @@ def main() -> int:
     print(f"[5/6] PHP lint: {php_state}" + (f" ({php_count} files)" if php_count else ""))
     js_count, js_state = javascript_syntax(root, args.require_node)
     print(f"[6/6] JavaScript syntax: {js_state}" + (f" ({js_count} files)" if js_count else ""))
-    print("ALL V9.3.0.1 COMMERCIAL MVP RELEASE GATES PASSED.")
+    print("ALL V9.3.0.2 COMMERCIAL MVP RELEASE GATES PASSED.")
     return 0
 
 

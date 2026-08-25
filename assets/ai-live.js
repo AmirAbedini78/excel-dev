@@ -130,6 +130,19 @@
   });
   const finite = value => value !== null && value !== "" && Number.isFinite(Number(value));
   const fmt = (value, digits = 1) => Number(value).toFixed(digits);
+  const safeToolNames = value => {
+    if (!Array.isArray(value)) return [];
+    const names = [];
+    const seen = new Set();
+    value.forEach(candidate => {
+      if (names.length >= 32 || typeof candidate !== "string") return;
+      const name = candidate.trim();
+      if (!/^[a-z][a-z0-9_]{0,79}$/.test(name) || seen.has(name)) return;
+      seen.add(name);
+      names.push(name);
+    });
+    return names;
+  };
 
   const metaText = job => {
     const parts = [];
@@ -165,9 +178,21 @@
     return parts.join(" • ");
   };
 
+  const toolText = job => {
+    const used = safeToolNames(job?.tools_used);
+    const attempted = safeToolNames(job?.tools_attempted);
+    if (!attempted.length) return used.length ? `ابزارهای موفق: ${used.join("، ")}` : "";
+    const same = attempted.length === used.length && attempted.every(name => used.includes(name));
+    if (same) return `ابزارها: ${attempted.join("، ")}`;
+    const parts = [`ابزارهای تلاش‌شده: ${attempted.join("، ")}`];
+    if (used.length) parts.push(`ابزارهای موفق: ${used.join("، ")}`);
+    return parts.join(" • ");
+  };
+
   const jobMetricsText = job => [
     metaText(job),
     metricsText(job?.metrics),
+    toolText(job),
     hardeningText(job?.commercial_hardening),
   ].filter(Boolean).join(" • ");
 

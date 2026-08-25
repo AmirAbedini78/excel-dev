@@ -40,6 +40,28 @@ final class AiRepository
         $st->execute([$id,Tenant::id(),(int)Auth::user()['id']]);$r=$st->fetch();return$r?:null;
     }
 
+    public static function safeToolNames(mixed $value): array
+    {
+        if(!is_array($value))return[];$safe=[];
+        foreach($value as $name){
+            if(!is_string($name))continue;$name=trim($name);
+            if(!preg_match('/^[a-z][a-z0-9_]{0,79}$/D',$name))continue;
+            $safe[$name]=true;if(count($safe)>=32)break;
+        }
+        return array_keys($safe);
+    }
+
+    public static function safeModelMetrics(mixed $value): array
+    {
+        if(!is_array($value))return[];$safe=[];
+        $allowed=['first_chunk_seconds','elapsed_seconds','prompt_eval_count','prompt_eval_duration','eval_count','eval_duration'];
+        foreach($allowed as $key){
+            if(!array_key_exists($key,$value)||!is_numeric($value[$key]))continue;
+            $number=(float)$value[$key];if(!is_finite($number)||$number<0)continue;$safe[$key]=$number;
+        }
+        return $safe;
+    }
+
     public static function liveJobStateForUser(int $id): ?array
     {
         $st=pdo()->prepare(
@@ -73,8 +95,11 @@ final class AiRepository
             'company_name'=>(string)($row['company_name']??''),'result_text'=>(string)($row['result_text']??''),
             'error_text'=>(string)($row['error_text']??''),'created_at'=>(string)($row['created_at']??''),
             'started_at'=>(string)($row['started_at']??''),'completed_at'=>(string)($row['completed_at']??''),
-            'updated_at'=>(string)($row['updated_at']??''),'live'=>$live,'metrics'=>(array)($meta['metrics']??[]),
+            'updated_at'=>(string)($row['updated_at']??''),'live'=>$live,
+            'metrics'=>array_replace(self::safeModelMetrics($meta['attempted_metrics']??[]),self::safeModelMetrics($meta['metrics']??[])),
             'mode'=>(string)($meta['mode']??''),'model'=>(string)($meta['model']??''),
+            'tools_used'=>self::safeToolNames($meta['tools_used']??[]),
+            'tools_attempted'=>self::safeToolNames($meta['tools_attempted']??[]),
             'commercial_hardening'=>(array)($meta['commercial_hardening']??[]),
             'terminal'=>in_array($status,['succeeded','failed'],true),
         ];

@@ -39,6 +39,8 @@ touches_code:
 - same terminal response can be replayed for delivery recovery؛
 - UI shows Proposal ID, localized risk/status and explicit confirmation.
 
+Job #51 proved the ambiguous-account branch still fails closed with `qwen3.5:0.8b`، high risk، a passing action latency budget and zero Proposal. It also showed that generic `action_read` labels and the model name alone are not sufficient attempt observability. v9.3.0.2 therefore renders bounded Tool names from `tools_used/tools_attempted` and six allowlisted numeric fields from `attempted_metrics`; arguments، results and call IDs remain server-side and redacted.
+
 General financial orchestration beyond the proven receipt slice remains deferred until after Commercial MVP freeze decision.
 
 ## Target examples

@@ -63,9 +63,9 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 
 - Repository: `AmirAbedini78/excel-dev`
 - SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
-- Deployed runtime baseline: `27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c` (`v9.3.0`)
-- Current implementation milestone: `v9.3.0.1 — Live Observability Hotfix`
-- Validation state: v9.3.0 CI/cPanel/Worker startup passed; Job #49 proved the Grounded read path but exposed missing hardening metadata in the no-refresh UI. Hotfix is `LOCAL-VALIDATED` and deploy validation is pending.
+- Deployed runtime baseline: `2f196868c9f27c719cf0165fd541656a2e5f11d4` (`v9.3.0.1`)
+- Current implementation milestone: `v9.3.0.2 — Safe Attempt Observability Hotfix`
+- Validation state: v9.3.0.1 CI/cPanel passed. Job #50 proved no-refresh route/model/latency/budget/risk parity. Job #51 proved blocked-action model correction and fail-closed behavior, but actual Tool names and attempted-model metrics were still absent from the UI; v9.3.0.2 is the scoped web-only closeout.
 - Release contract: `09-COMMERCIAL-MVP-RELEASE.md`
-- Next target: deploy v9.3.0.1, repeat the live read-metadata check without refresh, complete the remaining v9.3 checklist, then freeze the Commercial MVP.
+- Next target: validate/deploy v9.3.0.2 on exact baseline `2f19686`, repeat blocked Job #51 and require bounded Tool names plus attempted-model metrics in both no-refresh and reload UI, then complete recovery/Proposal/Approval/redaction gates.
 - Scope: **Accounting/Financial AI MVP only**

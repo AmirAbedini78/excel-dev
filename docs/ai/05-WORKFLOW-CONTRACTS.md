@@ -173,12 +173,16 @@ Worker terminal result
 → persisted redacted metadata
 → authenticated ai_live state
 → SSE or Polling
-→ same terminal answer + route/model/metrics/hardening fields
+→ same terminal answer + route/model/Tool names/metrics/hardening fields
 ```
 
 Success:
-- بدون refresh، `mode`, `model`, model metrics, end-to-end time, latency budget status و risk class دیده شوند؛
+- بدون refresh، `mode`, `model`, bounded `tools_used/tools_attempted` names, model metrics, end-to-end time, latency budget status و risk class دیده شوند؛
 - SSE و Polling payload/renderer مشترک داشته باشند؛
 - refresh بعدی همان معنی را در server-rendered UI نشان دهد؛
 - endpoint فقط برای user/workspace مالک Job قابل خواندن بماند؛
 - هیچ token، authorization، Tool argument یا Tool result حساس به UI نرسد.
+
+Tool-name boundary فقط نام‌هایی با الگوی `[a-z][a-z0-9_]{0,79}` را، به‌صورت unique و حداکثر ۳۲ نام، عبور می‌دهد. نام ابزار برای audit لازم است؛ arguments/result/call ID برای UI لازم نیست و ممنوع می‌ماند.
+
+اگر مسیر blocked/rejected/fallback پس از اجرای مدل پایان یابد، UI از `attempted_metrics` فقط شش مقدار عددی allowlisted مربوط به first chunk، elapsed و token count/duration را به‌عنوان fallback نمایش می‌دهد؛ metadata آزاد مدل به مرورگر منتقل نمی‌شود.

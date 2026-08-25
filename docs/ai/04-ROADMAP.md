@@ -253,7 +253,7 @@ Out of scope for v9.2:
 - background auto-execution without a user action/approval boundary
 
 ### v9.3 — Commercial MVP Hardening
-Status: `LIVE-VALIDATION-IN-PROGRESS`; v9.3.0.1 hotfix `LOCAL-VALIDATED`
+Status: `LIVE-VALIDATION-IN-PROGRESS`; v9.3.0.2 hotfix `LOCAL-VALIDATED`
 
 - permanent end-to-end regression/release suite + GitHub CI
 - canonical permission/risk matrix
@@ -265,7 +265,7 @@ Status: `LIVE-VALIDATION-IN-PROGRESS`; v9.3.0.1 hotfix `LOCAL-VALIDATED`
 - Proposal/mode/risk/latency UX polish
 - rollback, demo and live release checklist
 
-Deployment `27e34a9`، CI/PHP lint، cPanel and Worker startup passed. Job #49 proved the Grounded/read-only forecast path but exposed a parity defect between persisted terminal metadata and the no-refresh SSE/Polling renderer. v9.3.0.1 closes that defect and adds mandatory JavaScript syntax gating; it does not change Worker routing or financial logic.
+Deployment `27e34a9`، CI/PHP lint، cPanel and Worker startup passed. Job #49 exposed route/latency/risk parity and v9.3.0.1 closed it. Commit `2f19686` then passed Python/PHP/Node CI and Jobs #50/#51 proved read metadata plus blocked-action model/fail-closed behavior. Job #51 showed Tool names and attempted-model metrics were persisted but not rendered؛ v9.3.0.2 closes only that bounded/allowlisted UI boundary and does not change Worker routing or financial logic.
 
 No new accounting/AI feature is part of v9.3. Completion requires the live checklist in `09-COMMERCIAL-MVP-RELEASE.md`; only then does the Commercial MVP become `FROZEN`.
 

@@ -134,6 +134,18 @@ redacted terminal result_json
 
 در v9.3.0.1 فیلد redacted `commercial_hardening` همراه `mode/model/metrics` از endpoint زنده عبور می‌کند. SSE و Polling هر دو از یک renderer استفاده می‌کنند و باید بدون refresh با رندر PHP پس از refresh از نظر route، model، latency budget و risk هم‌معنا باشند.
 
+v9.3.0.2 همین boundary را برای blocked/fallback attempt observability کامل می‌کند:
+
+```text
+persisted tools_used / tools_attempted (names only)
+persisted attempted_metrics (numeric allowlist only)
+→ server allow-pattern + unique + max 32
+→ authenticated owner-scoped live payload
+→ text-only SSE/Polling renderer + escaped PHP reload renderer
+```
+
+Metric allowlist فقط `first_chunk_seconds`، `elapsed_seconds`، token counts/durations را می‌پذیرد. Tool arguments، Tool results، call IDs و trace details حساس از این boundary عبور نمی‌کنند.
+
 Proposal descriptorها به generic LLM loop داده نمی‌شوند. فقط Guarded Invoice Agent و Accounting Action Orchestrator پس از grounding قطعی می‌توانند Proposal Tool مشخص را مستقیم فراخوانی کنند.
 
 ## 5. Tool contract

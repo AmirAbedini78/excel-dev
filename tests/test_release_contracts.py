@@ -58,10 +58,26 @@ class ServerBoundaryTests(unittest.TestCase):
     def test_live_payload_exposes_redacted_commercial_metadata(self):
         self.assertIn("'commercial_hardening'=>(array)($meta['commercial_hardening']??[])", self.repository)
 
-    def test_live_renderer_has_v9301_metadata_contract(self):
-        self.assertIn('assets/ai-live.js?v=9.3.0.1', self.module)
+    def test_live_payload_exposes_only_bounded_attempt_observability(self):
+        self.assertIn("public static function safeToolNames(mixed $value): array", self.repository)
+        self.assertIn("preg_match('/^[a-z][a-z0-9_]{0,79}$/D',$name)", self.repository)
+        self.assertIn("if(count($safe)>=32)break", self.repository)
+        self.assertIn("'tools_used'=>self::safeToolNames($meta['tools_used']??[])", self.repository)
+        self.assertIn("'tools_attempted'=>self::safeToolNames($meta['tools_attempted']??[])", self.repository)
+        self.assertIn("public static function safeModelMetrics(mixed $value): array", self.repository)
+        self.assertIn("['first_chunk_seconds','elapsed_seconds','prompt_eval_count','prompt_eval_duration','eval_count','eval_duration']", self.repository)
+        self.assertIn("self::safeModelMetrics($meta['attempted_metrics']??[])", self.repository)
+        self.assertIn("AiRepository::safeModelMetrics($meta['attempted_metrics']??[])", self.module)
+
+    def test_live_renderer_has_v9302_metadata_contract(self):
+        self.assertIn('assets/ai-live.js?v=9.3.0.2', self.module)
         self.assertNotIn('assets/ai-live.js?v=8.0.0', self.module)
         self.assertIn("hardeningText(job?.commercial_hardening)", self.live_asset)
+        self.assertIn("toolText(job)", self.live_asset)
+        self.assertIn("safeToolNames(job?.tools_attempted)", self.live_asset)
+        self.assertIn("AiRepository::safeToolNames($meta['tools_attempted']??[])", self.module)
+        self.assertNotIn("tool_arguments", self.live_asset)
+        self.assertNotIn("tool_results", self.live_asset)
         self.assertIn('forecast_risk_anomaly: "پیش‌بینی، ریسک و ناهنجاری"', self.live_asset)
         self.assertIn('commercial_hardening_complete: "تأیید قرارداد تجاری"', self.live_asset)
         self.assertIn('within_budget: "پاس"', self.live_asset)
@@ -81,6 +97,13 @@ class ServerBoundaryTests(unittest.TestCase):
         self.assertIn("actions/setup-node@v4", workflow)
         self.assertIn("--require-php --require-node", workflow)
         self.assertIn('node, "--check"', gate)
+
+    def test_release_gate_runs_php_observability_behavior(self):
+        gate = (ROOT / "scripts/release_gate.py").read_text(encoding="utf-8")
+        behavior = ROOT / "tests/php_live_observability_test.php"
+        self.assertTrue(behavior.is_file())
+        self.assertIn('run([php, "-n", str(behavior_test)], root)', gate)
+        self.assertIn("PHP_LIVE_ATTEMPT_OBSERVABILITY: PASS", behavior.read_text(encoding="utf-8"))
 
 
 class ReleaseArtifactTests(unittest.TestCase):

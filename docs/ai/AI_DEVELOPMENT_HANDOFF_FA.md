@@ -30,13 +30,13 @@ DEFER:
 ## Current baseline / phase
 
 ```text
-Deployed source baseline: 27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c
-Baseline: v9.3.0 Commercial MVP Hardening — CI/PHP/cPanel/Worker startup passed
-Latest live evidence: Job #49 grounded/read-only PASS; no Proposal/write; no-refresh hardening metadata UI failed
-Working milestone: v9.3.0.1 Live Observability Hotfix
-Working status: LOCAL-VALIDATED; GitHub CI + cPanel/browser validation pending
+Deployed source baseline: 2f196868c9f27c719cf0165fd541656a2e5f11d4
+Baseline: v9.3.0.1 Live Observability Hotfix — Python/PHP/Node CI + cPanel passed
+Latest live evidence: Job #50 read metadata PASS؛ Job #51 blocked safety/model-name PASS، Proposal zero، Tool names and attempted metrics absent from UI
+Working milestone: v9.3.0.2 Safe Attempt Observability Hotfix
+Working status: LOCAL-VALIDATED candidate; GitHub CI + cPanel/browser validation pending
 Release contract: docs/ai/09-COMMERCIAL-MVP-RELEASE.md
-Next: install exact hotfix on `27e34a9`, pass CI with PHP+Node, deploy cPanel, repeat the no-refresh read check, finish the remaining live checklist, then freeze Commercial MVP. Worker rebuild is not required for this web-only hotfix.
+Next: install exact v9.3.0.2 hotfix on `2f19686`, pass CI with PHP+Node, deploy cPanel, repeat blocked Job #51 and require safe Tool names plus attempted-model metrics in live/reload UI، then finish idempotency/replay/Approval/redaction gates. Worker rebuild is not required.
 ```
 
 ## Architecture
@@ -96,7 +96,7 @@ Prompt
 → grounded response
 ```
 
-v9.3 Feature جدید نیست؛ هدفش freeze کردن رفتارهای اثبات‌شده با regression، recovery، security، observability و release gates است. v9.3.0.1 فقط parity متادیتای terminal بین persistence، SSE/Polling و رندر مرورگر را اصلاح می‌کند.
+v9.3 Feature جدید نیست؛ هدفش freeze کردن رفتارهای اثبات‌شده با regression، recovery، security، observability و release gates است. v9.3.0.1 route/model/latency/risk parity را اصلاح کرد؛ v9.3.0.2 فقط Tool-name و attempted-metrics parity امن و bounded را کامل می‌کند.
 
 ## Development workflow
 

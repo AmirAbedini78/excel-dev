@@ -7,12 +7,12 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Deployed source baseline: 27e34a9af3d1ca05a2b25f5aa2b60a94a86a369c
-Deployed milestone: v9.3.0 — Commercial MVP Hardening
-Validated deployment: GitHub CI + PHP lint + cPanel HEAD + rebuilt Docker Worker
-Latest live evidence: Job #49 — Grounded/read-only Worker path PASS; no Proposal/write
-Working milestone: v9.3.0.1 — Live Observability Hotfix
-Working validation: LOCAL-VALIDATED; cPanel/browser revalidation pending
+Deployed source baseline: 2f196868c9f27c719cf0165fd541656a2e5f11d4
+Deployed milestone: v9.3.0.1 — Live Observability Hotfix
+Validated deployment: GitHub Python/PHP/Node gate + cPanel + no-refresh browser Jobs #50/#51
+Latest live evidence: Job #51 — blocked action/model/fail-closed PASS; Proposal zero; Tool names and attempted-model metrics missing
+Working milestone: v9.3.0.2 — Safe Attempt Observability Hotfix
+Working validation: LOCAL-VALIDATED candidate; CI/cPanel/browser proof pending
 ```
 
 ## Scope فعال
@@ -192,7 +192,7 @@ The first proactive accounting recommendation workflow is now Live-proven:
 - Job #48 explicitly confirmed `proposal_created=false`; no voucher/payment/receipt/invoice was created.
 - v9.2.0 therefore completes the first `proactive grounded review → next-best-action ranking → safe human-controlled action handoff` lifecycle as `LIVE-VALIDATED`.
 
-### Commercial MVP Hardening — v9.3.0 deployed / v9.3.0.1 hotfix
+### Commercial MVP Hardening — v9.3.0.1 deployed / v9.3.0.2 hotfix
 
 Status: `LOCAL-VALIDATED`
 
@@ -207,9 +207,13 @@ Status: `LOCAL-VALIDATED`
 - server-rendered AI UI localizes all proven routes and shows total latency/budget/risk؛
 - detailed permission/risk/recovery/security/demo/release contract is canonical in `09-COMMERCIAL-MVP-RELEASE.md`.
 
-Commit `27e34a9` passed the GitHub release gate، PHP lint، cPanel deployment and rebuilt Worker registration. Live Job #49 completed a fixed 9-read forecast/risk plan, ended with `commercial_hardening_complete`, created no Proposal/write and kept the response Grounded.
+Commit `27e34a9` passed the original GitHub release gate، PHP lint، cPanel deployment and rebuilt Worker registration. Live Job #49 completed a fixed 9-read forecast/risk plan, ended with `commercial_hardening_complete`, created no Proposal/write and kept the response Grounded.
 
 Job #49 also exposed a release-blocking browser parity gap: the authenticated live endpoint did not include `commercial_hardening`, and the SSE/Polling renderer still used the old v8 route/stage map. Therefore the no-refresh result omitted total latency/budget/risk and showed raw route/stage codes. v9.3.0.1 fixes the endpoint payload, both live transports, current route/stage localization, asset cache-busting and mandatory JavaScript syntax validation.
+
+Commit `2f19686` passed the expanded Python/PHP/Node GitHub gate and was deployed. Job #50 proved the read terminal contract without refresh: localized forecast route/stages، model metrics، `47.5s` end-to-end، visible exceeded SLO and low risk. Job #51 then proved blocked action fail-closed on ambiguous `بانک`: attempted model `qwen3.5:0.8b` remained visible، action budget passed at `24.7s`، risk was high and Proposal remained zero.
+
+Job #51 also exposed the final presentation gap: the commercial wrapper had already persisted bounded `tools_used/tools_attempted` and `attempted_metrics`, but the authenticated live payload and both renderers did not show them. v9.3.0.2 exposes only normalized names (`[a-z][a-z0-9_]{0,79}`، unique، max 32) and six allowlisted numeric metric fields; it never exposes Tool arguments/results/call IDs. Worker، financial logic and schema remain unchanged.
 
 No financial feature, forecast formula, accounting number, Tool capability or auto-execution scope was added in v9.3 or this hotfix.
 
@@ -224,14 +228,14 @@ Live grounded facts from Job #46:
 - trial balance: debit = credit = `17,821,580,000 IRR`, difference `0`
 
 
-The earlier blocked-action model-attempt observability gap is covered by the v9.3 commercial wrapper; its live UI proof remains part of the pending blocked-action checklist.
+The blocked-action model/fail-closed half is live-proven by Job #51. Attempt telemetry remains open until v9.3.0.2 is deployed and the same prompt shows `search_parties`، `party_ledger`، `trial_balance` plus first-output/model timing in both live and reload metadata.
 
 ## Known non-blocking issues
 
 1. Adaptive exact-prompt cache is **FROZEN** as an optimization; no large dictionary/template project now.
 2. Old root docs under `docs/*.md` contain an earlier broader roadmap and must not override this SmartDocs set.
 3. Full accounting application completeness is intentionally deferred until AI MVP is proven.
-4. v9.3.0 PHP lint/CI/deploy/startup پاس است؛ v9.3.0.1 باید دوباره CI و cPanel deploy شود.
+4. v9.3.0.1 CI/cPanel/read UI پاس است؛ v9.3.0.2 safe attempt parity باید CI و cPanel/browser را پاس کند.
 5. تا تکمیل hotfix و همه checklist سند 09، v9.3 نباید `LIVE-VALIDATED` نامیده شود.
 6. در Workflow وابسته، نبود داده برای رتبه‌بندی باید `partial` برگرداند و نتایج معتبر مراحل قبلی را دور نریزد.
 

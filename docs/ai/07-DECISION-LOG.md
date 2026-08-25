@@ -84,3 +84,8 @@ v9.3 یک Wrapper نهایی cross-cutting روی Guard Stack دارد تا بد
 Status: ACCEPTED
 
 Job #49 نشان داد persistence صحیح metadata کافی نیست؛ اگر endpoint یا browser renderer آن را در SSE/Polling حذف کند، Commercial observability در تجربه اصلی کاربر شکست خورده است. از v9.3.0.1، terminal live payload باید redacted `commercial_hardening` را حمل کند و renderer مشترک SSE/Polling با رندر PHP از نظر route/model/latency/risk هم‌معنا باشد. JavaScript syntax نیز release gate اجباری است.
+
+## ADR-018 — Attempt observability is allowlisted and bounded
+Status: ACCEPTED
+
+Job #51 مدل تلاش‌شده و fail-closed بودن Action را ثابت کرد، اما stage عمومی `action_read` نام Toolهای واقعی را نشان نداد و metrics مدل تلاش‌شده نیز نمایش داده نشد. برای audit تجاری، endpoint و renderer می‌توانند فقط نام‌های normalize‌شده `tools_used/tools_attempted` و شش مقدار عددی allowlisted از `attempted_metrics` را نمایش دهند. Tool arguments، results، call IDs، free-form model metadata و trace details حساس هرگز وارد payload مرورگر نمی‌شوند.

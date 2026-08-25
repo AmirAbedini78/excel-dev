@@ -82,6 +82,8 @@ patch کوچک
 - execute only after explicit test approval
 - verify created Draft
 - no duplicate on retry
+- blocked/noop path must show attempted model، allowlisted attempted metrics and bounded actual Tool names in SSE/Polling and reload UI
+- Tool arguments/results/call IDs must remain absent from the browser payload
 
 ### Planner
 - dependency correctness
@@ -150,6 +152,8 @@ python scripts/release_gate.py --require-node
 ```bash
 python scripts/release_gate.py --require-php --require-node
 ```
+
+از v9.3.0.2، PHP gate علاوه بر lint، تست رفتاری `tests/php_live_observability_test.php` را نیز اجرا می‌کند تا allowlist نام ابزار/metrics و parity رندر reload به‌صورت اجرایی بررسی شود.
 
 برای تغییر هم‌زمان Worker + Control Plane، هر سه سطح اجباری‌اند:
 

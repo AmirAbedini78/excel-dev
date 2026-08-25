@@ -1003,3 +1003,54 @@ JavaScript syntax: 6/6 PASS
 secret scan/Python/JSON: PASS
 PHP lint + GitHub CI + cPanel/browser live proof: pending package install
 ```
+
+## v9.3.0.1 deployment — Jobs #50/#51
+
+Commit `2f196868c9f27c719cf0165fd541656a2e5f11d4` passed the GitHub Python/PHP/Node gate and was deployed to cPanel without a Worker rebuild.
+
+Job #50 repeated the Job #49 forecast prompt without refresh and proved the hotfix:
+
+```text
+route: localized forecast/risk
+model: qwen3.5:0.8b
+end-to-end: 47.5s
+read_model budget: exceeded but visible
+risk: low
+commercial_hardening_complete
+Proposal/write: zero
+```
+
+Job #51 repeated the known ambiguous receipt action:
+
+```text
+accounting_action_blocked
+model attempted: qwen3.5:0.8b
+end-to-end: 24.7s
+action budget: within budget
+risk: high
+real account choices: 10101 / 10102
+Proposal: zero
+```
+
+The financial/safety/model-name gate passed, but the UI still showed generic `action_read` labels rather than persisted actual Tool names and omitted first-output/model-time metrics. Static inspection confirmed `tools_used/tools_attempted` and `attempted_metrics` existed in terminal metadata but were omitted by `liveJobStateForUser` and both renderers.
+
+## v9.3.0.2 — Safe Attempt Observability Hotfix
+
+- authenticated live payload exposes bounded Tool-name arrays only؛
+- blocked/fallback model metrics use a six-field numeric allowlist and fall back to persisted `attempted_metrics`؛
+- server filter: lowercase identifier، max 80 characters، unique، max 32؛
+- shared SSE/Polling renderer and PHP reload renderer show attempted/successful names؛
+- arguments، results and call IDs remain hidden؛
+- cache-busted asset `9.3.0.2`؛
+- no Worker، financial، routing or schema change.
+
+Candidate validation:
+
+```text
+Python/contract suite: 39/39 PASS
+PHP lint: 53/53 PASS + live observability behavior PASS
+JavaScript syntax: 6/6 PASS
+server Tool-name boundary behavior: PASS
+live Tool renderer behavior: PASS
+secret/Python/JSON gates: PASS
+```
