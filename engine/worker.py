@@ -999,6 +999,8 @@ from workflow_planner import install_workflow_planner as _install_workflow_plann
 _install_workflow_planner(Worker)
 from action_orchestrator import install_action_orchestrator as _install_action_orchestrator
 _install_action_orchestrator(Worker)
+from financial_intelligence import install_financial_intelligence as _install_financial_intelligence
+_install_financial_intelligence(Worker)
 
 def main() -> None:
     ap = argparse.ArgumentParser()

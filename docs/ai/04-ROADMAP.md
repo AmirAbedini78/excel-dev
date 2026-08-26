@@ -179,18 +179,26 @@ Live evidence:
 - no automatic approval/finalization is allowed by the v8.9 Worker.
 
 ### v9.0 — Financial Intelligence Core
-Status: `PLANNED`
+Status: `LIVE-VALIDATED` via v9.0.1 hardening
 
-- consistent KPI definitions
-- time-series extraction
-- AR/AP style signals در حد داده موجود
-- trend comparison
-- ranking
-- drill-down
-- anomaly candidates
-- explainable managerial report
+Validated architecture:
 
-LLM calculator نیست؛ metric engine deterministic است.
+```text
+grounded server datasets
+→ deterministic financial metrics
+→ deterministic findings
+→ bounded qwen finding-ID prioritization
+→ deterministic severity gate
+→ management financial intelligence report
+```
+
+Live evidence:
+- Job #45: first 10-dataset management report successfully grounded and rendered.
+- v9.0.1: deterministic severity gate prevents Info findings from outranking Warning/Critical findings.
+- Job #46: `-31.9%` confirmed purchase decline surfaced as management priority #1.
+- no write/proposal path exists in Financial Intelligence Core.
+- current partial Jalali month is excluded from primary monthly trend comparison.
+- unsupported profit/cash-flow metrics are explicitly not guessed.
 
 ### v9.1 — Forecast / Risk / Anomaly
 Status: `PLANNED`

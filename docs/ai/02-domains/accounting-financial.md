@@ -124,3 +124,30 @@ credit total: 100,000,000 IRR
 ```
 
 Because the created voucher remains `draft`, it does not alter confirmed/final party ledger or trial-balance facts. Jobs #43/#44 verified this invariant after execution.
+
+## v9.0.1 live financial intelligence
+
+The accounting module now supports a read-only management intelligence layer over confirmed accounting facts.
+
+```text
+10 grounded datasets
+→ complete-month sales/purchase trend
+→ concentration checks
+→ draft exposure
+→ trial-balance integrity
+→ largest confirmed balances
+→ severity-safe management priorities
+```
+
+Live Job #46:
+
+```text
+confirmed sales trend: +26.4%
+confirmed purchase trend: -31.9%  [warning]
+top customer share: 26.1%
+top vendor share: 59.4%
+non-final sales: 784,300,000 IRR / 14.2%
+trial difference: 0
+```
+
+Primary monthly trends use the last two complete Jalali months, not an incomplete current month.

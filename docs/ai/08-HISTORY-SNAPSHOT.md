@@ -655,3 +655,117 @@ READ
 → SERVER EXECUTION AS DRAFT
 → VERIFY
 ```
+
+## v9.0.0 / v9.0.1 — Financial Intelligence Live Validation
+
+Frozen baseline:
+
+```text
+6f5d6c4b8400a8df023011896ff204e0c3c28b09
+```
+
+### v9.0.0 installer
+
+```text
+core financial intelligence: 42/42 PASS
+actual-like integration: 6/6 PASS
+real Ollama priority selector pre-install: 3/3 PASS
+real Ollama priority selector post-rebuild: 3/3 PASS
+full guard stack: PASS
+Worker registration: PASS
+```
+
+### Job #45
+
+The first real management request executed:
+
+```text
+financial_intelligence_candidate
+→ 10 grounded financial datasets
+→ financial_intelligence_llm
+→ financial_intelligence_prioritized
+→ financial_intelligence_complete
+```
+
+Grounded facts:
+
+```text
+sales 1405/04 → 1405/05:
+1,570,360,000 → 1,985,720,000 IRR
+change: +26.4%
+
+purchases 1405/04 → 1405/05:
+2,151,600,000 → 1,466,300,000 IRR
+change: -31.9%
+
+top customer: کارخانه بهین بسته‌بندی
+share: 26.1%
+
+top vendor: ابزار دقیق سپهر
+share: 59.4%
+
+non-final sales:
+2 docs
+784,300,000 IRR
+14.2%
+
+trial:
+17,821,580,000 debit
+17,821,580,000 credit
+difference 0
+```
+
+Job #45 exposed a product-quality gap: the LLM chose informational largest balances as the only primary management priority while a deterministic purchase-decline warning existed.
+
+### v9.0.1 management priority hardening
+
+A server-owned severity gate was added:
+
+```text
+critical
+→ warning
+→ info
+```
+
+Regression:
+
+```text
+v9.0 core: 42/42 PASS
+priority hardening: 12/12 PASS
+built Worker regression: PASS
+```
+
+### Job #46
+
+The same live prompt confirmed the hardening:
+
+```text
+priority #1:
+[warning] confirmed purchases -31.9%
+
+then informational findings:
+largest balances
+trial balanced
+sales +26.4%
+customer concentration 26.1%
+```
+
+Model:
+```text
+qwen3.5:0.8b
+first output: ~1.1s
+model time: ~5.5s
+```
+
+### v9.0 conclusion
+
+Financial Intelligence is `LIVE-VALIDATED`:
+
+```text
+grounded facts
+→ deterministic metrics
+→ deterministic findings
+→ bounded LLM priority
+→ deterministic severity gate
+→ management report
+```

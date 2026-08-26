@@ -147,6 +147,28 @@ The first write/action vertical slice is now Live-proven:
 - Job #44 proved approved/final trial balance facts were unaffected: debit = credit = `17,821,580,000 IRR`, difference `0`.
 - Therefore the first full `READ → CONDITION → PROPOSAL → HUMAN APPROVAL → DRAFT EXECUTION → VERIFY` workflow is `LIVE-VALIDATED`.
 
+### Financial Intelligence Core — v9.0.0 / v9.0.1
+
+The first management-level financial intelligence workflow is now Live-proven:
+
+- Installer v9.0.0: static/compile/core `42/42`, actual-like integration `6/6`, real Ollama bounded priority selector `3/3` before mutation and `3/3` after rebuild, full guard stack PASS.
+- Job #45: 10 grounded accounting datasets were read successfully; deterministic metrics/findings were generated; qwen3.5:0.8b prioritized only server-grounded finding IDs; report values reconciled to real accounting data.
+- Job #45 exposed one product-quality issue: the model elevated informational `largest_account_balances` above the deterministic purchase-decline warning.
+- v9.0.1 added a server-owned severity gate `critical → warning → info`; the model may only influence order inside the same severity tier.
+- v9.0.1 regression: v9.0 core `42/42` + management priority hardening `12/12` PASS before/after rebuild.
+- Job #46: the real warning `purchases -31.9%` appeared first in management priorities, ahead of informational balances.
+- Job #46 model latency improved to ~5.5s with first output ~1.1s after warmup.
+- v9.0.1 therefore completes the first `grounded facts → deterministic findings → bounded model prioritization → severity-safe management report` lifecycle as `LIVE-VALIDATED`.
+
+Live grounded facts from Job #46:
+- confirmed sales: 1405/04 `1,570,360,000 IRR` → 1405/05 `1,985,720,000 IRR` (`+26.4%`)
+- confirmed purchases: 1405/04 `2,151,600,000 IRR` → 1405/05 `1,466,300,000 IRR` (`-31.9%`, warning)
+- top customer concentration: کارخانه بهین بسته‌بندی `26.1%`
+- top vendor concentration: ابزار دقیق سپهر `59.4%`
+- non-final sales exposure: `2` docs / `784,300,000 IRR` / `14.2%`
+- trial balance: debit = credit = `17,821,580,000 IRR`, difference `0`
+
+
 Known low-severity observability issue: when a v8.9 action is blocked after the LLM goal-selection step (Job #41), the final UI meta currently reports `model: none` even though the trace proves `qwen3.5:0.8b` ran. This does not affect financial grounding or safety and is deferred to a later observability cleanup.
 
 ## Known non-blocking issues

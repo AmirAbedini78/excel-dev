@@ -102,3 +102,30 @@ The orchestrator parses the explicit user amount/account phrases, resolves entit
 Live Jobs #41/#42 proved both fail-closed ambiguity and successful grounded Proposal creation. Human approval then exercised the existing Control Plane validator/executor. Jobs #43/#44 proved the resulting `draft` does not contaminate approved/final read facts.
 
 Known observability cleanup: a post-LLM blocked path can currently show `model=none` in final UI metadata even though trace events record the real model. Safety/execution are unaffected.
+
+## v9.0.1 Financial Intelligence execution contract
+
+The Financial Intelligence model boundary is narrower than a general analyst:
+
+```text
+LLM input: grounded finding IDs + severity/category/title
+LLM output: selected grounded finding IDs only
+```
+
+The server owns:
+- tool plan
+- financial periods
+- amounts
+- thresholds
+- finding generation
+- severity labels
+- final report text
+- critical/warning/info precedence
+
+v9.0.1 adds the deterministic priority invariant:
+
+```text
+critical > warning > info
+```
+
+LLM preference is only advisory within the same severity tier. If priority selection fails, deterministic severity ordering still produces the report.

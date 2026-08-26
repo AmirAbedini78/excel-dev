@@ -62,7 +62,7 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 
 - Repository: `AmirAbedini78/excel-dev`
 - SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
-- Current implementation milestone: `v8.9.0 — Accounting Action Orchestrator`
-- Validation state: `LIVE-VALIDATED` end-to-end through Jobs #41–#44 plus human approval: grounded read → deterministic condition → approval-only Proposal → human approval → draft voucher → post-action verification.
-- Next development target: `v9.0 — Financial Intelligence Core` after freezing/committing the exact v8.9 runtime + SmartDocs set.
+- Current implementation milestone: `v9.0.1 — Financial Intelligence Core + Management Priority Hardening`
+- Validation state: `LIVE-VALIDATED` through Financial Intelligence Jobs #45/#46: 10 grounded datasets → deterministic metrics/findings → bounded Qwen priority selection → deterministic severity gate → management report.
+- Next development target: `v9.1 — Forecast / Risk / Anomaly` after freezing/committing v9.0.1.
 - Scope: **Accounting/Financial AI MVP only**

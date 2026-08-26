@@ -1,13 +1,13 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Accounting/Financial AI MVP",
-  "baseline_commit": "b442fe3b556c32bcea3b40b8bff1b70de76ce4cd",
-  "current_milestone": "v8.9.0 Accounting Action Orchestrator",
+  "baseline_commit": "6f5d6c4b8400a8df023011896ff204e0c3c28b09",
+  "current_milestone": "v9.0.1 Financial Intelligence Core + Management Priority Hardening",
   "milestone_status": "LIVE-VALIDATED",
   "live_validation_pending": false,
-  "next_phase": "v9.0 Financial Intelligence Core",
-  "next_phase_mode": "financial intelligence using deterministic facts plus bounded model interpretation",
-  "active_task": "Freeze v8.9.0: exact runtime + SmartDocs stage/commit/push, capture final v8.9 SHA, then start v9.0",
+  "next_phase": "v9.1 Forecast / Risk / Anomaly",
+  "next_phase_mode": "deterministic/statistical forecasts and anomaly/risk signals over grounded accounting data",
+  "active_task": "Freeze v9.0.1: exact runtime + SmartDocs stage/commit/push, capture final v9.0 SHA, then start v9.1",
   "frozen_subsystems": [
     "adaptive plan cache expansion",
     "large regex/dictionary expansion"
@@ -20,22 +20,18 @@
     "multi-agent/framework migration without proven need"
   ],
   "known_issues": [
-    "Blocked v8.9 action after LLM selection can show model=none in final UI meta even though trace records qwen3.5:0.8b; observability-only, not financial safety",
-    "qwen3:1.7b timed out on the v8.8 complex planner diagnostic; gemma3:4b is too slow for that planner path on current CPU",
-    "legacy root docs contain older broader roadmap"
+    "Blocked v8.9 action after LLM selection can show model=none in final UI meta even though trace records qwen3.5:0.8b; observability-only",
+    "Current Financial Intelligence intentionally does not estimate unsupported net profit/cash flow/ratios without grounded primitives",
+    "Legacy root docs contain older broader roadmap"
   ],
-  "updated_at": "2026-08-23",
+  "updated_at": "2026-08-24",
   "live_validation_jobs": [
-    41,
-    42,
-    43,
-    44
+    45,
+    46
   ],
   "live_validation_summary": {
-    "job_41": "generic bank account ambiguous; real trial-balance candidates returned; fail-closed with no Proposal",
-    "job_42": "grounded debtor receipt action created Proposal #2 for 100,000,000 IRR using real customer/account IDs",
-    "human_approval": "Proposal #2 approved in UI; server created AI-VCH-20260823-193339-D278 as balanced draft voucher",
-    "job_43": "approved/final party balance remained 727,100,000 IRR after draft execution",
-    "job_44": "approved/final trial balance remained 17,821,580,000 debit/credit, difference 0"
+    "job_45": "10 grounded datasets produced deterministic metrics/findings and bounded LLM priority; exposed Info-over-Warning ordering quality gap",
+    "v9.0.1": "server-owned severity gate critical > warning > info; regression 42/42 + hardening 12/12 PASS",
+    "job_46": "same live prompt; -31.9% purchase decline warning became management priority #1; model qwen3.5:0.8b, ~5.5s"
   }
 }

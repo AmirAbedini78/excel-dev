@@ -1,9 +1,9 @@
 # SmartDocs Backlog
 
 ## P0 — Current
-- Freeze v8.9.0 after end-to-end Live validation: exact runtime + SmartDocs stage/commit/push and capture final SHA
+- Freeze v9.0.1 after Job #46: exact runtime + SmartDocs stage/commit/push and capture final SHA
 ## P0 — Next
-- v9.0 Financial Intelligence Core
+- v9.1 Forecast / Risk / Anomaly
 
 - account resolver/search capability as needed
 - safe resume after approval

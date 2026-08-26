@@ -30,11 +30,11 @@ DEFER:
 ## Current baseline / phase
 
 ```text
-v8.9 source baseline: b442fe3b556c32bcea3b40b8bff1b70de76ce4cd
-Milestone: v8.9.0 Accounting Action Orchestrator
-Status: LIVE-VALIDATED — Jobs #41–#44 + human approval
-v8.9 Live validation completed the first controlled financial action lifecycle. Job #41 proved fail-closed account ambiguity; Job #42 created Proposal #2 from real Tool-derived party/account IDs; explicit human approval created draft voucher `AI-VCH-20260823-193339-D278`; Jobs #43/#44 proved approved/final customer balance and trial balance remained unchanged. v8.9 is LIVE-VALIDATED; next operational step is exact runtime + SmartDocs commit/push, then v9.0 Financial Intelligence Core.
-Next after v8.9 freeze: v9.0 Financial Intelligence Core
+v9.0 source baseline: 6f5d6c4b8400a8df023011896ff204e0c3c28b09
+Milestone: v9.0.1 Financial Intelligence Core + Management Priority Hardening
+Status: LIVE-VALIDATED — Jobs #45/#46
+v9.0 Financial Intelligence is Live-validated. Job #45 proved the 10-dataset grounded management report; v9.0.1 added a deterministic `critical → warning → info` priority gate after Job #45 exposed Info-over-Warning ordering; Job #46 verified the real -31.9% purchase warning is now management priority #1. Next operational step is exact runtime + SmartDocs commit/push, then v9.1 Forecast / Risk / Anomaly.
+Next after v9.0.1 freeze: v9.1 Forecast / Risk / Anomaly
 ```
 
 ## Architecture
