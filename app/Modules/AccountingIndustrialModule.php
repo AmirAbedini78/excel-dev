@@ -323,8 +323,30 @@ final class AccountingIndustrialModule
         Tenant::requirePermission('accounting.vouchers.view');if(Tenant::can('accounting.vouchers.manage'))self::voucherForm();
         $st=pdo()->prepare("SELECT * FROM acc_vouchers WHERE workspace_id=? AND company_id=? ORDER BY voucher_date DESC,id DESC LIMIT 300");$st->execute([Tenant::id(),AccountingRepository::companyId()]);
         echo '<section class="card table-card"><div class="section-title"><h2>اسناد حسابداری</h2></div><div class="table-wrap"><table><thead><tr><th>شماره</th><th>تاریخ</th><th>نوع</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>وضعیت</th><th></th></tr></thead><tbody>';
-        foreach($st->fetchAll() as $r){echo '<tr><td>'.h($r['voucher_no']).'</td><td>'.h(AccountingRepository::faDate($r['voucher_date'])).'</td><td>'.h($r['voucher_type']).'</td><td>'.h($r['description']).'</td><td>'.number_format((float)$r['total_debit']).'</td><td>'.number_format((float)$r['total_credit']).'</td><td>'.h($r['status']).'</td><td>';
+        foreach($st->fetchAll() as $r){echo '<tr><td>'.h($r['voucher_no']).'</td><td>'.h(AccountingRepository::faDate($r['voucher_date'])).'</td><td>'.h($r['voucher_type']).'</td><td>'.h($r['description']).'</td><td>'.number_format((float)$r['total_debit']).'</td><td>'.number_format((float)$r['total_credit']).'</td><td>'.h($r['status']).'</td><td class="row-actions"><a class="btn tiny" href="index.php?page=industrial&section=vouchers&view='.(int)$r['id'].'">مشاهده</a>';
             if(Tenant::can('accounting.vouchers.manage'))echo '<form method="post" class="inline-form" onsubmit="return confirm(\'سند حذف شود؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_delete_voucher"><input type="hidden" name="id" value="'.(int)$r['id'].'"><button class="btn tiny danger">حذف</button></form>';echo '</td></tr>';}
+        echo '</tbody></table></div></section>';if(($view=(int)($_GET['view']??0))>0)self::voucherView($view);
+    }
+
+    private static function voucherView(int $id): void
+    {
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();
+        $st=pdo()->prepare("SELECT * FROM acc_vouchers WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1");$st->execute([$id,$wid,$cid]);$v=$st->fetch();if(!$v)return;
+        $st=pdo()->prepare("SELECT l.*,a.code account_code,a.name account_name,p.code party_code,p.name party_name,cc.code cost_center_code,cc.name cost_center_name,pr.code project_code,pr.name project_name FROM acc_voucher_lines l LEFT JOIN acc_accounts a ON a.id=l.account_id AND a.workspace_id=l.workspace_id LEFT JOIN acc_parties p ON p.id=l.party_id AND p.workspace_id=l.workspace_id LEFT JOIN acc_cost_centers cc ON cc.id=l.cost_center_id AND cc.workspace_id=l.workspace_id LEFT JOIN acc_projects pr ON pr.id=l.project_id AND pr.workspace_id=l.workspace_id WHERE l.workspace_id=? AND l.voucher_id=? ORDER BY l.line_no");$st->execute([$wid,$id]);$lines=$st->fetchAll();
+        $source=trim((string)($v['source_type']??''));$sourceLabel=$source==='ai_agent'?'ایجادشده توسط AI':($source!==''?$source:'ثبت دستی');
+        $difference=(float)$v['total_debit']-(float)$v['total_credit'];
+        echo '<section class="card"><div class="section-title"><div><h2>سند حسابداری '.h($v['voucher_no']).'</h2><div class="muted">'.h(AccountingRepository::faDate($v['voucher_date'])).' • '.h($v['voucher_type']).' • '.h($v['status']).' • '.h($sourceLabel).'</div></div><a class="btn tiny" href="index.php?page=industrial&section=vouchers">بستن جزئیات</a></div>';
+        if(trim((string)($v['description']??''))!=='')echo '<p>'.h($v['description']).'</p>';
+        echo '<div class="acc-form-total"><span>بدهکار: <b>'.number_format((float)$v['total_debit']).'</b></span><span>بستانکار: <b>'.number_format((float)$v['total_credit']).'</b></span><span>اختلاف: <b>'.number_format($difference).'</b></span></div>';
+        echo '<div class="table-wrap"><table class="acc-entry-table"><thead><tr><th>#</th><th>حساب</th><th>طرف حساب</th><th>مرکز هزینه</th><th>پروژه</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th></tr></thead><tbody>';
+        foreach($lines as $l){
+            $account=trim((string)($l['account_code']??'').' - '.(string)($l['account_name']??''),' -');
+            $party=trim((string)($l['party_code']??'').' - '.(string)($l['party_name']??''),' -');
+            $costCenter=trim((string)($l['cost_center_code']??'').' - '.(string)($l['cost_center_name']??''),' -');
+            $project=trim((string)($l['project_code']??'').' - '.(string)($l['project_name']??''),' -');
+            echo '<tr><td>'.(int)$l['line_no'].'</td><td>'.h($account?:'—').'</td><td>'.h($party?:'—').'</td><td>'.h($costCenter?:'—').'</td><td>'.h($project?:'—').'</td><td>'.h($l['description']??'').'</td><td>'.number_format((float)$l['debit']).'</td><td>'.number_format((float)$l['credit']).'</td></tr>';
+        }
+        if(!$lines)echo '<tr><td colspan="8" class="muted">برای این سند آرتیکلی ثبت نشده است.</td></tr>';
         echo '</tbody></table></div></section>';
     }
 

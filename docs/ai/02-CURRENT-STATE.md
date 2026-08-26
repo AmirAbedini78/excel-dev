@@ -248,3 +248,12 @@ The blocked-action model/fail-closed half is live-proven by Job #51. Attempt tel
 - learned proactive ranking
 - production RAG corpus and retrieval evaluation
 - full accounting application completeness
+
+### v9.3 approval/draft closeout evidence — 2026-08-26
+
+- Final observability source baseline is `7e1c7c59725aebb2caaa31e815b8b35ffd615882`; CI/deploy completed before the latest live action tests.
+- Job #53 closed the blocked-action presentation parity check for attempted model/metrics and bounded Tool names.
+- Job #54 created grounded high-risk Proposal #3 for a `100,000,000 IRR` receipt from `کارخانه بهین بسته‌بندی`; no accounting draft existed before human approval.
+- Human approval executed Proposal #3 and created voucher `AI-VCH-20260826-202025-9F19` dated `1405/06/04`, type `general`, status `draft`, debit `100,000,000`, credit `100,000,000`.
+- The accounting data model already stores voucher articles in `acc_voucher_lines`, but the existing Vouchers UI had no detail route while Purchase/Sales already had one. The current closeout candidate adds a `مشاهده` action and a scoped voucher detail view showing account, party, cost center, project, description, debit and credit.
+- Proposal/terminal retry deterministic self-tests pass. Repeated fault-injection harness work is no longer an MVP blocker; product-panel verification takes precedence for closeout.

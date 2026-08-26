@@ -1,12 +1,11 @@
 # SmartDocs Backlog
 
 ## P0 — Current
-- install v9.3.0.2 Safe Attempt Observability Hotfix on exact baseline `2f19686`
-- pass GitHub CI with mandatory Python/PHP/JavaScript gates
-- cPanel deploy hotfix; Worker rebuild is not required because `engine/*` is unchanged
-- repeat ambiguous-account Job #51 and verify model + attempted-model metrics + exact bounded Tool names + zero Proposal without refresh and after reload
-- execute remaining Proposal idempotency، terminal replay، Approval/Draft/verification and secret-redaction checks in `09-COMMERCIAL-MVP-RELEASE.md`
-- freeze Commercial MVP after exact final SHA
+- deploy the scoped Accounting Voucher Detail UI candidate on baseline `7e1c7c5`
+- open `AI-VCH-20260826-202025-9F19` from `حسابداری و مالی → اسناد حسابداری → مشاهده` and verify the two stored articles in the product UI
+- record the successful human-approval/draft evidence in SmartDocs and perform one final browser smoke pass
+- close v9.3 as the Commercial MVP release candidate and freeze feature development
+- do not spend additional MVP time on standalone recovery-proof harnesses; deterministic retry/replay tests are sufficient unless a real product failure appears
 
 ## P1 — After Commercial MVP freeze
 
