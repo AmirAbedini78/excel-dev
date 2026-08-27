@@ -1054,3 +1054,7 @@ server Tool-name boundary behavior: PASS
 live Tool renderer behavior: PASS
 secret/Python/JSON gates: PASS
 ```
+
+## v10.0 kickoff — Modular Pilot Platform
+
+2026-08-27: کاربر پس از v9.3 Feature Freeze به‌صورت صریح North Star را گسترش داد. هدف جدید، ERPSMART به‌عنوان Modular AI-Native Business Operations Platform با Vertical اول Finance/Trade است. Strategy پذیرفته‌شده: Wide Platform / Deep Modules؛ Module Kernel و Model Provider Gateway به‌عنوان foundation، سپس Finance action depth و Inventory/Procurement/CRM-lite/Trade slices برای Design Partner Pilot.

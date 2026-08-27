@@ -99,3 +99,14 @@ Status: ACCEPTED
 همچنین `engine/config.json` یک فایل runtime محلی و gitignored است و ممکن است Worker token واقعی داشته باشد؛ source-secret gate نباید این فایل runtime را به‌عنوان secret committed گزارش کند. فقط همین path از source scan مستثناست.
 
 v9.3 پس از این closeout feature-frozen است؛ کار بعدی RC/demo/market/customer/pricing/positioning/GTM است.
+
+## ADR-019 — v10 Wide Platform / Deep Modules pivot
+Status: ACCEPTED — 2026-08-27
+
+پس از Live validation کامل v9.3، Scope از Accounting-only MVP به Modular AI-Native Business Operations Platform تغییر می‌کند. تصمیم کاربر صریح است و North Star/Roadmap مجاز به تغییر هستند.
+
+Architecture strategy: Platform از نظر Module blueprint جامع می‌شود، اما عمق عملیاتی فقط Module-by-Module بالا می‌رود. اولین Vertical تجاری Finance/Trade برای شرکت‌های بازرگانی B2B است. Module غیرفعال نباید navigation/route/AI processing داشته باشد.
+
+v9.3 safety contracts همچنان invariant هستند. Model Provider Gateway باید LLM provider را قابل تعویض کند بدون اینکه domain calculation/validation به مدل منتقل شود.
+
+Long-term benchmark/model vision یک Asset strategy است، نه Scope آموزش مدل در v10: ابتدا Product workflows + evaluation data، سپس benchmark و در صورت توجیه داده/مجوز، مدل تخصصی.

@@ -7,20 +7,19 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Live product baseline entering closeout: 448fca0b00a5ef2470e5498a9e25981ce30a7865
-Live milestone: v9.3 — Commercial MVP
-Validation: LIVE-VALIDATED
-Feature state: FROZEN
-Latest live evidence: Job #54 → Proposal #3 → human approval → AI-VCH-20260826-202025-9F19 → product UI article verification PASS
-Closeout candidate: draft-only voucher deletion + runtime-config release-gate false-positive fix + SmartDocs sync
-Next: RC/demo/market/customer/pricing/positioning/GTM
+Baseline: 5a4474dfb7a429c526fb68e9b55b0d8b6c982411
+Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
+Working milestone: v10.0 Modular Pilot Platform
+Working status: IMPLEMENTED-IN-PROGRESS
+Current cycle: Module Kernel v1 + Module Center + SmartDocs pivot
+Next cycles: Model Provider Gateway; Finance Agent action depth; Inventory/Procurement/CRM-lite/Trade pilot slices
 ```
 
 ## Scope فعال
 
-**Accounting/Financial AI MVP**
+**Modular AI-Native Business Operations Platform**
 
-تمرکز روی تکمیل Workflowهای هوشمند است؛ نه توسعه تمام منوهای حسابداری یا سایر ماژول‌ها.
+Vertical اول برای بازار: Finance/Trade برای شرکت‌های بازرگانی، واردکننده و توزیع‌کننده B2B. Blueprint Platform جامع است؛ عمق هر Module مرحله‌ای و بر اساس workflow واقعی/شواهد مشتری تکمیل می‌شود.
 
 ## Runtime topology
 

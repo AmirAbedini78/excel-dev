@@ -5,39 +5,32 @@
 
 ## Product
 
-ERPSMART فعلاً یک **AI-native Accounting/Financial MVP** است.
+ERPSMART یک **Modular AI-Native Business Operations Platform** است. v9.3 هسته Finance AI را Live-validated کرد؛ v10 Platform را برای Pilot شرکت‌های بازرگانی B2B ماژولار و عملیاتی می‌کند.
 
 هدف:
-- سؤال از داده مالی
-- گزارش و تحلیل
-- forecast/risk/anomaly
-- AI Agent برای اجرای عملیات مالی
+- ماژول‌های Business قابل فعال/غیرفعال در سطح Workspace
+- سؤال/تحلیل/Forecast Grounded در هر Domain فعال
+- Agent Action روی workflowهای پشتیبانی‌شده
+- Automation/Proactive intelligence بین Finance/Sales/Inventory/Procurement/Trade
+- Local-first AI با Provider قابل تعویض
 - کاربر به‌تدریج Supervisor باشد نه data-entry operator
 
 ## Scope lock
 
-فعلاً توسعه روی Accounting/Financial AI است.
+Vertical اول: **Finance/Trade برای trading/import/distribution B2B**.
 
-DEFER:
-- Notes/CRM/Phonebook AI
-- Practice OS expansion
-- Full accounting software completeness
-- Builder
-- advanced RAG stack
-- multi-agent
-- framework migration صرفاً برای مد روز
+v10 توسعه Platform foundation + Module depth لازم برای Design Partner Pilot است. ERP کاملِ همه صنایع، Rewrite کامل Frontend، autonomous high-risk posting و model-training بزرگ بدون داده کافی خارج از Scope این Sprint هستند.
 
 ## Current baseline / phase
 
 ```text
-Live product baseline entering closeout: 448fca0b00a5ef2470e5498a9e25981ce30a7865
-Baseline: v9.3 Commercial MVP — live product flow validated
-Latest live evidence: Job #50 read observability PASS؛ Job #53 blocked action Tool/model/metrics parity PASS with Proposal zero؛ Job #54 → Proposal #3 → human approval → AI-VCH-20260826-202025-9F19 → exact two-article product UI verification PASS
-Working milestone: v9.3 closeout / feature freeze
-Working status: LIVE-VALIDATED / FEATURE FROZEN
-Release contract: docs/ai/09-COMMERCIAL-MVP-RELEASE.md
-Recovery: deterministic Proposal retry + terminal replay tests PASS; standalone fault-injection harnesses deferred unless a real runtime failure appears
-Next: deploy the small closeout hardening patch, then stop core feature work and move to RC/demo/ICP/pricing/positioning/customer/GTM.
+Baseline: 5a4474dfb7a429c526fb68e9b55b0d8b6c982411
+Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
+Working milestone: v10.0 Modular Pilot Platform
+Working status: IMPLEMENTED-IN-PROGRESS
+Current cycle: Module Kernel v1 + Module Center + SmartDocs pivot
+Next: Provider Gateway → Finance Agent action depth → Inventory/Procurement/CRM-lite/Trade → Design Partner demo readiness
+Canonical v10 contract: docs/ai/10-MODULAR-PILOT-PLATFORM.md
 ```
 
 ## Architecture

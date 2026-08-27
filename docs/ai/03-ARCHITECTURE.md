@@ -233,3 +233,33 @@ Historical financial series
 ### Fine-tuning
 بعد از داشتن حجم مناسب Interaction تاییدشده:
 Prompt → Plan → Tools → Approval/Correction → Outcome.
+
+## 10. v10 Module architecture
+
+از v10، Platform علاوه بر Domain/AI contract، یک Module Kernel دارد:
+
+```text
+Workspace
+  → Module Registry
+      → enabled / disabled
+      → dependencies
+      → pages/routes/menu
+      → permissions
+      → schema/assets/API
+      → AI tools/RAG/events/background jobs
+```
+
+Rule: Module غیرفعال نباید در navigation یا route قابل استفاده باشد و در Cycleهای بعد AI Tool/Background Job آن نیز فقط در حالت فعال expose می‌شود.
+
+`workspace_modules` منبع وضعیت فعال/غیرفعال هر Workspace است. `ModuleRegistry` تنها Catalog/Dependency contract را نگه می‌دارد؛ Module Center مدیریت این وضعیت را برای Platform Admin انجام می‌دهد.
+
+Target AI runtime بعدی:
+
+```text
+Model Provider Gateway
+  → Ollama local primary
+  → OpenAI-compatible fallback/alternate
+  → task/provider policy
+```
+
+Business-critical calculations و domain execution مستقل از Provider باقی می‌مانند.

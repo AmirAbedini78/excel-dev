@@ -18,6 +18,7 @@ require_once APP_ROOT . '/app/Core/Auth.php';
 require_once APP_ROOT . '/app/Core/Schema.php';
 require_once APP_ROOT . '/app/Core/Notify.php';
 require_once APP_ROOT . '/app/Core/Tenant.php';
+require_once APP_ROOT . '/app/Core/ModuleRegistry.php';
 require_once APP_ROOT . '/app/Core/ChoiceRegistry.php';
 require_once APP_ROOT . '/app/Core/Audit.php';
 require_once APP_ROOT . '/app/Core/FileLibrary.php';
@@ -49,6 +50,7 @@ if (file_exists($configFile)) {
         AccountingSchema::migrate(pdo());
         AccountingExtendedSchema::migrate(pdo());
         AiSchema::migrate(pdo());
+        ModuleRegistry::ensureSchema();
         RuntimeCache::markSchema(RuntimeCache::SCHEMA_VERSION);
     }
 
@@ -56,6 +58,7 @@ if (file_exists($configFile)) {
 
     if (Auth::check()) {
         Tenant::boot();
+        ModuleRegistry::boot();
         if (empty($_SESSION['_v4_login_audited'])) {
             Audit::log('auth.login','users',(int)Auth::user()['id'],'ورود کاربر');
             $_SESSION['_v4_login_audited']=1;

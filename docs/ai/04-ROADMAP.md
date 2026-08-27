@@ -1,7 +1,27 @@
 # 04-ROADMAP — Roadmap Canonical فعلی
 
-> این Roadmap بر «AI-first Accounting MVP» قفل شده است.
-> Full Accounting Product expansion بعد از اثبات MVP انجام می‌شود.
+> v9.3 Accounting/Financial AI به‌عنوان هسته اثبات‌شده `FROZEN` است.
+> از v10 Roadmap روی **Wide Platform / Deep Modules** و اولین Vertical تجاری Finance/Trade قفل می‌شود.
+
+## v10 — Modular Pilot Platform
+Status: `IMPLEMENTED-IN-PROGRESS`
+
+### Thursday 2026-08-27
+- Module Kernel v1 + Module Center + workspace gating
+- SmartDocs/North Star pivot
+- Model Provider Gateway v1
+- Finance form/action coverage matrix
+- highest-value Finance Agent action gaps
+
+### Friday 2026-08-28
+- Inventory minimal-complete slice
+- Procurement minimal-complete slice
+- CRM-lite / Customer 360
+- Trade/Logistics model + intelligence
+- cross-module proactive manager brief
+- data import/API readiness + Design Partner demo pack
+
+Stop gate: پس از Demo واقعی workflowهای مطالبات، موجودی، تأمین، Trade risk و Agent actions، توسعه feature فقط از شواهد Design Partner ادامه می‌یابد. جزئیات در `10-MODULAR-PILOT-PLATFORM.md`.
 
 ## Completed foundation
 

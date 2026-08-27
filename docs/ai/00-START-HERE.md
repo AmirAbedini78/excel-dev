@@ -15,6 +15,7 @@
 7. در صورت عملیات/تحلیل AI: `05-WORKFLOW-CONTRACTS.md`
 8. قبل از تحویل: `06-TEST-RELEASE-PROTOCOL.md`
 9. برای Commercial MVP: `09-COMMERCIAL-MVP-RELEASE.md`
+10. برای v10 Platform: `10-MODULAR-PILOT-PLATFORM.md`
 
 برای انتقال سریع Context به AI جدید، بعد از موارد بالا این فایل را بخوان:
 
@@ -62,12 +63,10 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 ## Current snapshot
 
 - Repository: `AmirAbedini78/excel-dev`
-- SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
-- Live product baseline entering closeout: `448fca0b00a5ef2470e5498a9e25981ce30a7865` (`feat(accounting): add voucher detail view`)
-- Current milestone: `v9.3 — Commercial MVP`
-- Validation state: **LIVE-VALIDATED / FEATURE FROZEN**. Job #50 closed read observability, Job #53 closed blocked-action Tool/model parity, Job #54 created grounded Proposal #3, human approval created balanced draft `AI-VCH-20260826-202025-9F19`, and the Accounting UI verified both stored articles with debit = credit = `100,000,000 IRR`.
-- Retry/replay state: deterministic Proposal idempotency and terminal replay tests PASS. Standalone live fault-injection harnesses are deferred unless a real runtime failure appears.
-- Closeout-only changes: draft-only voucher deletion guard, release-gate exclusion for the intentionally local/gitignored `engine/config.json`, and SmartDocs synchronization. No new AI/financial capability is added.
-- Release contract: `09-COMMERCIAL-MVP-RELEASE.md`
-- Next target after closeout deploy: **RC/demo/market/customer/pricing/positioning/GTM**; no new core feature development inside v9.3.
-- Scope: **Accounting/Financial AI MVP only**
+- v9.3 final baseline: `5a4474dfb7a429c526fb68e9b55b0d8b6c982411` — `LIVE-VALIDATED / FEATURE FROZEN`.
+- Proven financial write evidence: Job #54 → Proposal #3 → Human Approval → balanced draft `AI-VCH-20260826-202025-9F19` → exact product UI article verification PASS.
+- Current milestone: **v10.0 — Modular Pilot Platform**.
+- Current scope: **Modular AI-Native Business Operations Platform**; first commercial vertical = Finance/Trade for B2B trading/import/distribution companies.
+- Current sprint: Module Kernel → Provider Gateway → Finance Agent depth → Inventory/Procurement/CRM-lite/Trade slices → Design Partner demo readiness.
+- v9.3 safety invariants remain frozen: current facts from deterministic Tools, no model-generated ERP IDs, Proposal/Approval for risky mutation, RAG is not current ledger.
+- Canonical v10 contract: `10-MODULAR-PILOT-PLATFORM.md`.

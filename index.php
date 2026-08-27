@@ -5,6 +5,7 @@ require_once __DIR__.'/app/Modules/ChoiceModule.php';
 require_once __DIR__.'/app/Modules/V5Module.php';
 require_once __DIR__.'/app/Modules/AccountingIndustrialModule.php';
 require_once __DIR__.'/app/Modules/AiModule.php';
+require_once __DIR__.'/app/Modules/ModuleCenterModule.php';
 function q(string $sql, array $params=[]): array { $st=pdo()->prepare($sql); $st->execute($params); return $st->fetchAll(); }
 function one(string $sql, array $params=[]): ?array { $st=pdo()->prepare($sql); $st->execute($params); $r=$st->fetch(); return $r ?: null; }
 function scalarv(string $sql, array $params=[]): int { $st=pdo()->prepare($sql); $st->execute($params); return (int)$st->fetchColumn(); }
@@ -193,6 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (str_starts_with($action,'choice_')) ChoiceModule::handle($action);
         if (str_starts_with($action,'acc_')) AccountingIndustrialModule::handle($action);
         if (str_starts_with($action,'ai_')) AiModule::handle($action);
+        if (str_starts_with($action,'module_')) ModuleCenterModule::handle($action);
         if ($action === 'inline_update_batch') handle_inline_update_batch();
         if ($action === 'inline_update') handle_inline_update();
         if ($action === 'delete_record') handle_delete_record();
@@ -541,6 +543,7 @@ function render_header(string $title, string $subtitle=''): void
         'choices'=>'مقادیر انتخابی',
         'industrial'=>'حسابداری و مالی',
         'ai'=>'دستیار هوشمند',
+        'modules'=>'مرکز ماژول‌ها',
         'shares'=>'اشتراک داده‌ها',
         'access'=>'کاربران و دسترسی‌ها',
         'platform'=>'مدیریت SaaS',
@@ -551,19 +554,20 @@ function render_header(string $title, string $subtitle=''): void
         'dashboard'=>'ماژول مدیریت امور حسابداران',
         'industrial'=>'ماژول حسابداری و مالی',
         'ai'=>'هوش مصنوعی و اتوماسیون',
+        'modules'=>'ماژول‌ها و بسته‌ها',
         'shares'=>'مدیریت و زیرساخت',
     ];
     $navPerm=['dashboard'=>'dashboard.view','companies'=>'companies.view','systems'=>'systems.view','monthly'=>'monthly.view','daily'=>'daily.view','custom_fields'=>'custom_fields.manage',
         'choices'=>'choices.manage','industrial'=>'accounting.view','ai'=>'ai.use','kanban'=>'kanban.view','notes'=>'notes.view','phonebook'=>'phonebook.view','shares'=>'shares.view','library'=>'files.view','access'=>'members.view','performance'=>'cache.manage','settings'=>'settings.manage'];
     foreach($navPerm as $nk=>$np) if(isset($nav[$nk]) && !Tenant::can($np)) unset($nav[$nk]);
-    if(!Tenant::isPlatformAdmin()) unset($nav['platform']);
-    if(!Tenant::isPlatformAdmin()) unset($nav['settings']);
+    foreach(array_keys($nav) as $nk) if(!ModuleRegistry::pageEnabled($nk)) unset($nav[$nk]);
+    if(!Tenant::isPlatformAdmin()){ unset($nav['platform']); unset($nav['settings']); unset($nav['modules']); }
     ?><!doctype html><html lang="fa" dir="rtl"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title><?=h($title)?> - Accounting CRM</title>
+    <title><?=h($title)?> - ERPSMART</title>
     <link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=7.0">
     </head><body><div class="app">
-    <aside class="sidebar compact"><div class="brand">Accounting CRM<span>سامانه سبک حسابداران</span></div><nav>
+    <aside class="sidebar compact"><div class="brand">ERPSMART<span>پلتفرم هوشمند عملیات کسب‌وکار</span></div><nav>
     <?php foreach($nav as $k=>$v): ?><?php if(isset($navGroups[$k])):?><span class="v5-nav-group"><?=h($navGroups[$k])?></span><?php endif;?><a class="<?=($_GET['page']??'dashboard')===$k?'active':''?>" href="index.php?page=<?=$k?>"><?=h($v)?></a><?php endforeach; ?>
     </nav></aside>
     <main class="main"><header class="topbar"><div><h1><?=h($title)?></h1><?php if($subtitle): ?><p><?=h($subtitle)?></p><?php endif; ?></div>
@@ -574,7 +578,8 @@ function render_header(string $title, string $subtitle=''): void
 function render_footer(): void { ?></main></div><script>window.CSRF='<?=h(csrf_token())?>';window.JALALI_TODAY='<?=h(Jalali::today())?>';window.V4_WORKSPACE_ID=<?=Tenant::id()?>;window.V4_WORKSPACES=<?=json_encode(Tenant::workspaceOptions(),JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP)?>;</script><script src="assets/app.js?v=6.0"></script><script src="assets/v4.js?v=6.0"></script><script src="assets/v5.js?v=6.0"></script><script src="assets/accounting.js?v=7.0"></script></body></html><?php }
 
 if ($page === 'login') { render_login(); exit; }
-Auth::require(); // Tenant already booted by bootstrap; V5 schema is migration-gated.
+Auth::require(); // Tenant and ModuleRegistry are already booted by bootstrap.
+if(!ModuleRegistry::pageEnabled($page)){ flash('این ماژول برای محیط کاری فعال نیست.','danger'); redirect('index.php'); }
 if($_SERVER['REQUEST_METHOD']==='GET' && $page!=='login' && setting('audit_page_views','0')==='1') Audit::log('page.view','page',0,$page);
 $pagePermission=['dashboard'=>'dashboard.view','companies'=>'companies.view','systems'=>'systems.view','monthly'=>'monthly.view','daily'=>'daily.view','kanban'=>'kanban.view','custom_fields'=>'custom_fields.manage',
         'choices'=>'choices.manage','industrial'=>'accounting.view','ai'=>'ai.use','phonebook'=>'phonebook.view','shares'=>'shares.view','performance'=>'cache.manage','settings'=>'settings.manage'];
@@ -592,6 +597,7 @@ elseif($page === 'kanban') render_kanban();
 elseif($page === 'notes') V5Module::renderNotes();
 elseif($page === 'industrial') AccountingIndustrialModule::render();
 elseif($page === 'ai') AiModule::render();
+elseif($page === 'modules') ModuleCenterModule::render();
 elseif($page === 'phonebook') V5Module::renderPhonebook();
 elseif($page === 'shares') V5Module::renderSharing();
 elseif($page === 'performance') V5Module::renderPerformance();

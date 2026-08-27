@@ -23,35 +23,35 @@
 
 هر تغییر North Star باید همزمان در `07-DECISION-LOG.md` ثبت شود.
 
-## اصل دوم: Scope فعلی کوچک‌تر از Vision نهایی است
+## اصل دوم: Scope v10 — Platform جامع، عمق مرحله‌ای
 
-Vision بلندمدت می‌تواند بزرگ باشد، ولی **Scope فعلی MVP فقط حسابداری/مالی و هوشمندسازی آن است**.
+v9.3 Accounting/Financial AI به‌عنوان هسته اثبات‌شده `FROZEN` می‌ماند. از v10 Scope فعال یک **Modular AI-Native Business Operations Platform** است که Vertical اول آن Finance/Trade برای شرکت‌های بازرگانی B2B است.
 
-وجود Notes، CRM، Phonebook، Calendar، Production یا سایر بخش‌ها در سورس به معنی مجاز بودن توسعه AI روی آن‌ها در فاز فعلی نیست.
+جامع‌بودن یعنی Blueprint و Module contractهای Platform کامل باشند؛ نه اینکه همه ERP قبل از اولین مشتری به‌صورت سطحی پیاده شود.
 
-## اصل سوم: Vertical Slice
+## اصل سوم: Wide Platform / Deep Modules
 
-برای اثبات AI لازم نیست ابتدا نرم‌افزار حسابداری کامل ساخته شود.
+هر Module فقط وقتی Pilot-ready است که Workflow واقعی خودش را از UI دستی تا Read/Report، Agent Action، Validation، Approval/Audit و در صورت نیاز Automation/Proactive behavior پوشش دهد.
 
-روش فعلی:
+روش v10:
 
 ```text
-Accounting primitive واقعی
+Module contract واقعی
         +
-Workflow مشخص
+Workflow کسب‌وکار مشخص
         +
 Safe Tool/Query
         +
 AI understanding/planning
         +
-Validation
+Deterministic domain execution
         +
-Approval برای Mutation
+Approval برای Mutation پرریسک
         +
-Runtime evidence
+Runtime/Product evidence
 ```
 
-اگر Workflow هوشمند نیازمند یک قابلیت حسابداری گمشده است، **فقط همان primitive لازم** تکمیل می‌شود؛ نه کل زیرسیستم حسابداری.
+ماژول غیرفعال نباید منو، route، AI Tool یا پردازش پس‌زمینه فعال داشته باشد. Module جدید فقط بر اساس Vertical و شواهد مشتری عمق می‌گیرد.
 
 ## اصل چهارم: منبع حقیقت مالی
 

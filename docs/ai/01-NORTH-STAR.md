@@ -2,27 +2,29 @@
 
 ## تعریف یک‌خطی
 
-**ERPSMART در فاز فعلی باید یک MVP حسابداری/مالی AI-Native بسازد که حسابدار بتواند با زبان طبیعی از داده‌های واقعی سؤال کند، تحلیل و پیش‌بینی بگیرد و به یک AI Agent دستور عملیات مالی بدهد؛ به‌گونه‌ای که کاربر به‌تدریج از اپراتور نرم‌افزار به ناظر کیفی/Supervisor تبدیل شود.**
+**ERPSMART یک Modular AI-Native Business Operations Platform است که ماژول‌های عملیاتی کسب‌وکار را با Agent، تحلیل، پیش‌بینی و اتوماسیون به هم متصل می‌کند؛ Vertical اول آن Finance/Trade برای شرکت‌های بازرگانی B2B است و هدف این است که کاربر از Data-entry Operator به Supervisor تصمیم و استثنا تبدیل شود.**
 
 ## Vision بلندمدت
 
-در آینده Platform می‌تواند Businessهای بیشتر و یک Accounting Application کامل‌تر را پوشش دهد، اما این Vision **مجوز توسعه همه ماژول‌ها در حال حاضر نیست**.
+Platform از نظر معماری می‌تواند Finance، Sales/CRM، Inventory، Procurement، Trade/Logistics، Production، HR، Project، Service و Marketing را پوشش دهد. عمق هر Module بر اساس Vertical و شواهد بازار تکمیل می‌شود؛ ERP جامع سطحی قبل از مشتری هدف نیست.
 
-## تصمیم مهم فعلی
+در بلندمدت Toolها، workflow traces، RAG corpusها و evaluation setهای هر Vertical می‌توانند پایه benchmarkها و مدل‌های تخصصی کسب‌وکار شوند، مشروط به مجوز و کیفیت داده.
 
-فعلاً:
+## تصمیم مهم فعلی — v10
 
 ```text
-نرم‌افزار حسابداری کامل شبیه سپیدار/هلو از صفر  ❌
-هوشمندسازی همه ماژول‌های موجود                 ❌
-توسعه Notes/CRM/Phonebook به خاطر AI           ❌
+بازنویسی کامل سپیدار/راهکاران/CRM قبل از بازار       ❌
+ساخت ده‌ها منوی نمایشی و نیمه‌کاره                    ❌
+Rewrite کامل Frontend صرفاً برای مد روز               ❌
 
-استفاده از Accounting/Financial Core موجود     ✅
-اثبات Workflowهای هوشمند روی همین Domain       ✅
-ساخت MVP تجاری AI-first                         ✅
+Module Kernel واقعی + Enable/Disable/Dependencies      ✅
+Finance/Trade Vertical عمیق و Actionable               ✅
+Inventory + Procurement + CRM-lite متصل                ✅
+Local-first AI + Cloud Provider Gateway                ✅
+Design Partner Pilot و توسعه بعدی از شواهد مشتری       ✅
 ```
 
-بعد از آنکه مغز AI و Workflowها قابل اتکا و تجاری شدند، توسعه یک نرم‌افزار حسابداری کامل‌تر و اتصال همان AI Core به آن انجام می‌شود.
+v9.3 هسته مالی اثبات‌شده را Freeze می‌کند؛ v10 آن را به Platform ماژولار قابل Pilot تبدیل می‌کند.
 
 ## چهار قابلیت تعریف‌کننده MVP
 
