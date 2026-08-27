@@ -324,7 +324,7 @@ final class AccountingIndustrialModule
         $st=pdo()->prepare("SELECT * FROM acc_vouchers WHERE workspace_id=? AND company_id=? ORDER BY voucher_date DESC,id DESC LIMIT 300");$st->execute([Tenant::id(),AccountingRepository::companyId()]);
         echo '<section class="card table-card"><div class="section-title"><h2>اسناد حسابداری</h2></div><div class="table-wrap"><table><thead><tr><th>شماره</th><th>تاریخ</th><th>نوع</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>وضعیت</th><th></th></tr></thead><tbody>';
         foreach($st->fetchAll() as $r){echo '<tr><td>'.h($r['voucher_no']).'</td><td>'.h(AccountingRepository::faDate($r['voucher_date'])).'</td><td>'.h($r['voucher_type']).'</td><td>'.h($r['description']).'</td><td>'.number_format((float)$r['total_debit']).'</td><td>'.number_format((float)$r['total_credit']).'</td><td>'.h($r['status']).'</td><td class="row-actions"><a class="btn tiny" href="index.php?page=industrial&section=vouchers&view='.(int)$r['id'].'">مشاهده</a>';
-            if(Tenant::can('accounting.vouchers.manage'))echo '<form method="post" class="inline-form" onsubmit="return confirm(\'سند حذف شود؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_delete_voucher"><input type="hidden" name="id" value="'.(int)$r['id'].'"><button class="btn tiny danger">حذف</button></form>';echo '</td></tr>';}
+            if(Tenant::can('accounting.vouchers.manage') && (string)$r['status']==='draft')echo '<form method="post" class="inline-form" onsubmit="return confirm(\'پیش‌نویس سند حذف شود؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_delete_voucher"><input type="hidden" name="id" value="'.(int)$r['id'].'"><button class="btn tiny danger">حذف</button></form>';echo '</td></tr>';}
         echo '</tbody></table></div></section>';if(($view=(int)($_GET['view']??0))>0)self::voucherView($view);
     }
 
@@ -618,7 +618,9 @@ final class AccountingIndustrialModule
 
     private static function deleteVoucher(): void
     {
-        Tenant::requirePermission('accounting.vouchers.manage');$id=(int)($_POST['id']??0);$wid=Tenant::id();$cid=AccountingRepository::companyId();$pdo=pdo();$pdo->beginTransaction();try{$pdo->prepare("DELETE l FROM acc_voucher_lines l JOIN acc_vouchers v ON v.id=l.voucher_id WHERE l.workspace_id=? AND v.id=? AND v.company_id=?")->execute([$wid,$id,$cid]);$pdo->prepare("DELETE FROM acc_vouchers WHERE id=? AND workspace_id=? AND company_id=?")->execute([$id,$wid,$cid]);$pdo->commit();}catch(Throwable$e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}self::audit('acc.voucher.delete','acc_vouchers',$id,'حذف سند حسابداری');self::back('vouchers');
+        Tenant::requirePermission('accounting.vouchers.manage');$id=(int)($_POST['id']??0);$wid=Tenant::id();$cid=AccountingRepository::companyId();
+        $st=pdo()->prepare("SELECT status FROM acc_vouchers WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1");$st->execute([$id,$wid,$cid]);$status=$st->fetchColumn();if($status===false)throw new RuntimeException('سند حسابداری پیدا نشد.');if($status!=='draft')throw new RuntimeException('فقط پیش‌نویس سند حسابداری قابل حذف است.');
+        $pdo=pdo();$pdo->beginTransaction();try{$pdo->prepare("DELETE FROM acc_voucher_lines WHERE workspace_id=? AND voucher_id=?")->execute([$wid,$id]);$pdo->prepare("DELETE FROM acc_vouchers WHERE id=? AND workspace_id=? AND company_id=? AND status='draft'")->execute([$id,$wid,$cid]);$pdo->commit();}catch(Throwable$e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}self::audit('acc.voucher.delete','acc_vouchers',$id,'حذف پیش‌نویس سند حسابداری');self::back('vouchers');
     }
 
     private static function saveBom(): void

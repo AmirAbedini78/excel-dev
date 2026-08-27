@@ -30,13 +30,14 @@ DEFER:
 ## Current baseline / phase
 
 ```text
-Deployed source baseline: 2f196868c9f27c719cf0165fd541656a2e5f11d4
-Baseline: v9.3.0.1 Live Observability Hotfix — Python/PHP/Node CI + cPanel passed
-Latest live evidence: Job #50 read metadata PASS؛ Job #51 blocked safety/model-name PASS، Proposal zero، Tool names and attempted metrics absent from UI
-Working milestone: v9.3.0.2 Safe Attempt Observability Hotfix
-Working status: LOCAL-VALIDATED candidate; GitHub CI + cPanel/browser validation pending
+Live product baseline entering closeout: 448fca0b00a5ef2470e5498a9e25981ce30a7865
+Baseline: v9.3 Commercial MVP — live product flow validated
+Latest live evidence: Job #50 read observability PASS؛ Job #53 blocked action Tool/model/metrics parity PASS with Proposal zero؛ Job #54 → Proposal #3 → human approval → AI-VCH-20260826-202025-9F19 → exact two-article product UI verification PASS
+Working milestone: v9.3 closeout / feature freeze
+Working status: LIVE-VALIDATED / FEATURE FROZEN
 Release contract: docs/ai/09-COMMERCIAL-MVP-RELEASE.md
-Next: install exact v9.3.0.2 hotfix on `2f19686`, pass CI with PHP+Node, deploy cPanel, repeat blocked Job #51 and require safe Tool names plus attempted-model metrics in live/reload UI، then finish idempotency/replay/Approval/redaction gates. Worker rebuild is not required.
+Recovery: deterministic Proposal retry + terminal replay tests PASS; standalone fault-injection harnesses deferred unless a real runtime failure appears
+Next: deploy the small closeout hardening patch, then stop core feature work and move to RC/demo/ICP/pricing/positioning/customer/GTM.
 ```
 
 ## Architecture
@@ -96,7 +97,7 @@ Prompt
 → grounded response
 ```
 
-v9.3 Feature جدید نیست؛ هدفش freeze کردن رفتارهای اثبات‌شده با regression، recovery، security، observability و release gates است. v9.3.0.1 route/model/latency/risk parity را اصلاح کرد؛ v9.3.0.2 فقط Tool-name و attempted-metrics parity امن و bounded را کامل می‌کند.
+v9.3 Feature جدید نیست و اکنون feature-frozen است. v9.3.0.1 route/model/latency/risk parity را اصلاح کرد؛ v9.3.0.2 Tool-name و attempted-metrics parity را بست؛ Job #54 و Voucher detail UI نیز Proposal → Approval → balanced Draft را در تجربه واقعی محصول بستند.
 
 ## Development workflow
 

@@ -130,14 +130,23 @@ class ReleaseArtifactTests(unittest.TestCase):
         token = re.compile(r"aiw_[A-Fa-f0-9]{24,}")
         private_key = re.compile(r"BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY")
         allowed_suffixes = {".py", ".php", ".js", ".json", ".md", ".yml", ".yaml", ".ps1"}
+        runtime_only = {Path("engine/config.json")}
         for path in ROOT.rglob("*"):
             if not path.is_file() or path.suffix.lower() not in allowed_suffixes:
                 continue
             if any(part in {".git", "__pycache__", "sample_import"} for part in path.parts):
                 continue
+            if path.relative_to(ROOT) in runtime_only:
+                continue
             text = path.read_text(encoding="utf-8", errors="ignore")
             self.assertIsNone(token.search(text), str(path.relative_to(ROOT)))
             self.assertIsNone(private_key.search(text), str(path.relative_to(ROOT)))
+
+    def test_accounting_voucher_delete_is_draft_only(self):
+        module = (ROOT / "app/Modules/AccountingIndustrialModule.php").read_text(encoding="utf-8")
+        self.assertIn("Tenant::can('accounting.vouchers.manage') && (string)$r['status']==='draft'", module)
+        self.assertIn("if($status!=='draft')throw new RuntimeException('فقط پیش‌نویس سند حسابداری قابل حذف است.')", module)
+        self.assertIn("company_id=? AND status='draft'", module)
 
 
 if __name__ == "__main__":

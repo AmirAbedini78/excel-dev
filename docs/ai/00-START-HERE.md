@@ -63,9 +63,11 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 
 - Repository: `AmirAbedini78/excel-dev`
 - SmartDocs foundation commit: `cd13fae227f18229ee734958ea465b41885e78e2`
-- Deployed runtime baseline: `2f196868c9f27c719cf0165fd541656a2e5f11d4` (`v9.3.0.1`)
-- Current implementation milestone: `v9.3.0.2 — Safe Attempt Observability Hotfix`
-- Validation state: v9.3.0.1 CI/cPanel passed. Job #50 proved no-refresh route/model/latency/budget/risk parity. Job #51 proved blocked-action model correction and fail-closed behavior, but actual Tool names and attempted-model metrics were still absent from the UI; v9.3.0.2 is the scoped web-only closeout.
+- Live product baseline entering closeout: `448fca0b00a5ef2470e5498a9e25981ce30a7865` (`feat(accounting): add voucher detail view`)
+- Current milestone: `v9.3 — Commercial MVP`
+- Validation state: **LIVE-VALIDATED / FEATURE FROZEN**. Job #50 closed read observability, Job #53 closed blocked-action Tool/model parity, Job #54 created grounded Proposal #3, human approval created balanced draft `AI-VCH-20260826-202025-9F19`, and the Accounting UI verified both stored articles with debit = credit = `100,000,000 IRR`.
+- Retry/replay state: deterministic Proposal idempotency and terminal replay tests PASS. Standalone live fault-injection harnesses are deferred unless a real runtime failure appears.
+- Closeout-only changes: draft-only voucher deletion guard, release-gate exclusion for the intentionally local/gitignored `engine/config.json`, and SmartDocs synchronization. No new AI/financial capability is added.
 - Release contract: `09-COMMERCIAL-MVP-RELEASE.md`
-- Next target: validate/deploy v9.3.0.2 on exact baseline `2f19686`, repeat blocked Job #51 and require bounded Tool names plus attempted-model metrics in both no-refresh and reload UI, then complete recovery/Proposal/Approval/redaction gates.
+- Next target after closeout deploy: **RC/demo/market/customer/pricing/positioning/GTM**; no new core feature development inside v9.3.
 - Scope: **Accounting/Financial AI MVP only**

@@ -1,27 +1,24 @@
 # SmartDocs Backlog
 
-## P0 — Current
-- deploy the scoped Accounting Voucher Detail UI candidate on baseline `7e1c7c5`
-- open `AI-VCH-20260826-202025-9F19` from `حسابداری و مالی → اسناد حسابداری → مشاهده` and verify the two stored articles in the product UI
-- record the successful human-approval/draft evidence in SmartDocs and perform one final browser smoke pass
-- close v9.3 as the Commercial MVP release candidate and freeze feature development
-- do not spend additional MVP time on standalone recovery-proof harnesses; deterministic retry/replay tests are sufficient unless a real product failure appears
+## P0 — Closeout / Release Candidate
+- install/deploy the v9.3 closeout patch based on live product baseline `448fca0`
+- confirm Accounting → Vouchers still loads after deploy; no extra recovery harness is required
+- commit/push the closeout change set and keep v9.3 feature-frozen
 
-## P1 — After Commercial MVP freeze
+## P1 — Current after freeze
+- prepare the 7-step commercial demo with the existing live demo data
+- define ICP / first customer segment
+- competitor and alternative workflow review
+- pricing / packaging / positioning
+- landing / pitch / customer interview script / GTM
 
-- market/customer/competitor analysis
-- pricing and positioning
-- demo/pitch/GTM
-- backlog prioritization from real customer evidence
-
-## P2
-
+## P2 — Evidence-driven product iteration
+- prioritize only from real customer/demo feedback
 - longer real datasets + forecast backtest/calibration
 - proactive feedback/outcome loop
 - permission split for high-risk Approval only if product evidence requires it
 
 ## Deferred until after MVP
-
 - full accounting app expansion
 - Practice OS expansion
 - AI for non-financial modules

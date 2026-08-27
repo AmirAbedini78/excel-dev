@@ -7,12 +7,13 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Deployed source baseline: 2f196868c9f27c719cf0165fd541656a2e5f11d4
-Deployed milestone: v9.3.0.1 — Live Observability Hotfix
-Validated deployment: GitHub Python/PHP/Node gate + cPanel + no-refresh browser Jobs #50/#51
-Latest live evidence: Job #51 — blocked action/model/fail-closed PASS; Proposal zero; Tool names and attempted-model metrics missing
-Working milestone: v9.3.0.2 — Safe Attempt Observability Hotfix
-Working validation: LOCAL-VALIDATED candidate; CI/cPanel/browser proof pending
+Live product baseline entering closeout: 448fca0b00a5ef2470e5498a9e25981ce30a7865
+Live milestone: v9.3 — Commercial MVP
+Validation: LIVE-VALIDATED
+Feature state: FROZEN
+Latest live evidence: Job #54 → Proposal #3 → human approval → AI-VCH-20260826-202025-9F19 → product UI article verification PASS
+Closeout candidate: draft-only voucher deletion + runtime-config release-gate false-positive fix + SmartDocs sync
+Next: RC/demo/market/customer/pricing/positioning/GTM
 ```
 
 ## Scope فعال
@@ -192,9 +193,9 @@ The first proactive accounting recommendation workflow is now Live-proven:
 - Job #48 explicitly confirmed `proposal_created=false`; no voucher/payment/receipt/invoice was created.
 - v9.2.0 therefore completes the first `proactive grounded review → next-best-action ranking → safe human-controlled action handoff` lifecycle as `LIVE-VALIDATED`.
 
-### Commercial MVP Hardening — v9.3.0.1 deployed / v9.3.0.2 hotfix
+### Commercial MVP Hardening — v9.3
 
-Status: `LOCAL-VALIDATED`
+Status: `LIVE-VALIDATED / FEATURE FROZEN`
 
 - permanent dependency-free regression/release suite added under `tests/` + `scripts/release_gate.py`;
 - GitHub CI release gate added with mandatory PHP lint;
@@ -228,15 +229,15 @@ Live grounded facts from Job #46:
 - trial balance: debit = credit = `17,821,580,000 IRR`, difference `0`
 
 
-The blocked-action model/fail-closed half is live-proven by Job #51. Attempt telemetry remains open until v9.3.0.2 is deployed and the same prompt shows `search_parties`، `party_ledger`، `trial_balance` plus first-output/model timing in both live and reload metadata.
+Job #53 closed the blocked-action presentation gate: `search_parties`، `party_ledger`، `trial_balance` and attempted-model metrics were visible with Proposal zero. Job #54 then closed the grounded Proposal path and the approved Draft was verified in the product UI.
 
 ## Known non-blocking issues
 
 1. Adaptive exact-prompt cache is **FROZEN** as an optimization; no large dictionary/template project now.
 2. Old root docs under `docs/*.md` contain an earlier broader roadmap and must not override this SmartDocs set.
 3. Full accounting application completeness is intentionally deferred until AI MVP is proven.
-4. v9.3.0.1 CI/cPanel/read UI پاس است؛ v9.3.0.2 safe attempt parity باید CI و cPanel/browser را پاس کند.
-5. تا تکمیل hotfix و همه checklist سند 09، v9.3 نباید `LIVE-VALIDATED` نامیده شود.
+4. Runtime `engine/config.json` intentionally contains the local Worker credential and is gitignored; release/source secret scanning must exclude this runtime-only file while continuing to scan source/docs/tests.
+5. Standalone fault-injection harnesses are deferred unless a real recovery bug appears; deterministic retry/replay contracts remain regression-tested.
 6. در Workflow وابسته، نبود داده برای رتبه‌بندی باید `partial` برگرداند و نتایج معتبر مراحل قبلی را دور نریزد.
 
 ## Not yet implemented as production capability
@@ -249,11 +250,15 @@ The blocked-action model/fail-closed half is live-proven by Job #51. Attempt tel
 - production RAG corpus and retrieval evaluation
 - full accounting application completeness
 
-### v9.3 approval/draft closeout evidence — 2026-08-26
+### v9.3 final live closeout evidence — 2026-08-26
 
-- Final observability source baseline is `7e1c7c59725aebb2caaa31e815b8b35ffd615882`; CI/deploy completed before the latest live action tests.
-- Job #53 closed the blocked-action presentation parity check for attempted model/metrics and bounded Tool names.
-- Job #54 created grounded high-risk Proposal #3 for a `100,000,000 IRR` receipt from `کارخانه بهین بسته‌بندی`; no accounting draft existed before human approval.
-- Human approval executed Proposal #3 and created voucher `AI-VCH-20260826-202025-9F19` dated `1405/06/04`, type `general`, status `draft`, debit `100,000,000`, credit `100,000,000`.
-- The accounting data model already stores voucher articles in `acc_voucher_lines`, but the existing Vouchers UI had no detail route while Purchase/Sales already had one. The current closeout candidate adds a `مشاهده` action and a scoped voucher detail view showing account, party, cost center, project, description, debit and credit.
-- Proposal/terminal retry deterministic self-tests pass. Repeated fault-injection harness work is no longer an MVP blocker; product-panel verification takes precedence for closeout.
+- Commit `7e1c7c5` closed safe attempt observability; Job #53 then proved blocked-action Tool/model/metrics parity with Proposal zero.
+- Job #54 grounded customer `کارخانه بهین بسته‌بندی`, real balance `727,100,000 IRR`, requested receipt `100,000,000 IRR`, debit account `10101 بانک ملت - جاری`, and credit account `11001 حساب‌های دریافتنی تجاری`.
+- Job #54 created high-risk Proposal #3 and created **no document before human approval**.
+- Human approval executed the existing server-side validator and created `AI-VCH-20260826-202025-9F19`, date `1405/06/04`, type `general`, status `draft`.
+- Product UI verification on commit `448fca0` showed exactly two stored articles:
+  1. `10101 - بانک ملت - جاری` — debit `100,000,000`, credit `0`, description `دریافت از کارخانه بهین بسته‌بندی`.
+  2. `11001 - حساب‌های دریافتنی تجاری` — party `CUS-003 - کارخانه بهین بسته‌بندی` — debit `0`, credit `100,000,000`, description `تسویه بخشی از مانده کارخانه بهین بسته‌بندی`.
+- Voucher totals in the UI: debit `100,000,000`, credit `100,000,000`, difference `0`.
+- Proposal idempotency and terminal complete replay deterministic tests PASS. Standalone live fault-injection harnesses are not an MVP release blocker unless a real runtime recovery defect appears.
+- v9.3 core capability set is frozen. Remaining work is release/RC/demo/market execution, not new AI feature development.

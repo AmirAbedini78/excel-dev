@@ -253,7 +253,7 @@ Out of scope for v9.2:
 - background auto-execution without a user action/approval boundary
 
 ### v9.3 — Commercial MVP Hardening
-Status: `LIVE-VALIDATION-IN-PROGRESS`; v9.3.0.2 hotfix `LOCAL-VALIDATED`
+Status: `LIVE-VALIDATED / FEATURE FROZEN`
 
 - permanent end-to-end regression/release suite + GitHub CI
 - canonical permission/risk matrix
@@ -265,9 +265,9 @@ Status: `LIVE-VALIDATION-IN-PROGRESS`; v9.3.0.2 hotfix `LOCAL-VALIDATED`
 - Proposal/mode/risk/latency UX polish
 - rollback, demo and live release checklist
 
-Deployment `27e34a9`، CI/PHP lint، cPanel and Worker startup passed. Job #49 exposed route/latency/risk parity and v9.3.0.1 closed it. Commit `2f19686` then passed Python/PHP/Node CI and Jobs #50/#51 proved read metadata plus blocked-action model/fail-closed behavior. Job #51 showed Tool names and attempted-model metrics were persisted but not rendered؛ v9.3.0.2 closes only that bounded/allowlisted UI boundary and does not change Worker routing or financial logic.
+Deployment `27e34a9`، v9.3.0.1 (`2f19686`) and v9.3.0.2 (`7e1c7c5`) completed the release/observability hardening. Job #50 proved read metadata and latency UI; Job #53 proved blocked-action model/Tool/metrics parity with Proposal zero. Job #54 produced grounded Proposal #3; human approval created balanced draft `AI-VCH-20260826-202025-9F19`; commit `448fca0` added the missing Voucher detail UI and the product UI verified both stored articles and zero difference.
 
-No new accounting/AI feature is part of v9.3. Completion requires the live checklist in `09-COMMERCIAL-MVP-RELEASE.md`; only then does the Commercial MVP become `FROZEN`.
+No new accounting/AI feature is part of the closeout. v9.3 is now feature-frozen. Post-freeze work is RC/demo/market/customer/pricing/positioning/GTM; any new core feature requires a new milestone decision.
 
 ## Post-MVP — فقط بعد از تصمیم جداگانه
 

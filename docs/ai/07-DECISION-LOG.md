@@ -89,3 +89,13 @@ Job #49 نشان داد persistence صحیح metadata کافی نیست؛ اگر
 Status: ACCEPTED
 
 Job #51 مدل تلاش‌شده و fail-closed بودن Action را ثابت کرد، اما stage عمومی `action_read` نام Toolهای واقعی را نشان نداد و metrics مدل تلاش‌شده نیز نمایش داده نشد. برای audit تجاری، endpoint و renderer می‌توانند فقط نام‌های normalize‌شده `tools_used/tools_attempted` و شش مقدار عددی allowlisted از `attempted_metrics` را نمایش دهند. Tool arguments، results، call IDs، free-form model metadata و trace details حساس هرگز وارد payload مرورگر نمی‌شوند.
+
+## 2026-08-26 — Commercial MVP closeout: product evidence over standalone proof harnesses
+
+Status: ACCEPTED
+
+برای بستن v9.3، تست‌های جداگانه fault-injection فقط زمانی blocker هستند که یک failure واقعی در recovery محصول مشاهده شود. Proposal idempotency و terminal replay همچنان در regression deterministic اجباری‌اند، اما مسیر اصلی acceptance از UI واقعی محصول است. Job #54 → Proposal #3 → human approval → `AI-VCH-20260826-202025-9F19` و مشاهده دو آرتیکل متوازن در Accounting UI معیار نهایی write-flow است.
+
+همچنین `engine/config.json` یک فایل runtime محلی و gitignored است و ممکن است Worker token واقعی داشته باشد؛ source-secret gate نباید این فایل runtime را به‌عنوان secret committed گزارش کند. فقط همین path از source scan مستثناست.
+
+v9.3 پس از این closeout feature-frozen است؛ کار بعدی RC/demo/market/customer/pricing/positioning/GTM است.
