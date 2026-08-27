@@ -24,12 +24,12 @@ v10 توسعه Platform foundation + Module depth لازم برای Design Partn
 ## Current baseline / phase
 
 ```text
-Baseline: 5a4474dfb7a429c526fb68e9b55b0d8b6c982411
+Baseline: 7d4a804dc0330d297803707bb8c9a2d455dfc0db
 Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
 Working milestone: v10.0 Modular Pilot Platform
 Working status: IMPLEMENTED-IN-PROGRESS
-Current cycle: Module Kernel v1 + Module Center + SmartDocs pivot
-Next: Provider Gateway → Finance Agent action depth → Inventory/Procurement/CRM-lite/Trade → Design Partner demo readiness
+Current cycle: Provider Gateway v1 — implementation/contract tests complete; local product smoke pending
+Next: Finance Agent action depth → Inventory/Procurement/CRM-lite/Trade → Design Partner demo readiness
 Canonical v10 contract: docs/ai/10-MODULAR-PILOT-PLATFORM.md
 ```
 
@@ -42,7 +42,9 @@ UI/Auth/RBAC/MySQL/Queue/Tools/Approval/Audit
         ↑ outbound HTTPS
 
 Docker Worker:
-Python + Ollama
+Python + Model Provider Gateway
+Primary: Ollama
+Optional: OpenAI-compatible cloud fallback / cloud-only second Worker
 ```
 
 ## Safety invariants

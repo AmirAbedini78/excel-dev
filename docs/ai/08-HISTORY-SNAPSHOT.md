@@ -1058,3 +1058,7 @@ secret/Python/JSON gates: PASS
 ## v10.0 kickoff — Modular Pilot Platform
 
 2026-08-27: کاربر پس از v9.3 Feature Freeze به‌صورت صریح North Star را گسترش داد. هدف جدید، ERPSMART به‌عنوان Modular AI-Native Business Operations Platform با Vertical اول Finance/Trade است. Strategy پذیرفته‌شده: Wide Platform / Deep Modules؛ Module Kernel و Model Provider Gateway به‌عنوان foundation، سپس Finance action depth و Inventory/Procurement/CRM-lite/Trade slices برای Design Partner Pilot.
+
+## v10.0 Cycle 2 — Model Provider Gateway
+
+After Module Kernel live validation, ERPSMART removed the hard runtime dependency on Ollama as the only possible LLM transport. `provider_gateway.py` adds local/cloud strategy selection, OpenAI-compatible Chat Completions, tool-call/message normalization, structured-output compatibility fallback, non-secret provider observability, and a cloud-only second-worker deployment template. Existing runtime config remains local and unchanged. Six provider contract tests passed before delivery; live product Ollama smoke remains the acceptance step after Worker rebuild.

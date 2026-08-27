@@ -1,9 +1,25 @@
 {
   "server_url": "https://excel2.bcsrp.ir/ai_api.php",
   "worker_token": "PASTE_TOKEN_FROM_WEB_PANEL",
-  "provider": "ollama",
+  "provider": "gateway",
+  "provider_strategy": "local_first",
   "ollama_url": "http://ollama:11434",
   "chat_model": "qwen3:1.7b",
+  "fast_model": "qwen3.5:0.8b",
+  "agent_model": "qwen3.5:0.8b",
+  "analysis_model": "gemma3:4b",
+  "cloud_provider": {
+    "enabled": false,
+    "name": "openai_compatible",
+    "base_url": "https://api.example.com/v1",
+    "api_key": "PASTE_CLOUD_API_KEY",
+    "chat_model": "provider-model-name",
+    "fast_model": "provider-model-name",
+    "agent_model": "provider-model-name",
+    "analysis_model": "provider-model-name",
+    "timeout_seconds": 120,
+    "extra_headers": {}
+  },
   "capabilities": [
     "llm"
   ],
@@ -17,9 +33,6 @@
   "rag_db": "data/rag.sqlite3",
   "embedding_model": "embeddinggemma",
   "rag_top_k": 5,
-  "fast_model": "qwen3.5:0.8b",
-  "agent_model": "qwen3.5:0.8b",
-  "analysis_model": "gemma3:4b",
   "deep_num_ctx": 640,
   "deep_num_predict": 96,
   "deep_temperature": 0.1,

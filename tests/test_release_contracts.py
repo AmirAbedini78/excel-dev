@@ -130,7 +130,7 @@ class ReleaseArtifactTests(unittest.TestCase):
         token = re.compile(r"aiw_[A-Fa-f0-9]{24,}")
         private_key = re.compile(r"BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY")
         allowed_suffixes = {".py", ".php", ".js", ".json", ".md", ".yml", ".yaml", ".ps1"}
-        runtime_only = {Path("engine/config.json")}
+        runtime_only = {Path("engine/config.json"), Path("engine/config.cloud.json")}
         for path in ROOT.rglob("*"):
             if not path.is_file() or path.suffix.lower() not in allowed_suffixes:
                 continue

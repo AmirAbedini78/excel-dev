@@ -3,10 +3,10 @@
 ## P0 — v10 two-day Pilot Platform sprint
 
 ### Thursday 2026-08-27
-- Module Kernel v1 + workspace enable/disable + Module Center
-- canonical SmartDocs pivot from Accounting-only MVP to Modular AI-Native Business Operations Platform
-- Model Provider Gateway v1: local Ollama primary + OpenAI-compatible provider/fallback path
-- Finance capability/action matrix against all existing Finance/Sales/Treasury forms
+- [x] Module Kernel v1 + workspace enable/disable + Module Center — LIVE-VALIDATED
+- [x] canonical SmartDocs pivot from Accounting-only MVP to Modular AI-Native Business Operations Platform
+- [~] Model Provider Gateway v1: implementation + 6/6 contract tests PASS; local product smoke pending; cloud live smoke waits for real provider credential
+- [ ] Finance capability/action matrix against all existing Finance/Sales/Treasury forms — NEXT
 - close highest-value missing Finance Agent actions without broad ERP expansion
 
 ### Friday 2026-08-28
@@ -39,3 +39,8 @@
 - autonomous high-risk financial execution
 - advanced multi-agent framework migration without complexity need
 - training proprietary large models before sufficient licensed/evaluable data exists
+
+### Job #55 routing correction
+- Provider Gateway install/Docker contract tests: PASS.
+- Product smoke semantic correctness: FAILED because named unquoted party balance fell through to `company_snapshot`.
+- Apply `v10.0-party-balance-r1`, repeat the exact Job #55 prompt, and require `search_parties + party_ledger` with no Proposal before closing Cycle 2.

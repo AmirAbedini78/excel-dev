@@ -27,3 +27,6 @@ engine/config.json
 engine/data/
 engine/.venv/
 engine/__pycache__/
+
+# Optional cloud-only Worker secret config
+engine/config.cloud.json

@@ -1,0 +1,14 @@
+name: erpsmart-cloud-worker
+
+services:
+  worker-cloud:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./config.cloud.json:/app/config.json:ro
+      - ./data:/app/data
+    environment:
+      TZ: Asia/Tehran
+    stop_grace_period: 20s

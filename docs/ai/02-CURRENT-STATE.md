@@ -7,12 +7,12 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: 5a4474dfb7a429c526fb68e9b55b0d8b6c982411
+Baseline: 7d4a804dc0330d297803707bb8c9a2d455dfc0db
 Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
 Working milestone: v10.0 Modular Pilot Platform
 Working status: IMPLEMENTED-IN-PROGRESS
-Current cycle: Module Kernel v1 + Module Center + SmartDocs pivot
-Next cycles: Model Provider Gateway; Finance Agent action depth; Inventory/Procurement/CRM-lite/Trade pilot slices
+Current cycle: Model Provider Gateway v1 — LOCAL-VALIDATED / live Ollama smoke pending
+Next cycles: Finance capability/action depth; Inventory/Procurement/CRM-lite/Trade pilot slices
 ```
 
 ## Scope فعال
@@ -261,3 +261,18 @@ Job #53 closed the blocked-action presentation gate: `search_parties`، `party_l
 - Voucher totals in the UI: debit `100,000,000`, credit `100,000,000`, difference `0`.
 - Proposal idempotency and terminal complete replay deterministic tests PASS. Standalone live fault-injection harnesses are not an MVP release blocker unless a real runtime recovery defect appears.
 - v9.3 core capability set is frozen. Remaining work is release/RC/demo/market execution, not new AI feature development.
+
+### Model Provider Gateway — v10 Cycle 2
+- Ollama remains the default local provider.
+- OpenAI-compatible `/chat/completions` provider is implemented for local-first/cloud-first/cloud-only strategies.
+- Same-worker cloud fallback covers Ollama failure while Worker is running.
+- Full local-PC outage is covered by a second always-on `cloud_only` Worker node, not by magic inside a powered-off PC.
+- API keys remain only in gitignored runtime config; provider/model names only are advertised.
+- Financial Tool/Proposal/Approval boundaries are unchanged.
+- Contract tests: 6/6 PASS before package delivery; product local-Ollama smoke pending after rebuild.
+
+## v10 live quality note — Job #55 — named party balance routing gap
+
+Provider Gateway install/build succeeded, but the first panel smoke exposed a separate NLP quality defect: `مانده کارخانه بهین بسته‌بندی را بررسی کن و فقط وضعیت فعلی را بگو.` was not recognized by the deterministic party-ledger route. Adaptive planning then delegated to the old read classifier, which incorrectly returned `company_snapshot`. No write/Proposal occurred.
+
+Hotfix `v10.0-party-balance-r1` makes common unquoted Persian balance/ledger requests deterministic: `search_parties → party_ledger`; `فقط وضعیت فعلی/فقط مانده` returns only the current grounded balance. The same live prompt must be repeated before Provider Gateway + read-quality Cycle 2 is accepted.

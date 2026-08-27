@@ -1,18 +1,19 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Modular AI-Native Business Operations Platform; first vertical = Finance/Trade for B2B trading/import/distribution companies",
-  "baseline_commit": "5a4474dfb7a429c526fb68e9b55b0d8b6c982411",
-  "baseline_milestone": "v9.3 Commercial MVP closeout",
-  "baseline_status": "LIVE-VALIDATED / FEATURE FROZEN",
-  "current_milestone": "v10.0 Modular Pilot Platform",
-  "milestone_status": "IMPLEMENTED-IN-PROGRESS",
+  "baseline_commit": "7d4a804dc0330d297803707bb8c9a2d455dfc0db",
+  "baseline_milestone": "v10.0 Module Kernel v1",
+  "baseline_status": "LIVE-VALIDATED",
+  "current_milestone": "v10.0 Provider Gateway + Named Party Balance Routing",
+  "milestone_status": "LOCAL-VALIDATED / LIVE-SEMANTIC-RETEST-PENDING",
   "live_validation_pending": true,
   "release_contract": "v10-modular-pilot-v1",
-  "active_task": "Two-day sprint: Module Kernel, model provider gateway, deeper Finance action coverage, then Inventory/Procurement/CRM-lite/Trade slices and design-partner demo readiness",
+  "active_task": "Repeat exact Job #55 prompt after deterministic named-party balance routing fix; require search_parties + party_ledger and correct current balance, then commit Cycle 2 and move immediately to Finance action coverage.",
   "in_scope": [
     "workspace module enable/disable and dependency contract",
-    "module center and menu/route gating",
-    "local-first model provider gateway with cloud-compatible fallback",
+    "local-first model provider gateway with OpenAI-compatible fallback",
+    "cloud-only second-worker deployment path for local-PC outage",
+    "semantic correctness for supported Finance natural-language reads",
     "Finance/Trade vertical depth",
     "Inventory and Procurement minimal-complete slices",
     "CRM-lite connected to Sales and receivables",
@@ -36,16 +37,21 @@
     "adaptive answer caching remains forbidden"
   ],
   "known_issues": [
-    "Finance UI breadth is larger than Agent action coverage; v10 must close the highest-value action gaps",
-    "Worker currently speaks Ollama directly; provider abstraction is not yet implemented at v10 kickoff",
-    "current AccountingIndustrialModule is too broad for long-term module boundaries and will be decomposed incrementally, not rewritten in one step",
+    "Finance UI breadth is larger than Agent action coverage; next cycle must close the highest-value action gaps",
+    "cloud provider live fallback cannot be proven until a real provider/API key is configured",
+    "same-process cloud fallback does not cover a powered-off local PC; an always-on cloud_only Worker is the HA path",
+    "Job #55 exposed a semantic routing defect: an unquoted named-party balance request fell through to company_snapshot; deterministic hotfix installed and live retest pending",
+    "current AccountingIndustrialModule remains broad and will be decomposed incrementally, not rewritten in one step",
     "forecast confidence remains data-limited on the synthetic demo dataset"
   ],
   "release_gates": {
     "v9_3_live_closeout": "PASS",
-    "module_kernel": "IN_PROGRESS",
-    "provider_gateway": "PLANNED_TODAY",
-    "finance_action_coverage": "PLANNED_TODAY",
+    "module_kernel": "PASS_LIVE",
+    "provider_gateway_contract_tests": "PASS_LOCAL",
+    "provider_gateway_local_transport_smoke": "PASS_JOB55",
+    "party_balance_semantic_smoke": "PENDING_RETEST",
+    "provider_gateway_cloud_fallback_smoke": "PENDING_PROVIDER_CREDENTIAL",
+    "finance_action_coverage": "NEXT_TODAY",
     "inventory_slice": "PLANNED_FRIDAY",
     "procurement_slice": "PLANNED_FRIDAY",
     "crm_lite_slice": "PLANNED_FRIDAY",
@@ -53,9 +59,11 @@
     "design_partner_demo": "PLANNED_FRIDAY"
   },
   "updated_at": "2026-08-27",
-  "last_live_validation_job": 54,
+  "last_live_validation_job": 55,
   "live_validation_summary": {
     "v9_3": "Job #54 -> Proposal #3 -> human approval -> balanced AI draft AI-VCH-20260826-202025-9F19 -> exact two-article product UI verification PASS",
-    "v10_goal": "Preserve the proven Finance AI core while turning ERPSMART into a workspace-modular platform and deepening a first Trade/Finance commercial vertical"
+    "module_kernel": "Module Center plus workspace AI disable/enable and route/menu gating PASS in product UI",
+    "provider_gateway": "Install/build plus 6/6 provider contract tests PASS; existing local Ollama transport reached a successful Job #55",
+    "job_55": "Transport/runtime succeeded but semantic result failed: named party balance request returned company_snapshot instead of party ledger; deterministic route hotfix installed and exact live retest pending"
   }
 }

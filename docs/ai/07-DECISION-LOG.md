@@ -110,3 +110,15 @@ Architecture strategy: Platform از نظر Module blueprint جامع می‌ش�
 v9.3 safety contracts همچنان invariant هستند. Model Provider Gateway باید LLM provider را قابل تعویض کند بدون اینکه domain calculation/validation به مدل منتقل شود.
 
 Long-term benchmark/model vision یک Asset strategy است، نه Scope آموزش مدل در v10: ابتدا Product workflows + evaluation data، سپس benchmark و در صورت توجیه داده/مجوز، مدل تخصصی.
+
+## ADR-020 — Model Provider Gateway and dual-worker availability
+Status: ACCEPTED — 2026-08-27
+
+ERPSMART LLM transport is provider-agnostic from v10 Cycle 2. Ollama stays primary for local/private operation; an OpenAI-compatible adapter may act as fallback/primary only by deployment configuration. Cloud transport never changes deterministic business truth, Tool validation, ERP IDs or Proposal/Approval boundaries.
+
+A cloud fallback inside the local Worker does not solve a powered-off PC. High availability is achieved by a second always-on Worker configured `cloud_only` against the same cPanel queue. Provider API keys are runtime secrets and must never be committed or exposed in registration/job metadata.
+
+## ADR-021 — Natural-language party balance is a deterministic grounded read
+Status: ACCEPTED — 2026-08-27
+
+Job #55 proved that provider/runtime success is not enough when semantic routing answers the wrong business question. Common Persian phrasings such as `مانده <نام طرف‌حساب> را بررسی کن` must bypass adaptive LLM planning and route directly through grounded entity resolution: `search_parties → party_ledger`. Entity text is copied from the prompt; ERP IDs still come only from server Tool results. Summary-only wording may reduce presentation noise but never changes the ledger source of truth.

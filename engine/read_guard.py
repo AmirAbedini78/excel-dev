@@ -9,7 +9,7 @@ from __future__ import annotations
 import json,re,time
 from typing import Any
 
-PATCH_VERSION="v8.6.0.1"
+PATCH_VERSION="v10.0-party-balance-r1"
 DIGITS=str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩","01234567890123456789")
 WRITE=("بساز","ایجاد کن","ثبت کن","حذف کن","ویرایش کن","تغییر بده","نهایی کن","تایید کن","تأیید کن","create","delete","update","approve")
 MONTHS={"فروردین":1,"اردیبهشت":2,"خرداد":3,"تیر":4,"مرداد":5,"شهریور":6,"مهر":7,"آبان":8,"آذر":9,"دی":10,"بهمن":11,"اسفند":12}
@@ -26,6 +26,27 @@ def money(x:Any)->str:
 def quoted(p:str)->str:
     m=re.search(r"[«\"']([^»\"'\r\n]{2,160})[»\"']",str(p or ""))
     return m.group(1).strip() if m else ""
+
+def party_ledger_query(p:str)->str:
+    """Extract a grounded party query from common Persian balance/ledger phrasing.
+
+    This intentionally copies only a substring already present in the prompt;
+    it never creates an ERP id or financial fact. Quoted entities retain the
+    existing highest-confidence behavior, while unquoted business names are
+    bounded by common Persian request verbs/questions.
+    """
+    q=quoted(p)
+    if q:return q
+    text=str(p or "").strip()
+    pat=(r"(?:مانده(?:\s+حساب)?|گردش(?:\s+حساب)?)\s+"
+         r"(?:مشتری\s+|طرف\s*حساب\s+|تامین\s*کننده\s+|تأمین\s*کننده\s+)?"
+         r"(.{2,160}?)(?=\s+(?:را|رو|چقدر(?:ه)?|چیست|چیه|بررسی|بگو|بده|نشان|نمایش|اعلام|گزارش)"
+         r"(?:\s|$|[،,؛;.!?؟])|[،,؛;.!?؟]|$)")
+    m=re.search(pat,text,flags=re.I)
+    if not m:return ""
+    candidate=m.group(1).strip(" \t\r\n«»\"'")
+    if norm(candidate) in {"","حساب","مشتری","طرف حساب","تامین کننده","تأمین کننده"}:return ""
+    return candidate
 
 def limit_of(p:str,default=5)->int:
     s=str(p or "").translate(DIGITS)
@@ -159,9 +180,11 @@ def route(p:str):
     if not n or any(x in n for x in WRITE):return None
     if any(x in n for x in ("تحلیل عمیق","ریسک","سناریو","پیش بینی","پیش‌بینی")):return None
     q=quoted(p)
+    ledger_q=party_ledger_query(p)
 
-    if any(x in n for x in ("مانده حساب","گردش حساب","گردش مشتری","مانده مشتری","دفتر مشتری")):
-        return {"intent":"party_ledger","query":q,"limit":5}
+    if any(x in n for x in ("مانده حساب","گردش حساب","گردش مشتری","مانده مشتری","دفتر مشتری")) or ledger_q:
+        return {"intent":"party_ledger","query":ledger_q or q,"limit":5,
+                "summary_only":any(x in n for x in ("فقط وضعیت فعلی","فقط مانده","مانده فعلی","وضعیت فعلی"))}
     if ("مشتری" in n or "طرف حساب" in n or "تامین کننده" in n or "تأمین کننده" in n) and any(x in n for x in ("پیدا","جستجو","مشخصات","اطلاعات")):
         return {"intent":"party_search","query":q,"limit":5}
     if any(x in n for x in ("کالا","محصول","آیتم","بارکد")) and any(x in n for x in ("پیدا","جستجو","مشخصات","اطلاعات")):
@@ -470,9 +493,13 @@ def execute_one(worker,job,plan,source="deterministic",model="none",metrics=None
             if party is None:text=f"طرف‌حساب «{q}» {'به‌صورت یکتا پیدا نشد' if reason=='ambiguous' else 'پیدا نشد'}؛ گردش حساب اجرا نشد."
             else:
                 pid=int(party["id"]);d=worker.tool(job,"party_ledger",{"party_id":pid},f"job{job['id']}-read-ledger-{pid}");used.append("party_ledger")
-                rr=rows(d);out=[f"گردش حساب: {party.get('name') or q}",f"مانده فعلی بر اساس آرتیکل‌های تایید/نهایی: {money((d or {}).get('balance') if isinstance(d,dict) else None)}"]
-                for r in rr[-8:]:out.append(f"• {r.get('voucher_date') or '-'} | {r.get('voucher_no') or '-'} | بدهکار {money(r.get('debit'))} | بستانکار {money(r.get('credit'))} | مانده جاری {money(r.get('running_balance'))}")
-                text="\n".join(out)
+                rr=rows(d);balance_line=f"مانده فعلی بر اساس آرتیکل‌های تایید/نهایی: {money((d or {}).get('balance') if isinstance(d,dict) else None)}"
+                if bool(plan.get("summary_only")):
+                    text=f"طرف‌حساب: {party.get('name') or q}\n{balance_line}"
+                else:
+                    out=[f"گردش حساب: {party.get('name') or q}",balance_line]
+                    for r in rr[-8:]:out.append(f"• {r.get('voucher_date') or '-'} | {r.get('voucher_no') or '-'} | بدهکار {money(r.get('debit'))} | بستانکار {money(r.get('credit'))} | مانده جاری {money(r.get('running_balance'))}")
+                    text="\n".join(out)
     elif intent=="document_analytics":
         work,entity_used,blocked=resolve_plan_entities(worker,job,str(job.get("prompt") or ""),plan);used+=entity_used
         if blocked:

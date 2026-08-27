@@ -14,7 +14,7 @@ from pathlib import Path
 
 TEXT_SUFFIXES = {".py", ".php", ".js", ".json", ".md", ".yml", ".yaml", ".ps1"}
 SKIP_PARTS = {".git", "__pycache__", "sample_import", "upload"}
-RUNTIME_SECRET_SCAN_EXCLUDES = {Path("engine/config.json")}
+RUNTIME_SECRET_SCAN_EXCLUDES = {Path("engine/config.json"), Path("engine/config.cloud.json")}
 SECRET_PATTERNS = {
     "worker_token": re.compile(r"aiw_[A-Fa-f0-9]{24,}"),
     "private_key": re.compile(r"BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY"),

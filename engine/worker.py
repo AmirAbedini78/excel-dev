@@ -1011,6 +1011,8 @@ from forecast_risk import install_forecast_risk as _install_forecast_risk
 _install_forecast_risk(Worker)
 from proactive_agent import install_proactive_agent as _install_proactive_agent
 _install_proactive_agent(Worker)
+from provider_gateway import install_provider_gateway as _install_provider_gateway
+_install_provider_gateway(Worker)
 from commercial_hardening import install_commercial_hardening as _install_commercial_hardening
 from commercial_hardening import validate_runtime_config as _validate_runtime_config
 _install_commercial_hardening(Worker)

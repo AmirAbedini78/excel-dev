@@ -143,3 +143,14 @@ Toolها، RAG corpusها، workflow traces، evaluation prompt sets و outcome 
 - در صورت توجیه داده/هزینه، مدل‌های تخصصی کوچک یا بزرگ‌تر برای هر Vertical.
 
 این Vision مجوز جمع‌آوری یا استفاده از داده مشتری بدون قرارداد/رضایت نیست؛ در MVP فعلی هدف اصلی ساخت Product + evaluation assets است، نه آموزش مدل اختصاصی.
+
+## Execution status — v10 Cycle 2
+
+- Module Kernel: `LIVE-VALIDATED`.
+- Provider Gateway: `LOCAL-VALIDATED / LIVE-VALIDATION-PENDING`.
+- New canonical provider contract: `11-MODEL-PROVIDER-GATEWAY.md`.
+- Next: Finance action coverage, not more provider-framework work.
+
+## Semantic correctness gate from Job #55
+
+Pilot readiness requires outcome correctness, not merely `Job successful`. A read request that asks for a named party balance is a failure if the system returns a company summary even when transport, LLM and Tool calls technically succeed. The prompt/capability evaluation pack must therefore include natural Persian paraphrases, unquoted entities, Persian digits/dates and concise-output modifiers such as `فقط وضعیت فعلی`.

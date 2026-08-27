@@ -118,6 +118,7 @@ Safe Deep
 → Financial Intelligence
 → Forecast/Risk/Anomaly
 → Proactive Accounting Agent
+→ Model Provider Gateway
 → Commercial Hardening (last wrapper)
 ```
 
@@ -263,3 +264,13 @@ Model Provider Gateway
 ```
 
 Business-critical calculations و domain execution مستقل از Provider باقی می‌مانند.
+
+## 5. v10 Model Provider topology
+
+```text
+cPanel Queue
+   ├── Local Worker: local_first → Ollama → cloud fallback
+   └── Optional always-on Worker: cloud_only → OpenAI-compatible API
+```
+
+Provider routing changes only LLM transport. Current business facts still come from Tool Gateway; financial mutations still require Proposal/Approval and deterministic server execution. Remote cloud endpoints require HTTPS. Cloud credentials stay in local gitignored runtime config.

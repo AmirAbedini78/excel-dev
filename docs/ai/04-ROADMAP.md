@@ -301,3 +301,8 @@ No new accounting/AI feature is part of the closeout. v9.3 is now feature-frozen
 - multi-agent
 
 این بخش‌ها Vision هستند، نه Scope فعلی.
+
+### v10 execution status — 2026-08-27
+- Module Kernel v1 + Module Center: `LIVE-VALIDATED` in product UI.
+- Model Provider Gateway v1: `LOCAL-VALIDATED / LIVE-VALIDATION-PENDING`.
+- Next immediate work after one local-Ollama smoke: Finance form/action coverage matrix and highest-value missing Agent actions.
