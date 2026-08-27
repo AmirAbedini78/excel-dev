@@ -306,3 +306,7 @@ No new accounting/AI feature is part of the closeout. v9.3 is now feature-frozen
 - Module Kernel v1 + Module Center: `LIVE-VALIDATED` in product UI.
 - Model Provider Gateway v1: `LOCAL-VALIDATED / LIVE-VALIDATION-PENDING`.
 - Next immediate work after one local-Ollama smoke: Finance form/action coverage matrix and highest-value missing Agent actions.
+
+## v10 Golden Flow lock — Trade Resilience MVP
+
+After the Finance candidate live gate, implementation order is: (1) Inventory + Procurement primitive, (2) Trade Case/Shipment + estimated/actual landed cost, (3) warehouse receipt/inspection + inventory valuation bridge, (4) Sales/Delivery integration, (5) cross-module proactive Manager Brief. Finance remains the accounting truth layer; it is no longer the only product narrative. See `13-TRADE-FLOW-MVP.md`.

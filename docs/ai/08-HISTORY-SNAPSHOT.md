@@ -1062,3 +1062,7 @@ secret/Python/JSON gates: PASS
 ## v10.0 Cycle 2 — Model Provider Gateway
 
 After Module Kernel live validation, ERPSMART removed the hard runtime dependency on Ollama as the only possible LLM transport. `provider_gateway.py` adds local/cloud strategy selection, OpenAI-compatible Chat Completions, tool-call/message normalization, structured-output compatibility fallback, non-secret provider observability, and a cloud-only second-worker deployment template. Existing runtime config remains local and unchanged. Six provider contract tests passed before delivery; live product Ollama smoke remains the acceptance step after Worker rebuild.
+
+## v10 Job #56 — semantic correctness + latency closure
+
+Exact Job #55 prompt repeated after deterministic party-balance routing hotfix: `grounded_read`, no LLM, tools `search_parties, party_ledger`, result 727,100,000 IRR, total 1.0s, budget PASS. This closed Cycle 2 local live acceptance and moved work to Finance action depth.

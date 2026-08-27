@@ -122,3 +122,8 @@ A cloud fallback inside the local Worker does not solve a powered-off PC. High a
 Status: ACCEPTED — 2026-08-27
 
 Job #55 proved that provider/runtime success is not enough when semantic routing answers the wrong business question. Common Persian phrasings such as `مانده <نام طرف‌حساب> را بررسی کن` must bypass adaptive LLM planning and route directly through grounded entity resolution: `search_parties → party_ledger`. Entity text is copied from the prompt; ERP IDs still come only from server Tool results. Summary-only wording may reduce presentation noise but never changes the ledger source of truth.
+
+## ADR-023 — First commercial MVP is an end-to-end trading flow, not a finance feature bundle
+Status: ACCEPTED — 2026-08-27
+
+The first Design Partner story will demonstrate one coherent B2B importer/distributor workflow across Procurement, Trade/Logistics, Warehouse/Inventory, Finance and Sales. Finance capabilities are supporting primitives inside this flow. The golden path is demand/replenishment → supplier/proforma/PO → shipment/import case → landed-cost estimate/risk → warehouse receipt/inspection → inventory valuation/vendor bill → sales/delivery → receivable/cash → margin/manager brief. AI may reason across the flow, but facts and mutations remain Tool/Proposal grounded.

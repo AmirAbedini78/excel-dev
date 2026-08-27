@@ -16,6 +16,9 @@
 8. قبل از تحویل: `06-TEST-RELEASE-PROTOCOL.md`
 9. برای Commercial MVP: `09-COMMERCIAL-MVP-RELEASE.md`
 10. برای v10 Platform: `10-MODULAR-PILOT-PLATFORM.md`
+11. برای Providerها: `11-MODEL-PROVIDER-GATEWAY.md`
+12. برای عمق Finance/Action: `12-FINANCE-CAPABILITY-MATRIX.md`
+13. برای Golden Flow بازرگانی: `13-TRADE-FLOW-MVP.md`
 
 برای انتقال سریع Context به AI جدید، بعد از موارد بالا این فایل را بخوان:
 
@@ -67,6 +70,6 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 - Proven financial write evidence: Job #54 → Proposal #3 → Human Approval → balanced draft `AI-VCH-20260826-202025-9F19` → exact product UI article verification PASS.
 - Current milestone: **v10.0 — Modular Pilot Platform**.
 - Current scope: **Modular AI-Native Business Operations Platform**; first commercial vertical = Finance/Trade for B2B trading/import/distribution companies.
-- Current sprint: Module Kernel **LIVE-VALIDATED** → Provider Gateway **LOCAL-VALIDATED / live smoke next** → Finance Agent depth → Inventory/Procurement/CRM-lite/Trade slices → Design Partner demo readiness.
+- Current sprint: Module Kernel **LIVE-VALIDATED** → Provider Gateway **LIVE-VALIDATED on local path (Job #56)** → Finance Agent depth → Inventory/Procurement/CRM-lite/Trade slices → Design Partner demo readiness.
 - v9.3 safety invariants remain frozen: current facts from deterministic Tools, no model-generated ERP IDs, Proposal/Approval for risky mutation, RAG is not current ledger.
-- Canonical v10 contracts: `10-MODULAR-PILOT-PLATFORM.md` + `11-MODEL-PROVIDER-GATEWAY.md`.
+- Canonical v10 contracts: `10-MODULAR-PILOT-PLATFORM.md` + `11-MODEL-PROVIDER-GATEWAY.md` + `12-FINANCE-CAPABILITY-MATRIX.md` + `13-TRADE-FLOW-MVP.md`.

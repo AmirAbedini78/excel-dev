@@ -119,3 +119,7 @@ v9.3 Feature جدید نیست و اکنون feature-frozen است. v9.3.0.1 rou
 - جواب cached مالی
 - patch روی patch بدون prevalidation
 - تغییر roadmap صرفاً بر اساس آخرین ایده
+
+## v10 latest — Finance Action Depth
+
+Cycle 2 is live-validated locally: Job #56 fixed named-party balance at 1.0s with no LLM. Cycle 3 adds Purchase/Cheque Finance building blocks, but the user clarified that receivable/debt examples were illustrative. The selected commercial narrative is now the end-to-end trading/import/distribution flow in `docs/ai/13-TRADE-FLOW-MVP.md`; next work crosses Inventory, Procurement, Trade/Logistics and Sales before broad CRM expansion.

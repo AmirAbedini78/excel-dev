@@ -7,12 +7,12 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: 7d4a804dc0330d297803707bb8c9a2d455dfc0db
+Baseline: 1e42fc49a124b85a94d41c5d5a661c40533330fd
 Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
 Working milestone: v10.0 Modular Pilot Platform
 Working status: IMPLEMENTED-IN-PROGRESS
-Current cycle: Model Provider Gateway v1 — LOCAL-VALIDATED / live Ollama smoke pending
-Next cycles: Finance capability/action depth; Inventory/Procurement/CRM-lite/Trade pilot slices
+Current cycle: Finance Action Depth — candidate implementation / live panel validation pending
+Next cycles: Inventory + Procurement primitive → Trade Case/Shipment/Landed Cost → Sales/Delivery + cross-module Manager Brief; CRM-lite follows the golden flow
 ```
 
 ## Scope فعال
@@ -276,3 +276,9 @@ Job #53 closed the blocked-action presentation gate: `search_parties`، `party_l
 Provider Gateway install/build succeeded, but the first panel smoke exposed a separate NLP quality defect: `مانده کارخانه بهین بسته‌بندی را بررسی کن و فقط وضعیت فعلی را بگو.` was not recognized by the deterministic party-ledger route. Adaptive planning then delegated to the old read classifier, which incorrectly returned `company_snapshot`. No write/Proposal occurred.
 
 Hotfix `v10.0-party-balance-r1` makes common unquoted Persian balance/ledger requests deterministic: `search_parties → party_ledger`; `فقط وضعیت فعلی/فقط مانده` returns only the current grounded balance. The same live prompt must be repeated before Provider Gateway + read-quality Cycle 2 is accepted.
+
+## v10 Cycle 3 — Finance Action Depth candidate
+
+Job #56 closed the Job #55 semantic defect: named-party current balance used `search_parties → party_ledger`, no LLM, 1.0s end-to-end, exact 727,100,000 IRR result.
+
+Finance capability audit against the actual UI found Purchase and Cheque as the highest-value supported-form action gaps. Cycle 3 adds guarded Purchase Invoice Proposal, guarded Cheque Proposal, `search_cash_accounts`, and deterministic `check_analytics`. No DB migration; live validation pending. See `12-FINANCE-CAPABILITY-MATRIX.md`.

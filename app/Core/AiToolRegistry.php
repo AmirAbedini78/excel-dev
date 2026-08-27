@@ -33,10 +33,26 @@ final class AiToolRegistry
                 'group_by'=>['type'=>'string','enum'=>['none','party','item','jalali_month','status']],
                 'limit'=>['type'=>'integer']
             ],'required'=>['kind']]],
+            ['name'=>'search_cash_accounts','mode'=>'read','risk'=>'low','description'=>'جستجوی حساب بانک/صندوق/کارتخوان شرکت فعال','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string']],'required'=>['query']]],
+            ['name'=>'check_analytics','mode'=>'read','risk'=>'low','description'=>'گزارش امن چک‌های دریافتنی/پرداختنی با وضعیت و دامنه سررسید','parameters'=>['type'=>'object','properties'=>[
+                'direction'=>['type'=>'string','enum'=>['all','receivable','payable']],
+                'status'=>['type'=>'string','enum'=>['all','open','received','paid','bounced','canceled']],
+                'due_scope'=>['type'=>'string','enum'=>['all','overdue','upcoming_7']],
+                'limit'=>['type'=>'integer']
+            ]]],
             ['name'=>'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پیش‌نویس فاکتور فروش؛ بدون تایید انسانی ثبت نهایی نمی‌شود','parameters'=>['type'=>'object','properties'=>[
                 'party_id'=>['type'=>'integer'],'document_date'=>['type'=>'string'],'due_date'=>['type'=>'string'],'notes'=>['type'=>'string'],
                 'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['item_id'=>['type'=>'integer'],'quantity'=>['type'=>'number'],'unit_price'=>['type'=>'number'],'discount_amount'=>['type'=>'number'],'tax_percent'=>['type'=>'number'],'description'=>['type'=>'string']],'required'=>['item_id','quantity','unit_price']]]
             ],'required'=>['party_id','lines']]],
+            ['name'=>'create_purchase_invoice_draft','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پیش‌نویس فاکتور خرید؛ فقط پس از تایید انسانی اجرا می‌شود','parameters'=>['type'=>'object','properties'=>[
+                'party_id'=>['type'=>'integer'],'doc_type'=>['type'=>'string','enum'=>['purchase_invoice_goods','purchase_invoice_service']],
+                'document_date'=>['type'=>'string'],'notes'=>['type'=>'string'],
+                'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['item_id'=>['type'=>'integer'],'quantity'=>['type'=>'number'],'unit_price'=>['type'=>'number'],'discount_amount'=>['type'=>'number'],'description'=>['type'=>'string']],'required'=>['item_id','quantity','unit_price']]]
+            ],'required'=>['party_id','lines']]],
+            ['name'=>'create_check','mode'=>'proposal','risk'=>'high','description'=>'آماده‌سازی ثبت چک دریافتنی/پرداختنی؛ فقط پس از تایید انسانی ایجاد می‌شود','parameters'=>['type'=>'object','properties'=>[
+                'direction'=>['type'=>'string','enum'=>['receivable','payable']], 'check_no'=>['type'=>'string'], 'amount'=>['type'=>'number'], 'due_date'=>['type'=>'string'],
+                'party_id'=>['type'=>'integer'],'cash_account_id'=>['type'=>'integer'],'notes'=>['type'=>'string']
+            ],'required'=>['direction','check_no','amount','due_date']]],
             ['name'=>'create_voucher_draft','mode'=>'proposal','risk'=>'high','description'=>'آماده‌سازی سند حسابداری بالانس به صورت پیش‌نویس','parameters'=>['type'=>'object','properties'=>[
                 'voucher_date'=>['type'=>'string'],'description'=>['type'=>'string'],
                 'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['account_id'=>['type'=>'integer'],'party_id'=>['type'=>'integer'],'description'=>['type'=>'string'],'debit'=>['type'=>'number'],'credit'=>['type'=>'number']],'required'=>['account_id']]]
@@ -82,6 +98,8 @@ final class AiToolRegistry
             'search_items'=>self::searchItems($wid,$cid,(string)($args['query']??'')),
             'trial_balance'=>self::trialBalance($wid,$cid),
             'party_ledger'=>self::partyLedger($wid,$cid,(int)($args['party_id']??0)),
+            'search_cash_accounts'=>self::searchCashAccounts($wid,$cid,(string)($args['query']??'')),
+            'check_analytics'=>self::checkAnalytics($wid,$cid,$args),
             'recent_sales'=>self::recentSales($wid,$cid,(int)($args['limit']??20)),
             'recent_purchases'=>self::recentPurchases($wid,$cid,(int)($args['limit']??20)),
             'document_analytics'=>self::documentAnalytics($wid,$cid,$args),
@@ -268,6 +286,8 @@ final class AiToolRegistry
         self::validateProposalArgs($wid,$cid,(string)$proposal['tool_name'],$args);
         return match($proposal['tool_name']){
             'create_sales_invoice_draft'=>self::createSalesDraft($wid,$cid,$userId,$args),
+            'create_purchase_invoice_draft'=>self::createPurchaseDraft($wid,$cid,$userId,$args),
+            'create_check'=>self::createCheck($wid,$cid,$userId,$args),
             'create_voucher_draft'=>self::createVoucherDraft($wid,$cid,$userId,$args),
             default=>throw new RuntimeException('اجرای این Tool هنوز پیاده‌سازی نشده است.')
         };
@@ -368,6 +388,34 @@ final class AiToolRegistry
     private static function partyLedger(int $wid,int $cid,int $partyId): array
     {
         self::assertOwned($wid,$cid,'acc_parties',$partyId);$st=pdo()->prepare("SELECT v.id voucher_id,v.voucher_no,v.voucher_date,v.description voucher_description,l.description,l.debit,l.credit,(l.debit-l.credit) movement FROM acc_voucher_lines l JOIN acc_vouchers v ON v.id=l.voucher_id AND v.workspace_id=l.workspace_id WHERE l.workspace_id=? AND v.company_id=? AND v.status IN ('approved','final') AND l.party_id=? ORDER BY v.voucher_date,v.id,l.line_no LIMIT 1000");$st->execute([$wid,$cid,$partyId]);$rows=$st->fetchAll();$balance=0;foreach($rows as &$r){$balance+=(float)$r['movement'];$r['running_balance']=$balance;}unset($r);return['party_id'=>$partyId,'balance'=>$balance,'rows'=>$rows];
+    }
+
+    private static function searchCashAccounts(int $wid,int $cid,string $query): array
+    {
+        $query=trim($query);if($query==='')return[];$like='%'.$query.'%';
+        $st=pdo()->prepare("SELECT id,code,name,bank_name,account_kind,account_no,iban,opening_balance FROM acc_cash_accounts WHERE workspace_id=? AND company_id=? AND active=1 AND (name LIKE ? OR code LIKE ? OR bank_name LIKE ? OR account_no LIKE ? OR iban LIKE ?) ORDER BY name LIMIT 30");
+        $st->execute([$wid,$cid,$like,$like,$like,$like,$like]);return$st->fetchAll();
+    }
+
+    private static function checkAnalytics(int $wid,int $cid,array $args): array
+    {
+        $direction=trim((string)($args['direction']??'all'));if(!in_array($direction,['all','receivable','payable'],true))$direction='all';
+        $status=trim((string)($args['status']??'all'));if(!in_array($status,['all','open','received','paid','bounced','canceled'],true))$status='all';
+        $due=trim((string)($args['due_scope']??'all'));if(!in_array($due,['all','overdue','upcoming_7'],true))$due='all';
+        $limit=max(1,min(100,(int)($args['limit']??30)));
+        $where=['c.workspace_id=?','c.company_id=?'];$params=[$wid,$cid];
+        if($direction!=='all'){$where[]='c.direction=?';$params[]=$direction;}
+        if($status!=='all'){$where[]='c.status=?';$params[]=$status;}
+        if($due==='overdue'){$where[]="c.status='open'";$where[]='c.due_date IS NOT NULL';$where[]='c.due_date<CURDATE()';}
+        elseif($due==='upcoming_7'){$where[]="c.status='open'";$where[]='c.due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL 7 DAY)';}
+        $sql="SELECT c.id,c.direction,c.check_no,c.amount,c.due_date,c.status,c.notes,p.name party_name,a.name cash_name,a.bank_name
+              FROM acc_checks c
+              LEFT JOIN acc_parties p ON p.id=c.party_id AND p.workspace_id=c.workspace_id AND p.company_id=c.company_id
+              LEFT JOIN acc_cash_accounts a ON a.id=c.cash_account_id AND a.workspace_id=c.workspace_id AND a.company_id=c.company_id
+              WHERE ".implode(' AND ',$where)." ORDER BY (c.due_date IS NULL),c.due_date,c.id DESC LIMIT ".$limit;
+        $st=pdo()->prepare($sql);$st->execute($params);$rows=$st->fetchAll();$total=0;
+        foreach($rows as &$r){$total+=(float)($r['amount']??0);$r['due_date_fa']=AccountingRepository::faDate($r['due_date']??null);}unset($r);
+        return ['direction'=>$direction,'status'=>$status,'due_scope'=>$due,'total_count'=>count($rows),'total_amount'=>$total,'rows'=>$rows];
     }
 
     private static function recentSales(int $wid,int $cid,int $limit): array
@@ -634,6 +682,24 @@ final class AiToolRegistry
         if($tool==='create_sales_invoice_draft'){
             self::assertOwned($wid,$cid,'acc_parties',(int)($args['party_id']??0));$lines=(array)($args['lines']??[]);if(!$lines)throw new RuntimeException('حداقل یک ردیف فاکتور لازم است.');
             foreach($lines as $l){self::assertOwned($wid,$cid,'acc_items',(int)($l['item_id']??0));if((float)($l['quantity']??0)<=0)throw new RuntimeException('مقدار فاکتور باید بیشتر از صفر باشد.');if((float)($l['unit_price']??0)<0)throw new RuntimeException('قیمت واحد نامعتبر است.');}
+        }elseif($tool==='create_purchase_invoice_draft'){
+            self::assertOwned($wid,$cid,'acc_parties',(int)($args['party_id']??0));
+            $docType=trim((string)($args['doc_type']??'purchase_invoice_goods'));
+            if(!in_array($docType,['purchase_invoice_goods','purchase_invoice_service'],true))throw new RuntimeException('نوع فاکتور خرید نامعتبر است.');
+            $lines=(array)($args['lines']??[]);if(!$lines)throw new RuntimeException('حداقل یک ردیف فاکتور خرید لازم است.');
+            foreach($lines as $l){
+                self::assertOwned($wid,$cid,'acc_items',(int)($l['item_id']??0));
+                if((float)($l['quantity']??0)<=0)throw new RuntimeException('مقدار خرید باید بیشتر از صفر باشد.');
+                if((float)($l['unit_price']??0)<0)throw new RuntimeException('قیمت واحد خرید نامعتبر است.');
+                if((float)($l['discount_amount']??0)<0)throw new RuntimeException('تخفیف خرید نامعتبر است.');
+            }
+        }elseif($tool==='create_check'){
+            $direction=trim((string)($args['direction']??''));if(!in_array($direction,['receivable','payable'],true))throw new RuntimeException('نوع چک نامعتبر است.');
+            $checkNo=trim((string)($args['check_no']??''));if($checkNo===''||mb_strlen($checkNo)>100)throw new RuntimeException('شماره چک نامعتبر است.');
+            if((float)($args['amount']??0)<=0)throw new RuntimeException('مبلغ چک باید بیشتر از صفر باشد.');
+            $due=AccountingRepository::date((string)($args['due_date']??''));if(!$due)throw new RuntimeException('تاریخ سررسید چک نامعتبر است.');
+            if(!empty($args['party_id']))self::assertOwned($wid,$cid,'acc_parties',(int)$args['party_id']);
+            if(!empty($args['cash_account_id']))self::assertOwned($wid,$cid,'acc_cash_accounts',(int)$args['cash_account_id']);
         }elseif($tool==='create_voucher_draft'){
             $lines=(array)($args['lines']??[]);if(count($lines)<2)throw new RuntimeException('سند حداقل دو آرتیکل لازم دارد.');$d=0;$c=0;
             foreach($lines as $l){self::assertOwned($wid,$cid,'acc_accounts',(int)($l['account_id']??0));$x=max(0,(float)($l['debit']??0));$y=max(0,(float)($l['credit']??0));if(($x>0&&$y>0)||($x<=0&&$y<=0))throw new RuntimeException('هر آرتیکل باید فقط بدهکار یا بستانکار باشد.');$d+=$x;$c+=$y;if(!empty($l['party_id']))self::assertOwned($wid,$cid,'acc_parties',(int)$l['party_id']);}
@@ -645,6 +711,8 @@ final class AiToolRegistry
     {
         return match($tool){
             'create_sales_invoice_draft'=>'ایجاد پیش‌نویس فاکتور فروش با '.count((array)($args['lines']??[])).' ردیف',
+            'create_purchase_invoice_draft'=>'ایجاد پیش‌نویس فاکتور خرید با '.count((array)($args['lines']??[])).' ردیف',
+            'create_check'=>'ثبت چک '.((string)($args['direction']??'')==='payable'?'پرداختنی':'دریافتنی').' شماره '.(string)($args['check_no']??''),
             'create_voucher_draft'=>'ایجاد پیش‌نویس سند حسابداری با '.count((array)($args['lines']??[])).' آرتیکل',
             default=>'عملیات پیشنهادی ایجنت'
         };
@@ -661,6 +729,39 @@ final class AiToolRegistry
         $ins=$pdo->prepare("INSERT INTO acc_sales_lines (workspace_id,sales_doc_id,line_no,item_id,description,quantity,unit_price,discount_amount,tax_percent,tax_amount,line_total,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,NOW())");$n=1;
         foreach($valid as [$l,$taxAmt,$total])$ins->execute([$wid,$id,$n++,(int)$l['item_id'],trim((string)($l['description']??'')),(float)$l['quantity'],(float)$l['unit_price'],max(0,(float)($l['discount_amount']??0)),max(0,(float)($l['tax_percent']??0)),$taxAmt,$total]);
         return ['entity'=>'acc_sales_docs','id'=>$id,'document_no'=>$no,'net_total'=>$net,'status'=>'draft'];
+    }
+
+    private static function createPurchaseDraft(int $wid,int $cid,int $userId,array $args): array
+    {
+        $date=AccountingRepository::date((string)($args['document_date']??''))?:date('Y-m-d');$party=(int)$args['party_id'];$lines=(array)$args['lines'];
+        $docType=trim((string)($args['doc_type']??'purchase_invoice_goods'));$no='AI-PUR-'.date('Ymd-His').'-'.strtoupper(bin2hex(random_bytes(2)));
+        $gross=0;$discount=0;$net=0;$valid=[];
+        foreach($lines as $l){
+            $qty=(float)$l['quantity'];$price=max(0,(float)$l['unit_price']);$base=$qty*$price;
+            $disc=max(0,min($base,(float)($l['discount_amount']??0)));$total=max(0,$base-$disc);
+            $gross+=$base;$discount+=$disc;$net+=$total;$valid[]=[$l,$total];
+        }
+        $pdo=pdo();$pdo->beginTransaction();
+        try{
+            $pdo->prepare("INSERT INTO acc_purchase_docs (workspace_id,company_id,doc_type,document_no,document_date,party_id,notes,workflow_status,taxpayer_status,total_before_discount,discount_total,net_total,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,'draft','not_sent',?,?,?,?,NOW(),NOW())")
+                ->execute([$wid,$cid,$docType,$no,$date,$party,trim((string)($args['notes']??'ایجادشده توسط AI و تاییدشده توسط کاربر')),$gross,$discount,$net,$userId]);
+            $id=(int)$pdo->lastInsertId();
+            $ins=$pdo->prepare("INSERT INTO acc_purchase_lines (workspace_id,purchase_doc_id,line_no,item_id,description,quantity,unit_price,discount_amount,line_total,created_at) VALUES (?,?,?,?,?,?,?,?,?,NOW())");$n=1;
+            foreach($valid as [$l,$total])$ins->execute([$wid,$id,$n++,(int)$l['item_id'],trim((string)($l['description']??'')),(float)$l['quantity'],(float)$l['unit_price'],max(0,(float)($l['discount_amount']??0)),$total]);
+            $pdo->commit();return ['entity'=>'acc_purchase_docs','id'=>$id,'document_no'=>$no,'doc_type'=>$docType,'net_total'=>$net,'status'=>'draft'];
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
+    }
+
+    private static function createCheck(int $wid,int $cid,int $userId,array $args): array
+    {
+        $direction=trim((string)$args['direction']);$checkNo=trim((string)$args['check_no']);$amount=(float)$args['amount'];
+        $due=AccountingRepository::date((string)$args['due_date']);$party=!empty($args['party_id'])?(int)$args['party_id']:null;$cash=!empty($args['cash_account_id'])?(int)$args['cash_account_id']:null;
+        $dupe=pdo()->prepare("SELECT id FROM acc_checks WHERE workspace_id=? AND company_id=? AND direction=? AND check_no=? LIMIT 1");$dupe->execute([$wid,$cid,$direction,$checkNo]);
+        if($dupe->fetchColumn())throw new RuntimeException('چکی با این شماره و نوع قبلاً ثبت شده است.');
+        $notes=trim((string)($args['notes']??''));if($notes==='')$notes='ایجادشده توسط AI پس از تایید انسانی';
+        pdo()->prepare("INSERT INTO acc_checks (workspace_id,company_id,direction,check_no,amount,due_date,party_id,cash_account_id,status,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?, 'open',?,NOW(),NOW())")
+            ->execute([$wid,$cid,$direction,$checkNo,$amount,$due,$party,$cash,$notes]);
+        $id=(int)pdo()->lastInsertId();return ['entity'=>'acc_checks','id'=>$id,'check_no'=>$checkNo,'direction'=>$direction,'amount'=>$amount,'due_date'=>$due,'status'=>'open'];
     }
 
     private static function createVoucherDraft(int $wid,int $cid,int $userId,array $args): array

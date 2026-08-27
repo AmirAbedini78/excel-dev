@@ -5,9 +5,11 @@
 ### Thursday 2026-08-27
 - [x] Module Kernel v1 + workspace enable/disable + Module Center — LIVE-VALIDATED
 - [x] canonical SmartDocs pivot from Accounting-only MVP to Modular AI-Native Business Operations Platform
-- [~] Model Provider Gateway v1: implementation + 6/6 contract tests PASS; local product smoke pending; cloud live smoke waits for real provider credential
-- [ ] Finance capability/action matrix against all existing Finance/Sales/Treasury forms — NEXT
-- close highest-value missing Finance Agent actions without broad ERP expansion
+- [x] Model Provider Gateway v1: local path LIVE-VALIDATED by Job #56; cloud live smoke waits for real provider credential
+- [x] Finance capability/action matrix against all existing Finance/Sales/Treasury forms
+- [~] Finance building blocks: Purchase + Cheque candidate; live validation pending
+- [x] Trade Flow MVP strategy locked: Import/Procure → Warehouse → Landed Cost/Finance → Sales/Delivery → Cash/Margin
+- [ ] Inventory + Procurement primitive is the next implementation cycle after Finance candidate validation
 
 ### Friday 2026-08-28
 - Inventory minimal-complete slice
@@ -44,3 +46,11 @@
 - Provider Gateway install/Docker contract tests: PASS.
 - Product smoke semantic correctness: FAILED because named unquoted party balance fell through to `company_snapshot`.
 - Apply `v10.0-party-balance-r1`, repeat the exact Job #55 prompt, and require `search_parties + party_ledger` with no Proposal before closing Cycle 2.
+
+## Cycle 3 live gate
+- [x] Job #56 semantic retest PASS: `search_parties + party_ledger`, 1.0s.
+- [x] Finance capability/action matrix.
+- [~] Purchase invoice Proposal — candidate; live panel test pending.
+- [~] Cheque analytics — candidate; live panel test pending.
+- [~] Cheque Proposal — candidate; live panel test pending.
+- [ ] Cash receive/payment primitive + Agent bridge — next after Cycle 3 PASS.

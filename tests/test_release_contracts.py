@@ -22,6 +22,8 @@ class ServerBoundaryTests(unittest.TestCase):
     def test_proposal_tools_are_explicitly_risk_classified(self):
         self.assertRegex(self.registry, r"'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium'")
         self.assertRegex(self.registry, r"'create_voucher_draft','mode'=>'proposal','risk'=>'high'")
+        self.assertRegex(self.registry, r"'create_purchase_invoice_draft','mode'=>'proposal','risk'=>'medium'")
+        self.assertRegex(self.registry, r"'create_check','mode'=>'proposal','risk'=>'high'")
         self.assertIn("requires_approval,status,proposed_at", self.registry)
         self.assertIn("1,'proposed',NOW()", self.registry)
 
@@ -70,7 +72,7 @@ class ServerBoundaryTests(unittest.TestCase):
         self.assertIn("AiRepository::safeModelMetrics($meta['attempted_metrics']??[])", self.module)
 
     def test_live_renderer_has_v9302_metadata_contract(self):
-        self.assertIn('assets/ai-live.js?v=9.3.0.2', self.module)
+        self.assertIn('assets/ai-live.js?v=10.0.2', self.module)
         self.assertNotIn('assets/ai-live.js?v=8.0.0', self.module)
         self.assertIn("hardeningText(job?.commercial_hardening)", self.live_asset)
         self.assertIn("toolText(job)", self.live_asset)

@@ -1,14 +1,14 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Modular AI-Native Business Operations Platform; first vertical = Finance/Trade for B2B trading/import/distribution companies",
-  "baseline_commit": "7d4a804dc0330d297803707bb8c9a2d455dfc0db",
-  "baseline_milestone": "v10.0 Module Kernel v1",
-  "baseline_status": "LIVE-VALIDATED",
-  "current_milestone": "v10.0 Provider Gateway + Named Party Balance Routing",
-  "milestone_status": "LOCAL-VALIDATED / LIVE-SEMANTIC-RETEST-PENDING",
+  "baseline_commit": "1e42fc49a124b85a94d41c5d5a661c40533330fd",
+  "baseline_milestone": "v10.0 Provider Gateway + Fast Party Balance Routing",
+  "baseline_status": "LIVE-VALIDATED LOCAL PATH",
+  "current_milestone": "v10.0 Finance Action Depth",
+  "milestone_status": "IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING",
   "live_validation_pending": true,
   "release_contract": "v10-modular-pilot-v1",
-  "active_task": "Repeat exact Job #55 prompt after deterministic named-party balance routing fix; require search_parties + party_ledger and correct current balance, then commit Cycle 2 and move immediately to Finance action coverage.",
+  "active_task": "Live-test Purchase/Cheque Finance building blocks, then move immediately to the Trade Flow golden path: Inventory + Procurement → Trade Case/Shipment/Landed Cost → Sales/Delivery → cross-module Manager Brief.",
   "in_scope": [
     "workspace module enable/disable and dependency contract",
     "local-first model provider gateway with OpenAI-compatible fallback",
@@ -40,30 +40,39 @@
     "Finance UI breadth is larger than Agent action coverage; next cycle must close the highest-value action gaps",
     "cloud provider live fallback cannot be proven until a real provider/API key is configured",
     "same-process cloud fallback does not cover a powered-off local PC; an always-on cloud_only Worker is the HA path",
-    "Job #55 exposed a semantic routing defect: an unquoted named-party balance request fell through to company_snapshot; deterministic hotfix installed and live retest pending",
     "current AccountingIndustrialModule remains broad and will be decomposed incrementally, not rewritten in one step",
-    "forecast confidence remains data-limited on the synthetic demo dataset"
+    "forecast confidence remains data-limited on the synthetic demo dataset",
+    "Cash transactions have schema but lack a complete operational UI/domain primitive; Agent mutation is deferred until that primitive is completed."
   ],
   "release_gates": {
     "v9_3_live_closeout": "PASS",
     "module_kernel": "PASS_LIVE",
     "provider_gateway_contract_tests": "PASS_LOCAL",
-    "provider_gateway_local_transport_smoke": "PASS_JOB55",
-    "party_balance_semantic_smoke": "PENDING_RETEST",
+    "provider_gateway_local_transport_smoke": "PASS_JOB56",
+    "party_balance_semantic_smoke": "PASS_JOB56_1S",
     "provider_gateway_cloud_fallback_smoke": "PENDING_PROVIDER_CREDENTIAL",
     "finance_action_coverage": "NEXT_TODAY",
     "inventory_slice": "PLANNED_FRIDAY",
     "procurement_slice": "PLANNED_FRIDAY",
     "crm_lite_slice": "PLANNED_FRIDAY",
     "trade_intelligence_slice": "PLANNED_FRIDAY",
-    "design_partner_demo": "PLANNED_FRIDAY"
+    "design_partner_demo": "PLANNED_FRIDAY",
+    "finance_capability_matrix": "PASS_SOURCE_AUDIT",
+    "purchase_invoice_agent_action": "CANDIDATE_LIVE_PENDING",
+    "check_analytics": "CANDIDATE_LIVE_PENDING",
+    "check_agent_action": "CANDIDATE_LIVE_PENDING",
+    "trade_flow_mvp_strategy": "PASS_LOCKED",
+    "inventory_procurement_slice": "NEXT",
+    "trade_case_landed_cost_slice": "PLANNED_NEXT"
   },
   "updated_at": "2026-08-27",
-  "last_live_validation_job": 55,
+  "last_live_validation_job": 56,
   "live_validation_summary": {
     "v9_3": "Job #54 -> Proposal #3 -> human approval -> balanced AI draft AI-VCH-20260826-202025-9F19 -> exact two-article product UI verification PASS",
     "module_kernel": "Module Center plus workspace AI disable/enable and route/menu gating PASS in product UI",
     "provider_gateway": "Install/build plus 6/6 provider contract tests PASS; existing local Ollama transport reached a successful Job #55",
-    "job_55": "Transport/runtime succeeded but semantic result failed: named party balance request returned company_snapshot instead of party ledger; deterministic route hotfix installed and exact live retest pending"
+    "job_55": "Transport/runtime succeeded but semantic result failed: named party balance request returned company_snapshot instead of party ledger; deterministic route hotfix installed and exact live retest pending",
+    "job_56": "Exact Job #55 prompt -> grounded_read -> search_parties + party_ledger -> 727,100,000 IRR -> no LLM -> 1.0s -> semantic and latency PASS",
+    "cycle_3": "Finance source/UI audit selected Purchase and Cheque as immediate building blocks. Product strategy is locked to an end-to-end Trade Flow MVP across Procurement, Logistics, Warehouse, Finance and Sales; Finance is a foundation rather than the whole narrative."
   }
 }

@@ -154,3 +154,7 @@ Toolها، RAG corpusها، workflow traces، evaluation prompt sets و outcome 
 ## Semantic correctness gate from Job #55
 
 Pilot readiness requires outcome correctness, not merely `Job successful`. A read request that asks for a named party balance is a failure if the system returns a company summary even when transport, LLM and Tool calls technically succeed. The prompt/capability evaluation pack must therefore include natural Persian paraphrases, unquoted entities, Persian digits/dates and concise-output modifiers such as `فقط وضعیت فعلی`.
+
+## Finance depth execution — Cycle 3
+
+Finance is a foundation, not the whole commercial vertical. Purchase invoice and Cheque are closed because they already exist as real primitives, but the MVP is organized around the cross-functional Trade Flow in `13-TRADE-FLOW-MVP.md`: procurement/import → shipment/customs → warehouse/inventory → landed cost/accounting → sales/delivery → cash/margin.

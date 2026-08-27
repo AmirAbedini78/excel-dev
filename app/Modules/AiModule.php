@@ -58,7 +58,7 @@ final class AiModule
             if($j['result_text'])echo '<div class="ai-answer"><strong>پاسخ ایجنت</strong><div>'.nl2br(h($j['result_text'])).'</div>'.self::metricsHtml($j).'</div>';elseif($j['error_text'])echo '<div class="alert danger">'.nl2br(h($j['error_text'])).'</div>';else echo '<div class="ai-pending">'.self::statusText((string)$j['status']).'</div>';
             echo '</div>';foreach($proposals as $p)self::proposalCard($p);echo '</article>';
         }
-        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=9.3.0.2"></script>';
+        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=10.0.2"></script>';
     }
 
     private static function metricsHtml(array $job): string
@@ -86,6 +86,12 @@ final class AiModule
             'accounting_action_rejected'=>'اقدام حسابداری ردشده',
             'guarded_sales_invoice_proposal'=>'Proposal فاکتور فروش',
             'guarded_sales_invoice_blocked'=>'فاکتور فروش مسدودشده',
+            'guarded_purchase_invoice_proposal'=>'Proposal فاکتور خرید',
+            'guarded_purchase_invoice_blocked'=>'فاکتور خرید مسدودشده',
+            'guarded_check_proposal'=>'Proposal چک',
+            'guarded_check_blocked'=>'عملیات چک مسدودشده',
+            'treasury_check_read'=>'گزارش Grounded چک‌ها',
+            'treasury_check_read_blocked'=>'گزارش چک‌ها مسدودشده',
             'financial_intelligence'=>'هوشمندی مالی',
             'financial_intelligence_blocked'=>'هوشمندی مالی مسدودشده',
             'forecast_risk_anomaly'=>'پیش‌بینی، ریسک و ناهنجاری',
