@@ -741,15 +741,15 @@ final class AiToolRegistry
             $disc=max(0,min($base,(float)($l['discount_amount']??0)));$total=max(0,$base-$disc);
             $gross+=$base;$discount+=$disc;$net+=$total;$valid[]=[$l,$total];
         }
-        $pdo=pdo();$pdo->beginTransaction();
+        $pdo=pdo();$ownsTransaction=!$pdo->inTransaction();if($ownsTransaction)$pdo->beginTransaction();
         try{
             $pdo->prepare("INSERT INTO acc_purchase_docs (workspace_id,company_id,doc_type,document_no,document_date,party_id,notes,workflow_status,taxpayer_status,total_before_discount,discount_total,net_total,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,'draft','not_sent',?,?,?,?,NOW(),NOW())")
                 ->execute([$wid,$cid,$docType,$no,$date,$party,trim((string)($args['notes']??'ایجادشده توسط AI و تاییدشده توسط کاربر')),$gross,$discount,$net,$userId]);
             $id=(int)$pdo->lastInsertId();
             $ins=$pdo->prepare("INSERT INTO acc_purchase_lines (workspace_id,purchase_doc_id,line_no,item_id,description,quantity,unit_price,discount_amount,line_total,created_at) VALUES (?,?,?,?,?,?,?,?,?,NOW())");$n=1;
             foreach($valid as [$l,$total])$ins->execute([$wid,$id,$n++,(int)$l['item_id'],trim((string)($l['description']??'')),(float)$l['quantity'],(float)$l['unit_price'],max(0,(float)($l['discount_amount']??0)),$total]);
-            $pdo->commit();return ['entity'=>'acc_purchase_docs','id'=>$id,'document_no'=>$no,'doc_type'=>$docType,'net_total'=>$net,'status'=>'draft'];
-        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
+            if($ownsTransaction)$pdo->commit();return ['entity'=>'acc_purchase_docs','id'=>$id,'document_no'=>$no,'doc_type'=>$docType,'net_total'=>$net,'status'=>'draft'];
+        }catch(Throwable $e){if($ownsTransaction&&$pdo->inTransaction())$pdo->rollBack();throw$e;}
     }
 
     private static function createCheck(int $wid,int $cid,int $userId,array $args): array
@@ -779,5 +779,5 @@ final class AiToolRegistry
         $st=pdo()->prepare("SELECT COALESCE(SUM(`$column`),0) FROM `$table` WHERE workspace_id=? AND company_id=?");$st->execute([$wid,$cid]);return(float)$st->fetchColumn();
     }
     private static function assertCompany(int $wid,int $cid): void{$st=pdo()->prepare("SELECT 1 FROM companies WHERE workspace_id=? AND id=? AND active=1 LIMIT 1");$st->execute([$wid,$cid]);if(!$st->fetchColumn())throw new RuntimeException('company_not_found');}
-    private static function assertOwned(int $wid,int $cid,string $table,int $id): void{if($id<=0||!in_array($table,['acc_parties','acc_items','acc_accounts'],true))throw new RuntimeException('entity_invalid');$st=pdo()->prepare("SELECT 1 FROM `$table` WHERE workspace_id=? AND company_id=? AND id=? LIMIT 1");$st->execute([$wid,$cid,$id]);if(!$st->fetchColumn())throw new RuntimeException('entity_not_owned');}
+    private static function assertOwned(int $wid,int $cid,string $table,int $id): void{if($id<=0||!in_array($table,['acc_parties','acc_items','acc_accounts','acc_cash_accounts'],true))throw new RuntimeException('entity_invalid');$st=pdo()->prepare("SELECT 1 FROM `$table` WHERE workspace_id=? AND company_id=? AND id=? LIMIT 1");$st->execute([$wid,$cid,$id]);if(!$st->fetchColumn())throw new RuntimeException('entity_not_owned');}
 }

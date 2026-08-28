@@ -28,16 +28,15 @@ def quoted(p:str)->str:
     return m.group(1).strip() if m else ""
 
 def party_ledger_query(p:str)->str:
-    """Extract a grounded party query from common Persian balance/ledger phrasing.
+    """Extract a grounded party query only for explicit balance/ledger intent.
 
-    This intentionally copies only a substring already present in the prompt;
-    it never creates an ERP id or financial fact. Quoted entities retain the
-    existing highest-confidence behavior, while unquoted business names are
-    bounded by common Persian request verbs/questions.
+    Quoting an ERP entity alone must not turn a generic information lookup into
+    a party ledger request. Values and identifiers remain grounded server-side.
     """
-    q=quoted(p)
+    text=str(p or "").strip();n=norm(text)
+    if not any(x in n for x in ("مانده","گردش","دفتر مشتری")):return ""
+    q=quoted(text)
     if q:return q
-    text=str(p or "").strip()
     pat=(r"(?:مانده(?:\s+حساب)?|گردش(?:\s+حساب)?)\s+"
          r"(?:مشتری\s+|طرف\s*حساب\s+|تامین\s*کننده\s+|تأمین\s*کننده\s+)?"
          r"(.{2,160}?)(?=\s+(?:را|رو|چقدر(?:ه)?|چیست|چیه|بررسی|بگو|بده|نشان|نمایش|اعلام|گزارش)"
