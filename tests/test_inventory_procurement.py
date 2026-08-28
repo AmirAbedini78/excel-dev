@@ -11,11 +11,11 @@ class Dummy:
         self.calls.append((name,args))
         if name=='search_purchase_documents':return {'rows':[{'id':8,'document_no':'AI-PUR-20260828-214858-1275','supplier_name':'تامین برق ایرانیان'}]}
         if name=='search_warehouses':return {'rows':[{'id':2,'code':'WH-01','name':'انبار مرکزی','warehouse_type':'general'}]}
-        if name=='purchase_pipeline':return {'rows':[{'purchase_doc_id':8,'purchase_line_id':11,'document_no':'AI-PUR-20260828-214858-1275','supplier_name':'تامین برق ایرانیان','item_id':1,'item_code':'PLC-S7-1200','item_name':'PLC S7-1200 CPU 1212C','ordered_qty':2.0,'accepted_qty':0.0,'expected_inbound':2.0}]}
+        if name=='purchase_pipeline':return {'rows':[{'purchase_doc_id':8,'purchase_line_id':11,'document_no':'AI-PUR-20260828-214858-1275','supplier_name':'تامین برق ایرانیان','item_id':1,'item_code':'PLC-S7-1200','item_name':'PLC S7-1200 CPU 1212C','ordered_qty':'2.0000','accepted_qty':'0.0000','expected_inbound':'2.0000'}]}
         if name=='create_warehouse_receipt':return {'proposal_id':7,'status':'awaiting_human_approval'}
         if name=='search_items':return {'rows':[{'id':1,'code':'PLC-S7-1200','name':'PLC S7-1200 CPU 1212C'}]}
-        if name=='inventory_position':return {'rows':[{'code':'PLC-S7-1200','name':'PLC S7-1200 CPU 1212C','on_hand':0.0,'reserved':0.0,'available':0.0,'expected_inbound':2.0,'projected_available':2.0}]}
-        if name=='replenishment_risk':return {'rows':[]}
+        if name=='inventory_position':return {'rows':[{'code':'PLC-S7-1200','name':'PLC S7-1200 CPU 1212C','on_hand':'0.0000','reserved':'0.0000','available':'0.0000','expected_inbound':'2.0000','projected_available':'2.0000'}]}
+        if name=='replenishment_risk':return {'rows':[{'code':'TEST','name':'TEST','available':'1.0000','expected_inbound':'2.0000','min_stock':'5.0000','suggested_replenishment':'2.0000'}]}
         raise AssertionError(name)
 
 class Tests(unittest.TestCase):
@@ -31,4 +31,7 @@ class Tests(unittest.TestCase):
     def test_replenishment_no_llm(self):
         w=Dummy();text,meta=IP.process_replenishment(w,{'id':73});self.assertEqual(meta['model'],'none');self.assertEqual(w.calls[0][0],'replenishment_risk')
 
+    def test_pipeline_accepts_decimal_strings(self):
+        w=Dummy();text,meta=IP.process_pipeline(w,{'id':74})
+        self.assertEqual(meta['mode'],'procurement_pipeline_read');self.assertIn('2',text)
 if __name__=='__main__':unittest.main()

@@ -5,11 +5,15 @@ import re, json, hashlib
 from typing import Any
 
 DIGITS=str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩","01234567890123456789")
-PATCH_VERSION="v10.1-inventory-procurement-r1"
+PATCH_VERSION="v10.1-inventory-procurement-r1.1"
 
 def norm(x:Any)->str:
     s=str(x or "").translate(DIGITS).replace("ي","ی").replace("ك","ک").replace("\u200c"," ")
     return re.sub(r"\s+"," ",s).strip().lower()
+
+def number(value:Any)->float:
+    try:return float(value or 0)
+    except (TypeError,ValueError):return 0.0
 
 def rows(x:Any)->list[dict[str,Any]]:
     if isinstance(x,dict) and isinstance(x.get("rows"),list):return [r for r in x["rows"] if isinstance(r,dict)]
@@ -90,7 +94,7 @@ def process_inventory(worker:Any,job:dict[str,Any],prompt:str):
     if not rr:text="موجودی قابل گزارش پیدا نشد."
     else:
         out=["وضعیت موجودی:"]
-        for r in rr[:30]:out.append(f"• {r.get('code') or '-'} | {r.get('name') or '-'} | موجود {r.get('on_hand') or 0:g} | رزرو {r.get('reserved') or 0:g} | قابل استفاده {r.get('available') or 0:g} | ورودی مورد انتظار {r.get('expected_inbound') or 0:g} | پیش‌بینی {r.get('projected_available') or 0:g}")
+        for r in rr[:30]:out.append(f"• {r.get('code') or '-'} | {r.get('name') or '-'} | موجود {number(r.get('on_hand')):g} | رزرو {number(r.get('reserved')):g} | قابل استفاده {number(r.get('available')):g} | ورودی مورد انتظار {number(r.get('expected_inbound')):g} | پیش‌بینی {number(r.get('projected_available')):g}")
         text="\n".join(out)
     worker.trace(job,"grounded_read_complete","Grounded inventory position completed",{"rows":len(rr)})
     return text,{"provider":"deterministic","model":"none","mode":"inventory_position_read","tools_used":tools,"patch_version":PATCH_VERSION}
@@ -99,7 +103,7 @@ def process_replenishment(worker:Any,job:dict[str,Any]):
     worker.trace(job,"grounded_read","Grounded replenishment risk",{})
     result=worker.tool(job,"replenishment_risk",{"limit":30},stable(int(job["id"]),"replenishment",30));rr=rows(result)
     if not rr:text="کالایی زیر نقطه سفارش ثبت‌شده دیده نشد."
-    else:text="کمبود و پیشنهاد تأمین:\n"+"\n".join(f"• {r.get('code') or '-'} | {r.get('name') or '-'} | قابل استفاده {r.get('available') or 0:g} | ورودی {r.get('expected_inbound') or 0:g} | حداقل {r.get('min_stock') or 0:g} | پیشنهاد خرید {r.get('suggested_replenishment') or 0:g}" for r in rr[:30])
+    else:text="کمبود و پیشنهاد تأمین:\n"+"\n".join(f"• {r.get('code') or '-'} | {r.get('name') or '-'} | قابل استفاده {number(r.get('available')):g} | ورودی {number(r.get('expected_inbound')):g} | حداقل {number(r.get('min_stock')):g} | پیشنهاد خرید {number(r.get('suggested_replenishment')):g}" for r in rr[:30])
     worker.trace(job,"grounded_read_complete","Grounded replenishment risk completed",{"rows":len(rr)})
     return text,{"provider":"deterministic","model":"none","mode":"inventory_replenishment_read","tools_used":["replenishment_risk"],"patch_version":PATCH_VERSION}
 
@@ -107,7 +111,7 @@ def process_pipeline(worker:Any,job:dict[str,Any]):
     worker.trace(job,"grounded_read","Grounded procurement inbound pipeline",{})
     result=worker.tool(job,"purchase_pipeline",{"open_only":True,"limit":50},stable(int(job["id"]),"purchase-pipeline",50));rr=rows(result)
     if not rr:text="ورودی خرید بازی وجود ندارد."
-    else:text="ورودی‌های مورد انتظار خرید:\n"+"\n".join(f"• {r.get('document_no') or '-'} | {r.get('supplier_name') or '-'} | {r.get('item_name') or '-'} | سفارش {r.get('ordered_qty') or 0:g} | پذیرفته {r.get('accepted_qty') or 0:g} | باقیمانده {r.get('expected_inbound') or 0:g}" for r in rr[:50])
+    else:text="ورودی‌های مورد انتظار خرید:\n"+"\n".join(f"• {r.get('document_no') or '-'} | {r.get('supplier_name') or '-'} | {r.get('item_name') or '-'} | سفارش {number(r.get('ordered_qty')):g} | پذیرفته {number(r.get('accepted_qty')):g} | باقیمانده {number(r.get('expected_inbound')):g}" for r in rr[:50])
     worker.trace(job,"grounded_read_complete","Grounded procurement inbound pipeline completed",{"rows":len(rr)})
     return text,{"provider":"deterministic","model":"none","mode":"procurement_pipeline_read","tools_used":["purchase_pipeline"],"patch_version":PATCH_VERSION}
 
