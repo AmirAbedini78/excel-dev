@@ -25,7 +25,7 @@ from urllib.parse import urlsplit
 PATCH_VERSION = "v9.3.0"
 RELEASE_CONTRACT = "commercial-mvp-v1"
 
-PROPOSAL_TOOLS = frozenset({"create_sales_invoice_draft", "create_purchase_invoice_draft", "create_check", "create_voucher_draft"})
+PROPOSAL_TOOLS = frozenset({"create_sales_invoice_draft", "create_purchase_invoice_draft", "create_warehouse_receipt", "create_check", "create_voucher_draft"})
 READ_ONLY_MODES = frozenset({
     "deterministic_financial_report",
     "deep_financial_analysis",
@@ -45,11 +45,16 @@ READ_ONLY_MODES = frozenset({
     "adaptive_cache_read",
     "adaptive_llm_read",
     "treasury_check_read",
+    "inventory_warehouses_read",
+    "inventory_position_read",
+    "inventory_replenishment_read",
+    "procurement_pipeline_read",
 })
 PROPOSAL_MODES = frozenset({
     "guarded_sales_invoice_proposal",
     "guarded_purchase_invoice_proposal",
     "guarded_check_proposal",
+    "guarded_inventory_receipt_proposal",
     "accounting_action_proposal",
 })
 
@@ -190,7 +195,7 @@ def _latency_budget(cfg: dict[str, Any], mode: str) -> tuple[str, float]:
 
 def _policy(mode: str, successful_tools: list[str], proposal_created: bool) -> dict[str, Any]:
     seen = set(successful_tools)
-    if "create_voucher_draft" in seen or "create_check" in seen or mode.startswith("accounting_action_") or mode.startswith("guarded_check_"):
+    if "create_voucher_draft" in seen or "create_check" in seen or "create_warehouse_receipt" in seen or mode.startswith("accounting_action_") or mode.startswith("guarded_check_") or mode.startswith("guarded_inventory_receipt_"):
         risk = "high"
     elif "create_sales_invoice_draft" in seen or "create_purchase_invoice_draft" in seen or mode.startswith("guarded_sales_invoice_") or mode.startswith("guarded_purchase_invoice_"):
         risk = "medium"
@@ -220,7 +225,7 @@ def _policy(mode: str, successful_tools: list[str], proposal_created: bool) -> d
 def _is_read_only_mode(mode: str) -> bool:
     return mode in READ_ONLY_MODES or mode.startswith((
         "grounded_", "adaptive_", "accounting_workflow_", "financial_intelligence",
-        "forecast_risk_", "proactive_accounting", "deterministic_", "deep_", "fast_read_", "treasury_",
+        "forecast_risk_", "proactive_accounting", "deterministic_", "deep_", "fast_read_", "treasury_", "inventory_", "procurement_",
     ))
 
 

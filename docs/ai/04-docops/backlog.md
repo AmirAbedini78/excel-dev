@@ -54,3 +54,9 @@
 - [~] Cheque analytics — candidate; live panel test pending.
 - [~] Cheque Proposal — candidate; live panel test pending.
 - [ ] Cash receive/payment primitive + Agent bridge — next after Cycle 3 PASS.
+
+## Page-aware AI Context Picker / Entity Chips
+- Embed Chat/Assistant in each operational module page.
+- Allow row/entity selection (supplier, item, warehouse, purchase, shipment, sales order) as typed context chips.
+- Resolve IDs and ownership server-side; user should not manually type ERP identifiers.
+- Implement after Inventory/Procurement and Trade entities stabilize; do not delay the Golden Flow.

@@ -123,3 +123,7 @@ v9.3 Feature جدید نیست و اکنون feature-frozen است. v9.3.0.1 rou
 ## v10 latest — Finance Action Depth
 
 Cycle 2 is live-validated locally: Job #56 fixed named-party balance at 1.0s with no LLM. Cycle 3 adds Purchase/Cheque Finance building blocks, but the user clarified that receivable/debt examples were illustrative. The selected commercial narrative is now the end-to-end trading/import/distribution flow in `docs/ai/13-TRADE-FLOW-MVP.md`; next work crosses Inventory, Procurement, Trade/Logistics and Sales before broad CRM expansion.
+
+## v10.1 Cycle 4 — Inventory + Procurement vertical slice
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDomain` now connects existing purchase documents to expected inbound, warehouse receipt/inspection, Stock Ledger, on-hand/reserved/available and replenishment reads. Risky receipt posting remains Proposal → Human Approval. See `14-INVENTORY-PROCUREMENT-MVP.md`. Context Picker / Entity Chips stays in committed UX backlog and will attach server-resolved page entities after the Golden Flow pages stabilize.

@@ -207,3 +207,7 @@ Breadth outside this golden flow is secondary until customer evidence exists.
 - Odoo 19 documentation: Purchase, Vendor Bills, Control Policies / 3-way matching, inventory valuation.
 - Oracle Fusion Cloud SCM 26B: Landed Cost Management / Trade Operations.
 - Iran trade-system legal context: electronic trade/customs/warehouse document exchange requirements and warehouse synchronization obligations.
+
+## v10.1 Cycle 4 — Inventory + Procurement vertical slice
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDomain` now connects existing purchase documents to expected inbound, warehouse receipt/inspection, Stock Ledger, on-hand/reserved/available and replenishment reads. Risky receipt posting remains Proposal → Human Approval. See `14-INVENTORY-PROCUREMENT-MVP.md`. Context Picker / Entity Chips stays in committed UX backlog and will attach server-resolved page entities after the Golden Flow pages stabilize.

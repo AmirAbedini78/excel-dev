@@ -310,3 +310,7 @@ No new accounting/AI feature is part of the closeout. v9.3 is now feature-frozen
 ## v10 Golden Flow lock — Trade Resilience MVP
 
 After the Finance candidate live gate, implementation order is: (1) Inventory + Procurement primitive, (2) Trade Case/Shipment + estimated/actual landed cost, (3) warehouse receipt/inspection + inventory valuation bridge, (4) Sales/Delivery integration, (5) cross-module proactive Manager Brief. Finance remains the accounting truth layer; it is no longer the only product narrative. See `13-TRADE-FLOW-MVP.md`.
+
+## v10.1 Cycle 4 — Inventory + Procurement vertical slice
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDomain` now connects existing purchase documents to expected inbound, warehouse receipt/inspection, Stock Ledger, on-hand/reserved/available and replenishment reads. Risky receipt posting remains Proposal → Human Approval. See `14-INVENTORY-PROCUREMENT-MVP.md`. Context Picker / Entity Chips stays in committed UX backlog and will attach server-resolved page entities after the Golden Flow pages stabilize.

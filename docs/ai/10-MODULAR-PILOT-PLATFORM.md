@@ -158,3 +158,7 @@ Pilot readiness requires outcome correctness, not merely `Job successful`. A rea
 ## Finance depth execution — Cycle 3
 
 Finance is a foundation, not the whole commercial vertical. Purchase invoice and Cheque are closed because they already exist as real primitives, but the MVP is organized around the cross-functional Trade Flow in `13-TRADE-FLOW-MVP.md`: procurement/import → shipment/customs → warehouse/inventory → landed cost/accounting → sales/delivery → cash/margin.
+
+## v10.1 Cycle 4 — Inventory + Procurement vertical slice
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDomain` now connects existing purchase documents to expected inbound, warehouse receipt/inspection, Stock Ledger, on-hand/reserved/available and replenishment reads. Risky receipt posting remains Proposal → Human Approval. See `14-INVENTORY-PROCUREMENT-MVP.md`. Context Picker / Entity Chips stays in committed UX backlog and will attach server-resolved page entities after the Golden Flow pages stabilize.

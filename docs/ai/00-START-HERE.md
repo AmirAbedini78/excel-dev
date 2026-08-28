@@ -73,3 +73,7 @@ History برای فهم علت تصمیم‌هاست، نه جایگزین وض�
 - Current sprint: Module Kernel **LIVE-VALIDATED** → Provider Gateway **LIVE-VALIDATED on local path (Job #56)** → Finance Agent depth → Inventory/Procurement/CRM-lite/Trade slices → Design Partner demo readiness.
 - v9.3 safety invariants remain frozen: current facts from deterministic Tools, no model-generated ERP IDs, Proposal/Approval for risky mutation, RAG is not current ledger.
 - Canonical v10 contracts: `10-MODULAR-PILOT-PLATFORM.md` + `11-MODEL-PROVIDER-GATEWAY.md` + `12-FINANCE-CAPABILITY-MATRIX.md` + `13-TRADE-FLOW-MVP.md`.
+
+## v10.1 Cycle 4 — Inventory + Procurement vertical slice
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDomain` now connects existing purchase documents to expected inbound, warehouse receipt/inspection, Stock Ledger, on-hand/reserved/available and replenishment reads. Risky receipt posting remains Proposal → Human Approval. See `14-INVENTORY-PROCUREMENT-MVP.md`. Context Picker / Entity Chips stays in committed UX backlog and will attach server-resolved page entities after the Golden Flow pages stabilize.

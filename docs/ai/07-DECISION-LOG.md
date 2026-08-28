@@ -127,3 +127,9 @@ Job #55 proved that provider/runtime success is not enough when semantic routing
 Status: ACCEPTED — 2026-08-27
 
 The first Design Partner story will demonstrate one coherent B2B importer/distributor workflow across Procurement, Trade/Logistics, Warehouse/Inventory, Finance and Sales. Finance capabilities are supporting primitives inside this flow. The golden path is demand/replenishment → supplier/proforma/PO → shipment/import case → landed-cost estimate/risk → warehouse receipt/inspection → inventory valuation/vendor bill → sales/delivery → receivable/cash → margin/manager brief. AI may reason across the flow, but facts and mutations remain Tool/Proposal grounded.
+
+## ADR-024 — Inventory truth is movement-ledger derived
+`on_hand` is derived from posted Stock Movements; `reserved` from active reservations; `available = on_hand - reserved`. Expected inbound remains a procurement projection and is not counted as on-hand. Rejected receipt quantity never increases stock.
+
+## ADR-025 — UI and Agent share InventoryDomain
+Manual module pages and AI Tools call the same `InventoryDomain`; stock calculations and receipt posting must not be duplicated in separate UI/Agent implementations.

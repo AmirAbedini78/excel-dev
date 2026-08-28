@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.0.0';
+    public const VERSION='10.1.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -23,12 +23,12 @@ final class ModuleRegistry
                 'pages'=>['ai'],
             ],
             'inventory'=>[
-                'title'=>'انبار و موجودی','description'=>'رسید/حواله، انتقال، موجودی، رزرو، انبارگردانی و Reorder Intelligence.',
-                'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>[],
+                'title'=>'انبار و موجودی','description'=>'رسید خرید، Stock Ledger، موجودی، رزرو، Available و Reorder Intelligence.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>[], 'pages'=>['inventory'],
             ],
             'procurement'=>[
-                'title'=>'تأمین و خرید','description'=>'درخواست خرید، RFQ، تأمین‌کننده، سفارش خرید، Approval و Supplier Intelligence.',
-                'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>['inventory'], 'pages'=>[],
+                'title'=>'تأمین و خرید','description'=>'جریان اسناد خرید، Expected Inbound، دریافت و Replenishment Intelligence.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>['inventory'], 'pages'=>['procurement'],
             ],
             'crm'=>[
                 'title'=>'CRM و فروش','description'=>'Lead، Opportunity، Pipeline، Activity، Customer 360 و پیگیری فروش.',
@@ -89,8 +89,13 @@ final class ModuleRegistry
     private static function seedWorkspace(int $wid): void
     {
         if($wid<=0)return;
+        $defs=self::definitions();
         $st=pdo()->prepare("INSERT IGNORE INTO workspace_modules (workspace_id,module_key,enabled,updated_at) VALUES (?,?,?,NOW())");
-        foreach(self::definitions() as $key=>$def)$st->execute([$wid,$key,!empty($def['default_enabled'])?1:0]);
+        foreach($defs as $key=>$def)$st->execute([$wid,$key,!empty($def['default_enabled'])?1:0]);
+        // New default-enabled Pilot modules are enabled for untouched rows only.
+        // An explicit admin toggle sets updated_by and is never overwritten here.
+        $up=pdo()->prepare("UPDATE workspace_modules SET enabled=1,updated_at=NOW() WHERE workspace_id=? AND module_key=? AND updated_by IS NULL");
+        foreach($defs as $key=>$def)if(!empty($def['implemented'])&&!empty($def['default_enabled']))$up->execute([$wid,$key]);
     }
 
     public static function enabled(string $key,?int $wid=null,array $trail=[]): bool

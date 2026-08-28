@@ -1066,3 +1066,7 @@ After Module Kernel live validation, ERPSMART removed the hard runtime dependenc
 ## v10 Job #56 — semantic correctness + latency closure
 
 Exact Job #55 prompt repeated after deterministic party-balance routing hotfix: `grounded_read`, no LLM, tools `search_parties, party_ledger`, result 727,100,000 IRR, total 1.0s, budget PASS. This closed Cycle 2 local live acceptance and moved work to Finance action depth.
+
+## v10.1 Cycle 4 — Inventory + Procurement vertical slice
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDomain` now connects existing purchase documents to expected inbound, warehouse receipt/inspection, Stock Ledger, on-hand/reserved/available and replenishment reads. Risky receipt posting remains Proposal → Human Approval. See `14-INVENTORY-PROCUREMENT-MVP.md`. Context Picker / Entity Chips stays in committed UX backlog and will attach server-resolved page entities after the Golden Flow pages stabilize.

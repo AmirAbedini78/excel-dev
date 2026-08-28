@@ -40,6 +40,15 @@ final class AiToolRegistry
                 'due_scope'=>['type'=>'string','enum'=>['all','overdue','upcoming_7']],
                 'limit'=>['type'=>'integer']
             ]]],
+            ['name'=>'search_warehouses','mode'=>'read','risk'=>'low','description'=>'جستجو یا فهرست انبارهای فعال شرکت','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string']]]],
+            ['name'=>'search_purchase_documents','mode'=>'read','risk'=>'low','description'=>'جستجوی سفارش/فاکتور خرید کالایی برای اتصال به دریافت','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string']]]],
+            ['name'=>'purchase_pipeline','mode'=>'read','risk'=>'low','description'=>'جریان خرید و مقدار ورودی مورد انتظار بر اساس خرید منهای دریافت پذیرفته‌شده','parameters'=>['type'=>'object','properties'=>['purchase_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'open_only'=>['type'=>'boolean'],'limit'=>['type'=>'integer']]]],
+            ['name'=>'inventory_position','mode'=>'read','risk'=>'low','description'=>'موجودی Grounded: on-hand، reserved، available و expected inbound','parameters'=>['type'=>'object','properties'=>['item_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'limit'=>['type'=>'integer']]]],
+            ['name'=>'replenishment_risk','mode'=>'read','risk'=>'low','description'=>'کالاهای زیر حداقل موجودی و مقدار پیشنهادی تأمین','parameters'=>['type'=>'object','properties'=>['warehouse_id'=>['type'=>'integer'],'limit'=>['type'=>'integer']]]],
+            ['name'=>'create_warehouse_receipt','mode'=>'proposal','risk'=>'high','description'=>'آماده‌سازی رسید انبار از سند خرید؛ فقط پس از تأیید انسانی Post و Stock Movement ایجاد می‌شود','parameters'=>['type'=>'object','properties'=>[
+                'purchase_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'receipt_date'=>['type'=>'string'],'notes'=>['type'=>'string'],
+                'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['purchase_line_id'=>['type'=>'integer'],'accepted_qty'=>['type'=>'number'],'rejected_qty'=>['type'=>'number'],'notes'=>['type'=>'string']],'required'=>['purchase_line_id','accepted_qty']]]
+            ],'required'=>['purchase_doc_id','warehouse_id','lines']]],
             ['name'=>'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پیش‌نویس فاکتور فروش؛ بدون تایید انسانی ثبت نهایی نمی‌شود','parameters'=>['type'=>'object','properties'=>[
                 'party_id'=>['type'=>'integer'],'document_date'=>['type'=>'string'],'due_date'=>['type'=>'string'],'notes'=>['type'=>'string'],
                 'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['item_id'=>['type'=>'integer'],'quantity'=>['type'=>'number'],'unit_price'=>['type'=>'number'],'discount_amount'=>['type'=>'number'],'tax_percent'=>['type'=>'number'],'description'=>['type'=>'string']],'required'=>['item_id','quantity','unit_price']]]
@@ -100,6 +109,11 @@ final class AiToolRegistry
             'party_ledger'=>self::partyLedger($wid,$cid,(int)($args['party_id']??0)),
             'search_cash_accounts'=>self::searchCashAccounts($wid,$cid,(string)($args['query']??'')),
             'check_analytics'=>self::checkAnalytics($wid,$cid,$args),
+            'search_warehouses'=>InventoryDomain::searchWarehouses($wid,$cid,(string)($args['query']??'')),
+            'search_purchase_documents'=>InventoryDomain::searchPurchaseDocuments($wid,$cid,(string)($args['query']??'')),
+            'purchase_pipeline'=>InventoryDomain::purchasePipeline($wid,$cid,$args),
+            'inventory_position'=>InventoryDomain::inventoryPosition($wid,$cid,$args),
+            'replenishment_risk'=>InventoryDomain::replenishmentRisk($wid,$cid,$args),
             'recent_sales'=>self::recentSales($wid,$cid,(int)($args['limit']??20)),
             'recent_purchases'=>self::recentPurchases($wid,$cid,(int)($args['limit']??20)),
             'document_analytics'=>self::documentAnalytics($wid,$cid,$args),
@@ -287,6 +301,7 @@ final class AiToolRegistry
         return match($proposal['tool_name']){
             'create_sales_invoice_draft'=>self::createSalesDraft($wid,$cid,$userId,$args),
             'create_purchase_invoice_draft'=>self::createPurchaseDraft($wid,$cid,$userId,$args),
+            'create_warehouse_receipt'=>InventoryDomain::createReceipt($wid,$cid,$userId,$args),
             'create_check'=>self::createCheck($wid,$cid,$userId,$args),
             'create_voucher_draft'=>self::createVoucherDraft($wid,$cid,$userId,$args),
             default=>throw new RuntimeException('اجرای این Tool هنوز پیاده‌سازی نشده است.')
@@ -693,6 +708,8 @@ final class AiToolRegistry
                 if((float)($l['unit_price']??0)<0)throw new RuntimeException('قیمت واحد خرید نامعتبر است.');
                 if((float)($l['discount_amount']??0)<0)throw new RuntimeException('تخفیف خرید نامعتبر است.');
             }
+        }elseif($tool==='create_warehouse_receipt'){
+            InventoryDomain::validateReceiptArgs($wid,$cid,$args);
         }elseif($tool==='create_check'){
             $direction=trim((string)($args['direction']??''));if(!in_array($direction,['receivable','payable'],true))throw new RuntimeException('نوع چک نامعتبر است.');
             $checkNo=trim((string)($args['check_no']??''));if($checkNo===''||mb_strlen($checkNo)>100)throw new RuntimeException('شماره چک نامعتبر است.');
@@ -712,6 +729,7 @@ final class AiToolRegistry
         return match($tool){
             'create_sales_invoice_draft'=>'ایجاد پیش‌نویس فاکتور فروش با '.count((array)($args['lines']??[])).' ردیف',
             'create_purchase_invoice_draft'=>'ایجاد پیش‌نویس فاکتور خرید با '.count((array)($args['lines']??[])).' ردیف',
+            'create_warehouse_receipt'=>'ثبت رسید انبار از سند خرید #'.(int)($args['purchase_doc_id']??0).' با '.count((array)($args['lines']??[])).' ردیف',
             'create_check'=>'ثبت چک '.((string)($args['direction']??'')==='payable'?'پرداختنی':'دریافتنی').' شماره '.(string)($args['check_no']??''),
             'create_voucher_draft'=>'ایجاد پیش‌نویس سند حسابداری با '.count((array)($args['lines']??[])).' آرتیکل',
             default=>'عملیات پیشنهادی ایجنت'

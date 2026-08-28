@@ -282,3 +282,7 @@ Hotfix `v10.0-party-balance-r1` makes common unquoted Persian balance/ledger req
 Job #56 closed the Job #55 semantic defect: named-party current balance used `search_parties → party_ledger`, no LLM, 1.0s end-to-end, exact 727,100,000 IRR result.
 
 Finance capability audit against the actual UI found Purchase and Cheque as the highest-value supported-form action gaps. Cycle 3 adds guarded Purchase Invoice Proposal, guarded Cheque Proposal, `search_cash_accounts`, and deterministic `check_analytics`. No DB migration; live validation pending. See `12-FINANCE-CAPABILITY-MATRIX.md`.
+
+## v10.1 Cycle 4 — Inventory + Procurement vertical slice
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDomain` now connects existing purchase documents to expected inbound, warehouse receipt/inspection, Stock Ledger, on-hand/reserved/available and replenishment reads. Risky receipt posting remains Proposal → Human Approval. See `14-INVENTORY-PROCUREMENT-MVP.md`. Context Picker / Entity Chips stays in committed UX backlog and will attach server-resolved page entities after the Golden Flow pages stabilize.
