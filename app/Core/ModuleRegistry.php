@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.2.0';
+    public const VERSION='10.3.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -13,7 +13,7 @@ final class ModuleRegistry
                 'pages'=>['dashboard','monthly','daily','kanban','companies','systems','phonebook','notes','library','custom_fields','choices'],
             ],
             'finance'=>[
-                'title'=>'مالی و حسابداری','description'=>'هسته مالی، خرید، فروش، اسناد حسابداری، خزانه، گزارش و قابلیت‌های مالی AI.',
+                'title'=>'مالی و حسابداری','description'=>'هسته مالی، خرید، فروش، رزرو/تحویل، حاشیه سود، اسناد حسابداری، خزانه، گزارش و قابلیت‌های مالی AI.',
                 'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>[],
                 'pages'=>['industrial'],
             ],

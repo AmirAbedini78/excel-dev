@@ -65,3 +65,9 @@
 - Sales reservation/delivery + actual margin using Landed Cost bridge.
 - Cross-module proactive Manager Brief.
 - Page-aware AI Context Picker / Entity Chips on Trade, Inventory, Procurement and Sales pages.
+
+## After Cycle 6
+- CRM-lite / Customer 360 connected to Sales, deliveries and receivables.
+- Page-aware AI / Context Picker with server-validated typed entity references and entity chips.
+- Design Partner import/onboarding adapters.
+- Complete cash-transaction operational primitive before exposing near-term cash forecasting in Manager Brief.

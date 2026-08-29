@@ -56,6 +56,12 @@ final class AiToolRegistry
             ['name'=>'create_trade_case','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پرونده بازرگانی متصل به سند خرید؛ فقط پس از تایید انسانی','parameters'=>['type'=>'object','properties'=>['purchase_doc_id'=>['type'=>'integer'],'proforma_no'=>['type'=>'string'],'proforma_date'=>['type'=>'string'],'origin_country'=>['type'=>'string'],'destination_country'=>['type'=>'string'],'incoterm'=>['type'=>'string'],'currency_code'=>['type'=>'string'],'fx_rate_to_irr'=>['type'=>'number'],'notes'=>['type'=>'string']],'required'=>['purchase_doc_id','incoterm','currency_code','fx_rate_to_irr']]],
             ['name'=>'create_trade_shipment','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی Shipment برای پرونده بازرگانی؛ فقط پس از تایید انسانی','parameters'=>['type'=>'object','properties'=>['trade_case_id'=>['type'=>'integer'],'shipment_no'=>['type'=>'string'],'mode'=>['type'=>'string','enum'=>['sea','air','road','rail','courier']],'carrier'=>['type'=>'string'],'forwarder'=>['type'=>'string'],'tracking_no'=>['type'=>'string'],'origin_location'=>['type'=>'string'],'destination_location'=>['type'=>'string'],'etd'=>['type'=>'string'],'eta'=>['type'=>'string'],'ata'=>['type'=>'string'],'status'=>['type'=>'string'],'package_count'=>['type'=>'integer'],'gross_weight_kg'=>['type'=>'number'],'notes'=>['type'=>'string']],'required'=>['trade_case_id','mode']]],
             ['name'=>'add_trade_cost','mode'=>'proposal','risk'=>'high','description'=>'ثبت هزینه برآوردی/واقعی بازرگانی موثر بر Landed Cost؛ فقط پس از تایید انسانی','parameters'=>['type'=>'object','properties'=>['trade_case_id'=>['type'=>'integer'],'shipment_id'=>['type'=>'integer'],'cost_type'=>['type'=>'string'],'basis'=>['type'=>'string','enum'=>['estimated','actual']],'amount'=>['type'=>'number'],'currency_code'=>['type'=>'string'],'fx_rate_to_irr'=>['type'=>'number'],'reference_no'=>['type'=>'string'],'notes'=>['type'=>'string']],'required'=>['trade_case_id','cost_type','basis','amount','currency_code','fx_rate_to_irr']]],
+            ['name'=>'search_sales_documents','mode'=>'read','risk'=>'low','description'=>'جستجوی سند فروش برای رزرو، تحویل و حاشیه سود','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string']]]],
+            ['name'=>'sales_fulfillment','mode'=>'read','risk'=>'low','description'=>'وضعیت Grounded سفارش، رزرو، تحویل و باقیمانده یک سند فروش','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer']],'required'=>['sales_doc_id']]],
+            ['name'=>'sales_margin_summary','mode'=>'read','risk'=>'low','description'=>'حاشیه سود تحویل‌شده با COGS مبتنی بر Actual/Projected Landed Cost','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer']],'required'=>['sales_doc_id']]],
+            ['name'=>'trade_manager_brief','mode'=>'read','risk'=>'low','description'=>'Manager Brief قطعی بین Trade، موجودی، فروش و Margin بدون ساخت عدد نقدینگی','parameters'=>['type'=>'object','properties'=>['limit'=>['type'=>'integer']]]],
+            ['name'=>'reserve_sales_stock','mode'=>'proposal','risk'=>'medium','description'=>'رزرو موجودی برای سند فروش؛ بدون تایید انسانی موجودی رزرو نمی‌شود','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
+            ['name'=>'deliver_sales_stock','mode'=>'proposal','risk'=>'high','description'=>'تحویل موجودی رزروشده و ثبت خروج انبار؛ فقط پس از تایید انسانی','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'delivery_date'=>['type'=>'string'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
             ['name'=>'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پیش‌نویس فاکتور فروش؛ بدون تایید انسانی ثبت نهایی نمی‌شود','parameters'=>['type'=>'object','properties'=>[
                 'party_id'=>['type'=>'integer'],'document_date'=>['type'=>'string'],'due_date'=>['type'=>'string'],'notes'=>['type'=>'string'],
                 'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['item_id'=>['type'=>'integer'],'quantity'=>['type'=>'number'],'unit_price'=>['type'=>'number'],'discount_amount'=>['type'=>'number'],'tax_percent'=>['type'=>'number'],'description'=>['type'=>'string']],'required'=>['item_id','quantity','unit_price']]]
@@ -125,6 +131,10 @@ final class AiToolRegistry
             'trade_case_snapshot'=>TradeDomain::caseSnapshot($wid,$cid,(int)($args['case_id']??0)),
             'landed_cost_summary'=>TradeDomain::landedCostSummary($wid,$cid,(int)($args['case_id']??0)),
             'trade_risk_summary'=>TradeDomain::riskSummary($wid,$cid,(int)($args['limit']??50)),
+            'search_sales_documents'=>SalesDomain::searchDocuments($wid,$cid,(string)($args['query']??'')),
+            'sales_fulfillment'=>SalesDomain::fulfillment($wid,$cid,$args),
+            'sales_margin_summary'=>SalesDomain::marginSummary($wid,$cid,(int)($args['sales_doc_id']??0)),
+            'trade_manager_brief'=>SalesDomain::managerBrief($wid,$cid,(int)($args['limit']??10)),
             'recent_sales'=>self::recentSales($wid,$cid,(int)($args['limit']??20)),
             'recent_purchases'=>self::recentPurchases($wid,$cid,(int)($args['limit']??20)),
             'document_analytics'=>self::documentAnalytics($wid,$cid,$args),
@@ -312,6 +322,8 @@ final class AiToolRegistry
         return match($proposal['tool_name']){
             'create_sales_invoice_draft'=>self::createSalesDraft($wid,$cid,$userId,$args),
             'create_purchase_invoice_draft'=>self::createPurchaseDraft($wid,$cid,$userId,$args),
+            'reserve_sales_stock'=>SalesDomain::reserveStock($wid,$cid,$userId,$args),
+            'deliver_sales_stock'=>SalesDomain::deliverStock($wid,$cid,$userId,$args),
             'create_warehouse_receipt'=>InventoryDomain::createReceipt($wid,$cid,$userId,$args),
             'create_trade_case'=>TradeDomain::createCase($wid,$cid,$userId,$args),
             'create_trade_shipment'=>TradeDomain::createShipment($wid,$cid,$userId,$args),
@@ -722,6 +734,10 @@ final class AiToolRegistry
                 if((float)($l['unit_price']??0)<0)throw new RuntimeException('قیمت واحد خرید نامعتبر است.');
                 if((float)($l['discount_amount']??0)<0)throw new RuntimeException('تخفیف خرید نامعتبر است.');
             }
+        }elseif($tool==='reserve_sales_stock'){
+            SalesDomain::normalizeReservationArgs($wid,$cid,$args);
+        }elseif($tool==='deliver_sales_stock'){
+            SalesDomain::normalizeDeliveryArgs($wid,$cid,$args);
         }elseif($tool==='create_warehouse_receipt'){
             InventoryDomain::validateReceiptArgs($wid,$cid,$args);
         }elseif($tool==='create_trade_case'){
@@ -749,6 +765,8 @@ final class AiToolRegistry
         return match($tool){
             'create_sales_invoice_draft'=>'ایجاد پیش‌نویس فاکتور فروش با '.count((array)($args['lines']??[])).' ردیف',
             'create_purchase_invoice_draft'=>'ایجاد پیش‌نویس فاکتور خرید با '.count((array)($args['lines']??[])).' ردیف',
+            'reserve_sales_stock'=>'رزرو موجودی سند فروش #'.(int)($args['sales_doc_id']??0).' از انبار #'.(int)($args['warehouse_id']??0),
+            'deliver_sales_stock'=>'تحویل موجودی رزروشده سند فروش #'.(int)($args['sales_doc_id']??0).' از انبار #'.(int)($args['warehouse_id']??0),
             'create_warehouse_receipt'=>'ثبت رسید انبار از سند خرید #'.(int)($args['purchase_doc_id']??0).' با '.count((array)($args['lines']??[])).' ردیف',
             'create_trade_case'=>'ایجاد پرونده بازرگانی برای سند خرید #'.(int)($args['purchase_doc_id']??0),
             'create_trade_shipment'=>'ثبت Shipment برای پرونده #'.(int)($args['trade_case_id']??0),

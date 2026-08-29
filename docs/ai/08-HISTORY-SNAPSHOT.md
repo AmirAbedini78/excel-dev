@@ -1074,3 +1074,12 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDoma
 ## v10.2 Cycle 5 — Trade Logistics + Landed Cost
 
 Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.
+
+## 2026-08-29 — Cycle 5 LIVE closed
+- `TRD-20260829-171042-90E6` created after Proposal #8.
+- `SHP-20260829-192303-3C8C` created after Proposal #9.
+- Estimated freight Proposal #10 produced Projected Landed 600,000,000 IRR.
+- Actual freight Proposal #11 replaced estimate by type and produced Projected/Actual Recorded 620,000,000 IRR; PLC Projected Unit 310,000,000 IRR.
+- Customs hold was grounded as high risk by Job #76.
+- Keep-alive commit `12c9000dba8bcafb42829176f8bbf232338ff78f` moved deterministic risk/landed reads from 5.6s/11.0s to 0.2s/0.3s in Jobs #77/#78.
+- Cycle 6 source work starts from this exact baseline.

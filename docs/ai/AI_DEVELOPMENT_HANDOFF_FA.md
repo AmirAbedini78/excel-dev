@@ -131,3 +131,6 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDoma
 ## v10.2 Cycle 5 — Trade Logistics + Landed Cost
 
 Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.
+
+## وضعیت تحویل v10.2 / شروع v10.3
+v10.2 با شواهد Live از Job #71 تا #78 بسته شده است. baseline توسعه بعدی `12c9000dba8bcafb42829176f8bbf232338ff78f` است. v10.3 باید روی اسناد فروش موجود کار کند و فروش موازی نسازد: Reservation از `acc_inventory_reservations`، Delivery از Stock Ledger، COGS از Landed Cost و Manager Brief فقط Grounded.

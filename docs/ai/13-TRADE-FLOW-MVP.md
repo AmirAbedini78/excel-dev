@@ -215,3 +215,6 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDoma
 ## v10.2 Cycle 5 — Trade Logistics + Landed Cost
 
 Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.
+
+## Cycle 5 verified bridge to Sales
+The Trade/Inventory bridge is now live-proven through actual/projected Landed Cost and received inventory valuation. The next MVP segment is not another Trade feature: it is Sales reservation, delivery and margin over the same stock and valuation facts.

@@ -318,3 +318,12 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDoma
 ## v10.2 Cycle 5 — Trade Logistics + Landed Cost
 
 Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.
+
+## Cycle 6 — Sales Fulfillment + Margin
+1. Existing Sales document → warehouse reservation.
+2. Reservation → posted delivery/outbound Stock Ledger.
+3. Delivered revenue excluding tax → landed-cost-aware COGS → gross margin.
+4. Cross-module deterministic Manager Brief across Trade, Inventory and Sales.
+5. Then CRM-lite / Customer 360 and data onboarding.
+
+Page-aware AI / Context Picker remains in backlog and must be layered on top of server-validated entity references, not replace grounding.

@@ -1017,6 +1017,8 @@ from inventory_procurement import install_inventory_procurement as _install_inve
 _install_inventory_procurement(Worker)
 from trade_logistics import install_trade_logistics as _install_trade_logistics
 _install_trade_logistics(Worker)
+from sales_fulfillment import install_sales_fulfillment as _install_sales_fulfillment
+_install_sales_fulfillment(Worker)
 from provider_gateway import install_provider_gateway as _install_provider_gateway
 _install_provider_gateway(Worker)
 from commercial_hardening import install_commercial_hardening as _install_commercial_hardening

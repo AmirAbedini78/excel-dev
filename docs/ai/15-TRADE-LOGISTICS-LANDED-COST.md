@@ -32,3 +32,13 @@ Actions: `create_trade_case`, `create_trade_shipment`, `add_trade_cost`.
 4. Add estimated + actual trade costs.
 5. Verify Landed Cost and inventory valuation bridge through grounded Agent read.
 6. Verify risk read for ETA/customs/cost variance.
+
+## LIVE E2E closeout
+Status: **LIVE E2E + PERFORMANCE PASS**.
+
+Evidence:
+- Jobs #71–#74 / Proposals #8–#11: case, shipment, estimated freight and actual freight execution.
+- Actual freight replaced estimated freight for the same cost type in Projected Landed Cost; no double counting.
+- Job #75: grounded 620,000,000 IRR Landed Cost and 310,000,000 IRR PLC unit valuation.
+- Job #76: customs hold → grounded high Trade risk.
+- Jobs #77/#78 after control-plane keep-alive: 0.2s / 0.3s deterministic reads within budget.

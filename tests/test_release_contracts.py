@@ -72,7 +72,7 @@ class ServerBoundaryTests(unittest.TestCase):
         self.assertIn("AiRepository::safeModelMetrics($meta['attempted_metrics']??[])", self.module)
 
     def test_live_renderer_has_v9302_metadata_contract(self):
-        self.assertIn('assets/ai-live.js?v=10.2.0', self.module)
+        self.assertIn('assets/ai-live.js?v=10.3.0', self.module)
         self.assertNotIn('assets/ai-live.js?v=8.0.0', self.module)
         self.assertIn("hardeningText(job?.commercial_hardening)", self.live_asset)
         self.assertIn("toolText(job)", self.live_asset)

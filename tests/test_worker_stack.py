@@ -26,6 +26,7 @@ class ActualWorkerStackTests(unittest.TestCase):
             "_finance_actions_v1_installed",
             "_inventory_procurement_v1_installed",
             "_trade_logistics_v1_installed",
+            "_sales_fulfillment_v1_installed",
             "_commercial_hardening_v1_installed",
         )
         missing = [name for name in expected if not getattr(worker.Worker, name, False)]

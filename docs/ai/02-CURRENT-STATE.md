@@ -290,3 +290,8 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDoma
 ## v10.2 Cycle 5 — Trade Logistics + Landed Cost
 
 Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.
+
+## v10.2 LIVE closeout — 2026-08-29
+Cycle 5 is LIVE E2E + performance closed. Jobs #71–#74 created/approved the Trade Case, Shipment and estimated/actual freight; Job #75 grounded Landed Cost at 620,000,000 IRR; customs hold drove Job #76 to grounded high risk. Control-plane keep-alive at commit `12c9000dba8bcafb42829176f8bbf232338ff78f` reduced the equivalent deterministic reads to Job #77 = 0.2s and Job #78 = 0.3s, both inside budget.
+
+Current source candidate: v10.3 Sales Fulfillment + Margin. It reuses canonical Sales documents and Inventory reservation/ledger, adds posted Delivery evidence, uses Landed Cost for COGS, and adds a grounded Manager Brief. Live validation is pending.
