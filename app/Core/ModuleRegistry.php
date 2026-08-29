@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.1.0';
+    public const VERSION='10.2.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -35,8 +35,8 @@ final class ModuleRegistry
                 'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>[],
             ],
             'trade'=>[
-                'title'=>'بازرگانی و لجستیک','description'=>'Proforma، ارز، حمل، بیمه، گمرک، ETA، Landed Cost و Trade Risk.',
-                'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>['inventory','procurement'], 'pages'=>[],
+                'title'=>'بازرگانی و لجستیک','description'=>'Trade Case، Shipment، ETA، گمرک، Estimated/Actual Landed Cost و Trade Risk.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>['inventory','procurement'], 'pages'=>['trade'],
             ],
             'production'=>[
                 'title'=>'تولید','description'=>'BOM، دستور تولید، مصرف، رسید تولید، بهای تمام‌شده و MRP-lite.',

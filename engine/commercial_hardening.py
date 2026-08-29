@@ -25,7 +25,7 @@ from urllib.parse import urlsplit
 PATCH_VERSION = "v9.3.0"
 RELEASE_CONTRACT = "commercial-mvp-v1"
 
-PROPOSAL_TOOLS = frozenset({"create_sales_invoice_draft", "create_purchase_invoice_draft", "create_warehouse_receipt", "create_check", "create_voucher_draft"})
+PROPOSAL_TOOLS = frozenset({"create_sales_invoice_draft", "create_purchase_invoice_draft", "create_warehouse_receipt", "create_trade_case", "create_trade_shipment", "add_trade_cost", "create_check", "create_voucher_draft"})
 READ_ONLY_MODES = frozenset({
     "deterministic_financial_report",
     "deep_financial_analysis",
@@ -49,12 +49,18 @@ READ_ONLY_MODES = frozenset({
     "inventory_position_read",
     "inventory_replenishment_read",
     "procurement_pipeline_read",
+    "trade_case_read",
+    "trade_landed_cost_read",
+    "trade_risk_read",
 })
 PROPOSAL_MODES = frozenset({
     "guarded_sales_invoice_proposal",
     "guarded_purchase_invoice_proposal",
     "guarded_check_proposal",
     "guarded_inventory_receipt_proposal",
+    "guarded_trade_case_proposal",
+    "guarded_trade_shipment_proposal",
+    "guarded_trade_cost_proposal",
     "accounting_action_proposal",
 })
 
@@ -195,9 +201,9 @@ def _latency_budget(cfg: dict[str, Any], mode: str) -> tuple[str, float]:
 
 def _policy(mode: str, successful_tools: list[str], proposal_created: bool) -> dict[str, Any]:
     seen = set(successful_tools)
-    if "create_voucher_draft" in seen or "create_check" in seen or "create_warehouse_receipt" in seen or mode.startswith("accounting_action_") or mode.startswith("guarded_check_") or mode.startswith("guarded_inventory_receipt_"):
+    if "create_voucher_draft" in seen or "create_check" in seen or "create_warehouse_receipt" in seen or "add_trade_cost" in seen or mode.startswith("accounting_action_") or mode.startswith("guarded_check_") or mode.startswith("guarded_inventory_receipt_") or mode.startswith("guarded_trade_cost_"):
         risk = "high"
-    elif "create_sales_invoice_draft" in seen or "create_purchase_invoice_draft" in seen or mode.startswith("guarded_sales_invoice_") or mode.startswith("guarded_purchase_invoice_"):
+    elif "create_sales_invoice_draft" in seen or "create_purchase_invoice_draft" in seen or "create_trade_case" in seen or "create_trade_shipment" in seen or mode.startswith("guarded_sales_invoice_") or mode.startswith("guarded_purchase_invoice_") or mode.startswith("guarded_trade_case_") or mode.startswith("guarded_trade_shipment_"):
         risk = "medium"
     else:
         risk = "low"
@@ -225,7 +231,7 @@ def _policy(mode: str, successful_tools: list[str], proposal_created: bool) -> d
 def _is_read_only_mode(mode: str) -> bool:
     return mode in READ_ONLY_MODES or mode.startswith((
         "grounded_", "adaptive_", "accounting_workflow_", "financial_intelligence",
-        "forecast_risk_", "proactive_accounting", "deterministic_", "deep_", "fast_read_", "treasury_", "inventory_", "procurement_",
+        "forecast_risk_", "proactive_accounting", "deterministic_", "deep_", "fast_read_", "treasury_", "inventory_", "procurement_", "trade_",
     ))
 
 

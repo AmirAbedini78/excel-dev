@@ -58,7 +58,7 @@ final class AiModule
             if($j['result_text'])echo '<div class="ai-answer"><strong>پاسخ ایجنت</strong><div>'.nl2br(h($j['result_text'])).'</div>'.self::metricsHtml($j).'</div>';elseif($j['error_text'])echo '<div class="alert danger">'.nl2br(h($j['error_text'])).'</div>';else echo '<div class="ai-pending">'.self::statusText((string)$j['status']).'</div>';
             echo '</div>';foreach($proposals as $p)self::proposalCard($p);echo '</article>';
         }
-        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=10.1.0"></script>';
+        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=10.2.0"></script>';
     }
 
     private static function metricsHtml(array $job): string
@@ -96,7 +96,7 @@ final class AiModule
             'inventory_position_read'=>'وضعیت Grounded موجودی',
             'inventory_replenishment_read'=>'ریسک تأمین و نقطه سفارش',
             'procurement_pipeline_read'=>'جریان خرید و ورودی مورد انتظار',
-            'guarded_inventory_receipt_proposal'=>'Proposal رسید انبار',
+            'guarded_inventory_receipt_proposal'=>'Proposal رسید انبار','trade_case_read'=>'وضعیت Grounded بازرگانی','trade_landed_cost_read'=>'Landed Cost Grounded','trade_risk_read'=>'ریسک بازرگانی Grounded','guarded_trade_case_proposal'=>'Proposal پرونده بازرگانی','guarded_trade_case_blocked'=>'پرونده بازرگانی مسدودشده','guarded_trade_shipment_proposal'=>'Proposal حمل','guarded_trade_shipment_blocked'=>'حمل مسدودشده','guarded_trade_cost_proposal'=>'Proposal هزینه بازرگانی','guarded_trade_cost_blocked'=>'هزینه بازرگانی مسدودشده',
             'guarded_inventory_receipt_blocked'=>'رسید انبار مسدودشده',
             'financial_intelligence'=>'هوشمندی مالی',
             'financial_intelligence_blocked'=>'هوشمندی مالی مسدودشده',

@@ -60,3 +60,8 @@
 - Allow row/entity selection (supplier, item, warehouse, purchase, shipment, sales order) as typed context chips.
 - Resolve IDs and ownership server-side; user should not manually type ERP identifiers.
 - Implement after Inventory/Procurement and Trade entities stabilize; do not delay the Golden Flow.
+
+## After Cycle 5
+- Sales reservation/delivery + actual margin using Landed Cost bridge.
+- Cross-module proactive Manager Brief.
+- Page-aware AI Context Picker / Entity Chips on Trade, Inventory, Procurement and Sales pages.

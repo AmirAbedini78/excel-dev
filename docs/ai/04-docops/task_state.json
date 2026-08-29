@@ -1,14 +1,14 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Modular AI-Native Business Operations Platform; first vertical = Finance/Trade for B2B trading/import/distribution companies",
-  "baseline_commit": "7463326aa9bcfe2c32a8a13223260226c3db81b0",
-  "baseline_milestone": "v10.0 Finance Action Depth LIVE-VALIDATED",
-  "baseline_status": "LIVE-VALIDATED LOCAL PATH",
-  "current_milestone": "v10.1 Inventory + Procurement Vertical Slice",
+  "baseline_commit": "53d82962d3f42b955aea529ed9873b1902a74210",
+  "baseline_milestone": "v10.1 Inventory + Procurement LIVE E2E",
+  "baseline_status": "LIVE-VALIDATED",
+  "current_milestone": "v10.2 Trade Logistics + Landed Cost Vertical Slice",
   "milestone_status": "IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING",
   "live_validation_pending": true,
   "release_contract": "v10-modular-pilot-v1",
-  "active_task": "Live-validate Purchase → Expected Inbound → Warehouse Receipt → Stock Ledger → Inventory Position, then move immediately to Trade Case/Shipment/Landed Cost.",
+  "active_task": "Live-validate Trade Case → Shipment → ETA/Customs → Estimated/Actual Landed Cost → inventory valuation bridge, then move to Sales/Delivery + Margin.",
   "in_scope": [
     "workspace module enable/disable and dependency contract",
     "local-first model provider gateway with OpenAI-compatible fallback",
@@ -52,21 +52,21 @@
     "party_balance_semantic_smoke": "PASS_JOB56_1S",
     "provider_gateway_cloud_fallback_smoke": "PENDING_PROVIDER_CREDENTIAL",
     "finance_action_coverage": "PASS_LIVE",
-    "inventory_slice": "IMPLEMENTED_CANDIDATE",
-    "procurement_slice": "IMPLEMENTED_CANDIDATE",
+    "inventory_slice": "PASS_LIVE_JOB70",
+    "procurement_slice": "PASS_LIVE_JOB70",
     "crm_lite_slice": "PLANNED_FRIDAY",
-    "trade_intelligence_slice": "PLANNED_FRIDAY",
+    "trade_intelligence_slice": "IMPLEMENTED_CANDIDATE",
     "design_partner_demo": "PLANNED_FRIDAY",
     "finance_capability_matrix": "PASS_SOURCE_AUDIT",
     "purchase_invoice_agent_action": "PASS_LIVE_JOB65_PROPOSAL6_EXECUTED",
     "check_analytics": "PASS_LIVE_JOB57",
     "check_agent_action": "PASS_LIVE_JOB64_PROPOSAL5_EXECUTED",
     "trade_flow_mvp_strategy": "PASS_LOCKED",
-    "inventory_procurement_slice": "IMPLEMENTED_CANDIDATE_LIVE_PENDING",
-    "trade_case_landed_cost_slice": "NEXT_AFTER_CYCLE4_LIVE"
+    "inventory_procurement_slice": "PASS_LIVE_JOB70",
+    "trade_case_landed_cost_slice": "IMPLEMENTED_CANDIDATE_LIVE_PENDING"
   },
-  "updated_at": "2026-08-28",
-  "last_live_validation_job": 65,
+  "updated_at": "2026-08-29",
+  "last_live_validation_job": 70,
   "live_validation_summary": {
     "v9_3": "Job #54 -> Proposal #3 -> human approval -> balanced AI draft AI-VCH-20260826-202025-9F19 -> exact two-article product UI verification PASS",
     "module_kernel": "Module Center plus workspace AI disable/enable and route/menu gating PASS in product UI",
@@ -74,6 +74,7 @@
     "job_55": "Transport/runtime succeeded but semantic result failed: named party balance request returned company_snapshot instead of party ledger; deterministic route hotfix installed and exact live retest pending",
     "job_56": "Exact Job #55 prompt -> grounded_read -> search_parties + party_ledger -> 727,100,000 IRR -> no LLM -> 1.0s -> semantic and latency PASS",
     "cycle_3": "LIVE PASS: Job #57 cheque analytics; Job #64 Proposal #5 approved to CH-PUR-0001; Job #65 Proposal #6 approved to purchase draft AI-PUR-20260828-214858-1275 for 2 x PLC S7-1200 at 500,000,000 IRR. Approval transaction hotfix committed at 7463326.",
-    "cycle_4": "Source candidate adds Purchase → Expected Inbound → Warehouse Receipt/Inspection → Stock Ledger → On-hand/Reserved/Available → Replenishment plus deterministic Agent reads and guarded receipt Proposal. Live validation pending."
+    "cycle_4": "LIVE E2E PASS: Job #66 warehouse discovery; Job #68 expected inbound 2; Job #69 Proposal #7; human approval created RCV-20260829-024216-D32F with accepted 2/rejected 0 into WH-MAIN; UI showed on_hand 2, available 2, expected inbound 0; Job #70 grounded inventory confirmed 2/0/2/0. DECIMAL read hotfix committed at 53d8296.",
+    "cycle_5": "Source candidate adds Trade Case, Shipment, Customs milestones, estimated/actual Trade Costs, deterministic Landed Cost allocation and inventory valuation bridge with Proposal-only AI mutations. Live validation pending."
   }
 }

@@ -1015,6 +1015,8 @@ from finance_actions import install_finance_actions as _install_finance_actions
 _install_finance_actions(Worker)
 from inventory_procurement import install_inventory_procurement as _install_inventory_procurement
 _install_inventory_procurement(Worker)
+from trade_logistics import install_trade_logistics as _install_trade_logistics
+_install_trade_logistics(Worker)
 from provider_gateway import install_provider_gateway as _install_provider_gateway
 _install_provider_gateway(Worker)
 from commercial_hardening import install_commercial_hardening as _install_commercial_hardening

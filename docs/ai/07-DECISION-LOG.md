@@ -133,3 +133,7 @@ The first Design Partner story will demonstrate one coherent B2B importer/distri
 
 ## ADR-025 — UI and Agent share InventoryDomain
 Manual module pages and AI Tools call the same `InventoryDomain`; stock calculations and receipt posting must not be duplicated in separate UI/Agent implementations.
+
+## v10.2 Cycle 5 — Trade Logistics + Landed Cost
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.

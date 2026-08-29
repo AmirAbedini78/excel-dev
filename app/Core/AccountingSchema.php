@@ -469,6 +469,7 @@ final class AccountingSchema
             INDEX idx_acc_inventory_reservation (workspace_id,company_id,warehouse_id,item_id,status)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
+\n        $sql[]="CREATE TABLE IF NOT EXISTS acc_trade_cases (\n            id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, case_no VARCHAR(120) NOT NULL, purchase_doc_id BIGINT NOT NULL, supplier_id BIGINT NOT NULL, proforma_no VARCHAR(120) NULL, proforma_date DATE NULL, origin_country VARCHAR(120) NULL, destination_country VARCHAR(120) NULL, incoterm VARCHAR(20) NOT NULL, currency_code VARCHAR(10) NOT NULL DEFAULT 'IRR', fx_rate_to_irr DECIMAL(20,6) NOT NULL DEFAULT 1, status VARCHAR(30) NOT NULL DEFAULT 'planning', customs_declaration_no VARCHAR(120) NULL, customs_office VARCHAR(190) NULL, clearance_status VARCHAR(30) NOT NULL DEFAULT 'not_started', customs_entry_date DATE NULL, customs_release_date DATE NULL, notes TEXT NULL, created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL, UNIQUE KEY uniq_acc_trade_case_no (workspace_id,company_id,case_no), UNIQUE KEY uniq_acc_trade_purchase (workspace_id,company_id,purchase_doc_id), INDEX idx_acc_trade_case_status (workspace_id,company_id,status)\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";\n\n        $sql[]="CREATE TABLE IF NOT EXISTS acc_trade_shipments (\n            id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, trade_case_id BIGINT NOT NULL, shipment_no VARCHAR(120) NOT NULL, mode VARCHAR(20) NOT NULL, carrier VARCHAR(190) NULL, forwarder VARCHAR(190) NULL, tracking_no VARCHAR(190) NULL, origin_location VARCHAR(190) NULL, destination_location VARCHAR(190) NULL, etd DATE NULL, eta DATE NULL, ata DATE NULL, status VARCHAR(30) NOT NULL DEFAULT 'planned', package_count INT NOT NULL DEFAULT 0, gross_weight_kg DECIMAL(20,4) NOT NULL DEFAULT 0, notes VARCHAR(1000) NULL, created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL, UNIQUE KEY uniq_acc_trade_shipment_no (workspace_id,company_id,shipment_no), INDEX idx_acc_trade_shipment_case (workspace_id,company_id,trade_case_id,status,eta)\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";\n\n        $sql[]="CREATE TABLE IF NOT EXISTS acc_trade_costs (\n            id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, trade_case_id BIGINT NOT NULL, shipment_id BIGINT NULL, cost_type VARCHAR(40) NOT NULL, basis VARCHAR(20) NOT NULL, amount DECIMAL(20,4) NOT NULL DEFAULT 0, currency_code VARCHAR(10) NOT NULL DEFAULT 'IRR', fx_rate_to_irr DECIMAL(20,6) NOT NULL DEFAULT 1, amount_irr DECIMAL(20,2) NOT NULL DEFAULT 0, reference_no VARCHAR(190) NULL, status VARCHAR(30) NOT NULL DEFAULT 'active', notes VARCHAR(1000) NULL, created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL, INDEX idx_acc_trade_cost_case (workspace_id,company_id,trade_case_id,basis,cost_type,status), INDEX idx_acc_trade_cost_shipment (workspace_id,shipment_id,status)\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";\n\n        $sql[]="CREATE TABLE IF NOT EXISTS acc_trade_milestones (\n            id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, trade_case_id BIGINT NOT NULL, shipment_id BIGINT NULL, milestone_type VARCHAR(50) NOT NULL, planned_date DATE NULL, actual_date DATE NULL, status VARCHAR(30) NOT NULL DEFAULT 'planned', reference_no VARCHAR(190) NULL, notes VARCHAR(1000) NULL, created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL, INDEX idx_acc_trade_milestone_case (workspace_id,company_id,trade_case_id,milestone_type,actual_date)\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";\n
         $sql[]="CREATE TABLE IF NOT EXISTS acc_module_settings (
             id BIGINT AUTO_INCREMENT PRIMARY KEY,
             workspace_id INT NOT NULL,
@@ -509,6 +510,8 @@ final class AccountingSchema
             ['inventory.manage','ثبت و مدیریت رسید و موجودی','inventory',221],
             ['procurement.view','مشاهده جریان تأمین و خرید','procurement',230],
             ['procurement.manage','مدیریت جریان تأمین و خرید','procurement',231],
+            ['trade.view','مشاهده بازرگانی و لجستیک','trade',240],
+            ['trade.manage','مدیریت پرونده، حمل، گمرک و هزینه بازرگانی','trade',241],
         ];
         $ins=$pdo->prepare("INSERT INTO workspace_permissions (permission_key,title,group_key,sort_order)
             VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),group_key=VALUES(group_key),sort_order=VALUES(sort_order)");
@@ -521,18 +524,18 @@ final class AccountingSchema
                 'accounting.view','accounting.master.manage','accounting.purchase.view','accounting.purchase.manage',
                 'accounting.vouchers.view','accounting.vouchers.manage','accounting.production.view','accounting.production.manage',
                 'accounting.treasury.view','accounting.treasury.manage','accounting.reports.view',
-                'inventory.view','inventory.manage','procurement.view','procurement.manage'
+                'inventory.view','inventory.manage','procurement.view','procurement.manage','trade.view','trade.manage'
             ],
             'accountant'=>[
                 'accounting.view','accounting.master.manage','accounting.purchase.view','accounting.purchase.manage',
                 'accounting.vouchers.view','accounting.vouchers.manage','accounting.production.view','accounting.production.manage',
                 'accounting.treasury.view','accounting.treasury.manage','accounting.reports.view',
-                'inventory.view','inventory.manage','procurement.view','procurement.manage'
+                'inventory.view','inventory.manage','procurement.view','procurement.manage','trade.view','trade.manage'
             ],
             'viewer'=>[
                 'accounting.view','accounting.purchase.view','accounting.vouchers.view',
                 'accounting.production.view','accounting.treasury.view','accounting.reports.view',
-                'inventory.view','procurement.view'
+                'inventory.view','procurement.view','trade.view'
             ],
         ];
         $pid=$pdo->prepare("SELECT id FROM workspace_permissions WHERE permission_key=? LIMIT 1");
