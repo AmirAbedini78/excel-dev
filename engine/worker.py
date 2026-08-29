@@ -1022,6 +1022,8 @@ _install_provider_gateway(Worker)
 from commercial_hardening import install_commercial_hardening as _install_commercial_hardening
 from commercial_hardening import validate_runtime_config as _validate_runtime_config
 _install_commercial_hardening(Worker)
+from api_transport import install_api_transport as _install_api_transport
+_install_api_transport(Api)
 
 def main() -> None:
     ap = argparse.ArgumentParser()

@@ -49,6 +49,10 @@ class ActualWorkerStackTests(unittest.TestCase):
         self.assertEqual(worker.Worker.process_agent.__name__, "hardened_process_agent")
         self.assertEqual(worker.Worker.tool.__name__, "hardened_tool")
 
+    def test_control_plane_keepalive_transport_is_installed(self):
+        self.assertTrue(getattr(worker.Api, "_keepalive_transport_v1_installed", False))
+        self.assertEqual(worker.Api.post.__name__, "keepalive_post")
+
 
 if __name__ == "__main__":
     unittest.main()
