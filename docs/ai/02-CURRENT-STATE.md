@@ -7,12 +7,13 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: 1e42fc49a124b85a94d41c5d5a661c40533330fd
+Baseline: 1638c458ec0b1390587b1ffb7ffd91512fe0ac6d
 Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
-Working milestone: v10.0 Modular Pilot Platform
-Working status: IMPLEMENTED-IN-PROGRESS
-Current cycle: Finance Action Depth — candidate implementation / live panel validation pending
-Next cycles: Inventory + Procurement primitive → Trade Case/Shipment/Landed Cost → Sales/Delivery + cross-module Manager Brief; CRM-lite follows the golden flow
+Latest closed milestone: v10.3 Sales Fulfillment + Margin — LIVE E2E CLOSED
+Working milestone: v10.4 CRM-lite / Customer 360
+Working status: SOURCE-AUDIT-NEXT
+Current cycle: CRM-lite / Customer 360 connected to Sales, receivables and fulfillment risk
+Next cycles: CRM-lite / Customer 360 → page-aware AI / Context Picker → pilot data onboarding / Design Partner readiness
 ```
 
 ## Scope فعال
@@ -295,3 +296,22 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE 
 Cycle 5 is LIVE E2E + performance closed. Jobs #71–#74 created/approved the Trade Case, Shipment and estimated/actual freight; Job #75 grounded Landed Cost at 620,000,000 IRR; customs hold drove Job #76 to grounded high risk. Control-plane keep-alive at commit `12c9000dba8bcafb42829176f8bbf232338ff78f` reduced the equivalent deterministic reads to Job #77 = 0.2s and Job #78 = 0.3s, both inside budget.
 
 Current source candidate: v10.3 Sales Fulfillment + Margin. It reuses canonical Sales documents and Inventory reservation/ledger, adds posted Delivery evidence, uses Landed Cost for COGS, and adds a grounded Manager Brief. Live validation is pending.
+
+### v10.3 Cycle 6 live closeout — Jobs #79–#87
+
+Status: `LIVE E2E CLOSED`.
+
+- Job #79: deterministic cross-module Manager Brief, no LLM, 0.2s, Trade risk `TRD-20260829-171042-90E6 = high/hold`, inventory shortages and sales-at-risk grounded.
+- Job #81: Sales fulfillment read for `AI-SAL-20260820-234534-4E5F`; PLC 2 outstanding + SENSOR-PROX 4 outstanding.
+- Job #82: `SENSOR-PROX` available stock = 0; this exposed the need for selective line reservation.
+- Hotfix commit `1638c458ec0b1390587b1ffb7ffd91512fe0ac6d` added explicit partial/selective reservation while preserving all-outstanding behavior.
+- Job #83 → Proposal #12: only sales line 28 / PLC quantity 2 was proposed for reservation in WH-MAIN; SENSOR-PROX was excluded. Human approval executed successfully.
+- Product UI after approval: ordered 6, reserved 2, delivered 0; margin remained `not_delivered`.
+- Job #84 → Proposal #13: delivery proposal contained only sales line 28 / quantity 2. Human approval created posted delivery `DLV-20260830-163108-188D`.
+- Delivery UI: ordered 6, reserved 0, delivered 2, outstanding 4; revenue ex-tax 370,000,000 IRR; COGS 620,000,000 IRR; gross margin -250,000,000 IRR; margin -67.6%; basis `actual_landed`.
+- Job #85 independently verified PLC inventory: on_hand 0, reserved 0, available 0, expected inbound 0, projected 0.
+- Job #86 independently verified fulfillment: PLC delivered 2/outstanding 0; SENSOR-PROX delivered 0/outstanding 4.
+- Job #87 independently verified landed-cost-aware margin with the same 370m / 620m / -250m / -67.6% values; no LLM; 4.7s; budget PASS.
+
+Cycle 6 therefore proves the live chain:
+`Sales Document → Selective Reservation → Human Approval → Delivery → Outbound Stock Ledger → Actual Landed COGS → Gross Margin → Cross-module Manager Brief`.

@@ -1,7 +1,7 @@
 # ERPSMART v10.3 — Sales Fulfillment, Delivery and Margin
 
 ## Status
-Source candidate for Cycle 6. Live validation is required before closeout.
+`LIVE E2E CLOSED` on baseline `1638c458ec0b1390587b1ffb7ffd91512fe0ac6d`.
 
 ## Product objective
 Close the commercial loop after Procurement/Trade/Inventory without creating a parallel Sales subsystem:
@@ -54,3 +54,15 @@ Use one real sales document linked to an inventory item that already has Trade/L
 5. grounded fulfillment read;
 6. grounded margin read with landed-cost basis;
 7. grounded Manager Brief.
+
+## Live evidence — 2026-08-30
+- Manager Brief: Job #79, deterministic/no LLM, 0.2s, budget PASS.
+- Fulfillment discovery: Job #81.
+- Zero-stock edge case for SENSOR-PROX: Job #82.
+- Selective reservation: Job #83 → Proposal #12 → human approval; only PLC line 28 quantity 2.
+- Delivery: Job #84 → Proposal #13 → human approval → `DLV-20260830-163108-188D`, posted.
+- Post-delivery inventory: Job #85 → PLC on_hand 0 / reserved 0 / available 0.
+- Post-delivery fulfillment: Job #86 → PLC delivered 2/outstanding 0; SENSOR-PROX outstanding 4.
+- Margin: Job #87 → revenue ex-tax 370,000,000 IRR; COGS 620,000,000 IRR; gross margin -250,000,000 IRR; -67.6%; basis `actual_landed`; 4.7s budget PASS.
+
+The negative margin is a grounded business result, not an error: the existing Sales document sells each PLC at 185,000,000 IRR while the live actual landed unit cost is 310,000,000 IRR.

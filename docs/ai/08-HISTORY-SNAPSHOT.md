@@ -1083,3 +1083,16 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE 
 - Customs hold was grounded as high risk by Job #76.
 - Keep-alive commit `12c9000dba8bcafb42829176f8bbf232338ff78f` moved deterministic risk/landed reads from 5.6s/11.0s to 0.2s/0.3s in Jobs #77/#78.
 - Cycle 6 source work starts from this exact baseline.
+
+## 2026-08-30 — Cycle 6 LIVE closed
+- Job #79 proved the deterministic Trade/Inventory/Sales Manager Brief at 0.2s with no LLM.
+- Job #81 proved Sales fulfillment on `AI-SAL-20260820-234534-4E5F`.
+- Job #82 showed `SENSOR-PROX` had zero stock; the all-outstanding reservation route was therefore product-incomplete for partial fulfillment.
+- Engine-only selective reservation hotfix was live-tested, then committed as `1638c458ec0b1390587b1ffb7ffd91512fe0ac6d`.
+- Job #83 created Proposal #12 containing only PLC sales line 28 / quantity 2; human approval reserved exactly those two units.
+- Job #84 created Proposal #13 containing only the active PLC reservation; human approval posted delivery `DLV-20260830-163108-188D`.
+- Sales UI showed revenue ex-tax 370,000,000 IRR, COGS 620,000,000 IRR, gross margin -250,000,000 IRR, -67.6%, basis `actual_landed`.
+- Job #85 verified PLC on_hand/reserved/available all zero after delivery.
+- Job #86 verified PLC delivered 2/outstanding 0 and SENSOR-PROX outstanding 4.
+- Job #87 independently grounded the same actual-landed margin and passed the deterministic latency budget at 4.7s.
+- Cycle 6 is `LIVE E2E CLOSED`; next product slice is CRM-lite / Customer 360.

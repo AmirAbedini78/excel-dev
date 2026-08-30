@@ -24,12 +24,13 @@ v10 توسعه Platform foundation + Module depth لازم برای Design Partn
 ## Current baseline / phase
 
 ```text
-Baseline: 7d4a804dc0330d297803707bb8c9a2d455dfc0db
+Baseline: 1638c458ec0b1390587b1ffb7ffd91512fe0ac6d
 Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
-Working milestone: v10.0 Modular Pilot Platform
-Working status: IMPLEMENTED-IN-PROGRESS
-Current cycle: Provider Gateway v1 — implementation/contract tests complete; local product smoke pending
-Next: Finance Agent action depth → Inventory/Procurement/CRM-lite/Trade → Design Partner demo readiness
+Latest closed milestone: v10.3 Sales Fulfillment + Margin — LIVE E2E CLOSED
+Working milestone: v10.4 CRM-lite / Customer 360
+Working status: SOURCE-AUDIT-NEXT
+Current cycle: Customer 360 over canonical parties + Sales + receivables + fulfillment risk
+Next: CRM-lite / Customer 360 → page-aware AI / Context Picker → pilot data onboarding / Design Partner readiness
 Canonical v10 contract: docs/ai/10-MODULAR-PILOT-PLATFORM.md
 ```
 
@@ -134,3 +135,16 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE 
 
 ## وضعیت تحویل v10.2 / شروع v10.3
 v10.2 با شواهد Live از Job #71 تا #78 بسته شده است. baseline توسعه بعدی `12c9000dba8bcafb42829176f8bbf232338ff78f` است. v10.3 باید روی اسناد فروش موجود کار کند و فروش موازی نسازد: Reservation از `acc_inventory_reservations`، Delivery از Stock Ledger، COGS از Landed Cost و Manager Brief فقط Grounded.
+
+## v10.3 Cycle 6 — LIVE E2E CLOSED
+Baseline after selective reservation hotfix: `1638c458ec0b1390587b1ffb7ffd91512fe0ac6d`.
+
+Canonical live proof:
+- Job #79 Manager Brief PASS.
+- Job #83 / Proposal #12 selective PLC reservation PASS and human-approved execution.
+- Job #84 / Proposal #13 delivery PASS and human-approved execution to `DLV-20260830-163108-188D`.
+- Job #85 inventory ledger verification PASS.
+- Job #86 fulfillment state verification PASS.
+- Job #87 margin verification PASS: 370m revenue ex-tax, 620m actual-landed COGS, -250m gross margin, -67.6%.
+
+Do not reopen Cycle 6 unless a new regression appears. Next source audit must reuse `acc_parties` and existing Sales/ledger primitives for CRM-lite / Customer 360; do not create a parallel customer truth store. Page-aware AI / Context Picker remains next-layer UX after the CRM slice is stable.

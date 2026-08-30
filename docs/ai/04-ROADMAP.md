@@ -319,11 +319,17 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDoma
 
 Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.
 
-## Cycle 6 — Sales Fulfillment + Margin
-1. Existing Sales document → warehouse reservation.
-2. Reservation → posted delivery/outbound Stock Ledger.
-3. Delivered revenue excluding tax → landed-cost-aware COGS → gross margin.
-4. Cross-module deterministic Manager Brief across Trade, Inventory and Sales.
-5. Then CRM-lite / Customer 360 and data onboarding.
+## Cycle 6 — Sales Fulfillment + Margin — LIVE E2E CLOSED
+1. Existing Sales document → selective warehouse reservation: PASS (Job #83 / Proposal #12).
+2. Reservation → posted delivery/outbound Stock Ledger: PASS (Job #84 / Proposal #13 / `DLV-20260830-163108-188D`).
+3. Delivered revenue excluding tax → actual-landed COGS → gross margin: PASS (Job #87).
+4. Cross-module deterministic Manager Brief across Trade, Inventory and Sales: PASS (Job #79).
+5. Independent inventory + fulfillment verification: PASS (Jobs #85/#86).
 
-Page-aware AI / Context Picker remains in backlog and must be layered on top of server-validated entity references, not replace grounding.
+## Cycle 7 — CRM-lite / Customer 360
+1. Reuse canonical `acc_parties`; do not create a parallel customer master.
+2. Customer 360 must join Sales history, open fulfillment, receivable/party ledger position and recent commercial activity.
+3. Add deterministic customer-risk / next-action reads before any CRM mutation automation.
+4. Keep CRM actions bounded and auditable; risky writes remain Proposal → Human Approval.
+5. After the Customer 360 slice stabilizes, layer page-aware AI / Context Picker on server-validated entity references.
+6. Then move to pilot data onboarding / Design Partner readiness.
