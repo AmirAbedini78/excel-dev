@@ -1096,3 +1096,10 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE 
 - Job #86 verified PLC delivered 2/outstanding 0 and SENSOR-PROX outstanding 4.
 - Job #87 independently grounded the same actual-landed margin and passed the deterministic latency budget at 4.7s.
 - Cycle 6 is `LIVE E2E CLOSED`; next product slice is CRM-lite / Customer 360.
+
+## 2026-08-30 — Cycle 7 source audit / candidate
+- baseline `c426aaf171faae3737928ccbea25883eeae3929a` verified.
+- `acc_parties` is canonical customer identity.
+- Workbench `phonebook_entries` is not reused as CRM identity.
+- no existing CRM Contact/Opportunity/Activity schema was found.
+- v10.4 candidate adds CRM-lite and live validation is pending.

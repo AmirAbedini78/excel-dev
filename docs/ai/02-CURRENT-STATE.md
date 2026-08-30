@@ -7,13 +7,13 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: 1638c458ec0b1390587b1ffb7ffd91512fe0ac6d
+Baseline: c426aaf171faae3737928ccbea25883eeae3929a
 Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
 Latest closed milestone: v10.3 Sales Fulfillment + Margin — LIVE E2E CLOSED
 Working milestone: v10.4 CRM-lite / Customer 360
-Working status: SOURCE-AUDIT-NEXT
-Current cycle: CRM-lite / Customer 360 connected to Sales, receivables and fulfillment risk
-Next cycles: CRM-lite / Customer 360 → page-aware AI / Context Picker → pilot data onboarding / Design Partner readiness
+Working status: IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING
+Current cycle: Customer 360 + Contact + Opportunity/Pipeline + Activity/Follow-up over acc_parties
+Next cycles: live CRM gate → page-aware AI / Context Picker → pilot data onboarding / Design Partner readiness
 ```
 
 ## Scope فعال

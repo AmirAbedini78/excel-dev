@@ -58,7 +58,7 @@ final class AiModule
             if($j['result_text'])echo '<div class="ai-answer"><strong>پاسخ ایجنت</strong><div>'.nl2br(h($j['result_text'])).'</div>'.self::metricsHtml($j).'</div>';elseif($j['error_text'])echo '<div class="alert danger">'.nl2br(h($j['error_text'])).'</div>';else echo '<div class="ai-pending">'.self::statusText((string)$j['status']).'</div>';
             echo '</div>';foreach($proposals as $p)self::proposalCard($p);echo '</article>';
         }
-        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=10.3.0"></script>';
+        echo '</section>';if($liveJobs)echo '<script src="assets/ai-live.js?v=10.4.0"></script>';
     }
 
     private static function metricsHtml(array $job): string
@@ -96,7 +96,7 @@ final class AiModule
             'inventory_position_read'=>'وضعیت Grounded موجودی',
             'inventory_replenishment_read'=>'ریسک تأمین و نقطه سفارش',
             'procurement_pipeline_read'=>'جریان خرید و ورودی مورد انتظار',
-            'guarded_inventory_receipt_proposal'=>'Proposal رسید انبار','trade_case_read'=>'وضعیت Grounded بازرگانی','trade_landed_cost_read'=>'Landed Cost Grounded','trade_risk_read'=>'ریسک بازرگانی Grounded','guarded_trade_case_proposal'=>'Proposal پرونده بازرگانی','guarded_trade_case_blocked'=>'پرونده بازرگانی مسدودشده','guarded_trade_shipment_proposal'=>'Proposal حمل','guarded_trade_shipment_blocked'=>'حمل مسدودشده','guarded_trade_cost_proposal'=>'Proposal هزینه بازرگانی','guarded_trade_cost_blocked'=>'هزینه بازرگانی مسدودشده','sales_fulfillment_read'=>'تأمین و تحویل فروش Grounded','sales_margin_read'=>'حاشیه سود فروش Grounded','trade_manager_brief_read'=>'Manager Brief تجاری Grounded','guarded_sales_reservation_proposal'=>'Proposal رزرو فروش','guarded_sales_reservation_blocked'=>'رزرو فروش مسدودشده','guarded_sales_delivery_proposal'=>'Proposal تحویل فروش','guarded_sales_delivery_blocked'=>'تحویل فروش مسدودشده',
+            'guarded_inventory_receipt_proposal'=>'Proposal رسید انبار','trade_case_read'=>'وضعیت Grounded بازرگانی','trade_landed_cost_read'=>'Landed Cost Grounded','trade_risk_read'=>'ریسک بازرگانی Grounded','guarded_trade_case_proposal'=>'Proposal پرونده بازرگانی','guarded_trade_case_blocked'=>'پرونده بازرگانی مسدودشده','guarded_trade_shipment_proposal'=>'Proposal حمل','guarded_trade_shipment_blocked'=>'حمل مسدودشده','guarded_trade_cost_proposal'=>'Proposal هزینه بازرگانی','guarded_trade_cost_blocked'=>'هزینه بازرگانی مسدودشده','sales_fulfillment_read'=>'تأمین و تحویل فروش Grounded','sales_margin_read'=>'حاشیه سود فروش Grounded','trade_manager_brief_read'=>'Manager Brief تجاری Grounded','crm_customer_360_read'=>'Customer 360 Grounded','crm_pipeline_read'=>'Pipeline فروش CRM Grounded','crm_followup_read'=>'پیگیری‌های CRM Grounded','guarded_crm_activity_proposal'=>'Proposal پیگیری CRM','guarded_crm_activity_blocked'=>'پیگیری CRM مسدودشده','guarded_crm_opportunity_proposal'=>'Proposal فرصت فروش CRM','guarded_crm_opportunity_blocked'=>'فرصت فروش CRM مسدودشده','guarded_sales_reservation_proposal'=>'Proposal رزرو فروش','guarded_sales_reservation_blocked'=>'رزرو فروش مسدودشده','guarded_sales_delivery_proposal'=>'Proposal تحویل فروش','guarded_sales_delivery_blocked'=>'تحویل فروش مسدودشده',
             'guarded_inventory_receipt_blocked'=>'رسید انبار مسدودشده',
             'financial_intelligence'=>'هوشمندی مالی',
             'financial_intelligence_blocked'=>'هوشمندی مالی مسدودشده',

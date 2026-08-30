@@ -25,7 +25,7 @@ from urllib.parse import urlsplit
 PATCH_VERSION = "v9.3.0"
 RELEASE_CONTRACT = "commercial-mvp-v1"
 
-PROPOSAL_TOOLS = frozenset({"create_sales_invoice_draft", "create_purchase_invoice_draft", "reserve_sales_stock", "deliver_sales_stock", "create_warehouse_receipt", "create_trade_case", "create_trade_shipment", "add_trade_cost", "create_check", "create_voucher_draft"})
+PROPOSAL_TOOLS = frozenset({"create_sales_invoice_draft", "create_purchase_invoice_draft", "reserve_sales_stock", "deliver_sales_stock", "create_warehouse_receipt", "create_trade_case", "create_trade_shipment", "add_trade_cost", "create_crm_activity", "create_crm_opportunity", "create_check", "create_voucher_draft"})
 READ_ONLY_MODES = frozenset({
     "deterministic_financial_report",
     "deep_financial_analysis",
@@ -55,6 +55,9 @@ READ_ONLY_MODES = frozenset({
     "sales_fulfillment_read",
     "sales_margin_read",
     "trade_manager_brief_read",
+    "crm_customer_360_read",
+    "crm_pipeline_read",
+    "crm_followup_read",
 })
 PROPOSAL_MODES = frozenset({
     "guarded_sales_invoice_proposal",
@@ -66,6 +69,8 @@ PROPOSAL_MODES = frozenset({
     "guarded_trade_cost_proposal",
     "guarded_sales_reservation_proposal",
     "guarded_sales_delivery_proposal",
+    "guarded_crm_activity_proposal",
+    "guarded_crm_opportunity_proposal",
     "accounting_action_proposal",
 })
 
@@ -208,7 +213,7 @@ def _policy(mode: str, successful_tools: list[str], proposal_created: bool) -> d
     seen = set(successful_tools)
     if "create_voucher_draft" in seen or "create_check" in seen or "create_warehouse_receipt" in seen or "add_trade_cost" in seen or "deliver_sales_stock" in seen or mode.startswith("accounting_action_") or mode.startswith("guarded_check_") or mode.startswith("guarded_inventory_receipt_") or mode.startswith("guarded_trade_cost_") or mode.startswith("guarded_sales_delivery_"):
         risk = "high"
-    elif "create_sales_invoice_draft" in seen or "create_purchase_invoice_draft" in seen or "create_trade_case" in seen or "create_trade_shipment" in seen or "reserve_sales_stock" in seen or mode.startswith("guarded_sales_invoice_") or mode.startswith("guarded_purchase_invoice_") or mode.startswith("guarded_trade_case_") or mode.startswith("guarded_trade_shipment_") or mode.startswith("guarded_sales_reservation_"):
+    elif "create_sales_invoice_draft" in seen or "create_purchase_invoice_draft" in seen or "create_trade_case" in seen or "create_trade_shipment" in seen or "reserve_sales_stock" in seen or "create_crm_activity" in seen or "create_crm_opportunity" in seen or mode.startswith("guarded_sales_invoice_") or mode.startswith("guarded_purchase_invoice_") or mode.startswith("guarded_trade_case_") or mode.startswith("guarded_trade_shipment_") or mode.startswith("guarded_sales_reservation_") or mode.startswith("guarded_crm_"):
         risk = "medium"
     else:
         risk = "low"
@@ -236,7 +241,7 @@ def _policy(mode: str, successful_tools: list[str], proposal_created: bool) -> d
 def _is_read_only_mode(mode: str) -> bool:
     return mode in READ_ONLY_MODES or mode.startswith((
         "grounded_", "adaptive_", "accounting_workflow_", "financial_intelligence",
-        "forecast_risk_", "proactive_accounting", "deterministic_", "deep_", "fast_read_", "treasury_", "inventory_", "procurement_", "trade_", "sales_",
+        "forecast_risk_", "proactive_accounting", "deterministic_", "deep_", "fast_read_", "treasury_", "inventory_", "procurement_", "trade_", "sales_", "crm_",
     ))
 
 

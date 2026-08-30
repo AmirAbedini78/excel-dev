@@ -148,3 +148,8 @@ Canonical live proof:
 - Job #87 margin verification PASS: 370m revenue ex-tax, 620m actual-landed COGS, -250m gross margin, -67.6%.
 
 Do not reopen Cycle 6 unless a new regression appears. Next source audit must reuse `acc_parties` and existing Sales/ledger primitives for CRM-lite / Customer 360; do not create a parallel customer truth store. Page-aware AI / Context Picker remains next-layer UX after the CRM slice is stable.
+
+## v10.4 Cycle 7 — CRM-lite candidate
+Input baseline: `c426aaf171faae3737928ccbea25883eeae3929a`.
+
+`acc_parties` remains canonical. CRM stores only contacts, opportunities and activities; live financial/Sales facts are derived from existing ledgers. AI CRM writes remain Proposal → Human Approval. Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`.

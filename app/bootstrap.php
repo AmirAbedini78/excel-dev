@@ -30,6 +30,7 @@ require_once APP_ROOT . '/app/Core/AccountingRepository.php';
 require_once APP_ROOT . '/app/Core/InventoryDomain.php';
 require_once APP_ROOT . '/app/Core/TradeDomain.php';
 require_once APP_ROOT . '/app/Core/SalesDomain.php';
+require_once APP_ROOT . '/app/Core/CrmDomain.php';
 require_once APP_ROOT . '/app/Core/AiSchema.php';
 require_once APP_ROOT . '/app/Core/AiToolRegistry.php';
 require_once APP_ROOT . '/app/Core/AiRepository.php';
@@ -53,6 +54,7 @@ if (file_exists($configFile)) {
         AccountingSchema::migrate(pdo());
         AccountingExtendedSchema::migrate(pdo());
         SalesDomain::migrate(pdo());
+        CrmDomain::migrate(pdo());
         AiSchema::migrate(pdo());
         ModuleRegistry::ensureSchema();
         RuntimeCache::markSchema(RuntimeCache::SCHEMA_VERSION);

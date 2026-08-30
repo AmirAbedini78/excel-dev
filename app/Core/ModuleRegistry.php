@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.3.0';
+    public const VERSION='10.4.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -31,8 +31,8 @@ final class ModuleRegistry
                 'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>['inventory'], 'pages'=>['procurement'],
             ],
             'crm'=>[
-                'title'=>'CRM و فروش','description'=>'Lead، Opportunity، Pipeline، Activity، Customer 360 و پیگیری فروش.',
-                'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>[],
+                'title'=>'CRM و فروش','description'=>'Customer 360، Contact، Opportunity، Pipeline، Activity و پیگیری فروش روی طرف‌حساب‌های واقعی.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>['finance'], 'pages'=>['crm'],
             ],
             'trade'=>[
                 'title'=>'بازرگانی و لجستیک','description'=>'Trade Case، Shipment، ETA، گمرک، Estimated/Actual Landed Cost و Trade Risk.',

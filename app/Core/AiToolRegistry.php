@@ -60,6 +60,11 @@ final class AiToolRegistry
             ['name'=>'sales_fulfillment','mode'=>'read','risk'=>'low','description'=>'وضعیت Grounded سفارش، رزرو، تحویل و باقیمانده یک سند فروش','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer']],'required'=>['sales_doc_id']]],
             ['name'=>'sales_margin_summary','mode'=>'read','risk'=>'low','description'=>'حاشیه سود تحویل‌شده با COGS مبتنی بر Actual/Projected Landed Cost','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer']],'required'=>['sales_doc_id']]],
             ['name'=>'trade_manager_brief','mode'=>'read','risk'=>'low','description'=>'Manager Brief قطعی بین Trade، موجودی، فروش و Margin بدون ساخت عدد نقدینگی','parameters'=>['type'=>'object','properties'=>['limit'=>['type'=>'integer']]]],
+            ['name'=>'crm_customer_360','mode'=>'read','risk'=>'low','description'=>'نمای 360 مشتری از Party، فروش، تحویل، مانده و CRM','parameters'=>['type'=>'object','properties'=>['party_id'=>['type'=>'integer']],'required'=>['party_id']]],
+            ['name'=>'crm_pipeline_summary','mode'=>'read','risk'=>'low','description'=>'خلاصه Pipeline فروش CRM','parameters'=>['type'=>'object','properties'=>[]]],
+            ['name'=>'crm_followup_queue','mode'=>'read','risk'=>'low','description'=>'صف پیگیری CRM','parameters'=>['type'=>'object','properties'=>['days'=>['type'=>'integer']]]],
+            ['name'=>'create_crm_activity','mode'=>'proposal','risk'=>'medium','description'=>'پیشنهاد پیگیری CRM با تایید انسانی','parameters'=>['type'=>'object','properties'=>['party_id'=>['type'=>'integer'],'activity_type'=>['type'=>'string'],'subject'=>['type'=>'string'],'activity_date'=>['type'=>'string'],'due_date'=>['type'=>'string'],'notes'=>['type'=>'string']],'required'=>['party_id','activity_type','subject']]],
+            ['name'=>'create_crm_opportunity','mode'=>'proposal','risk'=>'medium','description'=>'پیشنهاد فرصت فروش CRM با تایید انسانی','parameters'=>['type'=>'object','properties'=>['party_id'=>['type'=>'integer'],'title'=>['type'=>'string'],'stage'=>['type'=>'string'],'amount_irr'=>['type'=>'number'],'probability'=>['type'=>'number'],'expected_close_date'=>['type'=>'string'],'notes'=>['type'=>'string']],'required'=>['party_id','title']]],
             ['name'=>'reserve_sales_stock','mode'=>'proposal','risk'=>'medium','description'=>'رزرو موجودی برای سند فروش؛ بدون تایید انسانی موجودی رزرو نمی‌شود','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
             ['name'=>'deliver_sales_stock','mode'=>'proposal','risk'=>'high','description'=>'تحویل موجودی رزروشده و ثبت خروج انبار؛ فقط پس از تایید انسانی','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'delivery_date'=>['type'=>'string'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
             ['name'=>'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پیش‌نویس فاکتور فروش؛ بدون تایید انسانی ثبت نهایی نمی‌شود','parameters'=>['type'=>'object','properties'=>[
@@ -135,6 +140,9 @@ final class AiToolRegistry
             'sales_fulfillment'=>SalesDomain::fulfillment($wid,$cid,$args),
             'sales_margin_summary'=>SalesDomain::marginSummary($wid,$cid,(int)($args['sales_doc_id']??0)),
             'trade_manager_brief'=>SalesDomain::managerBrief($wid,$cid,(int)($args['limit']??10)),
+            'crm_customer_360'=>CrmDomain::customer360($wid,$cid,(int)($args['party_id']??0)),
+            'crm_pipeline_summary'=>CrmDomain::pipelineSummary($wid,$cid),
+            'crm_followup_queue'=>CrmDomain::followupQueue($wid,$cid,(int)($args['days']??7)),
             'recent_sales'=>self::recentSales($wid,$cid,(int)($args['limit']??20)),
             'recent_purchases'=>self::recentPurchases($wid,$cid,(int)($args['limit']??20)),
             'document_analytics'=>self::documentAnalytics($wid,$cid,$args),
@@ -328,6 +336,8 @@ final class AiToolRegistry
             'create_trade_case'=>TradeDomain::createCase($wid,$cid,$userId,$args),
             'create_trade_shipment'=>TradeDomain::createShipment($wid,$cid,$userId,$args),
             'add_trade_cost'=>TradeDomain::addCost($wid,$cid,$userId,$args),
+            'create_crm_activity'=>CrmDomain::createActivity($wid,$cid,$userId,$args),
+            'create_crm_opportunity'=>CrmDomain::createOpportunity($wid,$cid,$userId,$args),
             'create_check'=>self::createCheck($wid,$cid,$userId,$args),
             'create_voucher_draft'=>self::createVoucherDraft($wid,$cid,$userId,$args),
             default=>throw new RuntimeException('اجرای این Tool هنوز پیاده‌سازی نشده است.')
@@ -746,6 +756,10 @@ final class AiToolRegistry
             TradeDomain::normalizeShipmentArgs($wid,$cid,$args);
         }elseif($tool==='add_trade_cost'){
             TradeDomain::normalizeCostArgs($wid,$cid,$args);
+        }elseif($tool==='create_crm_activity'){
+            CrmDomain::normalizeActivityArgs($wid,$cid,$args);
+        }elseif($tool==='create_crm_opportunity'){
+            CrmDomain::normalizeOpportunityArgs($wid,$cid,$args);
         }elseif($tool==='create_check'){
             $direction=trim((string)($args['direction']??''));if(!in_array($direction,['receivable','payable'],true))throw new RuntimeException('نوع چک نامعتبر است.');
             $checkNo=trim((string)($args['check_no']??''));if($checkNo===''||mb_strlen($checkNo)>100)throw new RuntimeException('شماره چک نامعتبر است.');
@@ -771,6 +785,8 @@ final class AiToolRegistry
             'create_trade_case'=>'ایجاد پرونده بازرگانی برای سند خرید #'.(int)($args['purchase_doc_id']??0),
             'create_trade_shipment'=>'ثبت Shipment برای پرونده #'.(int)($args['trade_case_id']??0),
             'add_trade_cost'=>'ثبت هزینه '.(string)($args['basis']??'').' '.(string)($args['cost_type']??'').' برای پرونده #'.(int)($args['trade_case_id']??0),
+            'create_crm_activity'=>'ثبت پیگیری CRM برای طرف حساب #'.(int)($args['party_id']??0),
+            'create_crm_opportunity'=>'ثبت فرصت CRM برای طرف حساب #'.(int)($args['party_id']??0),
             'create_check'=>'ثبت چک '.((string)($args['direction']??'')==='payable'?'پرداختنی':'دریافتنی').' شماره '.(string)($args['check_no']??''),
             'create_voucher_draft'=>'ایجاد پیش‌نویس سند حسابداری با '.count((array)($args['lines']??[])).' آرتیکل',
             default=>'عملیات پیشنهادی ایجنت'

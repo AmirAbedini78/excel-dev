@@ -6,6 +6,7 @@ require_once __DIR__.'/app/Modules/V5Module.php';
 require_once __DIR__.'/app/Modules/AccountingIndustrialModule.php';
 require_once __DIR__.'/app/Modules/InventoryProcurementModule.php';
 require_once __DIR__.'/app/Modules/TradeModule.php';
+require_once __DIR__.'/app/Modules/CrmModule.php';
 require_once __DIR__.'/app/Modules/AiModule.php';
 require_once __DIR__.'/app/Modules/ModuleCenterModule.php';
 function q(string $sql, array $params=[]): array { $st=pdo()->prepare($sql); $st->execute($params); return $st->fetchAll(); }
@@ -199,6 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (str_starts_with($action,'module_')) ModuleCenterModule::handle($action);
         if (str_starts_with($action,'inv_')) InventoryProcurementModule::handle($action);
         if (str_starts_with($action,'trade_')) TradeModule::handle($action);
+        if (str_starts_with($action,'crm_')) CrmModule::handle($action);
         if ($action === 'inline_update_batch') handle_inline_update_batch();
         if ($action === 'inline_update') handle_inline_update();
         if ($action === 'delete_record') handle_delete_record();
@@ -549,6 +551,7 @@ function render_header(string $title, string $subtitle=''): void
         'procurement'=>'تأمین و خرید',
         'inventory'=>'انبار و موجودی',
         'trade'=>'بازرگانی و لجستیک',
+        'crm'=>'CRM و فروش',
         'ai'=>'دستیار هوشمند',
         'modules'=>'مرکز ماژول‌ها',
         'shares'=>'اشتراک داده‌ها',
@@ -562,12 +565,13 @@ function render_header(string $title, string $subtitle=''): void
         'industrial'=>'ماژول حسابداری و مالی',
         'procurement'=>'تأمین و زنجیره موجودی',
         'trade'=>'بازرگانی و لجستیک',
+        'crm'=>'CRM و فروش',
         'ai'=>'هوش مصنوعی و اتوماسیون',
         'modules'=>'ماژول‌ها و بسته‌ها',
         'shares'=>'مدیریت و زیرساخت',
     ];
     $navPerm=['dashboard'=>'dashboard.view','companies'=>'companies.view','systems'=>'systems.view','monthly'=>'monthly.view','daily'=>'daily.view','custom_fields'=>'custom_fields.manage',
-        'choices'=>'choices.manage','industrial'=>'accounting.view','procurement'=>'procurement.view','inventory'=>'inventory.view','trade'=>'trade.view','ai'=>'ai.use','kanban'=>'kanban.view','notes'=>'notes.view','phonebook'=>'phonebook.view','shares'=>'shares.view','library'=>'files.view','access'=>'members.view','performance'=>'cache.manage','settings'=>'settings.manage'];
+        'choices'=>'choices.manage','industrial'=>'accounting.view','procurement'=>'procurement.view','inventory'=>'inventory.view','trade'=>'trade.view','crm'=>'crm.view','ai'=>'ai.use','kanban'=>'kanban.view','notes'=>'notes.view','phonebook'=>'phonebook.view','shares'=>'shares.view','library'=>'files.view','access'=>'members.view','performance'=>'cache.manage','settings'=>'settings.manage'];
     foreach($navPerm as $nk=>$np) if(isset($nav[$nk]) && !Tenant::can($np)) unset($nav[$nk]);
     foreach(array_keys($nav) as $nk) if(!ModuleRegistry::pageEnabled($nk)) unset($nav[$nk]);
     if(!Tenant::isPlatformAdmin()){ unset($nav['platform']); unset($nav['settings']); unset($nav['modules']); }
@@ -591,7 +595,7 @@ Auth::require(); // Tenant and ModuleRegistry are already booted by bootstrap.
 if(!ModuleRegistry::pageEnabled($page)){ flash('این ماژول برای محیط کاری فعال نیست.','danger'); redirect('index.php'); }
 if($_SERVER['REQUEST_METHOD']==='GET' && $page!=='login' && setting('audit_page_views','0')==='1') Audit::log('page.view','page',0,$page);
 $pagePermission=['dashboard'=>'dashboard.view','companies'=>'companies.view','systems'=>'systems.view','monthly'=>'monthly.view','daily'=>'daily.view','kanban'=>'kanban.view','custom_fields'=>'custom_fields.manage',
-        'choices'=>'choices.manage','industrial'=>'accounting.view','procurement'=>'procurement.view','inventory'=>'inventory.view','trade'=>'trade.view','ai'=>'ai.use','phonebook'=>'phonebook.view','shares'=>'shares.view','performance'=>'cache.manage','settings'=>'settings.manage'];
+        'choices'=>'choices.manage','industrial'=>'accounting.view','procurement'=>'procurement.view','inventory'=>'inventory.view','trade'=>'trade.view','crm'=>'crm.view','ai'=>'ai.use','phonebook'=>'phonebook.view','shares'=>'shares.view','performance'=>'cache.manage','settings'=>'settings.manage'];
 if(isset($pagePermission[$page])) Tenant::requirePermission($pagePermission[$page]);
 if($page==='settings' && !Tenant::isPlatformAdmin()) { http_response_code(403); throw new RuntimeException('تنظیمات زیرساخت فقط برای مدیر کل پلتفرم در دسترس است.'); }
 
@@ -607,6 +611,7 @@ elseif($page === 'notes') V5Module::renderNotes();
 elseif($page === 'industrial') AccountingIndustrialModule::render();
 elseif($page === 'procurement' || $page === 'inventory') InventoryProcurementModule::render();
 elseif($page === 'trade') TradeModule::render();
+elseif($page === 'crm') CrmModule::render();
 elseif($page === 'ai') AiModule::render();
 elseif($page === 'modules') ModuleCenterModule::render();
 elseif($page === 'phonebook') V5Module::renderPhonebook();

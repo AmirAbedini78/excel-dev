@@ -333,3 +333,8 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE 
 4. Keep CRM actions bounded and auditable; risky writes remain Proposal → Human Approval.
 5. After the Customer 360 slice stabilizes, layer page-aware AI / Context Picker on server-validated entity references.
 6. Then move to pilot data onboarding / Design Partner readiness.
+
+## v10.4 Cycle 7 — CRM-lite implementation candidate
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`.
+
+Customer identity remains `acc_parties`. The slice adds Contact, Opportunity/Pipeline, Activity/Follow-up, deterministic Customer 360 reads and Proposal-only CRM actions. Independent Lead Capture remains later.

@@ -1019,6 +1019,8 @@ from trade_logistics import install_trade_logistics as _install_trade_logistics
 _install_trade_logistics(Worker)
 from sales_fulfillment import install_sales_fulfillment as _install_sales_fulfillment
 _install_sales_fulfillment(Worker)
+from crm_lite import install_crm_lite as _install_crm_lite
+_install_crm_lite(Worker)
 from provider_gateway import install_provider_gateway as _install_provider_gateway
 _install_provider_gateway(Worker)
 from commercial_hardening import install_commercial_hardening as _install_commercial_hardening
