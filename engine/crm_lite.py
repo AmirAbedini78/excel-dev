@@ -23,6 +23,24 @@ def unique(c:list[dict[str,Any]],q:str):
 def blocked(t,tools,m):return t,{"provider":"deterministic","model":"none","mode":m,"tools_used":tools,"patch_version":PATCH_VERSION}
 def find_party(w,j,q,tools):
     r=w.tool(j,"search_parties",{"query":q},stable(int(j["id"]),"crm-party",q));tools.append("search_parties");return unique(rows(r),q)
+def context_party(j):
+    ctx=j.get("context") if isinstance(j,dict) else None
+    pc=ctx.get("page_context") if isinstance(ctx,dict) else None
+    if not isinstance(pc,dict) or pc.get("version")!="v1" or pc.get("validated") is not True:return None
+    if int(pc.get("company_id") or 0)!=int(j.get("company_id") or 0):return None
+    for e in pc.get("entities") or []:
+        if isinstance(e,dict) and e.get("type")=="party" and int(e.get("id") or 0)>0:
+            return {"id":int(e["id"]),"code":str(e.get("code") or ""),"name":str(e.get("label") or ""),"source_page":str(e.get("source_page") or "")}
+    return None
+def resolve_party(w,j,p,tools):
+    q=customer(p);ctx=context_party(j)
+    if q:
+        party=find_party(w,j,q,tools)
+        if not party:return None,f"مشتری «{q}» یکتا پیدا نشد."
+        if ctx and int(ctx["id"])!=int(party["id"]):return None,"مشتری نوشته‌شده با زمینه انتخاب‌شده صفحه یکسان نیست؛ عملیات متوقف شد."
+        return party,""
+    if ctx:return ctx,""
+    return None,"نام مشتری را داخل « » مشخص کن یا از Context Picker صفحه استفاده کن."
 def date_token(p):
     m=re.search(r"(?<!\d)(1[34]\d{2}[/-]\d{1,2}[/-]\d{1,2}|20\d{2}-\d{1,2}-\d{1,2})(?!\d)",str(p or "").translate(DIGITS));return m.group(1) if m else ""
 def amount(p):
@@ -41,17 +59,15 @@ def isact(p):
 def isopp(p):
     n=norm(p);return "مشتری" in n and "فرصت" in n and action(n)
 def process360(w,j,p):
-    tools=[];q=customer(p)
-    if not q:return blocked("نام مشتری را داخل « » مشخص کن.",tools,"crm_customer_360_read")
-    party=find_party(w,j,q,tools)
-    if not party:return blocked(f"مشتری «{q}» یکتا پیدا نشد.",tools,"crm_customer_360_read")
-    w.trace(j,"grounded_read","Grounded CRM Customer 360",{})
+    tools=[];party,err=resolve_party(w,j,p,tools)
+    if not party:return blocked(err,tools,"crm_customer_360_read")
+    w.trace(j,"grounded_read","Grounded CRM Customer 360",{"page_context_used":bool(context_party(j))})
     d=w.tool(j,"crm_customer_360",{"party_id":int(party["id"])},stable(int(j["id"]),"crm360",party["id"]));tools.append("crm_customer_360")
     f=d.get("financial",{});c=d.get("crm",{});pp=d.get("party",{})
-    out=[f"Customer 360 | {pp.get('name') or q}",f"• مانده: {float(f.get('current_balance_irr') or 0):,.0f} ریال | {f.get('balance_nature') or '-'}",f"• فروش: {float(f.get('recorded_sales_net_irr') or 0):,.0f} ریال | {int(f.get('sales_document_count') or 0)} سند",f"• تحویل‌نشده: {float(f.get('outstanding_sales_quantity') or 0):g}",f"• Pipeline باز: {float(c.get('open_pipeline_irr') or 0):,.0f} ریال | وزنی {float(c.get('weighted_pipeline_irr') or 0):,.0f} ریال"]
+    out=[f"Customer 360 | {pp.get('name') or party.get('name') or '-'}",f"• مانده: {float(f.get('current_balance_irr') or 0):,.0f} ریال | {f.get('balance_nature') or '-'}",f"• فروش: {float(f.get('recorded_sales_net_irr') or 0):,.0f} ریال | {int(f.get('sales_document_count') or 0)} سند",f"• تحویل‌نشده: {float(f.get('outstanding_sales_quantity') or 0):g}",f"• Pipeline باز: {float(c.get('open_pipeline_irr') or 0):,.0f} ریال | وزنی {float(c.get('weighted_pipeline_irr') or 0):,.0f} ریال"]
     nxt=c.get("next_followup");out.append(f"• پیگیری بعدی: {nxt.get('due_date')} | {nxt.get('subject')}" if isinstance(nxt,dict) else "• پیگیری بعدی: ثبت نشده")
     w.trace(j,"grounded_read_complete","Grounded CRM Customer 360 completed",{})
-    return "\n".join(out),{"provider":"deterministic","model":"none","mode":"crm_customer_360_read","tools_used":tools,"patch_version":PATCH_VERSION}
+    return "\n".join(out),{"provider":"deterministic","model":"none","mode":"crm_customer_360_read","tools_used":tools,"page_context_used":bool(context_party(j)),"patch_version":PATCH_VERSION}
 def process_pipeline(w,j):
     w.trace(j,"grounded_read","Grounded CRM pipeline",{});d=w.tool(j,"crm_pipeline_summary",{},stable(int(j["id"]),"crm-pipeline","all"))
     out=[f"CRM Pipeline | باز {int(d.get('open_count') or 0)} | {float(d.get('open_amount_irr') or 0):,.0f} ریال | وزنی {float(d.get('weighted_amount_irr') or 0):,.0f} ریال"]
@@ -63,28 +79,28 @@ def process_follow(w,j):
     for r in (d.get("rows") or [])[:10]:out.append(f"• {r.get('due_date')} | {r.get('party_name')} | {r.get('subject')} | {r.get('bucket')}")
     w.trace(j,"grounded_read_complete","Grounded CRM follow-up queue completed",{});return "\n".join(out),{"provider":"deterministic","model":"none","mode":"crm_followup_read","tools_used":["crm_followup_queue"],"patch_version":PATCH_VERSION}
 def process_activity(w,j,p):
-    tools=[];q=customer(p);subject=quoted_after(p,"موضوع");due=date_token(p);w.trace(j,"guarded_route","CRM activity -> guarded proposal workflow",{})
-    if not q or not subject:return blocked("مشتری و موضوع را داخل « » مشخص کن؛ Proposal ساخته نشد.",tools,"guarded_crm_activity_blocked")
-    party=find_party(w,j,q,tools)
-    if not party:return blocked(f"مشتری «{q}» یکتا پیدا نشد.",tools,"guarded_crm_activity_blocked")
+    tools=[];subject=quoted_after(p,"موضوع");due=date_token(p);w.trace(j,"guarded_route","CRM activity -> guarded proposal workflow",{"page_context_used":bool(context_party(j))})
+    if not subject:return blocked("موضوع را داخل « » مشخص کن؛ Proposal ساخته نشد.",tools,"guarded_crm_activity_blocked")
+    party,err=resolve_party(w,j,p,tools)
+    if not party:return blocked(err+" Proposal ساخته نشد.",tools,"guarded_crm_activity_blocked")
     n=norm(p);typ="call" if "تماس" in n else ("meeting" if "جلسه" in n else ("email" if "ایمیل" in n else ("message" if "پیام" in n else "task")))
     args={"party_id":int(party["id"]),"activity_type":typ,"subject":subject}
     if due:args["due_date"]=due
     w.trace(j,"proposal_request","Creating CRM activity proposal",{"human_approval_required":True});pr=w.tool(j,"create_crm_activity",args,stable(int(j["id"]),"crm-act",args));tools.append("create_crm_activity")
     if not isinstance(pr,dict) or int(pr.get("proposal_id") or 0)<=0:return blocked("Proposal پیگیری CRM ساخته نشد.",tools,"guarded_crm_activity_blocked")
     pid=int(pr["proposal_id"]);w.trace(j,"proposal_created","CRM activity proposal created",{"proposal_id":pid,"human_approval_required":True})
-    return f"Proposal #{pid} برای پیگیری «{subject}» آماده شد. تا تأیید انسانی ثبت نمی‌شود.",{"provider":"guarded_tool_orchestrator","model":"none","mode":"guarded_crm_activity_proposal","tools_used":tools,"proposal_id":pid,"proposal_status":"awaiting_human_approval","awaiting_human_approval":True,"patch_version":PATCH_VERSION}
+    return f"Proposal #{pid} برای پیگیری «{subject}» آماده شد. تا تأیید انسانی ثبت نمی‌شود.",{"provider":"guarded_tool_orchestrator","model":"none","mode":"guarded_crm_activity_proposal","tools_used":tools,"proposal_id":pid,"proposal_status":"awaiting_human_approval","awaiting_human_approval":True,"page_context_used":bool(context_party(j)),"patch_version":PATCH_VERSION}
 def process_opp(w,j,p):
-    tools=[];q=customer(p);title=quoted_after(p,"فرصت فروش") or quoted_after(p,"فرصت");due=date_token(p);w.trace(j,"guarded_route","CRM opportunity -> guarded proposal workflow",{})
-    if not q or not title:return blocked("مشتری و عنوان فرصت را داخل « » مشخص کن؛ Proposal ساخته نشد.",tools,"guarded_crm_opportunity_blocked")
-    party=find_party(w,j,q,tools)
-    if not party:return blocked(f"مشتری «{q}» یکتا پیدا نشد.",tools,"guarded_crm_opportunity_blocked")
+    tools=[];title=quoted_after(p,"فرصت فروش") or quoted_after(p,"فرصت");due=date_token(p);w.trace(j,"guarded_route","CRM opportunity -> guarded proposal workflow",{"page_context_used":bool(context_party(j))})
+    if not title:return blocked("عنوان فرصت را داخل « » مشخص کن؛ Proposal ساخته نشد.",tools,"guarded_crm_opportunity_blocked")
+    party,err=resolve_party(w,j,p,tools)
+    if not party:return blocked(err+" Proposal ساخته نشد.",tools,"guarded_crm_opportunity_blocked")
     args={"party_id":int(party["id"]),"title":title,"stage":"qualification","amount_irr":amount(p),"probability":prob(p)}
     if due:args["expected_close_date"]=due
     w.trace(j,"proposal_request","Creating CRM opportunity proposal",{"human_approval_required":True});pr=w.tool(j,"create_crm_opportunity",args,stable(int(j["id"]),"crm-opp",args));tools.append("create_crm_opportunity")
     if not isinstance(pr,dict) or int(pr.get("proposal_id") or 0)<=0:return blocked("Proposal فرصت CRM ساخته نشد.",tools,"guarded_crm_opportunity_blocked")
     pid=int(pr["proposal_id"]);w.trace(j,"proposal_created","CRM opportunity proposal created",{"proposal_id":pid,"human_approval_required":True})
-    return f"Proposal #{pid} برای فرصت «{title}» آماده شد. تا تأیید انسانی ثبت نمی‌شود.",{"provider":"guarded_tool_orchestrator","model":"none","mode":"guarded_crm_opportunity_proposal","tools_used":tools,"proposal_id":pid,"proposal_status":"awaiting_human_approval","awaiting_human_approval":True,"patch_version":PATCH_VERSION}
+    return f"Proposal #{pid} برای فرصت «{title}» آماده شد. تا تأیید انسانی ثبت نمی‌شود.",{"provider":"guarded_tool_orchestrator","model":"none","mode":"guarded_crm_opportunity_proposal","tools_used":tools,"proposal_id":pid,"proposal_status":"awaiting_human_approval","awaiting_human_approval":True,"page_context_used":bool(context_party(j)),"patch_version":PATCH_VERSION}
 def install_crm_lite(worker_cls:type)->None:
     if getattr(worker_cls,"_crm_lite_v1_installed",False):return
     original=worker_cls.process_agent

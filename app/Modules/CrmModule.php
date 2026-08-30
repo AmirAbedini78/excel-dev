@@ -42,7 +42,8 @@ final class CrmModule
     {
         $d=CrmDomain::customer360(Tenant::id(),AccountingRepository::companyId(),$partyId);$p=$d['party'];$f=$d['financial'];$c=$d['crm'];
         $cid=AccountingRepository::companyId();
-        echo '<section class="card"><div class="section-title"><div><h2>'.h($p['name']).'</h2><p class="muted">'.h(($p['code']??'').' • '.($p['mobile']??'')).'</p></div><a class="btn tiny" href="index.php?page=crm&company_id='.$cid.'">بازگشت</a></div>';
+        $aiLink=(ModuleRegistry::pageEnabled('ai')&&Tenant::can('ai.use'))?'<a class="btn tiny primary" href="index.php?page=ai&company_id='.$cid.'&context_type=party&context_id='.$partyId.'&context_source=crm">از AI درباره این مشتری بپرس</a>':'';
+        echo '<section class="card"><div class="section-title"><div><h2>'.h($p['name']).'</h2><p class="muted">'.h(($p['code']??'').' • '.($p['mobile']??'')).'</p></div><div class="row-actions">'.$aiLink.'<a class="btn tiny" href="index.php?page=crm&company_id='.$cid.'">بازگشت</a></div></div>';
         echo '<div class="acc-kpis"><div><b>'.self::m($f['current_balance_irr']).'</b><small>مانده • '.h($f['balance_nature']).'</small></div><div><b>'.self::m($f['recorded_sales_net_irr']).'</b><small>فروش ثبت‌شده</small></div><div><b>'.(int)$f['sales_document_count'].'</b><small>سند فروش</small></div><div><b>'.number_format((float)$f['outstanding_sales_quantity'],4).'</b><small>تحویل‌نشده</small></div><div><b>'.self::m($c['open_pipeline_irr']).'</b><small>Pipeline باز</small></div><div><b>'.self::m($c['weighted_pipeline_irr']).'</b><small>Pipeline وزنی</small></div></div></section>';
 
         echo '<section class="grid-2"><article class="card"><h3>مخاطبان</h3>';

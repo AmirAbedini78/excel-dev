@@ -10,20 +10,22 @@ final class AiRepository
         return (int)pdo()->lastInsertId();
     }
 
-    public static function queueChat(string $prompt,?int $companyId=null,?int $conversationId=null): int
+    public static function queueChat(string $prompt,?int $companyId=null,?int $conversationId=null,array $contextRefs=[]): int
     {
         $prompt=trim($prompt);if($prompt==='')throw new RuntimeException('متن درخواست خالی است.');
         if(mb_strlen($prompt)>12000)throw new RuntimeException('متن درخواست بیش از حد طولانی است.');
         $wid=Tenant::id();$uid=(int)Auth::user()['id'];
         if(!$companyId)$companyId=AccountingRepository::companyId()?:null;
         if($companyId && !self::companyOwned($wid,$companyId))throw new RuntimeException('شرکت انتخاب‌شده معتبر نیست.');
+        $pageContext=AiPageContext::resolve($wid,$companyId,$contextRefs);
         if(!$conversationId)$conversationId=self::createConversation($companyId,mb_substr($prompt,0,80));
         $context=AiToolRegistry::bootstrapContext($wid,$companyId);
+        if($pageContext)$context['page_context']=$pageContext;
         $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at)
             VALUES (?,?,?,?, 'agent_chat',?,'queued',100,'llm',?,NOW(),NOW())");
         $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
         $id=(int)pdo()->lastInsertId();
-        Audit::log('ai.job.queued','ai_jobs',$id,'ثبت درخواست برای موتور AI',null,null,['company_id'=>$companyId]);
+        Audit::log('ai.job.queued','ai_jobs',$id,'ثبت درخواست برای موتور AI',null,null,['company_id'=>$companyId,'page_context_entities'=>count((array)($pageContext['entities']??[]))]);
         return $id;
     }
 

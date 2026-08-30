@@ -7,13 +7,13 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: 71c303ce9e292da53114507bc47127019e54a878
+Baseline: 27b3b31dad821fa1a88f4eb0fa1d2b6a5519471a
 Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
 Latest closed milestone: v10.4 CRM-lite / Customer 360 — LIVE E2E CLOSED
 Working milestone: v10.5 Page-aware AI / Context Picker
-Working status: PLANNED / SOURCE-AUDIT-NEXT
-Current cycle: server-validated page/entity context attachment for module-aware AI
-Next cycles: Context Picker / Entity Chips → pilot data onboarding → Design Partner readiness
+Working status: IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING
+Current cycle: CRM Customer 360 typed context ref → server validation → AI read/proposal
+Next cycles: live Context Picker gate → Sales/Trade/Inventory entity refs → pilot data onboarding
 ```
 
 ## Scope فعال

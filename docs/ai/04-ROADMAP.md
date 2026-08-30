@@ -345,6 +345,15 @@ Live evidence:
 - Manual Contact persisted in UI: `مخاطب آزمایشی CRM` / `مسئول خرید`.
 
 ## v10.5 Cycle 8 — Page-aware AI / Context Picker
-Status: `PLANNED / SOURCE-AUDIT-NEXT`.
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`.
 
-Goal: users select rows/entities from the current page/module and attach them to AI as typed context references instead of retyping names/codes. Every reference must be workspace/company/RBAC validated server-side, ERP IDs must be resolved by the server, and fresh Tool reads remain the source of business truth. Initial implementation should follow the proven CRM/Trade/Inventory/Sales pages without changing Proposal/Approval safety boundaries.
+Cycle 8 r1 implements the first page-aware vertical slice on CRM Customer 360:
+- Customer page emits only a typed `party/id/source_page` reference.
+- `AiPageContext` validates workspace, active company, module/RBAC and canonical customer ownership server-side.
+- Only the resolved canonical ref is persisted under `ai_jobs.context_json.page_context`.
+- Worker accepts a validated `party` context for CRM Customer 360, Activity Proposal and Opportunity Proposal without requiring the user to retype the customer name.
+- Fresh Tool calls remain mandatory; context is an entity pointer, never a cached business fact.
+- If an explicitly named customer conflicts with the attached page context, the deterministic CRM route fails closed.
+- Proposal → Human Approval boundaries are unchanged.
+
+Live gate: open `CUS-003` Customer 360 → click `از AI درباره این مشتری بپرس` → verify chip → run context-only 360 read → create context-only Activity/Opportunity Proposals without approval → verify `party_id=3` → reject → run explicit mismatched customer and verify fail-closed. After this gate, extend the same Context Kernel to Sales Document, Trade Case, Item/Inventory and Warehouse.

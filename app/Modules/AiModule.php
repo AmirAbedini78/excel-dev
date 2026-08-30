@@ -5,7 +5,8 @@ final class AiModule
     {
         Tenant::requirePermission('ai.use');
         if($action==='ai_queue_chat'){
-            $id=AiRepository::queueChat((string)($_POST['prompt']??''),(int)($_POST['company_id']??0)?:null,(int)($_POST['conversation_id']??0)?:null);
+            $refs=AiPageContext::decodeRefs((string)($_POST['context_refs_json']??''));
+            $id=AiRepository::queueChat((string)($_POST['prompt']??''),(int)($_POST['company_id']??0)?:null,(int)($_POST['conversation_id']??0)?:null,$refs);
             flash('درخواست به صف موتور AI اضافه شد.');redirect('index.php?page=ai&job_id='.$id);
         }
         if($action==='ai_approve_proposal'){
@@ -37,8 +38,25 @@ final class AiModule
     private static function assistant(): void
     {
         $companies=AccountingRepository::companies();$current=AccountingRepository::companyId();
+        $contextRefs=AiPageContext::queryRefs();$pageContext=[];$contextError='';
+        if($contextRefs){
+            try{$pageContext=AiPageContext::resolve(Tenant::id(),$current,$contextRefs);}
+            catch(Throwable $e){$contextError=$e->getMessage();$contextRefs=[];}
+        }
         echo '<section class="card ai-hero"><div><span class="ai-kicker">Agent Control Plane</span><h2>به نرم‌افزار دستور بده، نه به منوها</h2><p>مثال: «برای مشتری فلانی از این سه کالا فاکتور پیش‌نویس بساز» یا «تراز آزمایشی را بررسی کن و مغایرت‌های مهم را بگو».</p></div><div class="ai-safety">عملیات نوشتنی → Proposal → تایید انسانی → اجرا</div></section>';
-        echo '<section class="card"><form method="post" class="ai-chat-form">'.csrf_field().'<input type="hidden" name="action" value="ai_queue_chat"><div class="ai-chat-context"><label>شرکت<select name="company_id">';foreach($companies as $c)echo '<option value="'.(int)$c['id'].'" '.((int)$c['id']===$current?'selected':'').'>'.h($c['name']).'</option>';echo '</select></label><span class="muted">پردازش LLM/RAG بیرون از cPanel انجام می‌شود.</span></div><textarea name="prompt" rows="4" required placeholder="مثلاً: آخرین خرید و فروش شرکت را تحلیل کن و اگر لازم است پیش‌نویس اقدام پیشنهاد بده..."></textarea><button class="btn primary">ارسال به ایجنت</button></form></section>';
+        if($contextError!=='')echo '<div class="alert danger">'.h($contextError).' زمینه صفحه به Job متصل نشد.</div>';
+        $contextHidden='';$contextChip='';$companyControl='';
+        if($pageContext){
+            $contextHidden='<input type="hidden" name="context_refs_json" value="'.h(json_encode($contextRefs,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)).'">';
+            $entity=(array)($pageContext['entities'][0]??[]);
+            $contextChip='<span class="badge">زمینه صفحه: '.h((string)($entity['code']??'')).' • '.h((string)($entity['label']??'')).'</span><a class="btn tiny" href="index.php?page=crm&company_id='.(int)$current.'&party_id='.(int)($entity['id']??0).'">بازگشت به مشتری</a><a class="btn tiny" href="index.php?page=ai&company_id='.(int)$current.'">حذف زمینه</a>';
+            $companyControl='<input type="hidden" name="company_id" value="'.(int)$current.'"><span class="muted">شرکت: '.h((string)($pageContext['company_name']??'')).'</span>';
+        }else{
+            $companyControl='<label>شرکت<select name="company_id">';
+            foreach($companies as $c)$companyControl.='<option value="'.(int)$c['id'].'" '.((int)$c['id']===$current?'selected':'').'>'.h($c['name']).'</option>';
+            $companyControl.='</select></label>';
+        }
+        echo '<section class="card"><form method="post" class="ai-chat-form">'.csrf_field().'<input type="hidden" name="action" value="ai_queue_chat">'.$contextHidden.'<div class="ai-chat-context">'.$companyControl.$contextChip.'<span class="muted">پردازش LLM/RAG بیرون از cPanel انجام می‌شود.</span></div><textarea name="prompt" rows="4" required placeholder="'.($pageContext?'مثلاً: وضعیت 360 این مشتری را بده.':'مثلاً: آخرین خرید و فروش شرکت را تحلیل کن و اگر لازم است پیش‌نویس اقدام پیشنهاد بده...').'"></textarea><button class="btn primary">ارسال به ایجنت</button></form></section>';
         $jobs=AiRepository::userJobs(25);$liveJobs=array_values(array_filter($jobs,fn($x)=>in_array((string)$x['status'],['queued','leased','running'],true)));
         if($liveJobs){
             echo '<section class="card" id="ai-live-panel"><div class="section-title"><div><h2>گزارش زنده موتور AI</h2><p class="muted">بدون رفرش صفحه؛ اتصال زنده SSE و در صورت محدودیت هاست، Polling سبک خودکار.</p></div><span class="badge" data-ai-transport>در حال اتصال…</span></div>';
