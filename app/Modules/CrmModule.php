@@ -15,8 +15,12 @@ final class CrmModule
     public static function render(): void
     {
         Tenant::requirePermission('crm.view');$section=(string)($_GET['section']??'customers');if(!in_array($section,['customers','pipeline','followups'],true))$section='customers';
-        render_header('CRM و فروش','Customer 360 روی acc_parties؛ بدون master مشتری موازی.');
-        echo '<nav class="acc-tabs"><a class="'.($section==='customers'?'active':'').'" href="index.php?page=crm">مشتریان</a><a class="'.($section==='pipeline'?'active':'').'" href="index.php?page=crm&section=pipeline">Pipeline</a><a class="'.($section==='followups'?'active':'').'" href="index.php?page=crm&section=followups">پیگیری‌ها</a></nav>';
+        $cid=AccountingRepository::companyId();$company=AccountingRepository::company();$companies=AccountingRepository::companies();
+        render_header('CRM و فروش','Customer 360 روی acc_parties؛ شرکت فعال: '.($company['name']??'نامشخص').'؛ بدون master مشتری موازی.');
+        echo '<section class="card"><form method="get" class="filters compact"><input type="hidden" name="page" value="crm"><input type="hidden" name="section" value="'.h($section).'"><label>شرکت<select name="company_id" onchange="this.form.submit()">';
+        foreach($companies as $co)echo '<option value="'.(int)$co['id'].'" '.((int)$co['id']===$cid?'selected':'').'>'.h($co['name']).'</option>';
+        echo '</select></label><noscript><button class="btn">تغییر شرکت</button></noscript></form></section>';
+        echo '<nav class="acc-tabs"><a class="'.($section==='customers'?'active':'').'" href="index.php?page=crm&company_id='.$cid.'">مشتریان</a><a class="'.($section==='pipeline'?'active':'').'" href="index.php?page=crm&company_id='.$cid.'&section=pipeline">Pipeline</a><a class="'.($section==='followups'?'active':'').'" href="index.php?page=crm&company_id='.$cid.'&section=followups">پیگیری‌ها</a></nav>';
         $partyId=(int)($_GET['party_id']??0);
         if($partyId)self::customer($partyId);elseif($section==='pipeline')self::pipeline();elseif($section==='followups')self::followups();else self::customers();
         render_footer();
@@ -27,16 +31,18 @@ final class CrmModule
     private static function customers(): void
     {
         $q=trim((string)($_GET['q']??''));$rows=CrmDomain::searchCustomers(Tenant::id(),AccountingRepository::companyId(),$q);
-        echo '<section class="card"><form method="get" class="filters compact"><input type="hidden" name="page" value="crm"><input name="q" value="'.h($q).'" placeholder="نام، کد، موبایل..."><button class="btn">جستجو</button></form></section>';
+        $cid=AccountingRepository::companyId();$company=AccountingRepository::company();
+        echo '<section class="card"><form method="get" class="filters compact"><input type="hidden" name="page" value="crm"><input type="hidden" name="company_id" value="'.$cid.'"><input name="q" value="'.h($q).'" placeholder="نام، کد، موبایل..."><button class="btn">جستجو</button></form></section>';
         echo '<section class="card table-card"><div class="table-wrap"><table><thead><tr><th>کد</th><th>مشتری</th><th>موبایل</th><th>سقف اعتبار</th><th></th></tr></thead><tbody>';
-        foreach($rows as $r)echo '<tr><td>'.h($r['code']??'—').'</td><td>'.h($r['name']).'</td><td>'.h($r['mobile']??'—').'</td><td>'.self::m($r['credit_limit']).'</td><td><a class="btn tiny" href="index.php?page=crm&party_id='.(int)$r['id'].'">Customer 360</a></td></tr>';
-        if(!$rows)echo '<tr><td colspan="5">مشتری پیدا نشد.</td></tr>';echo '</tbody></table></div></section>';
+        foreach($rows as $r)echo '<tr><td>'.h($r['code']??'—').'</td><td>'.h($r['name']).'</td><td>'.h($r['mobile']??'—').'</td><td>'.self::m($r['credit_limit']).'</td><td><a class="btn tiny" href="index.php?page=crm&company_id='.$cid.'&party_id='.(int)$r['id'].'">Customer 360</a></td></tr>';
+        if(!$rows)echo '<tr><td colspan="5">در شرکت فعال «'.h($company['name']??'نامشخص').'» مشتری پیدا نشد.</td></tr>';echo '</tbody></table></div></section>';
     }
 
     private static function customer(int $partyId): void
     {
         $d=CrmDomain::customer360(Tenant::id(),AccountingRepository::companyId(),$partyId);$p=$d['party'];$f=$d['financial'];$c=$d['crm'];
-        echo '<section class="card"><div class="section-title"><div><h2>'.h($p['name']).'</h2><p class="muted">'.h(($p['code']??'').' • '.($p['mobile']??'')).'</p></div><a class="btn tiny" href="index.php?page=crm">بازگشت</a></div>';
+        $cid=AccountingRepository::companyId();
+        echo '<section class="card"><div class="section-title"><div><h2>'.h($p['name']).'</h2><p class="muted">'.h(($p['code']??'').' • '.($p['mobile']??'')).'</p></div><a class="btn tiny" href="index.php?page=crm&company_id='.$cid.'">بازگشت</a></div>';
         echo '<div class="acc-kpis"><div><b>'.self::m($f['current_balance_irr']).'</b><small>مانده • '.h($f['balance_nature']).'</small></div><div><b>'.self::m($f['recorded_sales_net_irr']).'</b><small>فروش ثبت‌شده</small></div><div><b>'.(int)$f['sales_document_count'].'</b><small>سند فروش</small></div><div><b>'.number_format((float)$f['outstanding_sales_quantity'],4).'</b><small>تحویل‌نشده</small></div><div><b>'.self::m($c['open_pipeline_irr']).'</b><small>Pipeline باز</small></div><div><b>'.self::m($c['weighted_pipeline_irr']).'</b><small>Pipeline وزنی</small></div></div></section>';
 
         echo '<section class="grid-2"><article class="card"><h3>مخاطبان</h3>';
@@ -56,7 +62,8 @@ final class CrmModule
         $d=CrmDomain::pipelineSummary(Tenant::id(),AccountingRepository::companyId());
         echo '<section class="card"><div class="acc-kpis"><div><b>'.(int)$d['open_count'].'</b><small>فرصت باز</small></div><div><b>'.self::m($d['open_amount_irr']).'</b><small>Pipeline</small></div><div><b>'.self::m($d['weighted_amount_irr']).'</b><small>Weighted</small></div></div></section>';
         echo '<section class="card table-card"><div class="table-wrap"><table><thead><tr><th>فرصت</th><th>مشتری</th><th>مرحله</th><th>مبلغ</th><th>احتمال</th><th>عملیات</th></tr></thead><tbody>';
-        foreach($d['opportunities'] as $o){echo '<tr><td>'.h($o['opportunity_no'].' - '.$o['title']).'</td><td><a href="index.php?page=crm&party_id='.(int)$o['party_id'].'">'.h($o['party_name']).'</a></td><td>'.h($o['stage']).'</td><td>'.self::m($o['amount_irr']).'</td><td>'.number_format((float)$o['probability']).'%</td><td>';
+        $cid=AccountingRepository::companyId();
+        foreach($d['opportunities'] as $o){echo '<tr><td>'.h($o['opportunity_no'].' - '.$o['title']).'</td><td><a href="index.php?page=crm&company_id='.$cid.'&party_id='.(int)$o['party_id'].'">'.h($o['party_name']).'</a></td><td>'.h($o['stage']).'</td><td>'.self::m($o['amount_irr']).'</td><td>'.number_format((float)$o['probability']).'%</td><td>';
             if(Tenant::can('crm.manage')&&(string)$o['status']==='open')echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="crm_move_opportunity"><input type="hidden" name="opportunity_id" value="'.(int)$o['id'].'"><select name="stage"><option value="qualification">Qualification</option><option value="proposal">Proposal</option><option value="negotiation">Negotiation</option><option value="won">Won</option><option value="lost">Lost</option></select><button class="btn tiny">تغییر</button></form>';echo '</td></tr>';}
         echo '</tbody></table></div></section>';
     }
@@ -66,7 +73,8 @@ final class CrmModule
         $d=CrmDomain::followupQueue(Tenant::id(),AccountingRepository::companyId(),7);
         echo '<section class="card"><div class="acc-kpis"><div><b>'.(int)$d['overdue_count'].'</b><small>عقب‌افتاده</small></div><div><b>'.(int)$d['today_count'].'</b><small>امروز</small></div><div><b>'.(int)$d['upcoming_count'].'</b><small>آینده</small></div></div></section>';
         echo '<section class="card table-card"><div class="table-wrap"><table><thead><tr><th>سررسید</th><th>مشتری</th><th>موضوع</th><th>وضعیت</th><th></th></tr></thead><tbody>';
-        foreach($d['rows'] as $a){echo '<tr><td>'.h(AccountingRepository::faDate($a['due_date'])).'</td><td><a href="index.php?page=crm&party_id='.(int)$a['party_id'].'">'.h($a['party_name']).'</a></td><td>'.h($a['subject']).'</td><td>'.h($a['bucket']).'</td><td>';
+        $cid=AccountingRepository::companyId();
+        foreach($d['rows'] as $a){echo '<tr><td>'.h(AccountingRepository::faDate($a['due_date'])).'</td><td><a href="index.php?page=crm&company_id='.$cid.'&party_id='.(int)$a['party_id'].'">'.h($a['party_name']).'</a></td><td>'.h($a['subject']).'</td><td>'.h($a['bucket']).'</td><td>';
             if(Tenant::can('crm.manage'))echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="crm_complete_activity"><input type="hidden" name="activity_id" value="'.(int)$a['id'].'"><button class="btn tiny">انجام شد</button></form>';echo '</td></tr>';}
         echo '</tbody></table></div></section>';
     }

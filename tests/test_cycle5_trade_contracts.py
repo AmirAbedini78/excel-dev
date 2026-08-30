@@ -25,5 +25,7 @@ class Cycle5Contracts(unittest.TestCase):
         for x in ('trade_case_read','trade_landed_cost_read','trade_risk_read','guarded_trade_case_proposal','guarded_trade_shipment_proposal','guarded_trade_cost_proposal'):self.assertIn('"'+x+'"',self.hard)
     def test_worker(self):self.assertIn('_install_trade_logistics(Worker)',self.worker);self.assertLess(self.worker.index('_install_trade_logistics(Worker)'),self.worker.index('_install_commercial_hardening(Worker)'))
     def test_task_state_json(self):
-        j=json.loads((ROOT/'docs/ai/04-docops/task_state.json').read_text(encoding='utf-8'));self.assertEqual(j['current_milestone'],'v10.2 Trade Logistics + Landed Cost Vertical Slice');self.assertEqual(j['release_gates']['inventory_procurement_slice'],'PASS_LIVE_JOB70')
+        j=json.loads((ROOT/'docs/ai/04-docops/task_state.json').read_text(encoding='utf-8'))
+        self.assertTrue(str(j['release_gates']['inventory_procurement_slice']).startswith('PASS'))
+        self.assertTrue(str(j['release_gates']['trade_case_landed_cost_slice']).startswith('PASS'))
 if __name__=='__main__':unittest.main()

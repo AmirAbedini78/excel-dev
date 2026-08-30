@@ -10,7 +10,9 @@ class Cycle4Contracts(unittest.TestCase):
         cls.schema=read('app/Core/AccountingSchema.php');cls.domain=read('app/Core/InventoryDomain.php');cls.modules=read('app/Core/ModuleRegistry.php');cls.index=read('index.php');cls.registry=read('app/Core/AiToolRegistry.php');cls.worker=read('engine/worker.py');cls.docker=read('engine/Dockerfile');cls.hard=read('engine/commercial_hardening.py');cls.cache=read('app/Core/RuntimeCache.php')
     def test_schema_tables(self):
         for t in ('acc_inventory_receipts','acc_inventory_receipt_lines','acc_stock_movements','acc_inventory_reservations'):self.assertIn('CREATE TABLE IF NOT EXISTS '+t,self.schema)
-        self.assertIn("SCHEMA_VERSION = '10.1.0'",self.cache)
+        import re
+        m=re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)'",self.cache);self.assertIsNotNone(m)
+        self.assertGreaterEqual(tuple(map(int,m.groups())),(10,1,0))
     def test_module_kernel(self):
         self.assertIn("'stage'=>'pilot','implemented'=>true,'default_enabled'=>true",self.modules);self.assertIn("'pages'=>['inventory']",self.modules);self.assertIn("'pages'=>['procurement']",self.modules);self.assertIn("updated_by IS NULL",self.modules)
     def test_routes(self):

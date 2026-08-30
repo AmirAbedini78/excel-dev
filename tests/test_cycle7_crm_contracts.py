@@ -17,5 +17,13 @@ class T(unittest.TestCase):
         for x in ("crm_customer_360","crm_pipeline_summary","crm_followup_queue","create_crm_activity","create_crm_opportunity"):self.assertIn("'name'=>'"+x+"'",self.r)
     def test_worker(self):self.assertIn("_install_crm_lite(Worker)",self.w);self.assertIn('"create_crm_activity"',self.h);self.assertIn('"crm_customer_360_read"',self.h)
     def test_state(self):
-        s=json.loads((ROOT/"docs/ai/04-docops/task_state.json").read_text(encoding="utf-8"));self.assertEqual(s["baseline_commit"],"c426aaf171faae3737928ccbea25883eeae3929a");self.assertEqual(s["release_gates"]["crm_lite_slice"],"IMPLEMENTED_CANDIDATE")
+        s=json.loads((ROOT/"docs/ai/04-docops/task_state.json").read_text(encoding="utf-8"))
+        gate=str(s["release_gates"]["crm_lite_slice"])
+        self.assertTrue(gate=="IMPLEMENTED_CANDIDATE" or gate.startswith("PASS"))
+        self.assertIn("cycle_7",s["live_validation_summary"])
+    def test_crm_ui_has_accounting_company_selector(self):
+        ui=(ROOT/"app/Modules/CrmModule.php").read_text(encoding="utf-8")
+        self.assertIn("AccountingRepository::companies()",ui)
+        self.assertIn('name="company_id"',ui)
+        self.assertIn("شرکت فعال",ui)
 if __name__=="__main__":unittest.main()

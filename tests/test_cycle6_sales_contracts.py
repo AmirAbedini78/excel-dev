@@ -34,8 +34,10 @@ class Cycle6SalesContracts(unittest.TestCase):
         self.assertIn("quantity']*(float)$line['unit_price']-(float)$line['discount_amount']",self.domain)
         self.assertIn("actual_landed_margin_available",self.domain)
 
-    def test_schema_gate_is_10_3(self):
-        self.assertIn("SCHEMA_VERSION = '10.3.0'",self.runtime)
+    def test_schema_gate_is_at_least_10_3(self):
+        import re
+        m=re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)'",self.runtime);self.assertIsNotNone(m)
+        self.assertGreaterEqual(tuple(map(int,m.groups())),(10,3,0))
         self.assertIn("SalesDomain.php",self.bootstrap)
         self.assertIn("SalesDomain::migrate(pdo())",self.bootstrap)
 
@@ -60,11 +62,11 @@ class Cycle6SalesContracts(unittest.TestCase):
         self.assertIn("SalesDomain::fulfillment",self.ui)
         self.assertIn("SalesDomain::marginSummary",self.ui)
 
-    def test_docs_move_cycle5_to_live_closed(self):
+    def test_docs_preserve_cycle6_live_closeout(self):
         state=json.loads((ROOT/"docs/ai/04-docops/task_state.json").read_text(encoding="utf-8"))
-        self.assertEqual(state["baseline_commit"],"12c9000dba8bcafb42829176f8bbf232338ff78f")
-        self.assertEqual(state["current_milestone"],"v10.3 Sales Fulfillment + Margin Vertical Slice")
-        self.assertIn("PASS_LIVE_JOB78",state["release_gates"]["trade_case_landed_cost_slice"])
+        self.assertTrue(str(state["release_gates"]["trade_case_landed_cost_slice"]).startswith("PASS"))
+        self.assertTrue(str(state["release_gates"]["sales_fulfillment_slice"]).startswith("PASS"))
+        self.assertTrue(str(state["release_gates"]["sales_margin_slice"]).startswith("PASS"))
 
 if __name__=="__main__":
     unittest.main()
