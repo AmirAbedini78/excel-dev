@@ -45,6 +45,38 @@ class SalesFulfillmentAgentTests(unittest.TestCase):
         self.assertEqual(proposal,{"sales_doc_id":21,"warehouse_id":1,"lines":[{"sales_line_id":31,"quantity":2.0}]})
         self.assertIn("تا تأیید انسانی",text)
 
+    def test_selective_reservation_uses_requested_item_only(self):
+        original=self.w.tool
+        def tool(job,name,args,call_id):
+            if name=="sales_fulfillment":
+                self.w.calls.append((name,args,call_id))
+                return {"sales_doc_id":21,"document_no":"AI-SAL-TEST-1","customer_name":"مشتری تست","ordered_quantity":6,"reserved_quantity":0,"delivered_quantity":0,"outstanding_quantity":6,
+                        "rows":[
+                            {"sales_line_id":31,"item_code":"PLC-S7-1200","item_name":"PLC S7-1200 CPU 1212C","ordered_qty":2,"reserved_qty":0,"delivered_qty":0,"outstanding_qty":2},
+                            {"sales_line_id":32,"item_code":"SENSOR-PROX","item_name":"سنسور مجاورتی M18","ordered_qty":4,"reserved_qty":0,"delivered_qty":0,"outstanding_qty":4},
+                        ]}
+            return original(job,name,args,call_id)
+        self.w.tool=tool
+        text,meta=sf.process_reserve(self.w,self.job,'برای سند فروش «AI-SAL-TEST-1» 2 عدد «PLC S7-1200 CPU 1212C» را در انبار «انبار مرکزی» رزرو کن')
+        self.assertEqual(meta["mode"],"guarded_sales_reservation_proposal")
+        proposal=[c for c in self.w.calls if c[0]=="reserve_sales_stock"][0][1]
+        self.assertEqual(proposal,{"sales_doc_id":21,"warehouse_id":1,"lines":[{"sales_line_id":31,"quantity":2.0}]})
+        self.assertIn("PLC-S7-1200",text)
+
+    def test_selective_reservation_rejects_qty_above_outstanding(self):
+        original=self.w.tool
+        def tool(job,name,args,call_id):
+            if name=="sales_fulfillment":
+                self.w.calls.append((name,args,call_id))
+                return {"sales_doc_id":21,"document_no":"AI-SAL-TEST-1","customer_name":"مشتری تست","ordered_quantity":2,"reserved_quantity":0,"delivered_quantity":0,"outstanding_quantity":2,
+                        "rows":[{"sales_line_id":31,"item_code":"PLC-S7-1200","item_name":"PLC S7-1200 CPU 1212C","ordered_qty":2,"reserved_qty":0,"delivered_qty":0,"outstanding_qty":2}]}
+            return original(job,name,args,call_id)
+        self.w.tool=tool
+        text,meta=sf.process_reserve(self.w,self.job,'برای سند فروش «AI-SAL-TEST-1» 3 عدد «PLC-S7-1200» را در انبار «انبار مرکزی» رزرو کن')
+        self.assertEqual(meta["mode"],"guarded_sales_reservation_blocked")
+        self.assertFalse(any(c[0]=="reserve_sales_stock" for c in self.w.calls))
+        self.assertIn("باقیمانده 2",text)
+
     def test_delivery_uses_reserved_quantity_only(self):
         text,meta=sf.process_delivery(self.w,self.job,'رزرو سند فروش «AI-SAL-TEST-1» را از انبار «انبار مرکزی» تحویل کن')
         self.assertEqual(meta["mode"],"guarded_sales_delivery_proposal")

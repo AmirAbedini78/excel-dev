@@ -5,7 +5,7 @@ import hashlib, json, re
 from typing import Any
 
 DIGITS=str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩","01234567890123456789")
-PATCH_VERSION="v10.3-sales-fulfillment-r1"
+PATCH_VERSION="v10.3-sales-fulfillment-r1-selective-reservation-r1"
 
 def norm(x:Any)->str:
     s=str(x or "").translate(DIGITS).replace("ي","ی").replace("ك","ک").replace("\u200c"," ")
@@ -43,6 +43,34 @@ def resolve_unique(candidates:list[dict[str,Any]],query:str,keys:tuple[str,...])
     if len(candidates)==1:return candidates[0]
     return None
 
+def requested_line(prompt:str)->tuple[float,str]:
+    # Parse explicit '<qty> number quoted-item' for selective reservation.
+    s=str(prompt or "").translate(DIGITS)
+    m=re.search(r"(?<![\d.])(\d+(?:\.\d+)?)\s*(?:عدد|واحد)?\s*[«\"']([^»\"'\r\n]{1,190})[»\"']",s,re.I)
+    if not m:return 0.0,""
+    return number(m.group(1)),m.group(2).strip()
+
+def resolve_sales_line(candidates:list[dict[str,Any]],query:str)->dict[str,Any]|None:
+    q=norm(query)
+    if not q:return None
+    exact=[r for r in candidates if any(norm(r.get(k))==q for k in ("item_code","item_name") if r.get(k) is not None)]
+    if len(exact)==1:return exact[0]
+    fuzzy=[r for r in candidates if any(q in norm(r.get(k)) or norm(r.get(k)) in q for k in ("item_code","item_name") if r.get(k) is not None and norm(r.get(k)))]
+    return fuzzy[0] if len(fuzzy)==1 else None
+
+def reservation_lines(prompt:str,fulfillment:Any)->tuple[list[dict[str,Any]],str]:
+    candidates=[r for r in rows(fulfillment) if number(r.get("outstanding_qty"))>0]
+    qty,item_query=requested_line(prompt)
+    if not item_query:
+        return [{"sales_line_id":int(r["sales_line_id"]),"quantity":number(r.get("outstanding_qty"))} for r in candidates],""
+    line=resolve_sales_line(candidates,item_query)
+    if not line:return [],f"آیتم «{item_query}» در ردیف‌های باز این سند یکتا پیدا نشد."
+    outstanding=number(line.get("outstanding_qty"))
+    if qty<=0:return [],"مقدار رزرو باید بیشتر از صفر باشد."
+    if qty>outstanding+0.000001:
+        return [],f"مقدار درخواستی {qty:g} از باقیمانده {outstanding:g} آیتم «{line.get('item_code') or line.get('item_name') or item_query}» بیشتر است."
+    return [{"sales_line_id":int(line["sales_line_id"]),"quantity":qty}],str(line.get("item_code") or line.get("item_name") or item_query)
+
 def is_reserve(p:str)->bool:
     n=norm(p);return "سند فروش" in n and "رزرو" in n and action_word(n) and not any(x in n for x in ("گزارش","وضعیت"))
 
@@ -77,14 +105,18 @@ def process_reserve(worker:Any,job:dict[str,Any],prompt:str):
     if not doc:return blocked(f"سند فروش «{sq}» یکتا پیدا نشد؛ Proposal ساخته نشد.",tools,"guarded_sales_reservation_blocked")
     if not wh:return blocked(f"انبار «{wq}» یکتا پیدا نشد؛ Proposal ساخته نشد.",tools,"guarded_sales_reservation_blocked")
     ful=worker.tool(job,"sales_fulfillment",{"sales_doc_id":int(doc["id"]),"warehouse_id":int(wh["id"])},stable(int(job["id"]),"sales-ful",{"d":doc["id"],"w":wh["id"]}));tools.append("sales_fulfillment")
-    lines=[{"sales_line_id":int(r["sales_line_id"]),"quantity":number(r.get("outstanding_qty"))} for r in rows(ful) if number(r.get("outstanding_qty"))>0]
-    if not lines:return blocked("این سند فروش باقیمانده قابل رزرو ندارد؛ Proposal ساخته نشد.",tools,"guarded_sales_reservation_blocked")
+    lines,selection=reservation_lines(prompt,ful)
+    if not lines:
+        _,explicit=requested_line(prompt)
+        if explicit:return blocked(selection or "ردیف انتخابی برای رزرو معتبر نیست؛ Proposal ساخته نشد.",tools,"guarded_sales_reservation_blocked")
+        return blocked("این سند فروش باقیمانده قابل رزرو ندارد؛ Proposal ساخته نشد.",tools,"guarded_sales_reservation_blocked")
     args={"sales_doc_id":int(doc["id"]),"warehouse_id":int(wh["id"]),"lines":lines}
-    worker.trace(job,"proposal_request","Creating sales reservation proposal",{"human_approval_required":True})
+    worker.trace(job,"proposal_request","Creating sales reservation proposal",{"human_approval_required":True,"selective_line":bool(selection)})
     pr=worker.tool(job,"reserve_sales_stock",args,stable(int(job["id"]),"sales-reserve-proposal",args));tools.append("reserve_sales_stock")
     if not isinstance(pr,dict) or int(pr.get("proposal_id") or 0)<=0:return blocked("Control Plane ایجاد Proposal رزرو فروش را تأیید نکرد.",tools,"guarded_sales_reservation_blocked")
     pid=int(pr["proposal_id"]);worker.trace(job,"proposal_created","Sales reservation proposal created",{"proposal_id":pid,"human_approval_required":True})
-    return f"Proposal #{pid} برای رزرو موجودی سند {doc.get('document_no') or sq} در انبار {wh.get('name') or wq} آماده شد. تا تأیید انسانی موجودی رزرو نمی‌شود.",{"provider":"guarded_tool_orchestrator","model":"none","mode":"guarded_sales_reservation_proposal","tools_used":tools,"proposal_id":pid,"proposal_status":"awaiting_human_approval","awaiting_human_approval":True,"patch_version":PATCH_VERSION}
+    scope=f" برای {selection}" if selection else ""
+    return f"Proposal #{pid} برای رزرو موجودی{scope} از سند {doc.get('document_no') or sq} در انبار {wh.get('name') or wq} آماده شد. تا تأیید انسانی موجودی رزرو نمی‌شود.",{"provider":"guarded_tool_orchestrator","model":"none","mode":"guarded_sales_reservation_proposal","tools_used":tools,"proposal_id":pid,"proposal_status":"awaiting_human_approval","awaiting_human_approval":True,"patch_version":PATCH_VERSION}
 
 def process_delivery(worker:Any,job:dict[str,Any],prompt:str):
     tools=[];sq=sales_no(prompt);wq=quoted_after(prompt,"انبار")
