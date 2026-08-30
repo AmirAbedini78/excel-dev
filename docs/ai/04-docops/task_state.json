@@ -1,14 +1,14 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "Modular AI-Native Business Operations Platform; first vertical = Finance/Trade for B2B trading/import/distribution companies",
-  "baseline_commit": "c426aaf171faae3737928ccbea25883eeae3929a",
-  "baseline_milestone": "v10.3 Sales Fulfillment + Margin LIVE E2E CLOSED",
+  "baseline_commit": "71c303ce9e292da53114507bc47127019e54a878",
+  "baseline_milestone": "v10.4 CRM-lite / Customer 360 LIVE E2E CLOSED",
   "baseline_status": "LIVE-VALIDATED",
-  "current_milestone": "v10.4 CRM-lite / Customer 360 Vertical Slice",
-  "milestone_status": "IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING",
-  "live_validation_pending": true,
+  "current_milestone": "v10.5 Page-aware AI / Context Picker",
+  "milestone_status": "PLANNED / SOURCE-AUDIT-NEXT",
+  "live_validation_pending": false,
   "release_contract": "v10-modular-pilot-v1",
-  "active_task": "Live-validate acc_parties → Customer 360 → Contact/Opportunity/Activity → Pipeline/Follow-up and Proposal/Human Approval.",
+  "active_task": "Source-audit and implement page-aware AI / Context Picker with typed server-validated entity references on proven module pages.",
   "in_scope": [
     "workspace module enable/disable and dependency contract",
     "local-first model provider gateway with OpenAI-compatible fallback",
@@ -54,7 +54,7 @@
     "finance_action_coverage": "PASS_LIVE",
     "inventory_slice": "PASS_LIVE_JOB70",
     "procurement_slice": "PASS_LIVE_JOB70",
-    "crm_lite_slice": "IMPLEMENTED_CANDIDATE",
+    "crm_lite_slice": "PASS_LIVE_JOB93_PROPOSAL14_15_CONTACT",
     "trade_intelligence_slice": "PASS_LIVE_JOB78",
     "design_partner_demo": "PLANNED_FRIDAY",
     "finance_capability_matrix": "PASS_SOURCE_AUDIT",
@@ -70,8 +70,8 @@
     "sales_selective_reservation": "PASS_LIVE_JOB83_PROPOSAL12_EXECUTED",
     "sales_delivery": "PASS_LIVE_JOB84_PROPOSAL13_EXECUTED"
   },
-  "updated_at": "2026-08-30",
-  "last_live_validation_job": 87,
+  "updated_at": "2026-08-31",
+  "last_live_validation_job": 93,
   "live_validation_summary": {
     "v9_3": "Job #54 -> Proposal #3 -> human approval -> balanced AI draft AI-VCH-20260826-202025-9F19 -> exact two-article product UI verification PASS",
     "module_kernel": "Module Center plus workspace AI disable/enable and route/menu gating PASS in product UI",
@@ -82,6 +82,6 @@
     "cycle_4": "LIVE E2E PASS: Job #66 warehouse discovery; Job #68 expected inbound 2; Job #69 Proposal #7; human approval created RCV-20260829-024216-D32F with accepted 2/rejected 0 into WH-MAIN; UI showed on_hand 2, available 2, expected inbound 0; Job #70 grounded inventory confirmed 2/0/2/0. DECIMAL read hotfix committed at 53d8296.",
     "cycle_5": "LIVE E2E + PERFORMANCE PASS: Job #71 Proposal #8 approved to TRD-20260829-171042-90E6; Job #72 Proposal #9 approved to SHP-20260829-192303-3C8C; Jobs #73/#74 Proposals #10/#11 proved estimated 600m and actual override/projected 620m; Job #75 grounded landed cost correct; manual customs hold then Job #76 grounded high risk; control-plane keep-alive commit 12c9000 reduced equivalent reads to Job #77 0.2s and Job #78 0.3s, both within deterministic budget.",
     "cycle_6": "LIVE E2E PASS: Job #79 grounded Manager Brief; Job #81 fulfillment read; Job #82 exposed zero-stock SENSOR-PROX and triggered selective-reservation hotfix; Job #83 Proposal #12 reserved only PLC line 28 qty 2 and was human-approved; Job #84 Proposal #13 delivered only the reserved PLC and human approval created DLV-20260830-163108-188D; UI showed revenue ex-tax 370m, COGS 620m, gross margin -250m, -67.6%, actual_landed; Job #85 inventory reached PLC 0/0/0; Job #86 fulfillment showed PLC delivered2/outstanding0 and SENSOR-PROX outstanding4; Job #87 independently confirmed actual-landed margin at 4.7s budget PASS. Selective reservation hotfix commit 1638c458.",
-    "cycle_7": "IMPLEMENTED CANDIDATE: acc_parties canonical; additive CRM contacts/opportunities/activities; Customer 360, Pipeline, Follow-up reads; Proposal-only Activity/Opportunity actions. Live validation pending."
+    "cycle_7": "LIVE E2E PASS: CRM company-context hotfix commit 71c303c + GitHub Commercial MVP Gate Run #19 success; Customer list loaded canonical acc_parties; Job #88 grounded CUS-003 Customer 360 at balance 727.1m debtor, Sales 1,157.2m, 3 docs, undelivered 29; Job #89 Proposal #14 approved Activity تماس برای بررسی سفارش بعدی due 1405/06/12; Job #90 grounded follow-up queue 0 overdue/0 today/1 upcoming; Job #91 Proposal #15 approved Opportunity OPP-20260831-011700-86AC at qualification, 900m, 50%; Job #92 grounded Pipeline 1 open/900m/450m weighted; Job #93 re-read Customer 360 with unchanged Finance/Sales truth plus new CRM facts; manual Contact مخاطب آزمایشی CRM / مسئول خرید persisted in UI."
   }
 }

@@ -7,13 +7,13 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: c426aaf171faae3737928ccbea25883eeae3929a
+Baseline: 71c303ce9e292da53114507bc47127019e54a878
 Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
-Latest closed milestone: v10.3 Sales Fulfillment + Margin — LIVE E2E CLOSED
-Working milestone: v10.4 CRM-lite / Customer 360
-Working status: IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING
-Current cycle: Customer 360 + Contact + Opportunity/Pipeline + Activity/Follow-up over acc_parties
-Next cycles: live CRM gate → page-aware AI / Context Picker → pilot data onboarding / Design Partner readiness
+Latest closed milestone: v10.4 CRM-lite / Customer 360 — LIVE E2E CLOSED
+Working milestone: v10.5 Page-aware AI / Context Picker
+Working status: PLANNED / SOURCE-AUDIT-NEXT
+Current cycle: server-validated page/entity context attachment for module-aware AI
+Next cycles: Context Picker / Entity Chips → pilot data onboarding → Design Partner readiness
 ```
 
 ## Scope فعال
@@ -315,3 +315,21 @@ Status: `LIVE E2E CLOSED`.
 
 Cycle 6 therefore proves the live chain:
 `Sales Document → Selective Reservation → Human Approval → Delivery → Outbound Stock Ledger → Actual Landed COGS → Gross Margin → Cross-module Manager Brief`.
+
+
+### v10.4 Cycle 7 live closeout — Jobs #88–#93
+
+Status: `LIVE E2E CLOSED`.
+
+- CRM company context hotfix commit `71c303ce9e292da53114507bc47127019e54a878` restored explicit Accounting company selection; GitHub `Commercial MVP Gate` Run #19 completed `success`.
+- Product UI on `شرکت دمو آریا تجهیز هوشمند` loaded canonical `acc_parties` customers including `CUS-003 کارخانه بهین بسته‌بندی`; no parallel CRM customer master was introduced.
+- Initial Customer 360 UI/read reconciled customer truth: balance `727,100,000 IRR debtor`, recorded Sales `1,157,200,000 IRR`, `3` Sales documents, outstanding undelivered quantity `29`.
+- Job #88 grounded the same Customer 360 through `search_parties → crm_customer_360`, no LLM, `0.8s`, with Pipeline `0` and no next follow-up.
+- Job #89 created medium-risk Proposal #14 through `create_crm_activity`; no Activity existed before approval. Human approval persisted `تماس برای بررسی سفارش بعدی`, due `1405/06/12`.
+- Product Follow-up queue showed `0 overdue / 0 today / 1 upcoming`; Job #90 independently grounded the same queue through `crm_followup_queue` in `0.5s`.
+- Job #91 created medium-risk Proposal #15 through `create_crm_opportunity`; human approval persisted `OPP-20260831-011700-86AC`, title `تامین سری بعدی PLC`, stage `qualification`, amount `900,000,000 IRR`, probability `50%`.
+- Product Pipeline showed `1` open opportunity, `900,000,000 IRR` open Pipeline and `450,000,000 IRR` weighted; Job #92 independently grounded the same values through `crm_pipeline_summary` in `0.5s`.
+- Job #93 re-read Customer 360 after both CRM writes: Finance/Sales facts remained unchanged while Pipeline became `900,000,000 / 450,000,000 IRR` and next follow-up became `2026-09-03 | تماس برای بررسی سفارش بعدی`.
+- Manual Contact gate passed in the product UI: `مخاطب آزمایشی CRM` / `مسئول خرید` persisted and rendered under the same Customer 360.
+- Cycle 7 therefore proves the live chain:
+  `acc_parties customer → Customer 360 → Contact → Activity Proposal → Human Approval → Follow-up Queue → Opportunity Proposal → Human Approval → Pipeline → grounded Customer 360 re-read`.

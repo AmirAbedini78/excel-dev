@@ -326,15 +326,25 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE 
 4. Cross-module deterministic Manager Brief across Trade, Inventory and Sales: PASS (Job #79).
 5. Independent inventory + fulfillment verification: PASS (Jobs #85/#86).
 
-## Cycle 7 — CRM-lite / Customer 360
-1. Reuse canonical `acc_parties`; do not create a parallel customer master.
-2. Customer 360 must join Sales history, open fulfillment, receivable/party ledger position and recent commercial activity.
-3. Add deterministic customer-risk / next-action reads before any CRM mutation automation.
-4. Keep CRM actions bounded and auditable; risky writes remain Proposal → Human Approval.
-5. After the Customer 360 slice stabilizes, layer page-aware AI / Context Picker on server-validated entity references.
-6. Then move to pilot data onboarding / Design Partner readiness.
+## Cycle 7 — CRM-lite / Customer 360 — LIVE E2E CLOSED
+1. Canonical customer identity remains `acc_parties`; no parallel CRM customer master.
+2. Customer 360 joins Sales, fulfillment, receivable/party-ledger truth and CRM process data.
+3. Contact, Activity/Follow-up and Opportunity/Pipeline are additive CRM process records.
+4. AI Activity/Opportunity writes remain Proposal → Human Approval → server execution.
+5. Grounded Customer 360, Follow-up Queue and Pipeline reads were independently reconciled after live writes.
+6. Independent Lead Capture remains later.
 
-## v10.4 Cycle 7 — CRM-lite implementation candidate
-Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`.
+Live evidence:
+- CRM company context fix: commit `71c303ce9e292da53114507bc47127019e54a878`; GitHub Commercial MVP Gate Run #19 = `success`.
+- Job #88: grounded Customer 360 = `727.1m` debtor balance, `1,157.2m` Sales, `3` Sales docs, `29` undelivered, Pipeline `0`.
+- Job #89 → Proposal #14 → human approval: Activity `تماس برای بررسی سفارش بعدی`, due `1405/06/12`.
+- Job #90: grounded Follow-up Queue = `0 overdue / 0 today / 1 upcoming`.
+- Job #91 → Proposal #15 → human approval: `OPP-20260831-011700-86AC`, `qualification`, `900m`, `50%`.
+- Job #92: grounded Pipeline = `1 open / 900m / weighted 450m`.
+- Job #93: Customer 360 re-read preserved Finance/Sales truth and exposed the new Pipeline/follow-up.
+- Manual Contact persisted in UI: `مخاطب آزمایشی CRM` / `مسئول خرید`.
 
-Customer identity remains `acc_parties`. The slice adds Contact, Opportunity/Pipeline, Activity/Follow-up, deterministic Customer 360 reads and Proposal-only CRM actions. Independent Lead Capture remains later.
+## v10.5 Cycle 8 — Page-aware AI / Context Picker
+Status: `PLANNED / SOURCE-AUDIT-NEXT`.
+
+Goal: users select rows/entities from the current page/module and attach them to AI as typed context references instead of retyping names/codes. Every reference must be workspace/company/RBAC validated server-side, ERP IDs must be resolved by the server, and fresh Tool reads remain the source of business truth. Initial implementation should follow the proven CRM/Trade/Inventory/Sales pages without changing Proposal/Approval safety boundaries.
