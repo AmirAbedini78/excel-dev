@@ -3,25 +3,37 @@
 > v9.3 Accounting/Financial AI به‌عنوان هسته اثبات‌شده `FROZEN` است.
 > از v10 Roadmap روی **Wide Platform / Deep Modules** و اولین Vertical تجاری Finance/Trade قفل می‌شود.
 
-## v10 — Modular Pilot Platform
-Status: `IMPLEMENTED-IN-PROGRESS`
+## v10 — Modular Pilot Platform → Intelligence Platform
 
-### Thursday 2026-08-27
-- Module Kernel v1 + Module Center + workspace gating
-- SmartDocs/North Star pivot
-- Model Provider Gateway v1
-- Finance form/action coverage matrix
-- highest-value Finance Agent action gaps
+Status: `IMPLEMENTED` foundation; next product layer `PLANNED`.
 
-### Friday 2026-08-28
-- Inventory minimal-complete slice
-- Procurement minimal-complete slice
-- CRM-lite / Customer 360
-- Trade/Logistics model + intelligence
-- cross-module proactive manager brief
-- data import/API readiness + Design Partner demo pack
+The original Finance/Trade Golden Flow has now produced live-proven slices through Cycle 7. The next roadmap does not abandon that vertical; it changes how users interact with and compose those capabilities.
 
-Stop gate: پس از Demo واقعی workflowهای مطالبات، موجودی، تأمین، Trade risk و Agent actions، توسعه feature فقط از شواهد Design Partner ادامه می‌یابد. جزئیات در `10-MODULAR-PILOT-PLATFORM.md`.
+Current product direction:
+
+```text
+ERPSMART Intelligence Platform
++ ERPSMART Business Copilot
+```
+
+Current source baseline: `338e13419d091e6e1d3a5e7fd836ac7296e88e6b`.
+
+### Immediate two-day cadence
+
+| Window | Presentable increment | Primary result |
+|---|---|---|
+| D0–D2 | MVP A — Universal Copilot Foundation | Global Sidecar + `@` Entity Registry/Search + persistent context + Customer Business Review |
+| D2–D4 | MVP B — Skills & Capability Retrieval | `/` picker + multi-entity compare + Supplier Review + Shipment Risk |
+| D4–D6 | MVP C — Role Brief / Intelligent Home | CEO vs Commercial experience + Executive Brief + trace/feedback |
+| D6–D8 | MVP D — Guarded Operator | Proposal/Approval cards inside Sidecar + verify/audit |
+| D8–D10 | MVP E — Proactive pilot | first deterministic Watchers + in-app work items |
+| D10–D12 | MVP F — Analysis Workspace | large rich analysis + saved Skill pilot |
+
+Every window must remain demoable and preserve the full prior regression/safety contracts. Detailed DoD is canonical in `20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md`.
+
+### Stop/learn gate
+
+After the coherent loop `Role Home → Sidecar/@ → Cross-module analysis → guarded action → verified outcome` is live-proven, next depth is prioritized from Design Partner evidence. Graph DB, heavy RAG, multi-agent, fine-tuning and broad module expansion do not enter the critical path without evidence.
 
 ## Completed foundation
 
@@ -344,16 +356,112 @@ Live evidence:
 - Job #93: Customer 360 re-read preserved Finance/Sales truth and exposed the new Pipeline/follow-up.
 - Manual Contact persisted in UI: `مخاطب آزمایشی CRM` / `مسئول خرید`.
 
-## v10.5 Cycle 8 — Page-aware AI / Context Picker
-Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`.
+## v10.5 Cycle 8 — Page-aware AI / Context Picker r1
 
-Cycle 8 r1 implements the first page-aware vertical slice on CRM Customer 360:
-- Customer page emits only a typed `party/id/source_page` reference.
-- `AiPageContext` validates workspace, active company, module/RBAC and canonical customer ownership server-side.
-- Only the resolved canonical ref is persisted under `ai_jobs.context_json.page_context`.
-- Worker accepts a validated `party` context for CRM Customer 360, Activity Proposal and Opportunity Proposal without requiring the user to retype the customer name.
-- Fresh Tool calls remain mandatory; context is an entity pointer, never a cached business fact.
-- If an explicitly named customer conflicts with the attached page context, the deterministic CRM route fails closed.
-- Proposal → Human Approval boundaries are unchanged.
+Status: `PARTIAL`.
 
-Live gate: open `CUS-003` Customer 360 → click `از AI درباره این مشتری بپرس` → verify chip → run context-only 360 read → create context-only Activity/Opportunity Proposals without approval → verify `party_id=3` → reject → run explicit mismatched customer and verify fail-closed. After this gate, extend the same Context Kernel to Sales Document, Trade Case, Item/Inventory and Warehouse.
+Kernel outcome retained:
+
+- typed browser refs;
+- server workspace/company/RBAC/customer validation;
+- `ai_jobs.context_json` transport;
+- Worker context consumption;
+- fresh Tool grounding;
+- explicit prompt/context mismatch fail-closed.
+
+Product UX outcome:
+
+```text
+Customer 360 → dedicated AI page
+```
+
+is `RETIRED`. The original live gate is cancelled as a product acceptance target. Cycle 8 is now an infrastructure spike feeding the universal architecture, not the final context feature.
+
+## v10.6 Cycle 9 — Universal Business Copilot Foundation
+
+Status: `PLANNED`.
+
+### D0–D2 — MVP A
+
+- Global Sidecar from one application-shell integration point.
+- persistent active conversation across navigation.
+- Universal Entity Registry/Context Resolver v1.
+- `@` mention/search and multi-entity chips.
+- Context Envelope v2: page context available, explicit refs attached.
+- Quick Preview.
+- initial providers for Customer/Supplier/Item/Sales/Purchase/Trade Case/Shipment/Warehouse/Voucher.
+- first cross-module `Customer Business Review` Skill.
+- existing Tool/Proposal/Worker stack reused; no parallel AI infrastructure.
+
+### D2–D4 — MVP B
+
+- Skill Registry and `/` picker.
+- deterministic Capability Retriever.
+- bounded Supervisor/Planner over retrieved capabilities.
+- Supplier Performance Review.
+- Trade / Shipment Risk.
+- multi-entity compare and Evidence drawer.
+
+### D4–D6 — MVP C
+
+- Experience Role v1 separate from Permission Role.
+- Intelligent Home first slice.
+- Executive Business Brief.
+- exception/work-item cards.
+- feedback + Experience Trace foundation.
+
+### D6–D8 — MVP D
+
+- Sidecar Proposal/Approval UX over existing safety contracts.
+- risk label + edit/reject/approve handoff.
+- post-execution verify.
+- reversible/compensatable metadata foundation.
+
+### D8–D12 — MVP E/F
+
+- first deterministic Watchers and in-app notifications;
+- Analysis Workspace for large results;
+- Saved Skill pilot;
+- entity-linked AI history foundation.
+
+## P1 after Universal Copilot core
+
+- Saved Skills / scheduled agents;
+- wider Watchers + Notification Hub;
+- Undo/Compensation implementation;
+- customer/supplier behavioral scoring;
+- currency/external intelligence with source+timestamp;
+- role-adaptive navigation;
+- workflow evaluation/promotion;
+- cross-workspace sharing correction;
+- pilot data onboarding / Design Partner hardening.
+
+## P2
+
+- production Document Intelligence / multimodal RAG;
+- Voice Commander;
+- image processing;
+- Email/Drive/WhatsApp integrations;
+- Knowledge Graph if relation-query evidence justifies it;
+- Agent-to-Agent if eval justifies it;
+- fine-tuning after licensed/evaluated data;
+- advanced forecasting/policy learning;
+- mobile optimization.
+
+## One-month product/eval targets
+
+Targets—not guarantees for the first 48 hours:
+
+```text
+≥90% Entity resolution on supported types
+≥95% correct Tool selection on benchmark
+100% unauthorized writes blocked
+100% financial mutations policy-checked
+≥80% supported management questions grounded
+≥50% fewer navigation/search steps on selected pilot workflows
+≥30% faster recurring workflows
+<5% human correction on promoted deterministic Skills
+0 cross-workspace leakage
+```
+
+Prediction metrics remain separate from factual QA metrics.

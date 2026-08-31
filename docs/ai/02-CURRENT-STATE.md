@@ -7,13 +7,14 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: 27b3b31dad821fa1a88f4eb0fa1d2b6a5519471a
-Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
-Latest closed milestone: v10.4 CRM-lite / Customer 360 — LIVE E2E CLOSED
-Working milestone: v10.5 Page-aware AI / Context Picker
-Working status: IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING
-Current cycle: CRM Customer 360 typed context ref → server validation → AI read/proposal
-Next cycles: live Context Picker gate → Sales/Trade/Inventory entity refs → pilot data onboarding
+Baseline: 338e13419d091e6e1d3a5e7fd836ac7296e88e6b
+Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FROZEN
+Latest closed milestone: v10.4 CRM-lite / Customer 360 — LIVE-VALIDATED
+v10.5 Cycle 8 r1: PARTIAL — Context Kernel retained; forced dedicated-page UX RETIRED
+Working milestone: v10.6 Cycle 9 Universal Business Copilot Foundation
+Working status: PLANNED
+Current cycle: Master Product/Architecture Spec lock → D0–D2 Universal Copilot Foundation
+Next cycles: Sidecar/@/Entity Registry → Skills/Capability Retrieval → Intelligent Home → Guarded Operator → Watchers
 ```
 
 ## Scope فعال
@@ -21,6 +22,25 @@ Next cycles: live Context Picker gate → Sales/Trade/Inventory entity refs → 
 **Modular AI-Native Business Operations Platform**
 
 Vertical اول برای بازار: Finance/Trade برای شرکت‌های بازرگانی، واردکننده و توزیع‌کننده B2B. Blueprint Platform جامع است؛ عمق هر Module مرحله‌ای و بر اساس workflow واقعی/شواهد مشتری تکمیل می‌شود.
+
+### Product architecture decision — 2026-08-31
+
+Scope با Vertical قبلی تعارض ندارد؛ interaction model تکامل یافته است:
+
+```text
+ERPSMART Intelligence Platform
+        +
+ERPSMART Business Copilot
+```
+
+ERP/Domainهای Finance, Inventory, Procurement, Trade, Sales و CRM همان Source of Truth عملیاتی می‌مانند. Business Copilot باید آن‌ها را از طریق Universal Entity/Context/Capability contracts به یک تجربه همیشه‌حاضر، cross-module و role-adaptive متصل کند.
+
+`338e134` از نظر kernel مفید است، ولی Product Gate قبلی لغو شده است: `Customer 360 → dedicated AI page` دیگر UX هدف نیست. `AiPageContext/context_json/Worker context` باید به Universal Entity Registry + Context Envelope تعمیم پیدا کند.
+
+Canonical specs:
+
+- `19-ERPSMART-INTELLIGENCE-PLATFORM-MASTER-SPEC.md`
+- `20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md`
 
 ## Runtime topology
 
@@ -230,6 +250,24 @@ Live grounded facts from Job #46:
 
 
 Job #53 closed the blocked-action presentation gate: `search_parties`، `party_ledger`، `trial_balance` and attempted-model metrics were visible with Proposal zero. Job #54 then closed the grounded Proposal path and the approved Draft was verified in the product UI.
+
+## v10.5 Cycle 8 / v10.6 transition audit — 2026-08-31
+
+Status: `PARTIAL` for Cycle 8 r1; next milestone `PLANNED`.
+
+Independent source/package audit on commit `338e13419d091e6e1d3a5e7fd836ac7296e88e6b` confirmed:
+
+- source ZIP HEAD and GitHub `main` point to the same commit;
+- Cycle 4→8 patch baselines align with the Git history chain;
+- full Python regression from the supplied source snapshot passes `124/124`;
+- Cycle 8 added useful typed-ref/server-validation/context transport primitives;
+- current `AiPageContext` is CRM-specific and must not grow into a per-module branch tree;
+- current `AiModule` remains a dedicated page and must be decomposed/reused for Global Sidecar rather than cloned into each module;
+- existing `ai_conversations` and `ai_jobs.context_json` can be reused for the first persistent Sidecar without a parallel queue;
+- Module Kernel/RBAC and existing Domain services provide the correct place for entity provider gating;
+- SmartDocs before this update lagged the accepted product architecture, and the handoff still referenced an older baseline.
+
+The next runtime candidate therefore starts from a documentation-locked architecture instead of modifying Cycle 8 r1 in-place without contracts.
 
 ## Known non-blocking issues
 

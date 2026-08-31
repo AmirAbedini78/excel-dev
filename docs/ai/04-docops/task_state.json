@@ -1,48 +1,54 @@
 {
   "project": "ERPSMART",
-  "canonical_scope": "Modular AI-Native Business Operations Platform; first vertical = Finance/Trade for B2B trading/import/distribution companies",
-  "baseline_commit": "27b3b31dad821fa1a88f4eb0fa1d2b6a5519471a",
-  "baseline_milestone": "v10.4 CRM-lite / Customer 360 LIVE E2E CLOSED",
-  "baseline_status": "LIVE-VALIDATED",
-  "current_milestone": "v10.5 Page-aware AI / Context Picker",
-  "milestone_status": "IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING",
-  "live_validation_pending": true,
-  "release_contract": "v10-modular-pilot-v1",
-  "active_task": "Live-validate CRM Customer 360 page context: typed party ref -> server validation -> context-only grounded read and Proposal targeting.",
+  "canonical_scope": "AI-native Business Operating System for B2B trading/import/distribution; ERPSMART Intelligence Platform + pervasive Business Copilot over trusted modular ERP domains",
+  "baseline_commit": "338e13419d091e6e1d3a5e7fd836ac7296e88e6b",
+  "baseline_milestone": "v10.5 Cycle 8 Context Kernel prototype (typed ref/server validation/context transport)",
+  "baseline_status": "PARTIAL",
+  "current_milestone": "v10.6 Cycle 9 Universal Business Copilot Foundation",
+  "milestone_status": "PLANNED",
+  "live_validation_pending": false,
+  "release_contract": "v10.6-universal-copilot-foundation-v1",
+  "active_task": "Lock Master Product/Architecture Spec, then implement D0-D2 Universal Sidecar + Entity Registry/Context Envelope + @ mention/search + first cross-module Customer Business Review.",
   "in_scope": [
-    "workspace module enable/disable and dependency contract",
-    "local-first model provider gateway with OpenAI-compatible fallback",
-    "cloud-only second-worker deployment path for local-PC outage",
-    "semantic correctness for supported Finance natural-language reads",
-    "Finance/Trade vertical depth",
-    "Inventory and Procurement minimal-complete slices",
-    "CRM-lite connected to Sales and receivables",
-    "Trade/Logistics intelligence",
-    "cross-module proactive manager brief",
-    "CSV/Excel/API pilot data adapters",
-    "prompt/capability evaluation pack",
-    "commercial demo readiness"
+    "global persistent Business Copilot Sidecar on authenticated enabled-module pages",
+    "Universal Entity Registry and server-side Entity/Context Resolver",
+    "@ mention/search, multi-entity attachments, current-page and selection awareness",
+    "Context Envelope v2 using validated entity pointers rather than business snapshots",
+    "Tool/Skill Registry and deterministic Capability Retrieval foundation",
+    "single Supervisor/Manager planner with constrained workflow grammar",
+    "cross-module grounded Customer/Supplier/Shipment/Executive review skills",
+    "Role Profile v1 and Intelligent Home first slice",
+    "rich response/evidence/proposal cards using existing Proposal/Approval safety",
+    "execution trace, feedback and Experience Store foundation",
+    "two-day presentable increments with full regression and live product gates",
+    "first market vertical Finance/Trade for B2B trading/import/distribution"
   ],
   "out_of_scope": [
     "complete reproduction of every Iranian ERP before customer evidence",
-    "full frontend rewrite without product need",
-    "uncontrolled autonomous financial posting",
-    "RAG as source of current ledger truth",
-    "training proprietary large models before sufficient licensed data exists"
+    "frontend framework rewrite during Universal Copilot P0",
+    "uncontrolled autonomous financial/legal/destructive actions",
+    "direct SQL or operational database credentials for LLM/Worker",
+    "RAG as source of current business truth",
+    "graph database or lakehouse in the first 48-hour critical path",
+    "multi-agent swarm before single-Supervisor eval proves need",
+    "raw online self-learning from every user action",
+    "fine-tuning large proprietary models before sufficient licensed/evaluated data exists"
   ],
   "frozen_subsystems": [
     "v9.3 financial safety invariants",
     "Proposal/Approval for risky financial mutations",
     "current financial facts from deterministic tools",
-    "adaptive answer caching remains forbidden"
+    "adaptive answer caching remains forbidden",
+    "Context/Memory/RAG never create authority",
+    "typed ERP IDs are server-resolved; model-generated IDs remain forbidden"
   ],
   "known_issues": [
-    "Finance UI breadth is larger than Agent action coverage; next cycle must close the highest-value action gaps",
-    "cloud provider live fallback cannot be proven until a real provider/API key is configured",
-    "same-process cloud fallback does not cover a powered-off local PC; an always-on cloud_only Worker is the HA path",
-    "current AccountingIndustrialModule remains broad and will be decomposed incrementally, not rewritten in one step",
-    "forecast confidence remains data-limited on the synthetic demo dataset",
-    "Cash transactions have schema but lack a complete operational UI/domain primitive; Agent mutation is deferred until that primitive is completed."
+    "Cycle 8 r1 product UX is retired: Customer 360 currently jumps to the dedicated AI page; the kernel is retained but the new Sidecar has not been implemented yet.",
+    "AiPageContext is CRM-specific and must be generalized through Entity Registry/Context Resolver rather than accumulating per-module branches.",
+    "AiModule is still a dedicated page; reusable Copilot composer/thread/rich-response components must be extracted without a frontend framework rewrite.",
+    "SmartDocs prior to this architecture lock lagged the accepted product direction; this package corrects the canonical docs before runtime work resumes.",
+    "Cloud provider live fallback remains credential-dependent; same-process fallback does not solve powered-off local Worker high availability.",
+    "Forecast confidence remains data-limited on the synthetic demo dataset."
   ],
   "release_gates": {
     "v9_3_live_closeout": "PASS",
@@ -56,7 +62,7 @@
     "procurement_slice": "PASS_LIVE_JOB70",
     "crm_lite_slice": "PASS_LIVE_JOB93_PROPOSAL14_15_CONTACT",
     "trade_intelligence_slice": "PASS_LIVE_JOB78",
-    "design_partner_demo": "PLANNED_FRIDAY",
+    "design_partner_demo": "PLANNED_AFTER_COHERENT_COPILOT_LOOP",
     "finance_capability_matrix": "PASS_SOURCE_AUDIT",
     "purchase_invoice_agent_action": "PASS_LIVE_JOB65_PROPOSAL6_EXECUTED",
     "check_analytics": "PASS_LIVE_JOB57",
@@ -69,7 +75,9 @@
     "manager_brief_slice": "PASS_LIVE_JOB79",
     "sales_selective_reservation": "PASS_LIVE_JOB83_PROPOSAL12_EXECUTED",
     "sales_delivery": "PASS_LIVE_JOB84_PROPOSAL13_EXECUTED",
-    "page_aware_context_slice": "IMPLEMENTED_CANDIDATE"
+    "page_aware_context_slice": "PARTIAL_KERNEL_RETAINED_UX_RETIRED",
+    "universal_copilot_master_spec": "PLANNED_DOC_LOCK",
+    "universal_copilot_mvp_a": "PLANNED"
   },
   "updated_at": "2026-08-31",
   "last_live_validation_job": 93,
@@ -84,6 +92,7 @@
     "cycle_5": "LIVE E2E + PERFORMANCE PASS: Job #71 Proposal #8 approved to TRD-20260829-171042-90E6; Job #72 Proposal #9 approved to SHP-20260829-192303-3C8C; Jobs #73/#74 Proposals #10/#11 proved estimated 600m and actual override/projected 620m; Job #75 grounded landed cost correct; manual customs hold then Job #76 grounded high risk; control-plane keep-alive commit 12c9000 reduced equivalent reads to Job #77 0.2s and Job #78 0.3s, both within deterministic budget.",
     "cycle_6": "LIVE E2E PASS: Job #79 grounded Manager Brief; Job #81 fulfillment read; Job #82 exposed zero-stock SENSOR-PROX and triggered selective-reservation hotfix; Job #83 Proposal #12 reserved only PLC line 28 qty 2 and was human-approved; Job #84 Proposal #13 delivered only the reserved PLC and human approval created DLV-20260830-163108-188D; UI showed revenue ex-tax 370m, COGS 620m, gross margin -250m, -67.6%, actual_landed; Job #85 inventory reached PLC 0/0/0; Job #86 fulfillment showed PLC delivered2/outstanding0 and SENSOR-PROX outstanding4; Job #87 independently confirmed actual-landed margin at 4.7s budget PASS. Selective reservation hotfix commit 1638c458.",
     "cycle_7": "LIVE E2E PASS: CRM company-context hotfix commit 71c303c + GitHub Commercial MVP Gate Run #19 success; Customer list loaded canonical acc_parties; Job #88 grounded CUS-003 Customer 360 at balance 727.1m debtor, Sales 1,157.2m, 3 docs, undelivered 29; Job #89 Proposal #14 approved Activity تماس برای بررسی سفارش بعدی due 1405/06/12; Job #90 grounded follow-up queue 0 overdue/0 today/1 upcoming; Job #91 Proposal #15 approved Opportunity OPP-20260831-011700-86AC at qualification, 900m, 50%; Job #92 grounded Pipeline 1 open/900m/450m weighted; Job #93 re-read Customer 360 with unchanged Finance/Sales truth plus new CRM facts; manual Contact مخاطب آزمایشی CRM / مسئول خرید persisted in UI.",
-    "cycle_8": "IMPLEMENTED CANDIDATE: CRM Customer 360 emits typed party context; AiPageContext server-validates workspace/company/RBAC/customer ownership; canonical context is stored in ai_jobs.context_json and consumed by deterministic CRM read/Activity/Opportunity routes; explicit prompt/context mismatch fails closed. Live validation pending."
+    "cycle_8": "PARTIAL: commit 338e134 added typed CRM refs, server workspace/company/RBAC validation, context_json persistence and Worker context consumption. Local candidate passed 124/124 full regression plus focused context tests and was deployed, but product review retired the forced Customer360 -> dedicated AI page UX before the original live gate. Kernel concepts are retained for Universal Entity/Context architecture.",
+    "architecture_lock_2026_08_31": "Accepted product direction: ERPSMART Intelligence Platform + pervasive Business Copilot; Global Sidecar, @ Entity mentions, Universal Entity/Context, Role-Adaptive Intelligent Home, Skills/Capability Retrieval, single Supervisor first, controlled Experience/Eval promotion and two-day demoable increments."
   }
 }

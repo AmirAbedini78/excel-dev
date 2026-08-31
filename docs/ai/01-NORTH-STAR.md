@@ -2,112 +2,207 @@
 
 ## تعریف یک‌خطی
 
-**ERPSMART یک Modular AI-Native Business Operations Platform است که ماژول‌های عملیاتی کسب‌وکار را با Agent، تحلیل، پیش‌بینی و اتوماسیون به هم متصل می‌کند؛ Vertical اول آن Finance/Trade برای شرکت‌های بازرگانی B2B است و هدف این است که کاربر از Data-entry Operator به Supervisor تصمیم و استثنا تبدیل شود.**
+**ERPSMART یک AI-native Business Operating System برای شرکت‌های بازرگانی/واردات/توزیع B2B است: ERP و Domainهای عملیاتی Source of Truth می‌مانند و ERPSMART Business Copilot به‌عنوان لایه هوشمند همیشه‌حاضر، Role-Adaptive، Cross-module و Guarded برای جستجو، تحلیل، تصمیم، اقدام و پایش روی آن‌ها عمل می‌کند.**
+
+نام معماری:
+
+```text
+ERPSMART Intelligence Platform
+```
+
+لایه‌ای که کاربر می‌بیند:
+
+```text
+ERPSMART Business Copilot
+```
 
 ## Vision بلندمدت
 
-Platform از نظر معماری می‌تواند Finance، Sales/CRM، Inventory، Procurement، Trade/Logistics، Production، HR، Project، Service و Marketing را پوشش دهد. عمق هر Module بر اساس Vertical و شواهد بازار تکمیل می‌شود؛ ERP جامع سطحی قبل از مشتری هدف نیست.
-
-در بلندمدت Toolها، workflow traces، RAG corpusها و evaluation setهای هر Vertical می‌توانند پایه benchmarkها و مدل‌های تخصصی کسب‌وکار شوند، مشروط به مجوز و کیفیت داده.
-
-## تصمیم مهم فعلی — v10
+ERPSMART نباید فقط مجموعه‌ای از فرم‌های ERP با یک Chatbox باشد. هدف نهایی ترکیب سه لایه است:
 
 ```text
-بازنویسی کامل سپیدار/راهکاران/CRM قبل از بازار       ❌
-ساخت ده‌ها منوی نمایشی و نیمه‌کاره                    ❌
-Rewrite کامل Frontend صرفاً برای مد روز               ❌
-
-Module Kernel واقعی + Enable/Disable/Dependencies      ✅
-Finance/Trade Vertical عمیق و Actionable               ✅
-Inventory + Procurement + CRM-lite متصل                ✅
-Local-first AI + Cloud Provider Gateway                ✅
-Design Partner Pilot و توسعه بعدی از شواهد مشتری       ✅
+Trusted Business System / ERP
+        ↓
+Unified Entity + Relationship + Capability Layer
+        ↓
+Business Copilot + Guarded Agent Workforce
 ```
 
-v9.3 هسته مالی اثبات‌شده را Freeze می‌کند؛ v10 آن را به Platform ماژولار قابل Pilot تبدیل می‌کند.
+ERP مسئول ثبت حقیقت، قواعد، transaction و audit است. AI مسئول فهم زبان طبیعی، یافتن Context مناسب، ترکیب قابلیت‌ها، تحلیل، پیشنهاد و orchestration است. اجرای business mutation از Domain service و Policy عبور می‌کند.
 
-## چهار قابلیت تعریف‌کننده MVP
+Platform می‌تواند در آینده Finance، Sales/CRM، Inventory، Procurement، Trade/Logistics، Production، HR، Project، Service و Marketing را پوشش دهد؛ ولی عمق هر Domain بر اساس Vertical و شواهد واقعی بازار تکمیل می‌شود، نه با ساخت ده‌ها Module سطحی قبل از Pilot.
 
-MVP وقتی معنی‌دار است که این چهار دسته را **واقعاً خوب** انجام دهد:
+## Vertical و بازار اول
 
-1. **Ask the Accounting System**
-   - سؤال طبیعی از داده‌های حسابداری
-   - Drill-down و Entity scope
-   - بازه زمانی و وضعیت سند
-   - پاسخ Grounded با داده تازه
+اولین ICP:
 
-2. **Financial Intelligence**
-   - گزارش مدیریتی
-   - مقایسه
-   - Trend/KPI
-   - تحلیل عمیق با محدودیت‌های داده
-   - anomaly/risk signals
+- شرکت بازرگانی / Importer
+- Distributor / Wholesaler
+- شرکت B2B با جریان قوی Procurement → Trade → Inventory → Sales → Finance
 
-3. **Prediction**
-   - Forecast عددی مستقل از LLM
-   - confidence/error
-   - cash-flow / sales / collections / anomaly در حد داده موجود
-   - LLM فقط توضیح‌دهنده خروجی مدل عددی
+Wedge رقابتی:
 
-4. **Accounting Agent**
-   - فهم دستور
-   - برنامه‌ریزی چندمرحله‌ای
-   - resolve مشتری/کالا/حساب از Tool
-   - ایجاد/ویرایش عملیات مجاز
-   - Proposal/Approval/Risk policy
-   - Verify + Audit + گزارش نتیجه
+```text
+Trade Resilience
++ Commercial Intelligence
++ Cross-module Guarded Automation
+```
+
+## چهار نقش Business Copilot
+
+1. **Assistant** — پیدا کردن، باز کردن، توضیح دادن و خلاصه‌سازی داده.
+2. **Analyst** — مقایسه، علت‌یابی، محاسبه اثر، تشخیص ریسک و Forecast با Engine مناسب.
+3. **Operator** — آماده‌سازی و اجرای عملیات واقعی از طریق Tool/Policy/Approval.
+4. **Autonomous Supervisor** — پایش مداوم، کشف Exception و اقدام محدود در چارچوب Policy.
+
+Autonomy مرحله‌ای است. سیستم ابتدا قابلیت را با Human-in-the-loop اثبات می‌کند و فقط با Eval/Policy/Undo مناسب Agency افزایش می‌یابد.
 
 ## تجربه کاربری هدف
 
-کاربر در نهایت باید بتواند بنویسد:
+Business Copilot باید در جریان کار حضور داشته باشد:
 
 ```text
-فروش سه ماه اخیر را بررسی کن،
-مشتری‌هایی که خریدشان افت کرده پیدا کن،
-مانده‌شان را بررسی کن،
-مهم‌ترین‌ها را اولویت‌بندی کن،
-و برای اقدامات مالی لازم Draft آماده کن.
+Global Sidecar
++ Intelligent Home
++ Analysis Workspace / Command Center
++ @ Universal Entity Mention
++ + Context/File
++ / Skill/Action
 ```
 
-Agent باید Task را به مراحل معتبر بشکند و Toolهای حسابداری را اجرا کند.
+کاربر نباید برای هر سؤال از صفحه جاری خارج شود. Current Page برای Context آماده است ولی به‌صورت کور داخل Prompt تزریق نمی‌شود.
 
-هدف نهایی Autonomy:
+Role Experience جدا از Permission است: CEO، مدیر بازرگانی، مدیر مالی، فروش، خرید و انبار می‌توانند همان Platform را با اولویت و نمایش متناسب با نقش ببینند، بدون اینکه UI adaptation مجوز جدید ایجاد کند.
+
+## قابلیت‌های تعریف‌کننده MVP جدید
+
+### 1. Ask the Business
+
+- زبان طبیعی روی داده‌های Business
+- `@` Entity selection
+- multi-entity context
+- page/selection awareness
+- navigation/deep links
+- پاسخ Grounded با داده تازه
+
+### 2. Business Intelligence
+
+- Cross-module analysis
+- compare / trend / KPI
+- risk / anomaly / impact
+- Customer/Supplier behavior signals
+- Manager/Executive Brief
+- Evidence قابل Drill-down
+
+### 3. Guarded Business Operator
+
+- intent → context/entity resolution
+- Capability/Skill discovery
+- constrained plan
+- deterministic Tools
+- Proposal/Approval/Risk Policy
+- Verify + Audit
+- Undo/Compensation در Domainهای پشتیبانی‌شده
+
+### 4. Proactive Supervisor
+
+- Watchers
+- Exception prioritization
+- business impact
+- next-best action
+- notification
+- configurable low-risk automation after evidence
+
+## معماری Capability، نه هزاران Workflow دستی
+
+Tool = primitive deterministic capability.
+
+Skill = capability کسب‌وکاری composed از Toolها/Engineها/Workflow primitives.
+
+Workflow Grammar پایه:
 
 ```text
-امروز:
-AI → Proposal → Human Approval → Execute
-
-مرحله بعد:
-Low-risk → Auto execute
-High-risk → Approval
-
-بلندمدت:
-Agent executes normal workflows
-Human reviews exceptions / high-risk decisions
+Resolve Read Filter Aggregate Compare Join Rank Calculate Predict Detect
+Recommend Propose Approve Execute Verify Notify Wait Branch Loop Escalate
 ```
+
+هدف این است که تعداد محدود و استاندارد از Primitiveها و Skillهای versioned بتوانند رفتارهای زیاد بسازند، نه اینکه برای هر جمله کاربر یک Route/Regex/Workflow اختصاصی رشد کند.
 
 ## مرز هوش
 
 ```text
-Structured financial facts → SQL/Tools
-Documents/policies/laws    → RAG
-Planning/interpretation    → LLM
-Forecast numeric output    → ML/statistical models
-Execution                  → deterministic domain services
-Approval/policy            → server-side controls
+Current structured facts       → Domain/SQL/Tools
+Documents/policies             → RAG with access control/eval
+Entity/context resolution      → Server registry + deterministic retrieval
+Planning/interpretation        → LLM under constrained capability set
+Forecast numeric output        → Statistical/ML engine
+Execution                      → Deterministic Domain services
+Authorization/approval/policy  → Server-side controls
+Experience learning            → Trace → Eval → controlled promotion
+```
+
+## Orchestration direction
+
+ابتدا Single Supervisor/Manager با Toolهای استاندارد و Domain Engineهای deterministic. Multi-Agent فقط زمانی وارد می‌شود که Eval نشان دهد Tool/Instruction complexity یا تخصص Domain واقعاً نیاز دارد. تجربه کاربر همچنان یک Business Copilot واحد باقی می‌ماند.
+
+## Model direction
+
+```text
+Deterministic
+→ Small Local
+→ Strong Local
+→ Cloud Reasoning
+```
+
+Routing بر اساس complexity، risk، latency، privacy، cost و capability است. Evals ابتدا baseline دقت را قفل می‌کنند؛ سپس برای Taskهای ساده‌تر مدل کوچک‌تر جایگزین می‌شود.
+
+## Learning direction
+
+Production Agent از هر رفتار کاربر مستقیماً «آموزش» نمی‌بیند.
+
+```text
+Trace
+→ Outcome Eval
+→ Human Feedback
+→ Experience Dataset
+→ Skill Candidate
+→ Offline Eval
+→ Promotion
+```
+
+Conversation، Preference، Business Experience، Workflow/Skill و Knowledge memory جدا هستند.
+
+## تصمیم مهم فعلی
+
+```text
+بازنویسی کامل ERP قبل از Pilot                           ❌
+Chatbot جدا از جریان کار                                ❌
+یک Ask-AI button اختصاصی برای هر صفحه                    ❌
+هزاران Workflow hard-coded                               ❌
+Multi-Agent از روز اول                                   ❌
+Graph DB/Lakehouse/RAG بزرگ در Critical Path              ❌
+
+ERP/Domainهای واقعی + Universal Entity/Context Layer      ✅
+Business Copilot همیشه‌حاضر                               ✅
+Composable Tools/Skills/Workflow Grammar                  ✅
+Role-Adaptive Experience                                  ✅
+Cross-module reasoning                                    ✅
+Guarded execution + Evidence + Evals                      ✅
+48h increments که هر کدام Demoable باشند                  ✅
 ```
 
 ## چیزهایی که North Star نیستند
 
-این‌ها زیرسیستم‌اند، نه هدف محصول:
+این‌ها implementation option/subsystem هستند، نه هویت محصول:
 
-- Adaptive Plan Cache
-- Regex/Dictionary routing
-- یک مدل خاص مثل Qwen/Gemma
+- Qwen/Gemma یا هر مدل خاص
 - Ollama
-- LangGraph
-- Hermes
-- FastRAG/Qdrant
-- Multi-node scheduling
+- OpenAI-compatible provider
+- LangGraph/Hermes
+- Qdrant/vector DB
+- Graph database
+- specific caching strategy
+- regex router
+- frontend framework
 
-هرکدام فقط وقتی ارزش دارند که مسیر چهار قابلیت اصلی MVP را بهتر کنند.
+هرکدام فقط با نیاز و Eval وارد می‌شوند.

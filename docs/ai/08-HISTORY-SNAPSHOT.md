@@ -1103,3 +1103,46 @@ Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE 
 - Workbench `phonebook_entries` is not reused as CRM identity.
 - no existing CRM Contact/Opportunity/Activity schema was found.
 - v10.4 candidate adds CRM-lite and live validation is pending.
+
+## 2026-08-31 — Cycle 7 live closeout
+
+- Commit `27b3b31dad821fa1a88f4eb0fa1d2b6a5519471a` closed CRM-lite documentation after full Cycle 7 live validation.
+- Jobs #88–#93 proved canonical `acc_parties` Customer 360, CRM Activity/Follow-up, Opportunity/Pipeline and re-read without changing Finance/Sales truth.
+- Cycle 7 became `LIVE-VALIDATED`.
+
+## 2026-08-31 — Cycle 8 r1 Context Kernel
+
+- Commit `338e13419d091e6e1d3a5e7fd836ac7296e88e6b` added typed CRM page refs, `AiPageContext` server validation, `ai_jobs.context_json` persistence and Worker deterministic context consumption.
+- Local candidate installation passed full regression `124/124` plus focused CRM/context tests and rebuilt/restarted the Worker.
+- The runtime/PHP changes were committed/pushed and deployed to cPanel.
+- Before executing the originally planned live context prompts, product review rejected the forced navigation flow `Customer 360 → Ask AI → dedicated AI page` as too narrow and not the intended universal assistant experience.
+- Decision: retain the Context Kernel primitive; retire the page-jump UX; cancel the old Cycle 8 product live gate.
+
+## 2026-08-31 — Intelligence Platform / Universal Business Copilot architecture lock
+
+Product direction was clarified from `ERP + AI` to:
+
+```text
+ERPSMART Intelligence Platform
++ ERPSMART Business Copilot
+```
+
+Key accepted decisions:
+
+- global persistent Sidecar instead of per-page Ask-AI navigation;
+- `@` Universal Entity mention/search and multi-entity context;
+- Universal Entity Registry + Context Envelope, with server-owned authority;
+- Role-Adaptive Experience separated from RBAC;
+- Intelligent Home focused on exceptions/work items;
+- Tool Registry + Skill Registry + constrained Workflow Grammar;
+- single Supervisor first; Multi-Agent only after eval evidence;
+- trace/eval/controlled Skill promotion instead of raw online self-learning;
+- P0/P1/P2 scope and two-day presentable increments;
+- v9.3 security/approval/idempotency invariants remain frozen.
+
+Source/package audit confirmed the supplied source ZIP and GitHub `main` at `338e134`; Cycle 4→8 patch baselines align with commit history; an independent local execution of the Python suite passed `124/124`.
+
+Canonical specs created:
+
+- `19-ERPSMART-INTELLIGENCE-PLATFORM-MASTER-SPEC.md`
+- `20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md`

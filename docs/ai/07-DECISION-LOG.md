@@ -137,3 +137,40 @@ Manual module pages and AI Tools call the same `InventoryDomain`; stock calculat
 ## v10.2 Cycle 5 — Trade Logistics + Landed Cost
 
 Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.
+
+## ADR-026 — ERPSMART Intelligence Platform / Business Copilot North Star
+Status: ACCEPTED — 2026-08-31
+
+The v10 Finance/Trade vertical remains the first market wedge, but the product interaction model is promoted from “modular ERP with AI features” to an **AI-native Business Operating System**. Architecture name is `ERPSMART Intelligence Platform`; the user-facing intelligent layer is `ERPSMART Business Copilot`.
+
+ERP/Domain services remain the system of record and execution authority. Business Copilot becomes the pervasive layer for Search, Analysis, Orchestration, Guarded Action and Proactive supervision. This decision does not reopen v9.3 safety invariants or justify broad horizontal module implementation without customer evidence.
+
+## ADR-027 — Universal Entity/Context/Skill contracts replace per-page AI integrations
+Status: ACCEPTED — 2026-08-31
+
+AI context must be modeled through a Universal Entity Registry and versioned Context Envelope. Module pages expose typed page/selection references; a central resolver re-validates workspace/company/module/RBAC and canonical identity. Browser labels/business facts are never authority.
+
+Tools remain deterministic primitives. User-facing business capabilities are versioned Skills composed from reusable Tools/Engines and constrained Workflow Grammar. With catalog growth, Capability Retrieval supplies a bounded relevant set to the Planner instead of injecting every Tool descriptor.
+
+The architecture must not grow by adding one CRM/Sales/Trade branch after another inside `AiPageContext` or by cloning an Ask-AI widget into each module.
+
+## ADR-028 — Pervasive Sidecar + Role-Adaptive Intelligent Home; Cycle 8 page-jump UX retired
+Status: ACCEPTED — 2026-08-31
+
+Primary daily UX is a Global Business Copilot Sidecar that persists while the user navigates. Current page is context-aware but not blindly injected. `@` selects canonical business entities; `+` attaches context/files/selections; `/` discovers Skills/Actions. Large work moves to an Analysis Workspace/Command Center.
+
+Permission Role and Experience Role are separate. Role adaptation may prioritize information and actions but never grants authority.
+
+Cycle 8 r1 commit `338e134` is retained as a Context Kernel prototype (`typed ref → server validation → context_json → Worker`), but the flow `Customer 360 → dedicated AI page` is `RETIRED` as product UX and its original live gate is cancelled.
+
+## ADR-029 — Incremental Supervisor architecture; multi-agent and self-learning are deferred by evidence
+Status: ACCEPTED — 2026-08-31
+
+P0 maximizes one user-facing Supervisor/Manager plus deterministic Domain Engines and standardized Tools. Multi-Agent is introduced only when eval shows that Tool/instruction overlap or specialization requires it; Manager Pattern is preferred to preserve one coherent assistant.
+
+Production does not learn policy directly from every user action. Runs are traced and evaluated; only controlled Skill candidates may be promoted after offline eval. Conversation, Preference, Business Experience, Workflow and Knowledge memories remain separate.
+
+## ADR-030 — Every two-day increment must be product-demoable and regression-complete
+Status: ACCEPTED — 2026-08-31
+
+Short-term speed is achieved through coherent vertical increments, not demo-only hacks. D0–D2 starts with Global Sidecar + Universal Entity/Context + `@` mentions + one real cross-module Skill. Each following two-day increment adds a presentable layer while preserving exact-baseline patching, full regression, server trust boundaries and live acceptance.

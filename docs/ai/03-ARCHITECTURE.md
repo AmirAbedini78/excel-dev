@@ -274,3 +274,188 @@ cPanel Queue
 ```
 
 Provider routing changes only LLM transport. Current business facts still come from Tool Gateway; financial mutations still require Proposal/Approval and deterministic server execution. Remote cloud endpoints require HTTPS. Cloud credentials stay in local gitignored runtime config.
+
+## 11. ERPSMART Intelligence Platform architecture — 2026-08-31
+
+The v9.3 trust boundaries and v10 Domain/Module architecture remain valid. The next layer is a pervasive Copilot architecture, not a replacement for the operational core.
+
+```text
+                         ERPSMART UI
+                             │
+       Sidecar ───── Intelligent Home ───── Analysis Workspace
+                             │
+                       Copilot Gateway
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+   Context Engine      Identity/Policy       Role UX Profile
+        │                    │                    │
+        └────────────────────┼────────────────────┘
+                             │
+                     Intent Interpreter
+                             │
+                    Capability Retriever
+                             │
+                    Planner / Supervisor
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+      Skills                Tools             Engines
+        │                    │                    │
+        └────────────────────┼────────────────────┘
+                             │
+                       Policy Engine
+                             │
+                      Execution Engine
+                             │
+                    Verify / Compensate
+                             │
+                      Experience Store
+                             │
+                          Evals
+```
+
+Detailed canonical contract: `19-ERPSMART-INTELLIGENCE-PLATFORM-MASTER-SPEC.md`.
+
+## 12. Universal Entity and Context boundary
+
+Cycle 8 r1 established the principle that the browser may send a typed pointer while the server owns canonical resolution. This becomes a registry contract:
+
+```text
+Untrusted typed ref / current page / selected rows
+                 ↓
+          AiEntityRegistry
+                 ↓
+          AiContextResolver
+                 ↓
+ workspace + company + module + RBAC
+                 ↓
+       Context Envelope v2
+                 ↓
+       Capability / Tool layer
+```
+
+Context is not authority and is not a cached fact snapshot. Every business read/mutation re-enters the Domain/Tool authorization boundary.
+
+P0 uses a Relation Registry over the relational operational DB. A graph database is deferred.
+
+## 13. UI composition boundary
+
+Global Copilot must be integrated once at the application shell level and reused across modules. Module pages provide typed page/selection handles; they do not embed independent chat implementations.
+
+```text
+Application Shell
+  → BusinessCopilot component
+      → composer
+      → thread
+      → entity search/chips
+      → preview/rich cards
+
+Module Page
+  → optional page-context provider
+  → optional selection provider
+```
+
+The existing dedicated `AiModule` remains as a Command Center/Analysis Workspace path and shares lower-level components/contracts with the Sidecar.
+
+## 14. Entity provider boundary
+
+A universal provider exposes search/resolve/preview/relations/deep-link and capability metadata while delegating truth to existing Domain services.
+
+Examples:
+
+```text
+party.customer   → canonical acc_parties / Accounting/CRM truth
+item             → canonical item master / Inventory truth
+sales.document   → SalesDomain
+trade.case       → TradeDomain
+shipment         → TradeDomain
+warehouse        → InventoryDomain
+finance.voucher  → Accounting domain
+```
+
+Do not create AI-specific duplicate master tables.
+
+## 15. Capability and Skill boundary
+
+Tool = deterministic typed primitive.
+
+Skill = versioned business workflow that composes Tools/Engines and declares role/entity/risk/eval contracts.
+
+With a growing catalog:
+
+```text
+Intent + Entity Context
+→ Capability Retriever
+→ bounded Skills/Tools
+→ exact deterministic Skill fast path OR constrained Supervisor
+```
+
+The whole Tool catalog is not injected into every model prompt.
+
+## 16. Workflow grammar and orchestration
+
+Canonical workflow primitives:
+
+```text
+Resolve Read Filter Aggregate Compare Join Rank Calculate Predict Detect
+Recommend Propose Approve Execute Verify Notify Wait Branch Loop Escalate
+```
+
+P0 maximizes one Supervisor/Manager and deterministic Domain Engines. Multi-agent execution is deferred until eval proves need; if introduced, a Manager Pattern preserves one user-facing assistant.
+
+## 17. Model Router boundary
+
+```text
+Deterministic
+→ Small Local Model
+→ Strong Local Model
+→ Cloud Reasoning Model
+```
+
+Accuracy/eval baseline precedes latency/cost optimization. Model choice never changes authorization, Domain calculations or Proposal/Approval semantics.
+
+## 18. Memory / Experience boundary
+
+Separate stores/concepts:
+
+```text
+Conversation Memory
+User Preference Memory
+Business Experience Memory
+Workflow/Skill Memory
+Knowledge Memory
+```
+
+Learning path is offline/controlled:
+
+```text
+Trace → Outcome Eval → Human Feedback → Dataset → Skill Candidate → Eval → Promotion
+```
+
+No raw user action updates production policy automatically.
+
+## 19. Security additions for agentic scope
+
+Existing v9.3 controls remain frozen. Universal Copilot adds explicit protection for:
+
+- Goal hijack and prompt-injection boundaries;
+- Tool misuse / action-level authorization;
+- identity/privilege abuse;
+- memory/context poisoning;
+- agentic supply-chain and code-execution exposure;
+- cascading failures via budgets/timeouts/step limits;
+- human-agent trust exploitation via clear Fact/Prediction/Recommendation/Proposal labeling;
+- future inter-agent schema/authentication before multi-agent is enabled.
+
+No Context, Memory or external document can increase authority.
+
+## 20. Performance additions
+
+- entity search/preview are deterministic and LLM-free;
+- search results are bounded/debounced;
+- Context stores refs rather than large snapshots;
+- capability retrieval bounds model descriptors;
+- exact reads keep deterministic fast paths;
+- large analyses move to Analysis Workspace;
+- Sidecar assets are shell-level and not copied/loaded repeatedly by each module.

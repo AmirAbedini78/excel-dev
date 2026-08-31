@@ -1,155 +1,209 @@
 # ERPSMART — AI Development Handoff
 
-> سند فشرده برای AI/Developer جدید.
-> قبل از استفاده، `00-START-HERE.md` مرجع اصلی ترتیب مطالعه است.
+> سند فشرده برای AI/Developer جدید. قبل از استفاده، `00-START-HERE.md` و Master Spec مرجع هستند.
 
 ## Product
 
-ERPSMART یک **Modular AI-Native Business Operations Platform** است. v9.3 هسته Finance AI را Live-validated کرد؛ v10 Platform را برای Pilot شرکت‌های بازرگانی B2B ماژولار و عملیاتی می‌کند.
-
-هدف:
-- ماژول‌های Business قابل فعال/غیرفعال در سطح Workspace
-- سؤال/تحلیل/Forecast Grounded در هر Domain فعال
-- Agent Action روی workflowهای پشتیبانی‌شده
-- Automation/Proactive intelligence بین Finance/Sales/Inventory/Procurement/Trade
-- Local-first AI با Provider قابل تعویض
-- کاربر به‌تدریج Supervisor باشد نه data-entry operator
-
-## Scope lock
-
-Vertical اول: **Finance/Trade برای trading/import/distribution B2B**.
-
-v10 توسعه Platform foundation + Module depth لازم برای Design Partner Pilot است. ERP کاملِ همه صنایع، Rewrite کامل Frontend، autonomous high-risk posting و model-training بزرگ بدون داده کافی خارج از Scope این Sprint هستند.
-
-## Current baseline / phase
+ERPSMART یک **AI-native Business Operating System** برای Vertical اول trading/import/distribution B2B است.
 
 ```text
-Baseline: 1638c458ec0b1390587b1ffb7ffd91512fe0ac6d
-Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FEATURE FROZEN
-Latest closed milestone: v10.3 Sales Fulfillment + Margin — LIVE E2E CLOSED
-Working milestone: v10.4 CRM-lite / Customer 360
-Working status: SOURCE-AUDIT-NEXT
-Current cycle: Customer 360 over canonical parties + Sales + receivables + fulfillment risk
-Next: CRM-lite / Customer 360 → page-aware AI / Context Picker → pilot data onboarding / Design Partner readiness
-Canonical v10 contract: docs/ai/10-MODULAR-PILOT-PLATFORM.md
+Architecture: ERPSMART Intelligence Platform
+User-facing AI: ERPSMART Business Copilot
 ```
 
-## Architecture
+ERP/Domainها Source of Truth هستند. Business Copilot لایه همیشه‌حاضر برای Search/Analysis/Orchestration/Guarded Action/Proactive supervision است.
+
+## Current baseline / phase — 2026-08-31
 
 ```text
-cPanel:
-UI/Auth/RBAC/MySQL/Queue/Tools/Approval/Audit
-
-        ↑ outbound HTTPS
-
-Docker Worker:
-Python + Model Provider Gateway
-Primary: Ollama
-Optional: OpenAI-compatible cloud fallback / cloud-only second Worker
+Repository: AmirAbedini78/excel-dev
+Branch: main
+Baseline: 338e13419d091e6e1d3a5e7fd836ac7296e88e6b
+Frozen safety milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FROZEN
+Latest fully closed business milestone: v10.4 Cycle 7 CRM-lite / Customer 360 — LIVE-VALIDATED
+v10.5 Cycle 8 r1: PARTIAL — Context Kernel retained; forced dedicated-page UX RETIRED
+Working milestone: v10.6 Cycle 9 Universal Business Copilot Foundation — PLANNED
+Immediate contract: docs/ai/20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md
+Master architecture: docs/ai/19-ERPSMART-INTELLIGENCE-PLATFORM-MASTER-SPEC.md
 ```
+
+## Proven business chain
+
+The source already has live-proven primitives across:
+
+```text
+Finance
+→ Procurement
+→ Inventory / Warehouse Receipt
+→ Trade Case / Shipment / Landed Cost
+→ Sales Reservation / Delivery / Margin
+→ CRM Customer 360 / Follow-up / Opportunity
+```
+
+Do not rebuild these truths in an AI-specific data model.
+
+Important live evidence includes:
+
+- v9.3 Job #54 → Proposal #3 → human approval → balanced voucher draft.
+- Cycle 4 Job #70 inventory/receipt truth.
+- Cycle 5 Jobs #71–#78 Trade/Landed Cost and performance closeout.
+- Cycle 6 Jobs #79/#83–#87 reservation, delivery, stock and actual-landed margin.
+- Cycle 7 Jobs #88–#93 Customer 360, Activity, Follow-up, Opportunity and Pipeline.
+
+## Cycle 8 r1 interpretation
+
+`338e134` introduced typed CRM page context. It is **not** to be reverted wholesale.
+
+Keep:
+
+- typed browser reference
+- server validation
+- context_json transport
+- Worker context handling
+- fail-closed mismatch
+
+Retire as product direction:
+
+```text
+page-specific Ask AI button → dedicated AI page
+```
+
+Generalize into Universal Entity/Context architecture and Global Sidecar.
 
 ## Safety invariants
 
 1. LLM direct SQL ندارد.
-2. Current financial number از Tool deterministic می‌آید.
-3. RAG ledger نیست.
-4. LLM IDs نمی‌سازد.
-5. Financial mutations Proposal/Approval دارند.
-6. Retry نباید duplicate بسازد.
-7. Tenant/company scope روی server validate می‌شود.
-8. Deep analysis باید deterministic fallback داشته باشد.
-9. Forecast number از LLM آزاد تولید نمی‌شود.
-10. Cache فقط Plan؛ نه Answer مالی.
+2. Current business facts از deterministic Domain/Tool می‌آید.
+3. RAG current ledger/inventory truth نیست.
+4. LLM ERP IDs را تولید نمی‌کند.
+5. Context/Memory/RAG مجوز ایجاد نمی‌کند.
+6. R2/R3 mutations از server Policy/Proposal/Approval عبور می‌کنند.
+7. Retry/idempotency duplicate ایجاد نمی‌کند.
+8. Workspace/company/RBAC server-side re-check می‌شود.
+9. Forecast numeric output از Engine عددی می‌آید.
+10. Generic model path write Tool descriptor دریافت نمی‌کند.
+11. Secret/trace exposure باید allowlisted/redacted بماند.
+12. Cross-company context در P0 fail closed است.
 
-## Current proven paths
-
-- deterministic report
-- Safe Deep
-- invoice proposal
-- grounded reads
-- parameterized analytics
-- entity/status analytics
-- multi-intent
-- adaptive unknown-read planning
-- constrained multi-step accounting workflows
-- conditional receipt Proposal + Human Approval + Draft verification
-- financial intelligence
-- deterministic forecast/risk/anomaly
-- proactive next-best-action recommendation
-- commercial runtime/recovery/release guard (local candidate)
-
-## Current implementation philosophy
-
-Planner read multi-step است و Write را intercept نمی‌کند؛ write فقط از Guarded Proposal routes عبور می‌کند.
-
-Example:
+## Target architecture
 
 ```text
-Prompt
-→ validated Plan
-→ step dependencies
-→ Tools
-→ deterministic calculations
-→ grounded response
+UI: Sidecar + Intelligent Home + Analysis Workspace
+                     ↓
+               Copilot Gateway
+                     ↓
+Context + Identity/Policy + Experience Role
+                     ↓
+Intent → Capability Retrieval → Supervisor
+                     ↓
+        Skills / Tools / Domain Engines
+                     ↓
+Policy → Execute → Verify/Compensate
+                     ↓
+             Experience Store → Evals
 ```
 
-v9.3 Feature جدید نیست و اکنون feature-frozen است. v9.3.0.1 route/model/latency/risk parity را اصلاح کرد؛ v9.3.0.2 Tool-name و attempted-metrics parity را بست؛ Job #54 و Voucher detail UI نیز Proposal → Approval → balanced Draft را در تجربه واقعی محصول بستند.
+## Universal Entity contract
+
+Browser selects minimal typed refs. Server resolves canonical entity handles through registered providers.
+
+P0 target entities:
+
+```text
+Customer
+Supplier
+Item
+Sales Document
+Purchase Document
+Trade Case
+Shipment
+Warehouse
+Delivery
+CRM Opportunity
+Voucher
+```
+
+Do not implement this as a growing `if/elseif` list inside `AiPageContext` or `AiModule`.
+
+## User UX contract
+
+Composer:
+
+```text
+@ Entity
++ Context/File/Selection
+/ Skill/Action
+🎤 Voice later
+```
+
+Current page is context-aware but not blindly injected. Conversation persists while navigating. Large results can move to Analysis Workspace.
+
+## Orchestration
+
+P0: one Business Copilot Supervisor + deterministic Domain Engines. Maximize the single-agent loop first. Multi-Agent is deferred until eval proves need.
+
+Workflow Grammar:
+
+```text
+Resolve Read Filter Aggregate Compare Join Rank Calculate Predict Detect
+Recommend Propose Approve Execute Verify Notify Wait Branch Loop Escalate
+```
+
+## Model strategy
+
+```text
+Deterministic → Small Local → Strong Local → Cloud Reasoning
+```
+
+Accuracy is established by eval first; cost/latency optimization comes after.
+
+## RAG/Data strategy
+
+P0 does not require a graph DB, vector DB or lakehouse.
+
+Start with:
+
+```text
+Operational DB
+Entity/Relation Registry
+Execution Trace/Experience
+Metrics/Evals
+```
+
+Files can be uploaded/linked/previewed before production RAG is introduced.
 
 ## Development workflow
 
-قبل از Edit:
-- read canonical docs
-- inspect exact Git files
-- identify scope/out-of-scope
-- candidate-first tests
-- exact changed file set
+Before edit:
 
-بعد از Edit:
-- build/lint/unit/integration
-- live test
-- docs update
-- exact staging
-- commit only when validated
+- read canonical docs + Master Spec + 48h plan;
+- inspect exact source baseline;
+- identify affected contracts and domain truth;
+- define exact file set and rollback;
+- build candidate outside repo.
 
-## Never repeat these mistakes
+After edit:
 
-- Tool schema بزرگ به مدل ضعیف بدون routing
-- آزاد گذاشتن LLM برای حساب کردن/ساخت عدد
-- تفسیر «خرید > فروش» به عنوان زیان
-- generated ERP IDs
-- جواب cached مالی
-- patch روی patch بدون prevalidation
-- تغییر roadmap صرفاً بر اساس آخرین ایده
+- lint/compile;
+- full existing regression;
+- focused new contract tests;
+- product smoke/live gate;
+- docs closeout;
+- exact staging; never default to `git add .`;
+- commit/push/deploy only after the required validation level passes.
 
-## v10 latest — Finance Action Depth
+## Immediate next implementation
 
-Cycle 2 is live-validated locally: Job #56 fixed named-party balance at 1.0s with no LLM. Cycle 3 adds Purchase/Cheque Finance building blocks, but the user clarified that receivable/debt examples were illustrative. The selected commercial narrative is now the end-to-end trading/import/distribution flow in `docs/ai/13-TRADE-FLOW-MVP.md`; next work crosses Inventory, Procurement, Trade/Logistics and Sales before broad CRM expansion.
+D0–D2 MVP A from `20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md`:
 
-## v10.1 Cycle 4 — Inventory + Procurement vertical slice
+- global Sidecar
+- persistent conversation
+- Universal Entity Registry/Resolver
+- `@` mention/search
+- multi-entity chips
+- Context Envelope v2
+- Quick Preview
+- first cross-module Customer Business Review
+- reuse existing Tool/Proposal/Worker stack
 
-Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Shared `InventoryDomain` now connects existing purchase documents to expected inbound, warehouse receipt/inspection, Stock Ledger, on-hand/reserved/available and replenishment reads. Risky receipt posting remains Proposal → Human Approval. See `14-INVENTORY-PROCUREMENT-MVP.md`. Context Picker / Entity Chips stays in committed UX backlog and will attach server-resolved page entities after the Golden Flow pages stabilize.
-
-## v10.2 Cycle 5 — Trade Logistics + Landed Cost
-
-Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Cycle 4 is now `LIVE E2E PASS` through Job #70 and receipt `RCV-20260829-024216-D32F`. Cycle 5 adds Trade Case → Shipment → ETA/Customs → Estimated/Actual Trade Costs → deterministic Landed Cost allocation → inventory valuation bridge. AI mutations remain Proposal → Human Approval. See `15-TRADE-LOGISTICS-LANDED-COST.md`.
-
-## وضعیت تحویل v10.2 / شروع v10.3
-v10.2 با شواهد Live از Job #71 تا #78 بسته شده است. baseline توسعه بعدی `12c9000dba8bcafb42829176f8bbf232338ff78f` است. v10.3 باید روی اسناد فروش موجود کار کند و فروش موازی نسازد: Reservation از `acc_inventory_reservations`، Delivery از Stock Ledger، COGS از Landed Cost و Manager Brief فقط Grounded.
-
-## v10.3 Cycle 6 — LIVE E2E CLOSED
-Baseline after selective reservation hotfix: `1638c458ec0b1390587b1ffb7ffd91512fe0ac6d`.
-
-Canonical live proof:
-- Job #79 Manager Brief PASS.
-- Job #83 / Proposal #12 selective PLC reservation PASS and human-approved execution.
-- Job #84 / Proposal #13 delivery PASS and human-approved execution to `DLV-20260830-163108-188D`.
-- Job #85 inventory ledger verification PASS.
-- Job #86 fulfillment state verification PASS.
-- Job #87 margin verification PASS: 370m revenue ex-tax, 620m actual-landed COGS, -250m gross margin, -67.6%.
-
-Do not reopen Cycle 6 unless a new regression appears. Next source audit must reuse `acc_parties` and existing Sales/ledger primitives for CRM-lite / Customer 360; do not create a parallel customer truth store. Page-aware AI / Context Picker remains next-layer UX after the CRM slice is stable.
-
-## v10.4 Cycle 7 — CRM-lite candidate
-Input baseline: `c426aaf171faae3737928ccbea25883eeae3929a`.
-
-`acc_parties` remains canonical. CRM stores only contacts, opportunities and activities; live financial/Sales facts are derived from existing ledgers. AI CRM writes remain Proposal → Human Approval. Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`.
+The first runtime patch must be a coherent Universal Copilot vertical, not another page-specific context experiment.
