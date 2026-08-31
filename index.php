@@ -578,17 +578,17 @@ function render_header(string $title, string $subtitle=''): void
     ?><!doctype html><html lang="fa" dir="rtl"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?=h($title)?> - ERPSMART</title>
-    <link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=7.0">
+    <link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=7.0"><link rel="stylesheet" href="assets/business-copilot.css?v=10.7.0">
     </head><body><div class="app">
     <aside class="sidebar compact"><div class="brand">ERPSMART<span>پلتفرم هوشمند عملیات کسب‌وکار</span></div><nav>
     <?php foreach($nav as $k=>$v): ?><?php if(isset($navGroups[$k])):?><span class="v5-nav-group"><?=h($navGroups[$k])?></span><?php endif;?><a class="<?=($_GET['page']??'dashboard')===$k?'active':''?>" href="index.php?page=<?=$k?>"><?=h($v)?></a><?php endforeach; ?>
     </nav></aside>
     <main class="main"><header class="topbar"><div><h1><?=h($title)?></h1><?php if($subtitle): ?><p><?=h($subtitle)?></p><?php endif; ?></div>
-    <div class="top-actions"><a class="btn tiny" href="index.php?page=dashboard">امروز: <?=h(Jalali::today())?></a>
+    <div class="top-actions"><?php BusinessCopilot::renderLauncher(); ?><a class="btn tiny" href="index.php?page=dashboard">امروز: <?=h(Jalali::today())?></a>
     <form method="post" class="inline-form"><?=csrf_field()?><input type="hidden" name="action" value="logout"><button class="btn tiny" type="submit">خروج</button></form></div></header>
     <?php foreach(flashes() as $f): ?><div class="alert <?=h($f['type'])?>"><?=h($f['msg'])?></div><?php endforeach; ?><?php
 }
-function render_footer(): void { ?></main></div><script>window.CSRF='<?=h(csrf_token())?>';window.JALALI_TODAY='<?=h(Jalali::today())?>';window.V4_WORKSPACE_ID=<?=Tenant::id()?>;window.V4_WORKSPACES=<?=json_encode(Tenant::workspaceOptions(),JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP)?>;</script><script src="assets/app.js?v=6.0"></script><script src="assets/v4.js?v=6.0"></script><script src="assets/v5.js?v=6.0"></script><script src="assets/accounting.js?v=7.0"></script></body></html><?php }
+function render_footer(): void { ?></main></div><?php BusinessCopilot::renderShell(); ?><script>window.CSRF='<?=h(csrf_token())?>';window.JALALI_TODAY='<?=h(Jalali::today())?>';window.V4_WORKSPACE_ID=<?=Tenant::id()?>;window.V4_WORKSPACES=<?=json_encode(Tenant::workspaceOptions(),JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP)?>;</script><script src="assets/app.js?v=6.0"></script><script src="assets/v4.js?v=6.0"></script><script src="assets/v5.js?v=6.0"></script><script src="assets/accounting.js?v=7.0"></script><script src="assets/business-copilot.js?v=10.7.0"></script></body></html><?php }
 
 if ($page === 'login') { render_login(); exit; }
 Auth::require(); // Tenant and ModuleRegistry are already booted by bootstrap.

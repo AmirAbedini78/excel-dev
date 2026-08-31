@@ -371,3 +371,7 @@ Status: `LIVE E2E CLOSED`.
 - Manual Contact gate passed in the product UI: `مخاطب آزمایشی CRM` / `مسئول خرید` persisted and rendered under the same Customer 360.
 - Cycle 7 therefore proves the live chain:
   `acc_parties customer → Customer 360 → Contact → Activity Proposal → Human Approval → Follow-up Queue → Opportunity Proposal → Human Approval → Pipeline → grounded Customer 360 re-read`.
+
+## v10.7 Cycle 10 — Universal Copilot Foundation
+
+Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Baseline: `c443d7d362c1c053978c0aaed803a09c5eb9a10b`. The candidate introduces one global Business Copilot Sidecar, Universal Entity Registry v1, deterministic `@` search, multi-entity Context chips, Context Envelope v2, Quick Preview and persistent conversation reuse. Cycle 8 typed-ref/server-validation principles remain preserved; forced navigation to the dedicated AI page is no longer the normal Customer 360 UX. See `21-UNIVERSAL-COPILOT-FOUNDATION-CANDIDATE.md`.

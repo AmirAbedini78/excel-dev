@@ -42,7 +42,7 @@ final class CrmModule
     {
         $d=CrmDomain::customer360(Tenant::id(),AccountingRepository::companyId(),$partyId);$p=$d['party'];$f=$d['financial'];$c=$d['crm'];
         $cid=AccountingRepository::companyId();
-        $aiLink=(ModuleRegistry::pageEnabled('ai')&&Tenant::can('ai.use'))?'<a class="btn tiny primary" href="index.php?page=ai&company_id='.$cid.'&context_type=party&context_id='.$partyId.'&context_source=crm">از AI درباره این مشتری بپرس</a>':'';
+        $aiLink=(ModuleRegistry::pageEnabled('ai')&&Tenant::can('ai.use'))?'<button type="button" class="btn tiny primary" data-copilot-attach="'.h(json_encode(['type'=>'party.customer','id'=>$partyId,'label'=>(string)$p['name'],'code'=>(string)($p['code']??''),'icon'=>'👤'],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)).'">از Copilot درباره این مشتری بپرس</button>':'';
         echo '<section class="card"><div class="section-title"><div><h2>'.h($p['name']).'</h2><p class="muted">'.h(($p['code']??'').' • '.($p['mobile']??'')).'</p></div><div class="row-actions">'.$aiLink.'<a class="btn tiny" href="index.php?page=crm&company_id='.$cid.'">بازگشت</a></div></div>';
         echo '<div class="acc-kpis"><div><b>'.self::m($f['current_balance_irr']).'</b><small>مانده • '.h($f['balance_nature']).'</small></div><div><b>'.self::m($f['recorded_sales_net_irr']).'</b><small>فروش ثبت‌شده</small></div><div><b>'.(int)$f['sales_document_count'].'</b><small>سند فروش</small></div><div><b>'.number_format((float)$f['outstanding_sales_quantity'],4).'</b><small>تحویل‌نشده</small></div><div><b>'.self::m($c['open_pipeline_irr']).'</b><small>Pipeline باز</small></div><div><b>'.self::m($c['weighted_pipeline_irr']).'</b><small>Pipeline وزنی</small></div></div></section>';
 

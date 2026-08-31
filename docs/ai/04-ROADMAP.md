@@ -465,3 +465,7 @@ Targets—not guarantees for the first 48 hours:
 ```
 
 Prediction metrics remain separate from factual QA metrics.
+
+## Active implementation gate — v10.7 Cycle 10
+
+D0–D2 Universal Copilot Foundation is now `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`: global Sidecar → `@` Entity search → multi-entity chips → Context Envelope v2 → Quick Preview → grounded Customer review. Promotion requires local regression, CI, cPanel deploy for PHP/UI assets, and the live acceptance sequence in `21-UNIVERSAL-COPILOT-FOUNDATION-CANDIDATE.md`.

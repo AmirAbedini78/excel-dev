@@ -18,7 +18,7 @@ final class AiRepository
         if(!$companyId)$companyId=AccountingRepository::companyId()?:null;
         if($companyId && !self::companyOwned($wid,$companyId))throw new RuntimeException('شرکت انتخاب‌شده معتبر نیست.');
         $pageContext=AiPageContext::resolve($wid,$companyId,$contextRefs);
-        if(!$conversationId)$conversationId=self::createConversation($companyId,mb_substr($prompt,0,80));
+        $conversationId=self::conversationIdForQueue($wid,$uid,$companyId,$conversationId,$prompt);
         $context=AiToolRegistry::bootstrapContext($wid,$companyId);
         if($pageContext)$context['page_context']=$pageContext;
         $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at)
@@ -27,6 +27,32 @@ final class AiRepository
         $id=(int)pdo()->lastInsertId();
         Audit::log('ai.job.queued','ai_jobs',$id,'ثبت درخواست برای موتور AI',null,null,['company_id'=>$companyId,'page_context_entities'=>count((array)($pageContext['entities']??[]))]);
         return $id;
+    }
+
+    private static function conversationIdForQueue(int $wid,int $uid,?int $companyId,?int $conversationId,string $prompt): int
+    {
+        if(!$conversationId)return self::createConversation($companyId,mb_substr($prompt,0,80));
+        $st=pdo()->prepare("SELECT id,company_id FROM ai_conversations WHERE id=? AND workspace_id=? AND user_id=? AND status='active' LIMIT 1");$st->execute([$conversationId,$wid,$uid]);$r=$st->fetch();
+        if(!$r)throw new RuntimeException('گفت‌وگوی انتخاب‌شده معتبر نیست.');$convCompany=$r['company_id']?(int)$r['company_id']:null;
+        if($convCompany!==null&&$companyId!==null&&$convCompany!==$companyId)throw new RuntimeException('گفت‌وگو متعلق به شرکت دیگری است.');
+        pdo()->prepare("UPDATE ai_conversations SET updated_at=NOW() WHERE id=?")->execute([$conversationId]);return$conversationId;
+    }
+
+    public static function queueCopilotChat(string $prompt,?int $companyId,?int $conversationId,array $currentPageRefs,array $attachedRefs): int
+    {
+        $prompt=trim($prompt);if($prompt==='')throw new RuntimeException('متن درخواست خالی است.');if(mb_strlen($prompt)>12000)throw new RuntimeException('متن درخواست بیش از حد طولانی است.');
+        $wid=Tenant::id();$uid=(int)Auth::user()['id'];if(!$companyId)$companyId=AccountingRepository::companyId()?:null;if(!$companyId||!self::companyOwned($wid,$companyId))throw new RuntimeException('شرکت انتخاب‌شده معتبر نیست.');
+        $envelope=AiContextEnvelope::build($wid,$companyId,$currentPageRefs,$attachedRefs);$conversationId=self::conversationIdForQueue($wid,$uid,$companyId,$conversationId,$prompt);$context=AiToolRegistry::bootstrapContext($wid,$companyId);$context['context_envelope']=$envelope;
+        $legacy=AiContextEnvelope::legacyPageContext($envelope);if($legacy)$context['page_context']=$legacy;
+        $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at) VALUES (?,?,?,?, 'agent_chat',?,'queued',100,'llm',?,NOW(),NOW())");
+        $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);$id=(int)pdo()->lastInsertId();
+        Audit::log('ai.job.queued','ai_jobs',$id,'ثبت درخواست Business Copilot',null,null,['company_id'=>$companyId,'context_envelope_version'=>AiContextEnvelope::VERSION,'attached_entities'=>count((array)$envelope['attached_entities']),'page_entities'=>count((array)($envelope['current_page']['entities']??[]))]);return$id;
+    }
+
+    public static function conversationJobsForUser(int $conversationId,int $limit=40,?int $companyId=null): array
+    {
+        $limit=max(1,min(100,$limit));$sql="SELECT id,prompt,status,result_text,error_text,created_at,completed_at FROM ai_jobs WHERE workspace_id=? AND requested_by=? AND conversation_id=?";$args=[Tenant::id(),(int)Auth::user()['id'],$conversationId];
+        if($companyId!==null){$sql.=" AND company_id=?";$args[]=$companyId;}$sql.=" ORDER BY id ASC LIMIT $limit";$st=pdo()->prepare($sql);$st->execute($args);return$st->fetchAll();
     }
 
     public static function userJobs(int $limit=30): array
@@ -64,7 +90,7 @@ final class AiRepository
         return $safe;
     }
 
-    public static function liveJobStateForUser(int $id): ?array
+    public static function liveJobStateForUser(int $id,?int $companyId=null): ?array
     {
         $st=pdo()->prepare(
             "SELECT j.id,j.status,j.result_text,j.result_json,j.error_text,
@@ -73,10 +99,10 @@ final class AiRepository
              FROM ai_jobs j
              LEFT JOIN ai_worker_nodes n ON n.id=j.worker_node_id
              LEFT JOIN companies c ON c.id=j.company_id
-             WHERE j.id=? AND j.workspace_id=? AND j.requested_by=?
+             WHERE j.id=? AND j.workspace_id=? AND j.requested_by=?".($companyId!==null?" AND j.company_id=?":"")."
              LIMIT 1"
         );
-        $st->execute([$id,Tenant::id(),(int)Auth::user()['id']]);
+        $args=[$id,Tenant::id(),(int)Auth::user()['id']];if($companyId!==null)$args[]=$companyId;$st->execute($args);
         $row=$st->fetch();
         if(!$row)return null;
         $meta=json_decode((string)($row['result_json']??''),true);if(!is_array($meta))$meta=[];

@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib,json,re
 from typing import Any
 DIGITS=str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩","01234567890123456789")
-PATCH_VERSION="v10.4-crm-lite-r1"
+PATCH_VERSION="v10.7-universal-copilot-r1"
 def norm(x:Any)->str:
     return re.sub(r"\s+"," ",str(x or "").translate(DIGITS).replace("ي","ی").replace("ك","ک").replace("\u200c"," ")).strip().lower()
 def rows(x:Any)->list[dict[str,Any]]:
@@ -23,24 +23,43 @@ def unique(c:list[dict[str,Any]],q:str):
 def blocked(t,tools,m):return t,{"provider":"deterministic","model":"none","mode":m,"tools_used":tools,"patch_version":PATCH_VERSION}
 def find_party(w,j,q,tools):
     r=w.tool(j,"search_parties",{"query":q},stable(int(j["id"]),"crm-party",q));tools.append("search_parties");return unique(rows(r),q)
-def context_party(j):
+def context_parties(j):
     ctx=j.get("context") if isinstance(j,dict) else None
-    pc=ctx.get("page_context") if isinstance(ctx,dict) else None
-    if not isinstance(pc,dict) or pc.get("version")!="v1" or pc.get("validated") is not True:return None
-    if int(pc.get("company_id") or 0)!=int(j.get("company_id") or 0):return None
+    if not isinstance(ctx,dict):return []
+    env=ctx.get("context_envelope")
+    out=[]
+    if isinstance(env,dict) and env.get("version")=="v2" and env.get("validated") is True and int(env.get("company_id") or 0)==int(j.get("company_id") or 0):
+        # Explicit @ attachments outrank implicit current-page context. This prevents an
+        # unrelated page entity from contaminating a deliberate user selection.
+        attached=env.get("attached_entities") if isinstance(env.get("attached_entities"),list) else []
+        cp=env.get("current_page");page=(cp.get("entities") if isinstance(cp,dict) and isinstance(cp.get("entities"),list) else [])
+        candidates=attached if any(isinstance(e,dict) and e.get("type") in ("party.customer","party") for e in attached) else page
+        seen=set()
+        for e in candidates:
+            if not isinstance(e,dict) or e.get("type") not in ("party.customer","party") or int(e.get("id") or 0)<=0:continue
+            i=int(e["id"])
+            if i in seen:continue
+            seen.add(i);out.append({"id":i,"code":str(e.get("code") or ""),"name":str(e.get("label") or ""),"source_page":str(e.get("source_page") or "crm")})
+        if out:return out
+    pc=ctx.get("page_context")
+    if not isinstance(pc,dict) or pc.get("version")!="v1" or pc.get("validated") is not True:return []
+    if int(pc.get("company_id") or 0)!=int(j.get("company_id") or 0):return []
     for e in pc.get("entities") or []:
         if isinstance(e,dict) and e.get("type")=="party" and int(e.get("id") or 0)>0:
-            return {"id":int(e["id"]),"code":str(e.get("code") or ""),"name":str(e.get("label") or ""),"source_page":str(e.get("source_page") or "")}
-    return None
+            out.append({"id":int(e["id"]),"code":str(e.get("code") or ""),"name":str(e.get("label") or ""),"source_page":str(e.get("source_page") or "")})
+    return out
+def context_party(j):
+    parties=context_parties(j);return parties[0] if len(parties)==1 else None
 def resolve_party(w,j,p,tools):
-    q=customer(p);ctx=context_party(j)
+    q=customer(p);ctxs=context_parties(j)
     if q:
         party=find_party(w,j,q,tools)
         if not party:return None,f"مشتری «{q}» یکتا پیدا نشد."
-        if ctx and int(ctx["id"])!=int(party["id"]):return None,"مشتری نوشته‌شده با زمینه انتخاب‌شده صفحه یکسان نیست؛ عملیات متوقف شد."
+        if ctxs and int(party["id"]) not in {int(x["id"]) for x in ctxs}:return None,"مشتری نوشته‌شده با Context متصل‌شده یکسان نیست؛ عملیات متوقف شد."
         return party,""
-    if ctx:return ctx,""
-    return None,"نام مشتری را داخل « » مشخص کن یا از Context Picker صفحه استفاده کن."
+    if len(ctxs)==1:return ctxs[0],""
+    if len(ctxs)>1:return None,"چند مشتری به درخواست متصل است؛ مشتری موردنظر را صریحاً مشخص کن."
+    return None,"نام مشتری را داخل « » مشخص کن یا با @ به Business Copilot متصل کن."
 def date_token(p):
     m=re.search(r"(?<!\d)(1[34]\d{2}[/-]\d{1,2}[/-]\d{1,2}|20\d{2}-\d{1,2}-\d{1,2})(?!\d)",str(p or "").translate(DIGITS));return m.group(1) if m else ""
 def amount(p):
@@ -105,10 +124,11 @@ def install_crm_lite(worker_cls:type)->None:
     if getattr(worker_cls,"_crm_lite_v1_installed",False):return
     original=worker_cls.process_agent
     def patched(self,j,tools_desc):
-        p=str(j.get("prompt") or "");available={str(x.get("name") or "") for x in tools_desc if isinstance(x,dict)}
+        p=str(j.get("prompt") or "");available={str(x.get("name") or "") for x in tools_desc if isinstance(x,dict)};n=norm(p)
         if isopp(p) and {"search_parties","create_crm_opportunity"}.issubset(available):return process_opp(self,j,p)
         if isact(p) and {"search_parties","create_crm_activity"}.issubset(available):return process_activity(self,j,p)
-        if is360(p) and {"search_parties","crm_customer_360"}.issubset(available):return process360(self,j,p)
+        customer_review=is360(p) or (bool(context_parties(j)) and any(x in n for x in ("وضعیت معاملات","معاملاتمون","معاملات ما","عملکرد مشتری","نمای کلی مشتری","وضعیت این مشتری")))
+        if customer_review and {"search_parties","crm_customer_360"}.issubset(available):return process360(self,j,p)
         if ispipe(p) and "crm_pipeline_summary" in available:return process_pipeline(self,j)
         if isfollow(p) and "crm_followup_queue" in available:return process_follow(self,j)
         return original(self,j,tools_desc)

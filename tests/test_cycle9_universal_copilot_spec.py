@@ -60,11 +60,11 @@ class Cycle9UniversalCopilotSpecContracts(unittest.TestCase):
             self.assertIn(token,self.mvp)
         self.assertIn("No increment is allowed to trade structural quality",self.mvp)
 
-    def test_task_state_moves_to_cycle9_without_reopening_cycle7(self):
-        self.assertEqual(self.state["baseline_commit"],"338e13419d091e6e1d3a5e7fd836ac7296e88e6b")
-        self.assertEqual(self.state["baseline_status"],"PARTIAL")
-        self.assertEqual(self.state["current_milestone"],"v10.6 Cycle 9 Universal Business Copilot Foundation")
-        self.assertEqual(self.state["milestone_status"],"PLANNED")
+    def test_cycle9_architecture_is_locked_while_execution_moves_to_cycle10(self):
+        self.assertEqual(self.state["baseline_commit"],"c443d7d362c1c053978c0aaed803a09c5eb9a10b")
+        self.assertEqual(self.state["baseline_status"],"PASS_CI_RUN22")
+        self.assertTrue(self.state["current_milestone"].startswith("v10.7 Cycle 10"))
+        self.assertEqual(self.state["release_gates"]["universal_copilot_master_spec"],"PASS_CI_RUN22_COMMIT_C443D7D")
         self.assertIn("Cycle 7",(ROOT/"docs/ai/02-CURRENT-STATE.md").read_text(encoding="utf-8"))
 
     def test_roadmap_has_two_day_cadence_and_deferred_heavy_infrastructure(self):

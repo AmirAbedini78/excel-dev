@@ -37,4 +37,18 @@ class T(unittest.TestCase):
         self.j=self.ctx();t,m=c.process_opp(self.w,self.j,'برای این مشتری فرصت فروش «Context PLC» با مبلغ 100000000 ریال و احتمال 40% آماده کن');a=[x for x in self.w.calls if x[0]=="create_crm_opportunity"][0][1];self.assertEqual(a["party_id"],3);self.assertFalse(any(x[0]=="search_parties" for x in self.w.calls))
     def test_context_mismatch_fails_closed(self):
         self.j=self.ctx();t,m=c.process360(self.w,self.j,'نمای 360 مشتری «فروشگاه پارس الکترونیک» را بده');self.assertIn("یکسان نیست",t);self.assertFalse(any(x[0]=="crm_customer_360" for x in self.w.calls))
+    def test_context_v2_attached_customer_grounds_without_name(self):
+        j={"id":10,"company_id":7,"context":{"context_envelope":{"version":"v2","validated":True,"company_id":7,"attached_entities":[{"type":"party.customer","id":3,"code":"CUS-003","label":"کارخانه بهین"}],"current_page":{"entities":[]}}}}
+        self.assertEqual(c.context_party(j)["id"],3)
+
+    def test_context_v2_explicit_customer_outranks_current_page_customer(self):
+        j={"id":12,"company_id":7,"context":{"context_envelope":{"version":"v2","validated":True,"company_id":7,"attached_entities":[{"type":"party.customer","id":4,"code":"CUS-004","label":"فروشگاه پارس"}],"current_page":{"entities":[{"type":"party.customer","id":3,"code":"CUS-003","label":"کارخانه بهین"}]}}}}
+        parties=c.context_parties(j)
+        self.assertEqual([x["id"] for x in parties],[4])
+
+    def test_context_v2_multiple_customers_is_ambiguous(self):
+        j={"id":11,"company_id":7,"context":{"context_envelope":{"version":"v2","validated":True,"company_id":7,"attached_entities":[{"type":"party.customer","id":3},{"type":"party.customer","id":4}],"current_page":{"entities":[]}}}}
+        p,e=c.resolve_party(self.w,j,"وضعیت مشتری را بده",[])
+        self.assertIsNone(p);self.assertIn("چند مشتری",e)
+
 if __name__=="__main__":unittest.main()

@@ -1,14 +1,14 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "AI-native Business Operating System for B2B trading/import/distribution; ERPSMART Intelligence Platform + pervasive Business Copilot over trusted modular ERP domains",
-  "baseline_commit": "338e13419d091e6e1d3a5e7fd836ac7296e88e6b",
-  "baseline_milestone": "v10.5 Cycle 8 Context Kernel prototype (typed ref/server validation/context transport)",
-  "baseline_status": "PARTIAL",
-  "current_milestone": "v10.6 Cycle 9 Universal Business Copilot Foundation",
-  "milestone_status": "PLANNED",
-  "live_validation_pending": false,
-  "release_contract": "v10.6-universal-copilot-foundation-v1",
-  "active_task": "Lock Master Product/Architecture Spec, then implement D0-D2 Universal Sidecar + Entity Registry/Context Envelope + @ mention/search + first cross-module Customer Business Review.",
+  "baseline_commit": "c443d7d362c1c053978c0aaed803a09c5eb9a10b",
+  "baseline_milestone": "v10.6 Cycle 9 Universal Business Copilot architecture lock",
+  "baseline_status": "PASS_CI_RUN22",
+  "current_milestone": "v10.7 Cycle 10 — Universal Copilot Foundation",
+  "milestone_status": "IMPLEMENTED-CANDIDATE",
+  "live_validation_pending": true,
+  "release_contract": "v10.7-universal-copilot-foundation-r1",
+  "active_task": "Validate D0-D2 Universal Sidecar + Entity Registry/Context Envelope v2 + @ mention/search + persistent conversation + Customer Business Review in product UI.",
   "in_scope": [
     "global persistent Business Copilot Sidecar on authenticated enabled-module pages",
     "Universal Entity Registry and server-side Entity/Context Resolver",
@@ -43,8 +43,8 @@
     "typed ERP IDs are server-resolved; model-generated IDs remain forbidden"
   ],
   "known_issues": [
-    "Cycle 8 r1 product UX is retired: Customer 360 currently jumps to the dedicated AI page; the kernel is retained but the new Sidecar has not been implemented yet.",
-    "AiPageContext is CRM-specific and must be generalized through Entity Registry/Context Resolver rather than accumulating per-module branches.",
+    "Cycle 10 r1 is an IMPLEMENTED-CANDIDATE; real browser/live acceptance is still pending after commit/CI/cPanel deploy.",
+    "AiPageContext remains only as a Cycle 8 compatibility layer; Universal Copilot uses AiEntityRegistry + AiContextResolver + AiContextEnvelope.",
     "AiModule is still a dedicated page; reusable Copilot composer/thread/rich-response components must be extracted without a frontend framework rewrite.",
     "SmartDocs prior to this architecture lock lagged the accepted product direction; this package corrects the canonical docs before runtime work resumes.",
     "Cloud provider live fallback remains credential-dependent; same-process fallback does not solve powered-off local Worker high availability.",
@@ -76,8 +76,8 @@
     "sales_selective_reservation": "PASS_LIVE_JOB83_PROPOSAL12_EXECUTED",
     "sales_delivery": "PASS_LIVE_JOB84_PROPOSAL13_EXECUTED",
     "page_aware_context_slice": "PARTIAL_KERNEL_RETAINED_UX_RETIRED",
-    "universal_copilot_master_spec": "PLANNED_DOC_LOCK",
-    "universal_copilot_mvp_a": "PLANNED"
+    "universal_copilot_master_spec": "PASS_CI_RUN22_COMMIT_C443D7D",
+    "universal_copilot_mvp_a": "IMPLEMENTED_CANDIDATE_LOCAL_VALIDATION_PENDING"
   },
   "updated_at": "2026-08-31",
   "last_live_validation_job": 93,

@@ -1,11 +1,11 @@
 # 20 — Universal Business Copilot — 48-hour MVP and two-day delivery cadence
 
-Status: `PLANNED`
+Status: `D0-D2 IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`
 
 Baseline for the first implementation candidate:
 
 ```text
-338e13419d091e6e1d3a5e7fd836ac7296e88e6b
+c443d7d362c1c053978c0aaed803a09c5eb9a10b
 ```
 
 This plan turns the Master Spec into small but **presentable** increments. Every two-day window must produce an end-to-end slice that can be shown without explaining unfinished plumbing.
