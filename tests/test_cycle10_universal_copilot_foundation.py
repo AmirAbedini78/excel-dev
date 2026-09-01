@@ -23,7 +23,6 @@ class Cycle10UniversalCopilotFoundation(unittest.TestCase):
         s=read('engine/crm_lite.py');self.assertIn('context_envelope',s);self.assertIn('"v2"',s);self.assertIn('page_context',s);self.assertIn('چند مشتری',s);self.assertIn('Explicit @ attachments outrank implicit current-page context',s)
     def test_customer_360_button_opens_copilot(self):
         s=read('app/Modules/CrmModule.php');self.assertIn('data-copilot-attach',s);self.assertIn('party.customer',s);self.assertIn('از Copilot درباره این مشتری بپرس',s)
-
     def test_sidecar_state_is_company_scoped_and_reserves_desktop_space(self):
         js=read('assets/business-copilot.js');css=read('assets/business-copilot.css')
         self.assertIn('${cfg.company_id}',js);self.assertIn('body.copilot-open .app',css)
@@ -31,12 +30,17 @@ class Cycle10UniversalCopilotFoundation(unittest.TestCase):
         s=read('engine/crm_lite.py');self.assertIn('وضعیت معاملات',s);self.assertIn('معاملاتمون',s);self.assertIn('customer_review=',s)
     def test_copilot_api_returns_json_csrf_error(self):
         s=read('copilot_api.php');self.assertIn("'csrf_mismatch'",s);self.assertNotIn('verify_csrf();$attached',s)
-
     def test_mention_search_hotfix_is_visible_and_provider_isolated(self):
         js=read('assets/business-copilot.js');api=read('copilot_api.php');reg=read('app/Core/AiEntityRegistry.php');idx=read('index.php')
         self.assertIn('در حال جست‌وجو',js);self.assertIn('جست‌وجوی موجودیت با خطا',js);self.assertIn('response.text()',js);self.assertIn('compositionend',js)
         self.assertIn('copilot_substr',api);self.assertIn('searchDetailed',api);self.assertIn("function_exists('mb_substr')",api)
         self.assertIn('failedProviders',reg);self.assertIn('entity search provider failed',reg);self.assertIn("function_exists('mb_substr')",reg)
         self.assertIn('business-copilot.js?v=10.7.1',idx)
+    def test_copilot_api_keeps_php80_compatible_return_syntax(self):
+        s=read('copilot_api.php')
+        self.assertIn('function copilot_json(array $d,int $status=200)',s)
+        self.assertNotIn(': never',s)
+        self.assertIn("if(!Auth::check())copilot_json",s)
+        self.assertIn("'Content-Type: application/json; charset=utf-8'",s)
 
 if __name__=='__main__': unittest.main()

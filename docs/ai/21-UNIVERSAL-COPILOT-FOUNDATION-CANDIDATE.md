@@ -46,3 +46,13 @@ Hotfix contract:
 - no DB migration or Worker mutation is required.
 
 After r2 deploy, repeat `@`, `@کارخانه`, multi-entity attach and Quick Preview before closing Cycle 10.
+
+## Live Gate finding — PHP 8.0 endpoint compatibility hotfix r3
+
+After r2 deploy the browser began surfacing the failure correctly, but the live `@` search endpoint still returned an unavailable/error state on cPanel while the Sidecar itself rendered normally.
+
+The Copilot endpoint uniquely declared `copilot_json(...): never`. The `never` return type was introduced in PHP 8.1. A PHP 8.0 host cannot parse that endpoint at all, which can produce exactly this pattern: the main ERPSMART page and Sidecar render normally, while every `copilot_api.php` request fails before JSON is produced.
+
+r3 removes the PHP 8.1-only `never` return declaration while preserving explicit `exit` semantics, and adds a regression contract that prevents reintroducing `: never` in this endpoint.
+
+No DB migration, Worker mutation, JavaScript change or schema change is required. After r3 deploy, retest `@` and `@کارخانه` in the real browser before proceeding to multi-entity/preview acceptance.
