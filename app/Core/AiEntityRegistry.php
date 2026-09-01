@@ -47,16 +47,33 @@ final class AiEntityRegistry
         ],$extra);
     }
 
-    public static function search(int $wid,int $cid,string $query='',array $types=[]): array
+    private static function textSlice(string $value,int $limit): string
     {
-        self::company($wid,$cid);$query=mb_substr(trim($query),0,120);$defs=self::definitions();
+        if($limit<=0)return'';
+        return function_exists('mb_substr')?mb_substr($value,0,$limit,'UTF-8'):substr($value,0,$limit);
+    }
+
+    public static function searchDetailed(int $wid,int $cid,string $query='',array $types=[]): array
+    {
+        self::company($wid,$cid);$query=self::textSlice(trim($query),120);$defs=self::definitions();
         if($types){$allowed=[];foreach($types as $t)if(is_string($t)&&isset($defs[$t]))$allowed[$t]=true;$defs=array_intersect_key($defs,$allowed);}
-        $out=[];
+        $out=[];$failedProviders=0;
         foreach($defs as $type=>$def){
             try{self::assertAccess($def);}catch(Throwable $e){continue;}
-            foreach(array_slice(self::searchType($wid,$cid,$type,$query,$def),0,self::SEARCH_PER_TYPE) as $r){$out[]=$r;if(count($out)>=self::SEARCH_TOTAL)break 2;}
+            try{$rows=self::searchType($wid,$cid,$type,$query,$def);}
+            catch(Throwable $e){
+                $failedProviders++;
+                error_log('[ERPSMART Copilot] entity search provider failed: '.$type);
+                continue;
+            }
+            foreach(array_slice($rows,0,self::SEARCH_PER_TYPE) as $r){$out[]=$r;if(count($out)>=self::SEARCH_TOTAL)break 2;}
         }
-        return$out;
+        return ['results'=>$out,'degraded'=>$failedProviders>0,'failed_provider_count'=>$failedProviders];
+    }
+
+    public static function search(int $wid,int $cid,string $query='',array $types=[]): array
+    {
+        return (array)(self::searchDetailed($wid,$cid,$query,$types)['results']??[]);
     }
 
     private static function searchType(int $wid,int $cid,string $type,string $query,array $def): array

@@ -32,4 +32,11 @@ class Cycle10UniversalCopilotFoundation(unittest.TestCase):
     def test_copilot_api_returns_json_csrf_error(self):
         s=read('copilot_api.php');self.assertIn("'csrf_mismatch'",s);self.assertNotIn('verify_csrf();$attached',s)
 
+    def test_mention_search_hotfix_is_visible_and_provider_isolated(self):
+        js=read('assets/business-copilot.js');api=read('copilot_api.php');reg=read('app/Core/AiEntityRegistry.php');idx=read('index.php')
+        self.assertIn('در حال جست‌وجو',js);self.assertIn('جست‌وجوی موجودیت با خطا',js);self.assertIn('response.text()',js);self.assertIn('compositionend',js)
+        self.assertIn('copilot_substr',api);self.assertIn('searchDetailed',api);self.assertIn("function_exists('mb_substr')",api)
+        self.assertIn('failedProviders',reg);self.assertIn('entity search provider failed',reg);self.assertIn("function_exists('mb_substr')",reg)
+        self.assertIn('business-copilot.js?v=10.7.1',idx)
+
 if __name__=='__main__': unittest.main()

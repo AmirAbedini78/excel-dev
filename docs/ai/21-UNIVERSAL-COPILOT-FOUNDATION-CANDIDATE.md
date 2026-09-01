@@ -32,3 +32,17 @@ Baseline: `c443d7d362c1c053978c0aaed803a09c5eb9a10b`
 8. Verify unrelated page context is not automatically converted into authority or an explicit attachment.
 
 No DB migration is required for this candidate.
+
+## Live Gate finding — Mention Search hotfix r2
+
+Browser validation on baseline `e958dd9631671835cfadf778dbced57e50911c40` proved the global Sidecar and page-context UX, but typing `@` / `@کارخانه` produced no visible result. Cycle 10 therefore remains `LIVE-VALIDATION-PENDING`.
+
+Hotfix contract:
+
+- mention search shows immediate loading/error/no-result feedback instead of failing silently;
+- one failing Entity provider cannot abort results from the other providers;
+- UTF-8 query truncation has a safe fallback when PHP `mbstring` is unavailable on hosting;
+- the browser asset URL is cache-busted to `business-copilot.js?v=10.7.1`;
+- no DB migration or Worker mutation is required.
+
+After r2 deploy, repeat `@`, `@کارخانه`, multi-entity attach and Quick Preview before closing Cycle 10.
