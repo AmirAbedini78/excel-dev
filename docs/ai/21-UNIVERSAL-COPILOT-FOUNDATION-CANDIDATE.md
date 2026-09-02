@@ -45,14 +45,27 @@ Hotfix contract:
 - the browser asset URL is cache-busted to `business-copilot.js?v=10.7.1`;
 - no DB migration or Worker mutation is required.
 
-After r2 deploy, repeat `@`, `@کارخانه`, multi-entity attach and Quick Preview before closing Cycle 10.
+## Live Gate finding — PHP endpoint compatibility hardening r3-r5
 
-## Live Gate finding — PHP 8.0 endpoint compatibility hotfix r3
+The live endpoint still returned an unavailable state. The endpoint was made compatible with a wider PHP runtime range and the regression runner was corrected to use the canonical `engine/compose.yaml`. This hardening passed 147/147 full regression and 13/13 focused contracts, but live `@` search still did not return JSON to the Sidecar. PHP syntax compatibility was therefore not the root cause.
 
-After r2 deploy the browser began surfacing the failure correctly, but the live `@` search endpoint still returned an unavailable/error state on cPanel while the Sidecar itself rendered normally.
+## Live Gate finding — Main-entrypoint API bridge + company context r6
 
-The Copilot endpoint uniquely declared `copilot_json(...): never`. The `never` return type was introduced in PHP 8.1. A PHP 8.0 host cannot parse that endpoint at all, which can produce exactly this pattern: the main ERPSMART page and Sidecar render normally, while every `copilot_api.php` request fails before JSON is produced.
+Live validation after commit `8d3a2498edbb5d29fb3f2fd978d9d8f1aa20a2b5` showed:
 
-r3 removes the PHP 8.1-only `never` return declaration while preserving explicit `exit` semantics, and adds a regression contract that prevents reintroducing `: never` in this endpoint.
+- the `@` UI trigger is firing and displaying the loading/error state;
+- the browser is still not receiving valid JSON from the standalone Copilot endpoint;
+- `InventoryProcurementModule` has no company selector even though its data is company-scoped.
 
-No DB migration, Worker mutation, JavaScript change or schema change is required. After r3 deploy, retest `@` and `@کارخانه` in the real browser before proceeding to multi-entity/preview acceptance.
+r6 contract:
+
+- move Copilot API execution into `BusinessCopilotApi`, loaded from bootstrap;
+- route the Sidecar through the already-proven main application entrypoint `index.php?copilot_api=1`;
+- keep `copilot_api.php` as a compatibility wrapper only;
+- JSON responses substitute invalid UTF-8, fail closed on encoding errors, emit bounded safe error codes and a request ID;
+- browser errors show HTTP status / request ID without exposing server internals;
+- restore a shared active-company selector to both Procurement and Inventory using the existing `acc-company-bar` UX and session-backed `AccountingRepository::companyId()`;
+- company switching clears record-specific page state by redirecting to the selected module root;
+- no DB migration, Worker mutation, schema change or new permission is introduced.
+
+After r6 deploy, first verify `@` / `@کارخانه`, then change company independently on Procurement and Inventory, then proceed to multi-entity and Quick Preview acceptance.

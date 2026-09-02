@@ -16,7 +16,7 @@ class Cycle10UniversalCopilotFoundation(unittest.TestCase):
         s=read('app/Core/AiContextEnvelope.php');self.assertIn("VERSION='v2'",s);self.assertIn("'current_page'",s);self.assertIn("'attached_entities'",s)
         r=read('app/Core/AiRepository.php');self.assertIn("$context['context_envelope']=$envelope",r);self.assertIn('queueCopilotChat',r)
     def test_sidecar_search_preview_do_not_require_llm(self):
-        api=read('copilot_api.php');reg=read('app/Core/AiEntityRegistry.php');self.assertIn("$action==='search'",api);self.assertIn("$action==='preview'",api);self.assertNotIn('provider_gateway',reg.lower());self.assertNotIn('ollama',reg.lower())
+        api=read('app/Core/BusinessCopilotApi.php');reg=read('app/Core/AiEntityRegistry.php');self.assertIn("$action==='search'",api);self.assertIn("$action==='preview'",api);self.assertNotIn('provider_gateway',reg.lower());self.assertNotIn('ollama',reg.lower())
     def test_conversation_is_user_scoped(self):
         r=read('app/Core/AiRepository.php');self.assertIn('workspace_id=? AND user_id=?',r);self.assertIn('conversationJobsForUser',r);self.assertIn('requested_by=? AND conversation_id=?',r);self.assertIn('AND company_id=?',r)
     def test_worker_understands_v2_and_legacy_context(self):
@@ -29,18 +29,35 @@ class Cycle10UniversalCopilotFoundation(unittest.TestCase):
     def test_magic_customer_review_routes_from_attached_context(self):
         s=read('engine/crm_lite.py');self.assertIn('وضعیت معاملات',s);self.assertIn('معاملاتمون',s);self.assertIn('customer_review=',s)
     def test_copilot_api_returns_json_csrf_error(self):
-        s=read('copilot_api.php');self.assertIn("'csrf_mismatch'",s);self.assertNotIn('verify_csrf();$attached',s)
+        s=read('app/Core/BusinessCopilotApi.php');self.assertIn("'csrf_mismatch'",s);self.assertIn("'X-Request-ID: '",s)
     def test_mention_search_hotfix_is_visible_and_provider_isolated(self):
-        js=read('assets/business-copilot.js');api=read('copilot_api.php');reg=read('app/Core/AiEntityRegistry.php');idx=read('index.php')
-        self.assertIn('در حال جست‌وجو',js);self.assertIn('جست‌وجوی موجودیت با خطا',js);self.assertIn('response.text()',js);self.assertIn('compositionend',js)
-        self.assertIn('copilot_substr',api);self.assertIn('searchDetailed',api);self.assertIn("function_exists('mb_substr')",api)
+        js=read('assets/business-copilot.js');api=read('app/Core/BusinessCopilotApi.php');reg=read('app/Core/AiEntityRegistry.php');idx=read('index.php')
+        self.assertIn('در حال جست‌وجو',js);self.assertIn('request_id',js);self.assertIn('HTTP',js);self.assertIn('response.text()',js);self.assertIn('compositionend',js)
+        self.assertIn('textSlice',api);self.assertIn('searchDetailed',api);self.assertIn('JSON_INVALID_UTF8_SUBSTITUTE',api)
         self.assertIn('failedProviders',reg);self.assertIn('entity search provider failed',reg);self.assertIn("function_exists('mb_substr')",reg)
-        self.assertIn('business-copilot.js?v=10.7.1',idx)
+        self.assertIn('business-copilot.js?v=10.7.2',idx)
     def test_copilot_api_keeps_php80_compatible_return_syntax(self):
-        s=read('copilot_api.php')
-        self.assertIn('function copilot_json(array $d,int $status=200)',s)
-        self.assertNotIn(': never',s)
-        self.assertIn("if(!Auth::check())copilot_json",s)
-        self.assertIn("'Content-Type: application/json; charset=utf-8'",s)
+        api=read('app/Core/BusinessCopilotApi.php');wrapper=read('copilot_api.php')
+        self.assertIn('final class BusinessCopilotApi',api)
+        self.assertNotIn(': never',api)
+        self.assertIn('BusinessCopilotApi::handle()',wrapper)
+        self.assertIn("'Content-Type: application/json; charset=utf-8'",api)
+    def test_copilot_uses_main_entrypoint_bridge_and_safe_json(self):
+        idx=read('index.php');boot=read('app/bootstrap.php');cop=read('app/Core/BusinessCopilot.php');api=read('app/Core/BusinessCopilotApi.php')
+        self.assertIn("isset($_GET['copilot_api'])",idx)
+        self.assertLess(idx.index("isset($_GET['copilot_api'])"),idx.index("$page = $_GET['page']"))
+        self.assertIn("BusinessCopilotApi.php",boot)
+        self.assertIn("'endpoint'=>'index.php?copilot_api=1'",cop)
+        self.assertIn("JSON_INVALID_UTF8_SUBSTITUTE",api)
+        self.assertIn("'json_encode_failed'",api)
+        self.assertIn("'server_error'",api)
+    def test_inventory_procurement_has_company_selector(self):
+        s=read('app/Modules/InventoryProcurementModule.php')
+        self.assertIn("'inv_select_company'",s)
+        self.assertIn('AccountingRepository::companies()',s)
+        self.assertIn('name="return_page"',s)
+        self.assertIn("in_array($return,['inventory','procurement'],true)",s)
+        self.assertIn('acc-company-bar',s)
+        self.assertIn("self::companyBar((string)($_GET['page']??'inventory'))",s)
 
 if __name__=='__main__': unittest.main()

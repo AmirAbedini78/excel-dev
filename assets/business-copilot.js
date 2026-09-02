@@ -24,10 +24,22 @@ async function searchMention(q){
     try{
         response=await fetch(u,{credentials:'same-origin',headers:{'Accept':'application/json'}});
         text=await response.text();
-        try{j=JSON.parse(text)}catch(e){throw new Error('invalid_json')}
-    }catch(e){if(seq===searchSeq)mentionStatus('جست‌وجوی موجودیت در دسترس نیست؛ دوباره تلاش کن.','danger');return}
+    }catch(e){
+        if(seq===searchSeq)mentionStatus('اتصال به جست‌وجوی موجودیت برقرار نشد.','danger');
+        return;
+    }
     if(seq!==searchSeq)return;
-    if(!response.ok||!j||j.ok!==true){mentionStatus('جست‌وجوی موجودیت با خطا روبه‌رو شد.','danger');return}
+    try{j=JSON.parse(text)}
+    catch(e){
+        mentionStatus(`پاسخ نامعتبر از جست‌وجو (HTTP ${response.status||0}).`,'danger');
+        return;
+    }
+    if(!response.ok||!j||j.ok!==true){
+        const code=(j&&j.error)?String(j.error):`http_${response.status||0}`;
+        const rid=(j&&j.request_id)?` • request_id: ${j.request_id}`:'';
+        mentionStatus(`خطای جست‌وجو: ${code}${rid}`,'danger');
+        return;
+    }
     renderMenu(j.results||[],j);
 }
 function renderMenu(rows,meta={}){

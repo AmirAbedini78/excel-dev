@@ -24,7 +24,7 @@ final class BusinessCopilot
     {
         if(!self::enabled())return;$company=AccountingRepository::company();$cid=(int)($company['id']??0);$uid=(int)(Auth::user()['id']??0);$pageRefs=self::currentPageRefs();$pageEntities=[];
         if($cid&&$pageRefs){try{$pageEntities=AiContextResolver::resolve(Tenant::id(),$cid,$pageRefs);}catch(Throwable $e){$pageEntities=[];}}
-        $config=['workspace_id'=>Tenant::id(),'user_id'=>$uid,'company_id'=>$cid,'company_name'=>(string)($company['name']??''),'page'=>(string)($_GET['page']??'dashboard'),'current_page_refs'=>$pageRefs,'current_page_entities'=>$pageEntities,'csrf'=>csrf_token(),'endpoint'=>'copilot_api.php'];
+        $config=['workspace_id'=>Tenant::id(),'user_id'=>$uid,'company_id'=>$cid,'company_name'=>(string)($company['name']??''),'page'=>(string)($_GET['page']??'dashboard'),'current_page_refs'=>$pageRefs,'current_page_entities'=>$pageEntities,'csrf'=>csrf_token(),'endpoint'=>'index.php?copilot_api=1'];
         echo '<button type="button" class="copilot-fab" data-copilot-open aria-label="باز کردن Business Copilot">◉</button>';
         echo '<div class="copilot-backdrop" data-copilot-close></div><aside id="business-copilot" class="copilot-sidecar" aria-hidden="true" data-copilot-config="'.h(json_encode($config,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)).'">';
         echo '<header class="copilot-head"><div><span>ERPSMART</span><strong>Business Copilot</strong><small>'.h((string)($company['name']??'بدون شرکت')).'</small></div><div class="copilot-head-actions"><a class="btn tiny" href="index.php?page=ai">مرکز فرمان</a><button class="btn tiny" type="button" data-copilot-close>×</button></div></header>';

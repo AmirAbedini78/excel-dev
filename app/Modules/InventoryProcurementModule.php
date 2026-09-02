@@ -3,6 +3,13 @@ final class InventoryProcurementModule
 {
     public static function handle(string $action): void
     {
+        if($action==='inv_select_company'){
+            $return=(string)($_POST['return_page']??'inventory');
+            if(!in_array($return,['inventory','procurement'],true))$return='inventory';
+            Tenant::requirePermission($return==='procurement'?'procurement.view':'inventory.view');
+            AccountingRepository::companyId();
+            redirect('index.php?page='.$return);
+        }
         if($action!=='inv_post_receipt')throw new RuntimeException('عملیات انبار نامعتبر است.');
         Tenant::requirePermission('inventory.manage');$wid=Tenant::id();$cid=AccountingRepository::companyId();$docId=(int)($_POST['purchase_doc_id']??0);$warehouseId=(int)($_POST['warehouse_id']??0);$raw=$_POST['lines']??[];$lines=[];
         if(is_array($raw))foreach($raw as $lineId=>$l){if(!is_array($l))continue;$lines[]=['purchase_line_id'=>(int)$lineId,'accepted_qty'=>(float)($l['accepted_qty']??0),'rejected_qty'=>(float)($l['rejected_qty']??0),'notes'=>(string)($l['notes']??'')];}
@@ -17,7 +24,18 @@ final class InventoryProcurementModule
 
     private static function header(string $title,string $subtitle): array
     {
-        $cid=AccountingRepository::companyId();if(!$cid)throw new RuntimeException('شرکت فعال مشخص نیست.');$company=AccountingRepository::company();render_header($title,$subtitle.' • شرکت: '.($company['name']??'-'));return [Tenant::id(),$cid];
+        $cid=AccountingRepository::companyId();if(!$cid)throw new RuntimeException('شرکت فعال مشخص نیست.');
+        render_header($title,$subtitle);
+        self::companyBar((string)($_GET['page']??'inventory'));
+        return [Tenant::id(),$cid];
+    }
+
+    private static function companyBar(string $page): void
+    {
+        $companies=AccountingRepository::companies();$current=AccountingRepository::companyId();
+        echo '<section class="card acc-company-bar"><div><strong>شرکت فعال</strong></div><form method="post" class="acc-inline">'.csrf_field().'<input type="hidden" name="action" value="inv_select_company"><input type="hidden" name="return_page" value="'.h($page).'"><select name="company_id" onchange="this.form.submit()">';
+        foreach($companies as $c)echo '<option value="'.(int)$c['id'].'" '.((int)$c['id']===$current?'selected':'').'>'.h($c['name']).'</option>';
+        echo '</select></form><div class="row-actions"><a class="btn tiny" href="index.php?page=procurement">تأمین و خرید</a><a class="btn tiny" href="index.php?page=inventory">انبار و موجودی</a></div></section>';
     }
 
     private static function procurement(): void
