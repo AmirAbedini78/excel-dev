@@ -9,7 +9,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY worker.py rag.py synthetic_data.py deep_safe.py agent_guard.py read_guard.py adaptive_router.py workflow_planner.py action_orchestrator.py financial_intelligence.py forecast_risk.py proactive_agent.py finance_actions.py inventory_procurement.py trade_logistics.py sales_fulfillment.py crm_lite.py api_transport.py commercial_hardening.py provider_gateway.py ./
+COPY worker.py rag.py synthetic_data.py deep_safe.py agent_guard.py read_guard.py adaptive_router.py workflow_planner.py action_orchestrator.py financial_intelligence.py forecast_risk.py proactive_agent.py finance_actions.py inventory_procurement.py trade_logistics.py sales_fulfillment.py crm_lite.py business_skills.py api_transport.py commercial_hardening.py provider_gateway.py ./
 RUN python -m compileall -q /app
 RUN mkdir -p /app/data
 

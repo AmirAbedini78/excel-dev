@@ -33,6 +33,7 @@ require_once APP_ROOT . '/app/Core/SalesDomain.php';
 require_once APP_ROOT . '/app/Core/CrmDomain.php';
 require_once APP_ROOT . '/app/Core/AiSchema.php';
 require_once APP_ROOT . '/app/Core/AiToolRegistry.php';
+require_once APP_ROOT . '/app/Core/AiCapabilityRegistry.php';
 require_once APP_ROOT . '/app/Core/AiPageContext.php';
 require_once APP_ROOT . '/app/Core/AiEntityRegistry.php';
 require_once APP_ROOT . '/app/Core/AiContextResolver.php';

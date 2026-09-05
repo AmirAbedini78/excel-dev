@@ -30,7 +30,7 @@ final class BusinessCopilot
             'workspace_id'=>Tenant::id(),'user_id'=>$uid,
             'company_id'=>$cid,'company_name'=>(string)($company['name']??''),'companies'=>$companies,
             'page'=>(string)($_GET['page']??'dashboard'),'current_page_refs'=>$pageRefs,'current_page_entities'=>$pageEntities,
-            'csrf'=>csrf_token(),'endpoint'=>'index.php?copilot_api=1'
+            'csrf'=>csrf_token(),'skills'=>AiCapabilityRegistry::catalog(),'endpoint'=>'index.php?copilot_api=1'
         ];
         echo '<button type="button" class="copilot-fab" data-copilot-open aria-label="باز کردن Business Copilot">◉</button>';
         echo '<div class="copilot-backdrop" data-copilot-close></div><aside id="business-copilot" class="copilot-sidecar" aria-hidden="true" data-copilot-config="'.h(json_encode($config,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)).'">';
@@ -45,5 +45,6 @@ final class BusinessCopilot
         echo '<div class="copilot-quick-actions"><button type="button" data-copilot-template="برای این شرکت یک بریف مدیریتی کوتاه از ۵ موضوع مهم امروز در فروش، خرید، موجودی، مطالبات و بازرگانی بده؛ هر مورد را با داده ERP و اقدام پیشنهادی مشخص کن.">بریف مدیرعامل</button><button type="button" data-copilot-template="پرونده‌های بازرگانی، محموله‌ها، ETA، گمرک و Landed Cost این شرکت را بررسی کن و ریسک‌های فوری و اقدام بعدی را اولویت‌بندی کن.">ریسک بازرگانی</button><button type="button" data-copilot-template="موجودی، رزرو، ورودی مورد انتظار و ریسک کمبود این شرکت را بررسی کن و اقلام پرریسک را اولویت‌بندی کن.">ریسک موجودی</button><button type="button" data-copilot-template="وضعیت مطالبات، پرداخت‌ها و فشار نقدینگی این شرکت را بر اساس داده‌های موجود بررسی کن و موارد فوری را بگو.">نقدینگی و وصول</button></div>';
         echo '<textarea rows="3" data-copilot-input placeholder="مثلاً: وضعیت معاملاتمون با @کارخانه ... چطوره؟"></textarea><div class="copilot-compose-actions"><span class="muted">@ جست‌وجوی سراسری موجودیت • داده‌ها هر بار از ERP تازه خوانده می‌شوند</span><button class="btn primary" type="button" data-copilot-send>ارسال</button></div></div>';
         echo '</aside>';
+        echo '<script src="assets/business-copilot-cycle12.js?v=10.9.0" defer></script>';
     }
 }

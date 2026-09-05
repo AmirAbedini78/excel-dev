@@ -42,11 +42,42 @@ final class AiRepository
     {
         $prompt=trim($prompt);if($prompt==='')throw new RuntimeException('متن درخواست خالی است.');if(mb_strlen($prompt)>12000)throw new RuntimeException('متن درخواست بیش از حد طولانی است.');
         $wid=Tenant::id();$uid=(int)Auth::user()['id'];if(!$companyId)$companyId=AccountingRepository::companyId()?:null;if(!$companyId||!self::companyOwned($wid,$companyId))throw new RuntimeException('شرکت انتخاب‌شده معتبر نیست.');
-        $envelope=AiContextEnvelope::build($wid,$companyId,$currentPageRefs,$attachedRefs);$conversationId=self::conversationIdForQueue($wid,$uid,$companyId,$conversationId,$prompt);$context=AiToolRegistry::bootstrapContext($wid,$companyId);$context['context_envelope']=$envelope;
+        $envelope=AiContextEnvelope::build($wid,$companyId,$currentPageRefs,$attachedRefs);
+        $conversationId=self::conversationIdForQueue($wid,$uid,$companyId,$conversationId,$prompt);
+        $context=AiToolRegistry::bootstrapContext($wid,$companyId);$context['context_envelope']=$envelope;
+        $history=self::conversationHistoryForQueue($wid,$uid,$companyId,$conversationId);
+        if($history)$context['conversation_history']=$history;
+
         $legacy=AiContextEnvelope::legacyPageContext($envelope);if($legacy)$context['page_context']=$legacy;
         $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at) VALUES (?,?,?,?, 'agent_chat',?,'queued',100,'llm',?,NOW(),NOW())");
         $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);$id=(int)pdo()->lastInsertId();
         Audit::log('ai.job.queued','ai_jobs',$id,'ثبت درخواست Business Copilot',null,null,['company_id'=>$companyId,'context_envelope_version'=>AiContextEnvelope::VERSION,'attached_entities'=>count((array)$envelope['attached_entities']),'page_entities'=>count((array)($envelope['current_page']['entities']??[]))]);return$id;
+    }
+
+    private static function boundedConversationText(string $value,int $limit): string
+    {
+        if($limit<=0)return'';
+        return function_exists('mb_substr')?mb_substr($value,0,$limit,'UTF-8'):substr($value,0,$limit);
+    }
+
+    private static function conversationHistoryForQueue(int $wid,int $uid,int $companyId,int $conversationId): array
+    {
+        $st=pdo()->prepare("SELECT prompt,result_text,result_json FROM ai_jobs
+            WHERE workspace_id=? AND requested_by=? AND company_id=? AND conversation_id=?
+              AND status='succeeded' AND result_text IS NOT NULL AND result_text<>''
+            ORDER BY id DESC LIMIT 3");
+        $st->execute([$wid,$uid,$companyId,$conversationId]);
+        $rows=array_reverse($st->fetchAll());$out=[];
+        foreach($rows as $r){
+            $meta=json_decode((string)($r['result_json']??''),true);if(!is_array($meta))$meta=[];
+            $out[]=[
+                'prompt'=>self::boundedConversationText((string)($r['prompt']??''),500),
+                'result_text'=>self::boundedConversationText((string)($r['result_text']??''),1200),
+                'mode'=>self::boundedConversationText((string)($meta['mode']??''),80),
+                'tools_used'=>self::safeToolNames($meta['tools_used']??[]),
+            ];
+        }
+        return$out;
     }
 
     public static function conversationJobsForUser(int $conversationId,int $limit=40,?int $companyId=null): array

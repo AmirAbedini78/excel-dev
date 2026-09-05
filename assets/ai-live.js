@@ -8,6 +8,8 @@
     running: "در حال پردازش",
     start: "شروع",
     route: "انتخاب مسیر",
+    capability_retrieval: "بازیابی قابلیت کسب‌وکار",
+    capability_retrieval_fallback: "مسیر جایگزین بازیابی قابلیت",
     analysis_bundle_request: "دریافت داده مالی",
     analysis_bundle_ready: "آماده‌سازی داده",
     deterministic_report: "گزارش قطعی",

@@ -582,7 +582,7 @@ function render_header(string $title, string $subtitle=''): void
     ?><!doctype html><html lang="fa" dir="rtl"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?=h($title)?> - ERPSMART</title>
-    <link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=7.0"><link rel="stylesheet" href="assets/business-copilot.css?v=10.8.0">
+    <link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=7.0"><link rel="stylesheet" href="assets/business-copilot.css?v=10.8.0"><link rel="stylesheet" href="assets/business-copilot-cycle12.css?v=10.9.0">
     </head><body><div class="app">
     <aside class="sidebar compact"><div class="brand">ERPSMART<span>پلتفرم هوشمند عملیات کسب‌وکار</span></div><nav>
     <?php foreach($nav as $k=>$v): ?><?php if(isset($navGroups[$k])):?><span class="v5-nav-group"><?=h($navGroups[$k])?></span><?php endif;?><a class="<?=($_GET['page']??'dashboard')===$k?'active':''?>" href="index.php?page=<?=$k?>"><?=h($v)?></a><?php endforeach; ?>

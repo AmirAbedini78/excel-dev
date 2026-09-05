@@ -1,0 +1,13 @@
+/* ERPSMART v10.9 Cycle 12 — additive Copilot UX */
+.copilot-skill-menu{position:absolute;right:8px;left:8px;bottom:calc(100% - 2px);z-index:10;overflow:auto;background:#fff;border:1px solid #d7deea;border-radius:12px;box-shadow:0 18px 44px rgba(15,23,42,.18);padding:6px;overscroll-behavior:contain}
+.copilot-skill-menu[hidden]{display:none!important}
+.copilot-skill-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 8px;color:#344054}.copilot-skill-head b{font-size:10.5px}.copilot-skill-head small{font-size:8.5px;color:#7a8493}
+.copilot-skill-category{border:1px solid #edf0f5;border-radius:9px;margin:5px 0;background:#fff;overflow:hidden}.copilot-skill-category>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 9px;cursor:pointer;font-size:10px;font-weight:900;background:#fafbfe}.copilot-skill-category>summary::-webkit-details-marker{display:none}.copilot-skill-category>summary b{min-width:24px;text-align:center;border-radius:999px;background:#eef3ff;color:#315fda;padding:2px 6px;font-size:9px}.copilot-skill-category[open]>summary{border-bottom:1px solid #edf0f5;background:#f5f8ff}
+.copilot-skill-body{padding:5px}.copilot-skill-item{width:100%;border:0;background:#fff;border-radius:8px;padding:8px 7px;text-align:right;display:grid;grid-template-columns:27px minmax(0,1fr) auto;align-items:center;gap:7px;cursor:pointer}.copilot-skill-item:hover{background:#f4f7fd}.copilot-skill-item i{font-style:normal;font-size:16px}.copilot-skill-item span{min-width:0}.copilot-skill-item b{display:block;font-size:10.5px}.copilot-skill-item small{display:block;color:#7a8493;font-size:8.8px;line-height:1.55;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.copilot-skill-item code{direction:ltr;font-size:8px;background:#f2f4f7;color:#475467;border-radius:6px;padding:3px 5px;white-space:nowrap}.copilot-skill-empty{padding:10px;color:#98a2b3;font-size:9px;text-align:center}
+.copilot-mention-menu,.copilot-skill-menu{scrollbar-width:thin;contain:layout paint}
+.copilot-mention-menu{overscroll-behavior:contain}
+/* The JS sets an inline max-height from actual space above the composer.
+   This fallback prevents the Cycle 11 popup from leaving the viewport before first measurement. */
+.copilot-mention-menu,.copilot-skill-menu{max-height:min(360px,calc(100vh - 230px))}
+@media(max-height:700px){.copilot-mention-menu,.copilot-skill-menu{max-height:min(280px,calc(100vh - 210px))}}
+@media(max-width:760px){.copilot-skill-item{grid-template-columns:24px minmax(0,1fr)}.copilot-skill-item code{grid-column:2}}
