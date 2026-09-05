@@ -19,11 +19,22 @@ def env(entities,company_id=1):
 
 class Dummy:
     def __init__(self):
-        self.calls=[];self.traces=[];self.progress_lock=threading.Lock();self.current_trace=[]
+        self.calls=[];self.traces=[];self.progress_lock=threading.Lock();self.current_trace=[];self.model_roles=[]
     def trace(self,job,stage,message,details=None):
         self.traces.append((stage,message,details or {}))
-    def model_for(self,role): return "qwen3.5:0.8b"
+    def model_for(self,role):
+        self.model_roles.append(role)
+        return "gemma3:4b" if role=="analysis" else "qwen3.5:0.8b"
     def ollama_chat(self,*args,**kwargs):
+        schema=kwargs.get("response_format")
+        props=schema.get("properties",{}) if isinstance(schema,dict) else {}
+        if "summary" in props:
+            return {"message":{"content":json.dumps({
+                "summary":"ریسک عملیاتی نیازمند پیگیری نزدیک است",
+                "findings":["تعهدهای باز و وضعیت عملیاتی باید کنار هم دیده شوند"],
+                "actions":["عامل اصلی ریسک را از شواهد Grounded پیگیری کن"],
+                "limitations":["کیفیت تصمیم به کامل بودن داده‌های ERP وابسته است"],
+            },ensure_ascii=False)}}
         return {"message":{"content":json.dumps({"capabilities":["trade-risk"]})}}
     def tool(self,job,name,args,call_id):
         self.calls.append((name,args))
@@ -33,6 +44,12 @@ class Dummy:
                     "financial":{"current_balance_irr":100*pid,"balance_nature":"بدهکار","recorded_sales_net_irr":1000*pid,"sales_document_count":pid,"outstanding_sales_quantity":2*pid},
                     "crm":{"open_pipeline_irr":500*pid,"weighted_pipeline_irr":250*pid,"next_followup":None}}
         if name=="document_analytics":
+            if args.get("group_by")=="party" and not args.get("party_id"):
+                return {"summary":{"document_count":9,"net_total":60000},"groups":[
+                    {"party_id":1,"label":"تامین الف","document_count":4,"net_total":30000},
+                    {"party_id":2,"label":"تامین ب","document_count":3,"net_total":20000},
+                    {"party_id":3,"label":"تامین ج","document_count":2,"net_total":10000},
+                ]}
             pid=int(args["party_id"])
             return {"summary":{"document_count":2*pid,"net_total":10000*pid},
                     "groups":[{"label":"1405/04","net_total":8000*pid},{"label":"1405/05","net_total":10000*pid}]}
@@ -120,6 +137,80 @@ class Cycle12SkillsCapabilityNlp(unittest.TestCase):
         self.assertEqual(meta["mode"],"procurement_supplier_compare")
         self.assertFalse(any(name.startswith("create_") for name,_ in w.calls))
         self.assertIn("بهترین تأمین‌کننده",text)
+
+    def test_natural_supplier_question_runs_portfolio_and_analysis_without_mentions(self):
+        class W(Dummy): pass
+        def original(self,j,t): return "generic",{"mode":"tool_agent","tools_used":[]}
+        W.process_agent=original
+        BS.install_business_skills(W)
+        w=W();job={"id":70,"company_id":1,"prompt":"کدوم تامین‌کننده عملکرد بهتری داشته؟",**env([],1)}
+        tools=[
+            {"name":"document_analytics","mode":"read"},{"name":"party_ledger","mode":"read"},
+            {"name":"search_trade_cases","mode":"read"},{"name":"trade_risk_summary","mode":"read"},
+        ]
+        text,meta=w.process_agent(job,tools)
+        self.assertEqual(meta["mode"],"procurement_supplier_portfolio_read")
+        self.assertEqual(meta["synthesis"],"analysis_model")
+        self.assertIn("مقایسه خودکار پرتفوی تأمین‌کنندگان",text)
+        self.assertIn("تحلیل هوشمند روی شواهد ERP",text)
+        self.assertNotIn("دقیقاً یک تأمین‌کننده",text)
+
+    def test_supplier_portfolio_needs_no_mentions_and_discovers_from_purchases(self):
+        w=Dummy();job={"id":71,"company_id":1,**env([],1)}
+        text,meta=BS.supplier_portfolio(w,job)
+        self.assertEqual(meta["mode"],"procurement_supplier_portfolio_read")
+        self.assertIn("مقایسه خودکار پرتفوی",text)
+        self.assertEqual(w.calls[0][0],"document_analytics")
+        self.assertEqual(w.calls[0][1].get("group_by"),"party")
+        self.assertNotIn("دقیقاً یک تأمین‌کننده",text)
+
+    def test_supplier_review_with_two_mentions_becomes_compare(self):
+        w=Dummy();job={"id":72,"company_id":1,**env([
+            {"type":"party.supplier","id":1,"label":"A"},
+            {"type":"party.supplier","id":2,"label":"B"},
+        ],1)}
+        text,meta=BS.supplier_review(w,job,BS.context_entities(job))
+        self.assertEqual(meta["mode"],"procurement_supplier_compare")
+        self.assertIn("مقایسه تأمین‌کننده‌ها",text)
+
+    def test_direct_skill_adds_grounded_analysis_after_erp_reads(self):
+        class W(Dummy): pass
+        def original(self,j,t): return "generic",{"mode":"tool_agent","tools_used":[]}
+        W.process_agent=original
+        BS.install_business_skills(W)
+        w=W();job={"id":73,"company_id":1,"prompt":"/trade-risk چه چیزی الان ریسک دارد؟",**env([],1)}
+        tools=[{"name":"trade_risk_summary","mode":"read"}]
+        text,meta=w.process_agent(job,tools)
+        self.assertEqual(meta["synthesis"],"analysis_model")
+        self.assertEqual(meta["provider"],"grounded_hybrid")
+        self.assertIn("analysis",w.model_roles)
+        self.assertIn("تحلیل هوشمند روی شواهد ERP",text)
+        self.assertTrue(any(stage=="grounded_synthesis" for stage,_,_ in w.traces))
+
+    def test_grounded_synthesis_numeric_guard_falls_back_to_evidence(self):
+        class NumericDummy(Dummy):
+            def ollama_chat(self,*args,**kwargs):
+                schema=kwargs.get("response_format")
+                props=schema.get("properties",{}) if isinstance(schema,dict) else {}
+                if "summary" in props:
+                    return {"message":{"content":json.dumps({
+                        "summary":"ریسک 99 درصد است",
+                        "findings":["نیازمند بررسی"],"actions":[],"limitations":[]
+                    },ensure_ascii=False)}}
+                return super().ollama_chat(*args,**kwargs)
+        w=NumericDummy();job={"id":74,"company_id":1,**env([],1)}
+        text,meta=BS.grounded_synthesis(w,job,"ریسک را تحلیل کن","ریسک Grounded ثبت شده است",{"mode":"trade_risk_read","tools_used":["trade_risk_summary"]},"trade-risk")
+        self.assertEqual(meta["synthesis"],"deterministic_fallback")
+        self.assertNotIn("99",text)
+        self.assertIn("داده‌های Grounded",text)
+
+    def test_explain_previous_uses_real_newlines_not_literal_escape(self):
+        job={"id":75,"company_id":1,"context":{"conversation_history":[{
+            "prompt":"ریسک چیست؟","result_text":"پاسخ Grounded","mode":"trade_risk_read","tools_used":["trade_risk_summary"]
+        }]}}
+        text,_=BS.explain_previous(job)
+        self.assertIn("\n",text)
+        self.assertNotIn("\\n",text)
 
     def test_specific_trade_case_review_uses_three_grounded_reads(self):
         w=Dummy();job={"id":8,"company_id":1,**env([{"type":"trade.case","id":9,"label":"TRD-1","code":"TRD-1"}],1)}
@@ -224,11 +315,15 @@ class Cycle12SourceContracts(unittest.TestCase):
         self.assertIn("/ مهارت‌ها",js)
         self.assertIn("fitFloating",js)
         self.assertIn("ResizeObserver",js)
-        self.assertIn("business-copilot-cycle12.css?v=10.9.0",idx)
-        self.assertIn("business-copilot-cycle12.js?v=10.9.0",cop)
-        self.assertEqual(idx.count("business-copilot-cycle12.css?v=10.9.0"),1)
-        self.assertEqual(cop.count("business-copilot-cycle12.js?v=10.9.0"),1)
+        self.assertIn("business-copilot-cycle12.css?v=10.9.1",idx)
+        self.assertIn("business-copilot-cycle12.js?v=10.9.1",cop)
+        self.assertEqual(idx.count("business-copilot-cycle12.css?v=10.9.1"),1)
+        self.assertEqual(cop.count("business-copilot-cycle12.js?v=10.9.1"),1)
+        self.assertIn('link[href*="business-copilot-cycle12.css"]',js)
         self.assertIn("max-height",css)
+        self.assertIn("height:100dvh",css)
+        self.assertIn("overflow-y:auto",css)
+        self.assertIn("scrollbar-gutter:stable",css)
 
     def test_conversation_history_is_same_user_company_and_bounded(self):
         repo=self.read("app/Core/AiRepository.php")
@@ -243,6 +338,8 @@ class Cycle12SourceContracts(unittest.TestCase):
         live=self.read("assets/ai-live.js")
         self.assertIn('capability_retrieval: "',live)
         self.assertIn('capability_retrieval_fallback: "',live)
+        self.assertIn('grounded_synthesis: "',live)
+        self.assertIn('grounded_synthesis_fallback: "',live)
 
     def test_worker_installs_capability_layer_before_commercial_guard(self):
         w=self.read("engine/worker.py")

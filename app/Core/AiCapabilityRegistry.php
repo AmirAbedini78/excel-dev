@@ -21,7 +21,7 @@ final class AiCapabilityRegistry
             [
                 'id'=>'supplier-review','title'=>'بررسی عملکرد تأمین‌کننده','icon'=>'🏭','category'=>'procurement',
                 'category_title'=>'خرید و تأمین','permission'=>'procurement.view','risk'=>'read',
-                'description'=>'خرید قطعی، مانده طرف‌حساب و ریسک پرونده‌های بازرگانی یک تأمین‌کننده را ترکیب می‌کند.',
+                'description'=>'اگر @ داشته باشی همان تأمین‌کننده را بررسی می‌کند؛ بدون @ پرتفوی تأمین‌کنندگان را از خرید واقعی کشف و مقایسه می‌کند.',
                 'entities'=>['party.supplier'],'example'=>'/supplier-review @تأمین‌کننده'
             ],
             [

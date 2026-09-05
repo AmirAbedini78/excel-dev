@@ -20,7 +20,7 @@ import inventory_procurement as IP
 import sales_fulfillment as SF
 import trade_logistics as TL
 
-PATCH_VERSION = "v10.9-cycle12-skills-r6"
+PATCH_VERSION = "v10.9-cycle12.1-live-intelligence-r1"
 DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 
 CAPABILITIES: dict[str, dict[str, Any]] = {
@@ -407,6 +407,130 @@ def _num(value: Any) -> float:
         return 0.0
 
 
+def _numeric_tokens(value: Any) -> set[str]:
+    normalized = str(value or "").translate(DIGITS)
+    return set(re.findall(r"\d+", normalized))
+
+
+def _numbers_grounded_in_evidence(value: Any, evidence_text: str) -> bool:
+    return _numeric_tokens(value).issubset(_numeric_tokens(evidence_text))
+
+
+def _analysis_text_items(value: Any, limit: int) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    out: list[str] = []
+    for item in value[:limit]:
+        text = re.sub(r"\s+", " ", str(item or "")).strip()
+        if text:
+            out.append(text[:500])
+    return out
+
+
+def grounded_synthesis(
+    worker: Any,
+    job: dict[str, Any],
+    prompt: str,
+    evidence_text: str,
+    meta: dict[str, Any],
+    skill_id: str,
+) -> tuple[str, dict[str, Any]]:
+    """Add qualitative LLM reasoning after deterministic ERP reads.
+
+    The model is deliberately forbidden from emitting digits, dates, IDs, percentages,
+    or money. Exact business facts remain in the deterministic evidence block above it.
+    This lets the model interpret/prioritize without becoming a source of business truth.
+    """
+    base_meta = dict(meta)
+    if str(base_meta.get("mode") or "").endswith("_blocked") or skill_id == "explain-previous":
+        return evidence_text, base_meta
+
+    model = worker.model_for("analysis")
+    schema = {
+        "type": "object",
+        "properties": {
+            "summary": {"type": "string"},
+            "findings": {"type": "array", "maxItems": 4, "items": {"type": "string"}},
+            "actions": {"type": "array", "maxItems": 3, "items": {"type": "string"}},
+            "limitations": {"type": "array", "maxItems": 2, "items": {"type": "string"}},
+        },
+        "required": ["summary", "findings", "actions", "limitations"],
+        "additionalProperties": False,
+    }
+    system = (
+        "You are ERPSMART's grounded business analyst. Answer only from the ERP evidence supplied. "
+        "Do not calculate, invent, transform, or infer numeric values, dates, percentages, currency amounts, "
+        "document numbers, business IDs, or codes. You may quote a value only when it is already present in the evidence. "
+        "Your job is qualitative interpretation: what matters, why it matters, what to inspect next, and what cannot "
+        "be concluded from the available evidence. Answer in concise Persian. Never claim evidence that is absent."
+    )
+    user = (
+        "USER_REQUEST:\n" + str(prompt or "")[:1200] +
+        "\n\nSKILL:" + skill_id +
+        "\n\nGROUNDED_ERP_EVIDENCE:\n" + str(evidence_text or "")[:6500]
+    )
+    try:
+        worker.trace(job, "grounded_synthesis", "Grounded evidence sent to analysis model", {
+            "skill_id": skill_id, "model": model, "evidence_chars": len(evidence_text),
+        })
+        response = worker.ollama_chat(
+            job, 90,
+            [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            [],
+            fast=False,
+            model=model,
+            num_ctx=2600,
+            num_predict=360,
+            temperature=0.1,
+            timeout_seconds=120,
+            response_format=schema,
+            think_override=False,
+        )
+        content = str((response.get("message") or {}).get("content") or "").strip()
+        data = json.loads(content)
+        if not isinstance(data, dict):
+            raise ValueError("grounded_synthesis_json_object_required")
+        summary = re.sub(r"\s+", " ", str(data.get("summary") or "")).strip()[:700]
+        findings = _analysis_text_items(data.get("findings"), 4)
+        actions = _analysis_text_items(data.get("actions"), 3)
+        limitations = _analysis_text_items(data.get("limitations"), 2)
+        rendered_parts = [summary, *findings, *actions, *limitations]
+        if not summary or not findings:
+            raise ValueError("grounded_synthesis_incomplete")
+        if any(not _numbers_grounded_in_evidence(x, evidence_text) for x in rendered_parts):
+            raise ValueError("grounded_synthesis_numeric_guard")
+
+        lines = [evidence_text, "", "تحلیل هوشمند روی شواهد ERP:", f"• {summary}"]
+        if findings:
+            lines.append("• برداشت‌های کلیدی:")
+            lines.extend(f"  - {x}" for x in findings)
+        if actions:
+            lines.append("• اقدام‌های پیشنهادی:")
+            lines.extend(f"  - {x}" for x in actions)
+        if limitations:
+            lines.append("• محدودیت داده:")
+            lines.extend(f"  - {x}" for x in limitations)
+        lines.append("• اعداد و شناسه‌های دقیق فقط از بخش Grounded بالا معتبرند؛ مدل فقط مجاز به ارجاع به مقادیر موجود در همان شواهد است.")
+
+        base_meta.update({
+            "provider": "grounded_hybrid",
+            "model": model,
+            "synthesis": "analysis_model",
+            "synthesis_guard": "evidence_numeric_provenance",
+        })
+        return "\n".join(lines), base_meta
+    except Exception as exc:
+        worker.trace(job, "grounded_synthesis_fallback", "Analysis synthesis unavailable; deterministic evidence preserved", {
+            "skill_id": skill_id, "model": model, "error_type": type(exc).__name__,
+        })
+        base_meta.update({
+            "synthesis": "deterministic_fallback",
+            "synthesis_error": type(exc).__name__,
+            "model": model,
+        })
+        return evidence_text + "\n\nیادداشت: تحلیل زبانی تکمیلی در این اجرا در دسترس نبود؛ داده‌های Grounded بالا همچنان معتبرند.", base_meta
+
+
 def _customer_facts(worker: Any, job: dict[str, Any], entity: dict[str, Any], tools: list[str]) -> dict[str, Any]:
     data = worker.tool(job, "crm_customer_360", {"party_id": int(entity["id"])}, stable(int(job["id"]), "skill-customer", entity["id"]))
     tools.append("crm_customer_360")
@@ -597,11 +721,113 @@ def _supplier_lines(f: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _supplier_portfolio_row(
+    worker: Any,
+    job: dict[str, Any],
+    group: dict[str, Any],
+    tools: list[str],
+    risk_rows: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    party_id = int(group.get("party_id") or 0)
+    if party_id <= 0:
+        return None
+    label = str(group.get("label") or f"Supplier #{party_id}")
+    ledger = worker.tool(job, "party_ledger", {"party_id": party_id}, stable(int(job["id"]), "supplier-portfolio-ledger", party_id))
+    tools.append("party_ledger")
+    cases = worker.tool(job, "search_trade_cases", {"query": label}, stable(int(job["id"]), "supplier-portfolio-cases", label))
+    tools.append("search_trade_cases")
+    case_rows = rows(cases)
+    case_nos = {str(x.get("case_no") or "") for x in case_rows if x.get("case_no")}
+    matched = [x for x in risk_rows if str(x.get("case_no") or "") in case_nos]
+    return {
+        "id": party_id,
+        "name": label,
+        "purchase_net_6m": _num(group.get("net_total")),
+        "purchase_docs_6m": int(group.get("document_count") or 0),
+        "ledger_balance": _num(ledger.get("balance") if isinstance(ledger, dict) else 0),
+        "trade_case_count": len(case_rows),
+        "high_risk_cases": sum(1 for x in matched if str(x.get("risk_level") or "").lower() == "high"),
+        "medium_risk_cases": sum(1 for x in matched if str(x.get("risk_level") or "").lower() == "medium"),
+        "max_delay_days": max((_num(x.get("delay_days")) for x in matched), default=0.0),
+    }
+
+
+def supplier_portfolio(worker: Any, job: dict[str, Any], limit: int = 5) -> tuple[str, dict[str, Any]]:
+    """Discover suppliers from actual purchase history when the user names none."""
+    tools: list[str] = []
+    analytics = worker.tool(job, "document_analytics", {
+        "kind": "purchases",
+        "period": "rolling_jalali_months",
+        "months": 6,
+        "status_scope": "confirmed",
+        "group_by": "party",
+        "limit": max(3, min(8, int(limit))),
+    }, stable(int(job["id"]), "supplier-portfolio", "confirmed-6m"))
+    tools.append("document_analytics")
+    analytics = analytics if isinstance(analytics, dict) else {}
+    groups = [x for x in (analytics.get("groups") or []) if isinstance(x, dict) and int(x.get("party_id") or 0) > 0]
+    if not groups:
+        return (
+            "در خریدهای قطعی شش ماه اخیر تأمین‌کننده‌ای برای مقایسه پیدا نشد. اگر منظورت تأمین‌کننده مشخصی است آن را با @ متصل کن.",
+            {"provider": "deterministic", "model": "none", "mode": "procurement_supplier_portfolio_empty", "tools_used": tools, "skill_id": "supplier-review", "patch_version": PATCH_VERSION},
+        )
+
+    risk = worker.tool(job, "trade_risk_summary", {"limit": 50}, stable(int(job["id"]), "supplier-portfolio-risk", "all"))
+    tools.append("trade_risk_summary")
+    risk_rows = rows(risk)
+    facts: list[dict[str, Any]] = []
+    for group in groups[:max(3, min(5, int(limit)))]:
+        row = _supplier_portfolio_row(worker, job, group, tools, risk_rows)
+        if row:
+            facts.append(row)
+    if not facts:
+        return (
+            "داده خرید وجود دارد اما تأمین‌کننده قابل اعتبارسنجی برای مقایسه پیدا نشد.",
+            {"provider": "deterministic", "model": "none", "mode": "procurement_supplier_portfolio_empty", "tools_used": tools, "skill_id": "supplier-review", "patch_version": PATCH_VERSION},
+        )
+
+    lines = [
+        "مقایسه خودکار پرتفوی تأمین‌کنندگان",
+        "Grounded / Read-only",
+        "",
+        "تأمین‌کننده‌های دارای خرید قطعی اخیر:",
+    ]
+    for i, f in enumerate(facts, 1):
+        lines.append(
+            f"• {i}. {f['name']} | خرید {_money(f['purchase_net_6m'])} در {f['purchase_docs_6m']} سند | "
+            f"high={f['high_risk_cases']} | medium={f['medium_risk_cases']} | "
+            f"بیشترین تأخیر={f['max_delay_days']:g} روز | مانده={_money(f['ledger_balance'])}"
+        )
+    lines += [
+        "",
+        "برداشت Grounded:",
+        "• این فهرست از خرید قطعی واقعی شرکت ساخته شده و برای شروع مقایسه نیاز به @ ندارد.",
+        "• حجم خرید به‌تنهایی به معنی بهتر بودن تأمین‌کننده نیست؛ ریسک پرونده، تأخیر و مانده نیز کنار آن دیده می‌شود.",
+        "• KPIهای کیفیت، مرجوعی، SLA و شرایط پرداخت در داده فعلی کامل نیستند؛ بنابراین رتبه قطعی کیفیت ساخته نمی‌شود.",
+        "",
+        "شواهد: Purchase Analytics(group_by=party) + Party Ledger + Trade Cases + Trade Risk.",
+    ]
+    return "\n".join(lines), {
+        "provider": "deterministic",
+        "model": "none",
+        "mode": "procurement_supplier_portfolio_read",
+        "tools_used": tools,
+        "skill_id": "supplier-review",
+        "analysis_scope": "supplier_portfolio",
+        "evidence": ["document_analytics", "party_ledger", "search_trade_cases", "trade_risk_summary"],
+        "patch_version": PATCH_VERSION,
+    }
+
+
 def supplier_review(worker: Any, job: dict[str, Any], entities: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
     suppliers = [x for x in entities if x["type"] == "party.supplier"]
-    if len(suppliers) != 1:
+    if len(suppliers) == 0:
+        return supplier_portfolio(worker, job)
+    if len(suppliers) == 2:
+        return compare_suppliers(worker, job, entities)
+    if len(suppliers) > 2:
         return (
-            "برای بررسی تأمین‌کننده دقیقاً یک تأمین‌کننده را با @ متصل کن.",
+            "بیش از دو تأمین‌کننده متصل است. برای مقایسه مستقیم حداکثر دو مورد را نگه دار، یا همه @ها را حذف کن تا پرتفوی تأمین‌کنندگان به‌صورت خودکار بررسی شود.",
             {"provider": "deterministic", "model": "none", "mode": "procurement_supplier_review_blocked", "tools_used": [], "skill_id": "supplier-review"},
         )
     tools: list[str] = []
@@ -629,9 +855,13 @@ def supplier_review(worker: Any, job: dict[str, Any], entities: list[dict[str, A
 
 def compare_suppliers(worker: Any, job: dict[str, Any], entities: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
     suppliers = [x for x in entities if x["type"] == "party.supplier"]
-    if len(suppliers) != 2:
+    if len(suppliers) == 0:
+        return supplier_portfolio(worker, job)
+    if len(suppliers) == 1:
+        return supplier_review(worker, job, entities)
+    if len(suppliers) > 2:
         return (
-            "برای مقایسه تأمین‌کننده‌ها دقیقاً دو تأمین‌کننده را با @ متصل کن.",
+            "برای مقایسه مستقیم حداکثر دو تأمین‌کننده را با @ متصل کن؛ بدون @، سیستم خودش پرتفوی خرید را بررسی می‌کند.",
             {"provider": "deterministic", "model": "none", "mode": "procurement_supplier_compare_blocked", "tools_used": [], "skill_id": "compare-suppliers"},
         )
     tools: list[str] = []
@@ -675,7 +905,6 @@ def compare_suppliers(worker: Any, job: dict[str, Any], entities: list[dict[str,
         "evidence": ["document_analytics", "party_ledger", "search_trade_cases", "trade_risk_summary"],
         "patch_version": PATCH_VERSION,
     }
-
 
 def trade_risk(worker: Any, job: dict[str, Any], entities: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
     cases = [x for x in entities if x["type"] == "trade.case"]
@@ -790,7 +1019,7 @@ def explain_previous(job: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     if preview:
         lines += ["", "خلاصه پاسخ قبلی برای ارجاع:", "• " + " | ".join(x.strip() for x in preview[:3] if x.strip())[:900]]
     lines += ["", "اگر منظورت مبنای یک عدد مشخص است، همان عدد یا شاخص را نام ببر تا مسیر داده‌اش را دقیق‌تر باز کنم."]
-    return "\\n".join(lines), {
+    return "\n".join(lines), {
         "provider": "deterministic",
         "model": "none",
         "mode": "grounded_conversation_explain_read",
@@ -854,6 +1083,8 @@ def install_business_skills(worker_cls: type) -> None:
             text, meta = direct
             meta = dict(meta)
             meta["capability_retrieval"] = {"selected": selected, "source": source}
+            skill_id = str(meta.get("skill_id") or (selected[0] if selected else ""))
+            text, meta = grounded_synthesis(self, job, prompt, text, meta, skill_id)
             return text, meta
 
         narrowed = _filter_tools(tools_desc, selected)
