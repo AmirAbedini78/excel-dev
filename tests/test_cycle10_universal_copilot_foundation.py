@@ -33,9 +33,9 @@ class Cycle10UniversalCopilotFoundation(unittest.TestCase):
     def test_mention_search_hotfix_is_visible_and_provider_isolated(self):
         js=read('assets/business-copilot.js');api=read('app/Core/BusinessCopilotApi.php');reg=read('app/Core/AiEntityRegistry.php');idx=read('index.php')
         self.assertIn('در حال جست‌وجو',js);self.assertIn('request_id',js);self.assertIn('HTTP',js);self.assertIn('response.text()',js);self.assertIn('compositionend',js)
-        self.assertIn('textSlice',api);self.assertIn('searchDetailed',api);self.assertIn('JSON_INVALID_UTF8_SUBSTITUTE',api)
-        self.assertIn('failedProviders',reg);self.assertIn('entity search provider failed',reg);self.assertIn("function_exists('mb_substr')",reg)
-        self.assertIn('business-copilot.js?v=10.7.2',idx)
+        self.assertIn('textSlice',api);self.assertIn('searchWorkspaceDetailed',api);self.assertIn('JSON_INVALID_UTF8_SUBSTITUTE',api)
+        self.assertIn('failed_provider_count',reg);self.assertIn('entity search provider failed',reg);self.assertIn("function_exists('mb_substr')",reg)
+        self.assertIn('business-copilot.js?v=10.8.0',idx)
     def test_copilot_api_keeps_php80_compatible_return_syntax(self):
         api=read('app/Core/BusinessCopilotApi.php');wrapper=read('copilot_api.php')
         self.assertIn('final class BusinessCopilotApi',api)
