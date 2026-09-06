@@ -10,6 +10,7 @@
     route: "انتخاب مسیر",
     capability_retrieval: "بازیابی قابلیت کسب‌وکار",
     capability_retrieval_fallback: "مسیر جایگزین بازیابی قابلیت",
+    supervisor_plan: "طرح محدود و قابل اعتبارسنجی کسب‌وکار",
     grounded_synthesis: "تحلیل هوشمند روی شواهد ERP",
     grounded_synthesis_fallback: "بازگشت به شواهد قطعی ERP",
     analysis_bundle_request: "دریافت داده مالی",

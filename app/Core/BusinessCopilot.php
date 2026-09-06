@@ -45,6 +45,6 @@ final class BusinessCopilot
         echo '<div class="copilot-quick-actions"><button type="button" data-copilot-template="برای این شرکت یک بریف مدیریتی کوتاه از ۵ موضوع مهم امروز در فروش، خرید، موجودی، مطالبات و بازرگانی بده؛ هر مورد را با داده ERP و اقدام پیشنهادی مشخص کن.">بریف مدیرعامل</button><button type="button" data-copilot-template="پرونده‌های بازرگانی، محموله‌ها، ETA، گمرک و Landed Cost این شرکت را بررسی کن و ریسک‌های فوری و اقدام بعدی را اولویت‌بندی کن.">ریسک بازرگانی</button><button type="button" data-copilot-template="موجودی، رزرو، ورودی مورد انتظار و ریسک کمبود این شرکت را بررسی کن و اقلام پرریسک را اولویت‌بندی کن.">ریسک موجودی</button><button type="button" data-copilot-template="وضعیت مطالبات، پرداخت‌ها و فشار نقدینگی این شرکت را بر اساس داده‌های موجود بررسی کن و موارد فوری را بگو.">نقدینگی و وصول</button></div>';
         echo '<textarea rows="3" data-copilot-input placeholder="مثلاً: وضعیت معاملاتمون با @کارخانه ... چطوره؟"></textarea><div class="copilot-compose-actions"><span class="muted">@ جست‌وجوی سراسری موجودیت • داده‌ها هر بار از ERP تازه خوانده می‌شوند</span><button class="btn primary" type="button" data-copilot-send>ارسال</button></div></div>';
         echo '</aside>';
-        echo '<script src="assets/business-copilot-cycle12.js?v=10.9.1" defer></script>';
+        echo '<script src="assets/business-copilot-cycle12.js?v=10.9.2" defer></script>';
     }
 }

@@ -21,13 +21,13 @@ final class AiCapabilityRegistry
             [
                 'id'=>'supplier-review','title'=>'بررسی عملکرد تأمین‌کننده','icon'=>'🏭','category'=>'procurement',
                 'category_title'=>'خرید و تأمین','permission'=>'procurement.view','risk'=>'read',
-                'description'=>'اگر @ داشته باشی همان تأمین‌کننده را بررسی می‌کند؛ بدون @ پرتفوی تأمین‌کنندگان را از خرید واقعی کشف و مقایسه می‌کند.',
+                'description'=>'بدون رتبه‌سازی مصنوعی، خرید قطعی، دریافت/پذیرش، تأخیر و Trade Risk تأمین‌کننده‌ها را کنار هم تحلیل می‌کند.',
                 'entities'=>['party.supplier'],'example'=>'/supplier-review @تأمین‌کننده'
             ],
             [
                 'id'=>'compare-suppliers','title'=>'مقایسه تأمین‌کننده‌ها','icon'=>'↔️','category'=>'procurement',
                 'category_title'=>'خرید و تأمین','permission'=>'procurement.view','risk'=>'read',
-                'description'=>'دو تأمین‌کننده را بر اساس خرید ثبت‌شده و سیگنال‌های واقعی Trade مقایسه می‌کند.',
+                'description'=>'دو تأمین‌کننده را با Evidence Pack خرید قطعی، دریافت/پذیرش، تأخیر و Trade Risk مقایسه می‌کند.',
                 'entities'=>['party.supplier','party.supplier'],'example'=>'/compare-suppliers @تأمین‌کننده-اول @تأمین‌کننده-دوم'
             ],
             [
@@ -35,6 +35,12 @@ final class AiCapabilityRegistry
                 'category_title'=>'بازرگانی و لجستیک','permission'=>'trade.view','risk'=>'read',
                 'description'=>'ETA، حمل، گمرک، تأخیر و Landed Cost را برای پرونده یا کل شرکت بررسی می‌کند.',
                 'entities'=>['trade.case','shipment'],'example'=>'/trade-risk @پرونده-بازرگانی'
+            ],
+            [
+                'id'=>'shipment-impact','title'=>'اثر محموله بر تعهدهای فروش','icon'=>'🔗','category'=>'trade',
+                'category_title'=>'بازرگانی و لجستیک','permission'=>'trade.view','risk'=>'read',
+                'description'=>'پرونده/محموله را به کالا، موجودی و تعهدهای فروش وصل می‌کند و Exposure شناخته‌شده را نشان می‌دهد.',
+                'entities'=>['trade.case','shipment'],'example'=>'/shipment-impact @پرونده-بازرگانی'
             ],
             [
                 'id'=>'inventory-risk','title'=>'ریسک موجودی و کمبود','icon'=>'📦','category'=>'inventory',

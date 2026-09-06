@@ -10,18 +10,24 @@ if(!composer||!input)return;
 
 // Cycle 12 stylesheet is additive so Cycle 11 cache contracts remain untouched.
 if(!document.querySelector('link[href*="business-copilot-cycle12.css"]')){
-    const link=document.createElement('link');link.rel='stylesheet';link.href='assets/business-copilot-cycle12.css?v=10.9.1';link.dataset.copilotCycle12Css='1';document.head.appendChild(link);
+    const link=document.createElement('link');link.rel='stylesheet';link.href='assets/business-copilot-cycle12.css?v=10.9.2';link.dataset.copilotCycle12Css='1';document.head.appendChild(link);
 }
 
 const hint=shell.querySelector('.copilot-compose-actions .muted');
 if(hint)hint.textContent='@ موجودیت • / مهارت • داده‌ها هر بار از ERP تازه خوانده می‌شوند';
 
+// Menus live in a dedicated Sidecar overlay. Keeping them inside the scrollable
+// composer clips them regardless of z-index when overflow is enabled.
+const overlay=document.createElement('div');
+overlay.className='copilot-overlay-layer';
+overlay.dataset.copilotOverlayLayer='1';
+shell.appendChild(overlay);
+if(mention)overlay.appendChild(mention);
 const menu=document.createElement('div');
 menu.className='copilot-skill-menu';
 menu.dataset.copilotSkillMenu='1';
 menu.hidden=true;
-if(mention&&mention.parentNode===composer)composer.insertBefore(menu,mention.nextSibling);
-else composer.insertBefore(menu,input);
+overlay.appendChild(menu);
 
 const norm=s=>String(s??'').replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/\u200c/g,' ').toLowerCase().trim();
 function slashToken(){
@@ -35,7 +41,10 @@ function hide(){menu.hidden=true}
 function fitFloating(el){
     if(!el||el.hidden)return;
     const side=shell.getBoundingClientRect(),comp=composer.getBoundingClientRect();
-    const available=Math.max(32,Math.floor(comp.top-side.top-12));
+    const available=Math.max(72,Math.floor(comp.top-side.top-12));
+    const bottom=Math.max(8,Math.floor(side.bottom-comp.top+2));
+    el.style.left='8px';el.style.right='8px';el.style.top='auto';
+    el.style.bottom=bottom+'px';
     el.style.maxHeight=Math.min(420,available)+'px';
 }
 function el(tag,cls,text){

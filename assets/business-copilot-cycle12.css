@@ -18,3 +18,12 @@
 .copilot-sidecar>.copilot-composer{min-height:0;max-height:min(42dvh,360px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable}
 .copilot-sidecar>.copilot-preview{max-height:min(28dvh,240px);overflow-y:auto}
 @supports not (height:100dvh){.copilot-sidecar{height:100vh;max-height:100vh}}
+
+/* Cycle 12.2: menus are portaled into this non-scrolling overlay so @ and /
+   can never be clipped by the composer/thread overflow contexts. */
+.copilot-sidecar{grid-template-rows:auto auto auto minmax(0,1fr) auto auto;isolation:isolate}
+.copilot-overlay-layer{position:absolute;inset:0;z-index:90;pointer-events:none;overflow:hidden}
+.copilot-overlay-layer>.copilot-mention-menu,.copilot-overlay-layer>.copilot-skill-menu{position:absolute;z-index:1;pointer-events:auto;margin:0;contain:layout paint}
+.copilot-sidecar>.copilot-thread{position:relative;z-index:1;min-height:0;overflow:auto!important}
+.copilot-sidecar>.copilot-preview{position:relative;z-index:2}
+.copilot-sidecar>.copilot-composer{position:relative;z-index:3;overflow-y:auto;overflow-x:hidden}

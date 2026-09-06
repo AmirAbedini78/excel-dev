@@ -1023,6 +1023,8 @@ from crm_lite import install_crm_lite as _install_crm_lite
 _install_crm_lite(Worker)
 from business_skills import install_business_skills as _install_business_skills
 _install_business_skills(Worker)
+from business_supervisor import install_business_supervisor as _install_business_supervisor
+_install_business_supervisor(Worker)
 from provider_gateway import install_provider_gateway as _install_provider_gateway
 _install_provider_gateway(Worker)
 from commercial_hardening import install_commercial_hardening as _install_commercial_hardening

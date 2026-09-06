@@ -54,6 +54,12 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
         "entity_types": {"trade.case", "shipment"},
         "keywords": ("ریسک", "بازرگانی", "محموله", "حمل", "eta", "گمرک", "ترخیص", "تاخیر", "تأخیر", "دیر", "landed cost", "بهای تمام"),
     },
+    "shipment-impact": {
+        "title": "اثر محموله بر تعهدهای فروش",
+        "tools": {"shipment_commitment_impact"},
+        "entity_types": {"trade.case", "shipment"},
+        "keywords": ("تعهد فروش", "تحت تاثیر", "تحت تأثیر", "اثر محموله", "اثر تاخیر", "اثر تأخیر", "shipment impact"),
+    },
     "inventory-risk": {
         "title": "ریسک موجودی و کمبود",
         "tools": {"replenishment_risk", "inventory_position", "purchase_pipeline"},
@@ -108,6 +114,7 @@ EXPLICIT_ALIASES = {
     "compare-suppliers": "compare-suppliers",
     "trade-risk": "trade-risk",
     "shipment-risk": "trade-risk",
+    "shipment-impact": "shipment-impact",
     "inventory-risk": "inventory-risk",
     "stock-risk": "inventory-risk",
     "executive-brief": "executive-brief",
@@ -212,6 +219,7 @@ def is_write_request(prompt: str) -> bool:
 STRONG_INTENT_PHRASES = {
     "حاشیه سود", "بهای تمام", "landed cost", "وضعیت شرکت", "فرصت فروش",
     "تامین کننده", "تأمین کننده", "تامین‌کننده", "تأمین‌کننده",
+    "کسری", "کمبود",
 }
 
 
@@ -990,6 +998,8 @@ TOOL_LABELS = {
     "trade_manager_brief": "بریف بین‌ماژولی مدیر",
     "sales_fulfillment": "وضعیت تأمین و تحویل فروش",
     "sales_margin_summary": "حاشیه سود فروش",
+    "supplier_performance_summary": "Evidence Pack عملکرد تأمین‌کننده",
+    "shipment_commitment_impact": "اثر محموله بر تعهدهای فروش",
 }
 
 

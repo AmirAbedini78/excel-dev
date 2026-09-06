@@ -1,0 +1,316 @@
+[
+  {
+    "prompt": "کدوم تامین‌کننده عملکرد بهتری داشته؟",
+    "entities": [],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "بهترین تأمین‌کننده برای ادامه همکاری کدومه؟",
+    "entities": [],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "تامین‌کننده‌ها رو از نظر عملکرد و ریسک مقایسه کن",
+    "entities": [],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "کدام تامین کننده قابل اتکاتر بوده؟",
+    "entities": [],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "عملکرد خرید از تأمین‌کننده‌ها چطور بوده؟",
+    "entities": [],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "ریسک تامین‌کننده‌های فعلی رو مقایسه کن",
+    "entities": [],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "بین این دو تأمین‌کننده کدام قابل اتکاتر است؟",
+    "entities": [
+      [
+        "party.supplier",
+        11
+      ],
+      [
+        "party.supplier",
+        12
+      ]
+    ],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "این دو تامین کننده را از نظر تاخیر و دریافت مقایسه کن",
+    "entities": [
+      [
+        "party.supplier",
+        11
+      ],
+      [
+        "party.supplier",
+        12
+      ]
+    ],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "/supplier-review",
+    "entities": [],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "/compare-suppliers @A @B",
+    "entities": [
+      [
+        "party.supplier",
+        11
+      ],
+      [
+        "party.supplier",
+        12
+      ]
+    ],
+    "expected": "supplier-review"
+  },
+  {
+    "prompt": "اگر این محموله دیر برسد کدام تعهدهای فروش تحت تأثیر قرار می‌گیرند؟",
+    "entities": [
+      [
+        "trade.case",
+        9
+      ]
+    ],
+    "expected": "shipment-impact"
+  },
+  {
+    "prompt": "اثر تأخیر این پرونده روی مشتری‌ها چیه؟",
+    "entities": [
+      [
+        "trade.case",
+        9
+      ]
+    ],
+    "expected": "shipment-impact"
+  },
+  {
+    "prompt": "این shipment چه اثری روی commitment های فروش دارد؟",
+    "entities": [
+      [
+        "shipment",
+        4
+      ]
+    ],
+    "expected": "shipment-impact"
+  },
+  {
+    "prompt": "اگر ETA این محموله عقب بیفته چه فروش‌هایی درگیر میشن؟",
+    "entities": [
+      [
+        "shipment",
+        4
+      ]
+    ],
+    "expected": "shipment-impact"
+  },
+  {
+    "prompt": "این پرونده بازرگانی روی کدام مشتری‌ها اثر دارد؟",
+    "entities": [
+      [
+        "trade.case",
+        9
+      ]
+    ],
+    "expected": "shipment-impact"
+  },
+  {
+    "prompt": "تعهد فروش وابسته به این محموله را نشان بده",
+    "entities": [
+      [
+        "shipment",
+        4
+      ]
+    ],
+    "expected": "shipment-impact"
+  },
+  {
+    "prompt": "/shipment-impact این پرونده چه اثری روی فروش دارد؟",
+    "entities": [
+      [
+        "trade.case",
+        9
+      ]
+    ],
+    "expected": "shipment-impact"
+  },
+  {
+    "prompt": "اگر حمل این پرونده تاخیر بخورد چی میشه برای مشتری‌ها؟",
+    "entities": [
+      [
+        "trade.case",
+        9
+      ]
+    ],
+    "expected": "shipment-impact"
+  },
+  {
+    "prompt": "چه چیزی الان توی بازرگانی بیشتر ریسک داره؟",
+    "entities": [],
+    "expected": "trade-risk"
+  },
+  {
+    "prompt": "ریسک پرونده‌های بازرگانی رو بگو",
+    "entities": [],
+    "expected": "trade-risk"
+  },
+  {
+    "prompt": "وضعیت ETA و گمرک این پرونده نگران‌کننده است؟",
+    "entities": [
+      [
+        "trade.case",
+        9
+      ]
+    ],
+    "expected": "trade-risk"
+  },
+  {
+    "prompt": "ریسک این محموله چیه؟",
+    "entities": [
+      [
+        "shipment",
+        4
+      ]
+    ],
+    "expected": "trade-risk"
+  },
+  {
+    "prompt": "این دو مشتری رو مقایسه کن",
+    "entities": [
+      [
+        "party.customer",
+        1
+      ],
+      [
+        "party.customer",
+        2
+      ]
+    ],
+    "expected": "compare-customers"
+  },
+  {
+    "prompt": "کدوم مشتری برای پیگیری فروش اولویت بیشتری داره؟",
+    "entities": [
+      [
+        "party.customer",
+        1
+      ],
+      [
+        "party.customer",
+        2
+      ]
+    ],
+    "expected": "compare-customers"
+  },
+  {
+    "prompt": "بین این دو مشتری کدام وضعیت بهتری دارد؟",
+    "entities": [
+      [
+        "party.customer",
+        1
+      ],
+      [
+        "party.customer",
+        2
+      ]
+    ],
+    "expected": "compare-customers"
+  },
+  {
+    "prompt": "این مشتری رو بررسی کن",
+    "entities": [
+      [
+        "party.customer",
+        1
+      ]
+    ],
+    "expected": "customer-review"
+  },
+  {
+    "prompt": "وضعیت معاملات این مشتری چطوره؟",
+    "entities": [
+      [
+        "party.customer",
+        1
+      ]
+    ],
+    "expected": "customer-review"
+  },
+  {
+    "prompt": "ریسک موجودی و کمبود رو بررسی کن",
+    "entities": [],
+    "expected": "inventory-risk"
+  },
+  {
+    "prompt": "کدوم کالاها کسری دارند؟",
+    "entities": [],
+    "expected": "inventory-risk"
+  },
+  {
+    "prompt": "وضعیت انبار و نیاز تامین چطوره؟",
+    "entities": [],
+    "expected": "inventory-risk"
+  },
+  {
+    "prompt": "این نتیجه رو بر چه اساسی گفتی؟",
+    "entities": [],
+    "expected": "explain-previous"
+  },
+  {
+    "prompt": "منبع این عدد چیه؟",
+    "entities": [],
+    "expected": "explain-previous"
+  },
+  {
+    "prompt": "یک پرونده بازرگانی ایجاد کن",
+    "entities": [],
+    "expected": "write-bypass"
+  },
+  {
+    "prompt": "برای مشتری یک پیگیری ثبت کن",
+    "entities": [
+      [
+        "party.customer",
+        1
+      ]
+    ],
+    "expected": "write-bypass"
+  },
+  {
+    "prompt": "این سند فروش را رزرو کن",
+    "entities": [
+      [
+        "sales.document",
+        20
+      ]
+    ],
+    "expected": "write-bypass"
+  },
+  {
+    "prompt": "یک سند حسابداری بساز",
+    "entities": [],
+    "expected": "write-bypass"
+  },
+  {
+    "prompt": "فاکتور خرید آماده کن",
+    "entities": [],
+    "expected": "write-bypass"
+  },
+  {
+    "prompt": "حذف کن این رکورد رو",
+    "entities": [],
+    "expected": "write-bypass"
+  }
+]
