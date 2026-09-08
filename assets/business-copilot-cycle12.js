@@ -10,7 +10,7 @@ if(!composer||!input)return;
 
 // Cycle 12 stylesheet is additive so Cycle 11 cache contracts remain untouched.
 if(!document.querySelector('link[href*="business-copilot-cycle12.css"]')){
-    const link=document.createElement('link');link.rel='stylesheet';link.href='assets/business-copilot-cycle12.css?v=10.9.2';link.dataset.copilotCycle12Css='1';document.head.appendChild(link);
+    const link=document.createElement('link');link.rel='stylesheet';link.href='assets/business-copilot-cycle12.css?v=10.9.3';link.dataset.copilotCycle12Css='1';document.head.appendChild(link);
 }
 
 const hint=shell.querySelector('.copilot-compose-actions .muted');

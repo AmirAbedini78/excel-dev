@@ -7,7 +7,7 @@
  */
 final class BusinessIntelligenceDomain
 {
-    public const VERSION='10.9.2';
+    public const VERSION='10.9.3';
 
     private static function assertCompany(int $wid,int $cid): void
     {
@@ -32,7 +32,10 @@ final class BusinessIntelligenceDomain
         $start=date('Y-m-d',strtotime('-'.$months.' months'));
         $end=date('Y-m-d');
 
-        $where=["d.workspace_id=?","d.company_id=?","d.doc_type IN ('purchase_order_goods','purchase_invoice_goods')","d.workflow_status IN ('approved','final')","d.document_date>=?","d.document_date<=?"];
+        // Canonical purchase-history semantics intentionally match document_analytics:
+        // confirmed = approved + final across ALL purchase document types. Receipt/acceptance
+        // metrics are narrowed to physical item lines separately below.
+        $where=["d.workspace_id=?","d.company_id=?","d.workflow_status IN ('approved','final')","d.document_date>=?","d.document_date<=?"];
         $params=[$wid,$cid,$start,$end];
         if($partyIds){$ph=implode(',',array_fill(0,count($partyIds),'?'));$where[]="d.party_id IN ($ph)";array_push($params,...$partyIds);}
         $whereSql=implode(' AND ',$where);
@@ -56,14 +59,16 @@ final class BusinessIntelligenceDomain
             COALESCE(SUM(GREATEST(l.quantity-COALESCE(rr.accepted_qty,0),0)),0) open_qty
             FROM acc_purchase_lines l
             JOIN acc_purchase_docs d ON d.id=l.purchase_doc_id AND d.workspace_id=l.workspace_id
+            JOIN acc_items i ON i.id=l.item_id AND i.workspace_id=l.workspace_id AND i.company_id=d.company_id
             LEFT JOIN (
                 SELECT rl.workspace_id,rl.purchase_line_id,SUM(rl.accepted_qty) accepted_qty,SUM(rl.rejected_qty) rejected_qty
                 FROM acc_inventory_receipt_lines rl
                 JOIN acc_inventory_receipts r ON r.id=rl.receipt_id AND r.workspace_id=rl.workspace_id AND r.status='posted'
                 GROUP BY rl.workspace_id,rl.purchase_line_id
             ) rr ON rr.workspace_id=l.workspace_id AND rr.purchase_line_id=l.id
-            WHERE d.workspace_id=? AND d.company_id=? AND d.doc_type IN ('purchase_order_goods','purchase_invoice_goods')
-              AND d.workflow_status IN ('approved','final') AND d.document_date>=? AND d.document_date<=? AND d.party_id IN ($ph)
+            WHERE d.workspace_id=? AND d.company_id=?
+              AND d.workflow_status IN ('approved','final') AND d.document_date>=? AND d.document_date<=?
+              AND d.party_id IN ($ph) AND COALESCE(i.item_type,'material')<>'service'
             GROUP BY d.party_id";
         $st=pdo()->prepare($lineSql);$st->execute($lineParams);$lineBy=[];foreach($st->fetchAll() as $r)$lineBy[(int)$r['party_id']]=$r;
 
@@ -108,7 +113,7 @@ final class BusinessIntelligenceDomain
             'limitations'=>array_filter([
                 'supplier_quality_score_not_enabled'=>'کیفیت/SLA و زمان پاسخ تامین‌کننده در مدل داده فعلی کامل نیست؛ رتبه کیفی مصنوعی ساخته نمی‌شود.',
                 'price_normalization_not_enabled'=>'مقایسه قیمت بدون نرمال‌سازی کالا/ارز انجام نمی‌شود.',
-                'goods_scope'=>'شاخص دریافت/پذیرش در این MVP فقط خرید کالایی تاییدشده را پوشش می‌دهد؛ خرید خدمات وارد این مقایسه نمی‌شود.',
+                'goods_scope'=>'حجم خرید قطعی همه اسناد approved/final را پوشش می‌دهد؛ شاخص دریافت/پذیرش فقط خطوط کالایی غیرخدمت را می‌سنجد و خدمات را به‌عنوان عدم‌دریافت جریمه نمی‌کند.',
                 'trade_sample_bound'=>'سیگنال Trade روی حداکثر 100 پرونده اخیر شرکت محاسبه می‌شود.',
                 'portfolio_scope'=>!$partyIds?'بدون @، مقایسه روی حداکثر '.$limit.' تأمین‌کننده با بیشترین خرید قطعی دوره انجام می‌شود.':null,
             ])

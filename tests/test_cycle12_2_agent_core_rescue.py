@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -58,6 +59,13 @@ class Dummy:
                 "summary":{"affected_sales_count":1,"affected_customer_count":1,"items_with_future_inbound_dependency":1,"items_with_trade_case_dependency_signal":1},
                 "limitations":{"causality":"اثر، Exposure است نه علیت قطعی"}
             }
+        if name=="trade_risk_summary":
+            return {"rows":[
+                {"trade_case_id":9,"case_no":"TRD-9","supplier_name":"تامین برق ایرانیان","status":"customs",
+                 "shipment_no":"SHP-9","shipment_status":"planned","eta":"1405/06/25","delay_days":0,
+                 "clearance_status":"hold","projected_landed_total_irr":620000000,"risk_score":4,"risk_level":"high",
+                 "reasons":["customs_hold"]}
+            ],"risk_count":1}
         raise AssertionError(name)
     def ollama_chat(self,job,round_no,messages,tools,**kwargs):
         self.model_calls.append(kwargs.get("model"))
@@ -75,12 +83,19 @@ class Dummy:
                 "actions":[{"text":"قبل از سفارش بعدی، علت خرید باز و ریسک پرونده کارن بررسی شود.","evidence_ids":["E14","E15"]}],
                 "limitations":["کیفیت و SLA کامل نیست."]
             }
-        else:
+        elif kind=="shipment_commitment_impact":
             data={
                 "summary":{"text":"این محموله با یک تعهد فروش باز هم‌کالا مرتبط است و پوشش فعلی برای آن کامل نیست.","evidence_ids":["E6","E8","E14"]},
                 "findings":[{"text":"بخشی از تعهد باز به ورودی آینده وابسته است.","evidence_ids":["E14"]}],
                 "actions":[{"text":"تعهد مشتری و وضعیت ETA پیش از وعده تحویل بعدی بازبینی شود.","evidence_ids":["E5","E16"]}],
                 "limitations":["این نتیجه Exposure را نشان می‌دهد، نه علیت قطعی."]
+            }
+        else:
+            data={
+                "summary":{"text":"ریسک اصلی از توقف گمرکی می‌آید، نه از تأخیر ثبت‌شده حمل.","evidence_ids":["E2","E5","E6"]},
+                "findings":[{"text":"پرونده در وضعیت پرریسک قرار دارد و علت قطعی آن توقف گمرکی است.","evidence_ids":["E1","E2","E6"]}],
+                "actions":[{"text":"رفع وضعیت توقف گمرکی باید پیش از تغییر وعده‌های عملیاتی پیگیری شود.","evidence_ids":["E2","E6"]}],
+                "limitations":[]
             }
         return {"message":{"content":json.dumps(data,ensure_ascii=False)}}
 
@@ -103,6 +118,15 @@ class Cycle122AgentCoreRescue(unittest.TestCase):
             "/shipment-impact این پرونده چه اثری روی فروش دارد؟",
         ]
         for p in prompts:self.assertTrue(SUP._shipment_impact_intent(p,entities),p)
+
+    def test_trade_risk_intent_benchmark(self):
+        prompts=[
+            "چه چیزی الان در بازرگانی بیشترین ریسک را دارد و چرا؟",
+            "/trade-risk ریسک‌های فوری شرکت چیه؟",
+            "پرریسک‌ترین پرونده بازرگانی کدام است؟",
+        ]
+        for p in prompts:self.assertTrue(SUP._trade_risk_intent(p,[]),p)
+        self.assertFalse(SUP._trade_risk_intent('/shipment-impact اثر این محموله روی فروش چیست؟',[]))
 
     def test_supplier_flow_uses_one_server_evidence_tool_and_reasoning(self):
         class W(Dummy):pass
@@ -150,6 +174,41 @@ class Cycle122AgentCoreRescue(unittest.TestCase):
         self.assertEqual(meta["mode"],"shipment_commitment_impact_blocked")
         self.assertEqual(w.calls,[]);self.assertIn("@",text)
 
+    def test_trade_risk_uses_structured_supervisor_and_reasoning(self):
+        class W(Dummy):pass
+        W.process_agent=lambda self,j,t:("old",{"mode":"old"})
+        SUP.install_business_supervisor(W)
+        w=W();job={"id":31,"company_id":1,"prompt":"چه چیزی الان در بازرگانی بیشترین ریسک را دارد و چرا؟",**env([])}
+        text,meta=w.process_agent(job,[{"name":"trade_risk_summary","mode":"read"}])
+        self.assertEqual([x[0] for x in w.calls],["trade_risk_summary"])
+        self.assertEqual(meta["mode"],"trade_risk_supervisor_read")
+        self.assertEqual(meta["synthesis"],"analysis_model")
+        self.assertIn("توقف گمرکی",text);self.assertIn("تحلیل هوشمند",text)
+
+    def test_supplier_source_uses_canonical_confirmed_docs_not_hardcoded_doc_types(self):
+        domain=(ROOT/'app/Core/BusinessIntelligenceDomain.php').read_text(encoding='utf-8')
+        start=domain.index('public static function supplierPerformanceSummary')
+        end=domain.index('public static function shipmentCommitmentImpact')
+        block=domain[start:end]
+        base=block[:block.index('$lineSql=')]
+        self.assertIn("d.workflow_status IN ('approved','final')",base)
+        self.assertNotIn("purchase_order_goods",base)
+        self.assertNotIn("purchase_invoice_goods",base)
+        self.assertIn("COALESCE(i.item_type,'material')<>'service'",block)
+
+    def test_trade_overview_resolves_only_single_active_case_as_page_context(self):
+        php=(ROOT/'app/Core/BusinessCopilot.php').read_text(encoding='utf-8')
+        self.assertIn("$_GET['case_id']??$_GET['view']??0",php)
+        self.assertIn("count($active)===1",php)
+        self.assertIn("['closed','canceled']",php)
+
+    def test_sidecar_flex_shell_pins_composer_and_thread_owns_scroll(self):
+        css=(ROOT/'assets/business-copilot-cycle12.css').read_text(encoding='utf-8')
+        self.assertIn('display:flex!important;flex-direction:column',css)
+        self.assertIn('flex:1 1 0!important;height:0!important',css)
+        self.assertIn('.copilot-sidecar>.copilot-composer{max-height:min(40dvh,320px)',css)
+        self.assertIn('overflow:hidden!important',css)
+
     def test_write_request_bypasses_supervisor(self):
         class W(Dummy):pass
         W.process_agent=lambda self,j,t:("guarded",{"mode":"guarded"})
@@ -165,6 +224,13 @@ class Cycle122AgentCoreRescue(unittest.TestCase):
         self.assertEqual(w.model_calls,["analysis-test","fallback-test"])
         self.assertEqual(meta["synthesis"],"analysis_model")
         self.assertNotIn("999",text)
+
+    def test_stale_runtime_route_never_displaces_current_fallback(self):
+        w=Dummy()
+        with patch.object(SUP.Path,"read_text",return_value=json.dumps({"selected_model":"stale-test"})):
+            self.assertEqual(SUP._runtime_analysis_models(w),["analysis-test","fallback-test"])
+        with patch.object(SUP.Path,"read_text",return_value=json.dumps({"selected_model":"fallback-test"})):
+            self.assertEqual(SUP._runtime_analysis_models(w),["fallback-test","analysis-test"])
 
     def test_php_registers_two_typed_intelligence_tools(self):
         registry=(ROOT/'app/Core/AiToolRegistry.php').read_text(encoding='utf-8')
@@ -208,6 +274,8 @@ class Cycle122AgentCoreRescue(unittest.TestCase):
                 actual="write-bypass"
             elif SUP._shipment_impact_intent(prompt,entities):
                 actual="shipment-impact"
+            elif SUP._trade_risk_intent(prompt,entities):
+                actual="trade-risk"
             elif SUP._supplier_intent(prompt,entities):
                 actual="supplier-review"
             else:

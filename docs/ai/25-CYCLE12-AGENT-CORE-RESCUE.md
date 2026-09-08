@@ -155,3 +155,18 @@ After this live gate passes, Cycle 12/MVP-B is closed and the roadmap advances t
 ## Runtime model routing hardening (r2 recovery)
 
 The first live preflight proved that a cold `analysis_model` can exceed a fixed 90-second one-off HTTP check even while the rest of the 208-test candidate is valid. The recovery preflight now uses the exact Worker `ollama_chat` transport, the same 150-second analysis budget used by the Supervisor, then a 120-second configured fallback. The first model that proves structured-output compatibility is persisted only in the existing Worker data volume (`/app/data/cycle12_analysis_route.json`) and is preferred by the bounded Supervisor. Repository configuration and business truth are not mutated.
+
+## Live Gate correction — v10.9.3
+
+Live validation after `ded6a88` exposed three product-blocking gaps and they are treated as correctness, not cosmetic polish:
+
+1. Supplier Performance used a narrower hard-coded `doc_type` set than canonical `document_analytics`, causing false `no_confirmed_purchase_history`. The source now uses the canonical confirmed semantics (`approved + final`) across all purchase documents; receipt/acceptance metrics remain limited to physical-item lines.
+2. Trade overview can resolve “this shipment/case” only when exactly one active Trade Case exists in the current company; multiple active cases still require explicit `@` selection.
+3. Company Trade Risk now uses the same Structured Evidence + bounded reasoning path instead of the legacy text-synthesis path.
+4. Sidecar uses a fixed-height flex shell: header/scope/composer are pinned, the thread alone expands/scrolls, and `@`/`/` remain in the overlay layer.
+
+No write boundary, schema, migration, RAG, or autonomy scope changed.
+
+## Runtime route hardening (v10.9.3 r6)
+
+The model proven by the local structured-output preflight is only a preference while it remains one of the Worker's currently configured `analysis` / `fallback` models. Stale runtime route metadata is ignored so it can never displace the configured fallback after a model/config change.

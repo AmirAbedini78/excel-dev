@@ -10,7 +10,23 @@ final class BusinessCopilot
     {
         if(!self::enabled())return[];$page=(string)($_GET['page']??'dashboard');$ref=null;
         if($page==='crm'&&(int)($_GET['party_id']??0)>0)$ref=['type'=>'party.customer','id'=>(int)$_GET['party_id']];
-        elseif($page==='trade'&&(int)($_GET['case_id']??0)>0)$ref=['type'=>'trade.case','id'=>(int)$_GET['case_id']];
+        elseif($page==='trade'){
+            $caseId=(int)($_GET['case_id']??$_GET['view']??0);
+            if($caseId>0)$ref=['type'=>'trade.case','id'=>$caseId];
+            else{
+                // On the Trade overview, "this shipment/case" is safe to resolve only
+                // when the active company has exactly one non-closed/non-canceled case.
+                // With multiple candidates we deliberately keep the context ambiguous.
+                try{
+                    $cid=AccountingRepository::companyId();$active=[];
+                    if($cid){foreach(TradeDomain::searchCases(Tenant::id(),$cid,'') as $case){
+                        if(in_array((string)($case['status']??''),['closed','canceled'],true))continue;
+                        $id=(int)($case['id']??0);if($id>0)$active[$id]=$id;
+                    }}
+                    if(count($active)===1)$ref=['type'=>'trade.case','id'=>(int)array_values($active)[0]];
+                }catch(Throwable $e){$ref=null;}
+            }
+        }
         elseif($page==='procurement'&&(int)($_GET['receive']??0)>0)$ref=['type'=>'purchase.document','id'=>(int)$_GET['receive']];
         return$ref?[$ref]:[];
     }
@@ -45,6 +61,6 @@ final class BusinessCopilot
         echo '<div class="copilot-quick-actions"><button type="button" data-copilot-template="برای این شرکت یک بریف مدیریتی کوتاه از ۵ موضوع مهم امروز در فروش، خرید، موجودی، مطالبات و بازرگانی بده؛ هر مورد را با داده ERP و اقدام پیشنهادی مشخص کن.">بریف مدیرعامل</button><button type="button" data-copilot-template="پرونده‌های بازرگانی، محموله‌ها، ETA، گمرک و Landed Cost این شرکت را بررسی کن و ریسک‌های فوری و اقدام بعدی را اولویت‌بندی کن.">ریسک بازرگانی</button><button type="button" data-copilot-template="موجودی، رزرو، ورودی مورد انتظار و ریسک کمبود این شرکت را بررسی کن و اقلام پرریسک را اولویت‌بندی کن.">ریسک موجودی</button><button type="button" data-copilot-template="وضعیت مطالبات، پرداخت‌ها و فشار نقدینگی این شرکت را بر اساس داده‌های موجود بررسی کن و موارد فوری را بگو.">نقدینگی و وصول</button></div>';
         echo '<textarea rows="3" data-copilot-input placeholder="مثلاً: وضعیت معاملاتمون با @کارخانه ... چطوره؟"></textarea><div class="copilot-compose-actions"><span class="muted">@ جست‌وجوی سراسری موجودیت • داده‌ها هر بار از ERP تازه خوانده می‌شوند</span><button class="btn primary" type="button" data-copilot-send>ارسال</button></div></div>';
         echo '</aside>';
-        echo '<script src="assets/business-copilot-cycle12.js?v=10.9.2" defer></script>';
+        echo '<script src="assets/business-copilot-cycle12.js?v=10.9.3" defer></script>';
     }
 }

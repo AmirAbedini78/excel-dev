@@ -27,3 +27,15 @@
 .copilot-sidecar>.copilot-thread{position:relative;z-index:1;min-height:0;overflow:auto!important}
 .copilot-sidecar>.copilot-preview{position:relative;z-index:2}
 .copilot-sidecar>.copilot-composer{position:relative;z-index:3;overflow-y:auto;overflow-x:hidden}
+/* Cycle 12.2 live-gate correction: fixed-height flex shell.
+   The message thread is the ONLY expanding region; composer is always pinned
+   inside the viewport regardless of message count, zoom, or full-page capture. */
+.copilot-sidecar{
+  display:flex!important;flex-direction:column;box-sizing:border-box;
+  top:0;bottom:auto;height:100vh;height:100dvh;max-height:100dvh;min-height:0;overflow:hidden!important;
+}
+.copilot-sidecar>.copilot-head,.copilot-sidecar>.copilot-scopebar,.copilot-sidecar>.copilot-page-context,.copilot-sidecar>.copilot-preview,.copilot-sidecar>.copilot-composer{flex:0 0 auto;min-height:0}
+.copilot-sidecar>.copilot-thread{flex:1 1 0!important;height:0!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain}
+.copilot-sidecar>.copilot-composer{max-height:min(40dvh,320px);overflow-y:auto!important;overflow-x:hidden!important;background:#fff}
+.copilot-overlay-layer{position:absolute!important;inset:0;z-index:90;pointer-events:none;overflow:hidden}
+@supports not (height:100dvh){.copilot-sidecar{height:100vh;max-height:100vh}.copilot-sidecar>.copilot-composer{max-height:min(40vh,320px)}}

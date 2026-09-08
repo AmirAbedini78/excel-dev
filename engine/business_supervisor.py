@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """ERPSMART v10.9.2 — constrained Business Supervisor + structured evidence.
 
-This rescue layer intentionally handles only the two MVP-B business workflows that
-need real cross-module reasoning today:
+This rescue layer handles the MVP-B business workflows that require bounded cross-module reasoning:
 - supplier performance / comparison
 - shipment/trade-case impact on known sales commitments
+- company trade-risk prioritization
 
 The server owns tool names and arguments. The LLM receives a bounded Evidence Pack
 only after deterministic ERP reads and may interpret it, never invent business facts.
@@ -18,7 +18,7 @@ from typing import Any
 
 import business_skills as BS
 
-PATCH_VERSION = "v10.9.2-cycle12.2-agent-core-rescue-r1"
+PATCH_VERSION = "v10.9.3-cycle12.2-live-gate-r6"
 
 
 def _norm(value: Any) -> str:
@@ -38,6 +38,17 @@ def _supplier_intent(prompt: str, entities: list[dict[str, Any]]) -> bool:
     return any(x in n for x in ("تامین کننده", "تأمین کننده", "تامین‌کننده", "تأمین‌کننده")) and any(
         x in n for x in ("عملکرد", "مقایسه", "بهتر", "بهترین", "کدوم", "کدام", "ریسک", "قابل اعتماد")
     )
+
+
+def _trade_risk_intent(prompt: str, entities: list[dict[str, Any]]) -> bool:
+    n = _norm(prompt)
+    if "/shipment-impact" in n:
+        return False
+    if "/trade-risk" in n or "/shipment-risk" in n:
+        return True
+    risk = any(x in n for x in ("ریسک", "پرریسک", "نگران", "خطر"))
+    trade = any(x in n for x in ("بازرگانی", "محموله", "حمل", "گمرک", "ترخیص", "eta", "landed cost", "پرونده"))
+    return risk and trade
 
 
 def _shipment_impact_intent(prompt: str, entities: list[dict[str, Any]]) -> bool:
@@ -193,30 +204,73 @@ def _shipment_pack(data: Any, prompt: str) -> dict[str, Any]:
     return {"kind":"shipment_commitment_impact","title":"اثر محموله بر تعهدهای فروش شناخته‌شده","request":prompt,"facts":facts,"facts_by_id":by,"sections":sections,"limitations":limitations}
 
 
-def _runtime_analysis_models(worker: Any) -> list[str]:
-    """Prefer the model that passed the real local preflight.
+def _trade_risk_pack(data: Any, prompt: str) -> dict[str, Any]:
+    d=data if isinstance(data,dict) else {}
+    rows=[r for r in d.get("rows",[]) if isinstance(r,dict)]
+    facts: list[dict[str, Any]]=[];sections=[];counter=1
+    reason_labels={
+        "shipment_missing":"محموله ثبت نشده",
+        "shipment_delayed":"محموله از ETA عبور کرده",
+        "customs_hold":"پرونده در توقف گمرکی است",
+        "customs_pending":"فرآیند گمرکی هنوز آزاد نشده",
+        "cost_overrun":"هزینه واقعی ثبت‌شده از برآورد عبور کرده",
+    }
+    for row in rows[:5]:
+        case=str(row.get("case_no") or row.get("trade_case_id") or "پرونده")
+        supplier=str(row.get("supplier_name") or "-")
+        reasons=[reason_labels.get(str(x),str(x)) for x in (row.get("reasons") or [])]
+        vals=[
+            ("سطح ریسک",str(row.get("risk_level") or "low"),""),
+            ("علت‌های قطعی ریسک","، ".join(reasons) if reasons else "سیگنال قطعی اضافه ثبت نشده",""),
+            ("وضعیت حمل",str(row.get("shipment_status") or "-"),""),
+            ("ETA",str(row.get("eta") or "-"),""),
+            ("تأخیر ثبت‌شده",float(row.get("delay_days") or 0),"روز"),
+            ("وضعیت ترخیص",str(row.get("clearance_status") or "-"),""),
+            ("Projected Landed Cost",float(row.get("projected_landed_total_irr") or 0),"ریال"),
+        ]
+        ids=[]
+        for label,value,unit in vals:
+            fid=f"E{counter}";counter+=1;facts.append(_fact(fid,label,value,"trade_risk_summary",unit,f"{case} / {supplier}"));ids.append(fid)
+        sections.append({"title":f"پرونده: {case} / {supplier}","fact_ids":ids})
+    limitations=[]
+    if not rows:limitations.append("پرونده بازرگانی بازی برای ارزیابی ریسک پیدا نشد.")
+    by={f["id"]:f for f in facts}
+    return {"kind":"trade_risk","title":"اولویت ریسک بازرگانی","request":prompt,"facts":facts,"facts_by_id":by,"sections":sections,"limitations":limitations}
 
-    The preflight writes only runtime routing metadata into /app/data (the existing
-    Worker data volume). It never changes repository/config business truth. If the
-    file is absent/stale/corrupt, normal role routing remains authoritative.
+
+def _runtime_analysis_models(worker: Any) -> list[str]:
+    """Return the current configured analysis/fallback models in safe order.
+
+    The runtime preflight may persist the model that most recently passed structured
+    output validation. That persisted route is only a *preference* and is trusted only
+    while it is still one of the worker's current configured analysis/fallback models.
+    This prevents a stale route from an older config/test run from displacing the real
+    fallback model and keeps the runtime router bounded to the current provider config.
     """
-    models: list[str] = []
+    configured: list[str] = []
+    for role in ("analysis", "fallback"):
+        try:
+            model = str(worker.model_for(role) or "").strip()
+            if model and model not in configured:
+                configured.append(model)
+        except Exception:
+            pass
+
+    if not configured:
+        return []
+
     route_path = Path(__file__).resolve().parent / "data" / "cycle12_analysis_route.json"
     try:
         data = json.loads(route_path.read_text(encoding="utf-8"))
         selected = str(data.get("selected_model") or "").strip()
-        if selected:
-            models.append(selected)
+        # Fail closed on stale runtime metadata: a previously proven model must not
+        # survive a config/model change unless it is still explicitly configured.
+        if selected in configured:
+            configured.remove(selected)
+            configured.insert(0, selected)
     except Exception:
         pass
-    for role in ("analysis", "fallback"):
-        try:
-            model = worker.model_for(role)
-            if model and model not in models:
-                models.append(model)
-        except Exception:
-            pass
-    return models[:2]
+    return configured[:2]
 
 
 def _analysis_schema(ids: list[str]) -> dict[str, Any]:
@@ -237,9 +291,10 @@ def _synthesize(worker: Any, job: dict[str, Any], prompt: str, pack: dict[str, A
     system=(
         "You are ERPSMART Business Analyst. Use ONLY the supplied structured ERP facts. "
         "Every summary, finding and action must cite one or more Evidence IDs that directly support it. "
-        "Do not invent business facts, IDs, dates, quantities, money or percentages. If evidence is insufficient, say so. "
+        "Do not invent business facts, IDs, dates, quantities, money or percentages. Keep narrative qualitative and do NOT repeat numeric values; exact numbers stay in the Evidence Pack. If evidence is insufficient, say so. "
         "For supplier comparison, do not equate higher purchase volume with better performance; weigh reliability, receipt acceptance, open quantity and trade risk. "
-        "For shipment impact, distinguish potential exposure from proven causality and use inventory/reservation coverage. Answer in concise Persian."
+        "For shipment impact, distinguish potential exposure from proven causality and use inventory/reservation coverage. "
+        "For trade risk, explain the highest-priority reason from risk reasons/status, not merely the largest amount. Answer in concise Persian."
     )
     schema=_analysis_schema(ids)
     models=_runtime_analysis_models(worker)
@@ -272,6 +327,14 @@ def _synthesize(worker: Any, job: dict[str, Any], prompt: str, pack: dict[str, A
             worker.trace(job,"grounded_synthesis_fallback","Reasoning model attempt rejected; evidence remains authoritative",{"model":model,"attempt":attempt,"error_type":last_error,"kind":pack["kind"]})
     meta=dict(base_meta);meta.update({"synthesis":"deterministic_fallback","synthesis_error":last_error,"evidence_pack":pack["kind"],"fact_count":len(ids),"patch_version":PATCH_VERSION})
     return grounded+"\n\nیادداشت: مدل تحلیلی در این اجرا پاسخ قابل اعتبارسنجی تولید نکرد؛ Evidence Pack بالا همچنان معتبر است.",meta
+
+
+def _trade_risk_run(worker: Any, job: dict[str, Any], prompt: str) -> tuple[str, dict[str, Any]]:
+    args={"limit":10}
+    worker.trace(job,"supervisor_plan","Server compiled trade-risk prioritization plan",{"tools":["trade_risk_summary"],"arguments_owned_by":"server"})
+    data=worker.tool(job,"trade_risk_summary",args,BS.stable(int(job["id"]),"supervisor-trade-risk",args))
+    pack=_trade_risk_pack(data,prompt)
+    return _synthesize(worker,job,prompt,pack,{"mode":"trade_risk_supervisor_read","tools_used":["trade_risk_summary"],"skill_id":"trade-risk","supervisor":"bounded_plan_v1"})
 
 
 def _supplier_run(worker: Any, job: dict[str, Any], prompt: str, entities: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
@@ -307,6 +370,8 @@ def install_business_supervisor(worker_cls: type) -> None:
         entities=_entities(job);available={str(d.get("name") or "") for d in tools_desc if str(d.get("mode") or "read")=="read"}
         if _shipment_impact_intent(prompt,entities) and "shipment_commitment_impact" in available:
             return _shipment_run(self,job,prompt,entities)
+        if _trade_risk_intent(prompt,entities) and "trade_risk_summary" in available:
+            return _trade_risk_run(self,job,prompt)
         if _supplier_intent(prompt,entities) and "supplier_performance_summary" in available:
             return _supplier_run(self,job,prompt,entities)
         return original(self,job,tools_desc)
