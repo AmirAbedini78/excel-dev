@@ -1,5 +1,12 @@
 # 05-WORKFLOW-CONTRACTS — قراردادهای هوش و Agent
 
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
 ## Workflow A — سؤال مالی ساده
 
 مثال:
@@ -186,3 +193,34 @@ Success:
 Tool-name boundary فقط نام‌هایی با الگوی `[a-z][a-z0-9_]{0,79}` را، به‌صورت unique و حداکثر ۳۲ نام، عبور می‌دهد. نام ابزار برای audit لازم است؛ arguments/result/call ID برای UI لازم نیست و ممنوع می‌ماند.
 
 اگر مسیر blocked/rejected/fallback پس از اجرای مدل پایان یابد، UI از `attempted_metrics` فقط شش مقدار عددی allowlisted مربوط به first chunk، elapsed و token count/duration را به‌عنوان fallback نمایش می‌دهد؛ metadata آزاد مدل به مرورگر منتقل نمی‌شود.
+
+## Workflow K — Agent Intelligence Kernel read loop
+
+For supported cross-module management questions, the primary contract is now a bounded Agent loop rather than a fixed mini-report.
+
+```text
+Goal
+→ validate Context / EntityRefs
+→ retrieve capability family
+→ server declares allowed action_id menu
+→ model chooses action_id only
+→ server compiles deterministic Tool + arguments
+→ execute fresh read Tool
+→ compact Observation
+→ re-plan
+→ stop when decision evidence is sufficient or budget is exhausted
+→ validated business synthesis
+→ deterministic decision-first fallback when model output is unusable
+```
+
+Hard rules:
+
+- model cannot submit Tool names or arguments;
+- model-created ERP IDs/SQL/current facts are forbidden;
+- Proposal/write descriptors are not part of the generic loop;
+- max Tool/Planner budgets are enforced;
+- explicit `@` type mismatch fails closed rather than silently widening scope;
+- final response is `Answer → Why → Trade-off/Risk → Confidence → Next Action → bounded Evidence`, not an Evidence dump;
+- internal chain-of-thought is never an audit artifact; trace records only stage/action/tool/result metadata.
+
+Initial production capability families: Supplier Performance, Trade Risk and Shipment Commitment Impact. Source contract: `26-AGENT-INTELLIGENCE-KERNEL.md`.

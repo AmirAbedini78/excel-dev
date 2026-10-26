@@ -10,7 +10,7 @@ final class AiRepository
         return (int)pdo()->lastInsertId();
     }
 
-    public static function queueChat(string $prompt,?int $companyId=null,?int $conversationId=null,array $contextRefs=[]): int
+    public static function queueChat(string $prompt,?int $companyId=null,?int $conversationId=null,array $contextRefs=[],?string $engine=null,?string $model=null): int
     {
         $prompt=trim($prompt);if($prompt==='')throw new RuntimeException('متن درخواست خالی است.');
         if(mb_strlen($prompt)>12000)throw new RuntimeException('متن درخواست بیش از حد طولانی است.');
@@ -21,9 +21,11 @@ final class AiRepository
         $conversationId=self::conversationIdForQueue($wid,$uid,$companyId,$conversationId,$prompt);
         $context=AiToolRegistry::bootstrapContext($wid,$companyId);
         if($pageContext)$context['page_context']=$pageContext;
+        $selection=AiEnginePreferences::choice($engine,$model);$context['engine_selection']=$selection;
+        $capability=$selection['provider']==='gemini'?'llm.gemini':'llm';
         $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at)
-            VALUES (?,?,?,?, 'agent_chat',?,'queued',100,'llm',?,NOW(),NOW())");
-        $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
+            VALUES (?,?,?,?, 'agent_chat',?,'queued',100,?,?,NOW(),NOW())");
+        $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,$capability,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
         $id=(int)pdo()->lastInsertId();
         Audit::log('ai.job.queued','ai_jobs',$id,'ثبت درخواست برای موتور AI',null,null,['company_id'=>$companyId,'page_context_entities'=>count((array)($pageContext['entities']??[]))]);
         return $id;
@@ -38,7 +40,7 @@ final class AiRepository
         pdo()->prepare("UPDATE ai_conversations SET updated_at=NOW() WHERE id=?")->execute([$conversationId]);return$conversationId;
     }
 
-    public static function queueCopilotChat(string $prompt,?int $companyId,?int $conversationId,array $currentPageRefs,array $attachedRefs): int
+    public static function queueCopilotChat(string $prompt,?int $companyId,?int $conversationId,array $currentPageRefs,array $attachedRefs,?string $engine=null,?string $model=null): int
     {
         $prompt=trim($prompt);if($prompt==='')throw new RuntimeException('متن درخواست خالی است.');if(mb_strlen($prompt)>12000)throw new RuntimeException('متن درخواست بیش از حد طولانی است.');
         $wid=Tenant::id();$uid=(int)Auth::user()['id'];if(!$companyId)$companyId=AccountingRepository::companyId()?:null;if(!$companyId||!self::companyOwned($wid,$companyId))throw new RuntimeException('شرکت انتخاب‌شده معتبر نیست.');
@@ -47,10 +49,12 @@ final class AiRepository
         $context=AiToolRegistry::bootstrapContext($wid,$companyId);$context['context_envelope']=$envelope;
         $history=self::conversationHistoryForQueue($wid,$uid,$companyId,$conversationId);
         if($history)$context['conversation_history']=$history;
+        $selection=AiEnginePreferences::choice($engine,$model);$context['engine_selection']=$selection;
+        $capability=$selection['provider']==='gemini'?'llm.gemini':'llm';
 
         $legacy=AiContextEnvelope::legacyPageContext($envelope);if($legacy)$context['page_context']=$legacy;
-        $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at) VALUES (?,?,?,?, 'agent_chat',?,'queued',100,'llm',?,NOW(),NOW())");
-        $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);$id=(int)pdo()->lastInsertId();
+        $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at) VALUES (?,?,?,?, 'agent_chat',?,'queued',100,?,?,NOW(),NOW())");
+        $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,$capability,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);$id=(int)pdo()->lastInsertId();
         Audit::log('ai.job.queued','ai_jobs',$id,'ثبت درخواست Business Copilot',null,null,['company_id'=>$companyId,'context_envelope_version'=>AiContextEnvelope::VERSION,'attached_entities'=>count((array)$envelope['attached_entities']),'page_entities'=>count((array)($envelope['current_page']['entities']??[]))]);return$id;
     }
 

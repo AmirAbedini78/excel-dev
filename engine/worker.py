@@ -22,6 +22,7 @@ import urllib.request
 import uuid
 from pathlib import Path
 from typing import Any
+from local_inference import LocalInference, InferenceError
 
 ROOT = Path(__file__).resolve().parent
 
@@ -168,7 +169,8 @@ class Worker:
         self.api = Api(cfg)
         self.uid = str(cfg.get("node_uid") or node_uid()).strip()
         self.node_name = str(cfg.get("node_name") or socket.gethostname())
-        self.models = ollama_models(str(cfg["ollama_url"]))
+        self.local_inference = LocalInference(cfg)
+        self.models = [] if str(cfg.get("provider_strategy") or "") == "cloud_only" else self.local_inference.models(refresh=True)
         self.capabilities = list(dict.fromkeys(str(x) for x in cfg.get("capabilities", ["llm"])))
         self.base_payload = {
             "node_uid": self.uid, "node_name": self.node_name,
@@ -266,118 +268,16 @@ class Worker:
         response_format: Any | None = None,
         think_override: bool | None = None,
     ) -> dict[str, Any]:
-        model_name = str(model or self.model_for("fallback"))
-
-        default_ctx = int(self.cfg.get("fast_num_ctx" if fast else "num_ctx", 1280 if fast else 2048))
-        default_predict = int(self.cfg.get("fast_num_predict" if fast else "num_predict", 160 if fast else 192))
-
-        ctx = max(512, min(4096, int(num_ctx if num_ctx is not None else default_ctx)))
-        predict = max(16, min(512, int(num_predict if num_predict is not None else default_predict)))
-        temp = float(temperature if temperature is not None else self.cfg.get("temperature", 0.2))
-
-        body: dict[str, Any] = {
-            "model": model_name,
-            "messages": messages,
-            "stream": True,
-            "keep_alive": str(self.cfg.get("keep_alive", "30m")),
-            "options": {
-                "temperature": temp,
-                "num_ctx": ctx,
-                "num_predict": predict,
-            },
-        }
-
-        if model_name.lower().startswith("qwen"):
-            body["think"] = bool(
-                self.cfg.get("think", False)
-                if think_override is None
-                else think_override
-            )
-
-        if tools:
-            body["tools"] = tools
-
-        # Ollama structured-output mode. Callers may request "json" (or a
-        # supported schema object) without changing behavior for existing calls.
-        if response_format is not None:
-            body["format"] = response_format
-
-        timeout = max(30, min(900, int(
-            timeout_seconds if timeout_seconds is not None
-            else self.cfg.get("ollama_timeout_seconds", 300)
-        )))
-        req = urllib.request.Request(
-            str(self.cfg["ollama_url"]).rstrip("/") + "/api/chat",
-            data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
-            method="POST",
-            headers={"Content-Type": "application/json"},
+        runtime = getattr(self, "local_inference", None)
+        if runtime is None:
+            self.local_inference = runtime = LocalInference(self.cfg)
+        return runtime.chat(
+            job, round_no, messages, tools, trace=self.trace, fast=fast,
+            model=model or self.model_for("fallback"), num_ctx=num_ctx,
+            num_predict=num_predict, temperature=temperature,
+            timeout_seconds=timeout_seconds, response_format=response_format,
+            think_override=think_override,
         )
-
-        started = time.monotonic()
-        content_parts: list[str] = []
-        thinking_chars = 0
-        tool_calls: list[dict[str, Any]] = []
-        final_chunk: dict[str, Any] = {}
-        last_progress = 0.0
-        first_chunk_seconds: float | None = None
-
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                for raw in r:
-                    raw = raw.strip()
-                    if not raw:
-                        continue
-
-                    elapsed = time.monotonic() - started
-                    if first_chunk_seconds is None:
-                        first_chunk_seconds = elapsed
-
-                    chunk = json.loads(raw.decode("utf-8"))
-                    final_chunk = chunk
-                    msg = chunk.get("message") or {}
-
-                    if msg.get("thinking"):
-                        thinking_chars += len(str(msg["thinking"]))
-                    if msg.get("content"):
-                        content_parts.append(str(msg["content"]))
-                    if msg.get("tool_calls"):
-                        tool_calls.extend(msg.get("tool_calls") or [])
-
-                    if elapsed - last_progress >= 5:
-                        self.trace(job, "llm_stream", "Model is processing", {
-                            "round": round_no + 1,
-                            "model": model_name,
-                            "elapsed_seconds": round(elapsed, 1),
-                            "first_chunk_seconds": round(first_chunk_seconds, 1) if first_chunk_seconds is not None else None,
-                            "thinking_chars": thinking_chars,
-                            "content_chars": sum(len(x) for x in content_parts),
-                            "tool_calls": len(tool_calls),
-                        })
-                        last_progress = elapsed
-        except urllib.error.HTTPError as e:
-            body_text = e.read().decode("utf-8", "replace")
-            raise RuntimeError(f"Ollama HTTP {e.code}: {body_text[:3000]}") from e
-        except (TimeoutError, socket.timeout) as e:
-            raise RuntimeError(f"Ollama timeout after {timeout}s") from e
-
-        message: dict[str, Any] = {"role": "assistant", "content": "".join(content_parts)}
-        if tool_calls:
-            message["tool_calls"] = tool_calls
-
-        metrics = {
-            "model": model_name,
-            "round": round_no + 1,
-            "elapsed_seconds": round(time.monotonic() - started, 2),
-            "first_chunk_seconds": round(first_chunk_seconds, 2) if first_chunk_seconds is not None else None,
-            "load_duration": final_chunk.get("load_duration"),
-            "prompt_eval_count": final_chunk.get("prompt_eval_count"),
-            "prompt_eval_duration": final_chunk.get("prompt_eval_duration"),
-            "eval_count": final_chunk.get("eval_count"),
-            "eval_duration": final_chunk.get("eval_duration"),
-            "total_duration": final_chunk.get("total_duration"),
-        }
-        self.trace(job, "llm_done", "Model response received", metrics)
-        return {"message": message, "_metrics": metrics}
 
     @staticmethod
     def normalize_tool_schema(schema: Any) -> dict[str, Any]:
@@ -840,15 +740,18 @@ class Worker:
             "prompt_chars": len(prompt),
         })
 
-        if bool(self.cfg.get("rag_enabled", False)):
+        if bool(self.cfg.get("rag_enabled", False)) and int(job.get("workspace_id") or 0) > 0 and int(job.get("company_id") or 0) > 0:
             try:
                 from rag import RagIndex
                 db = Path(str(self.cfg.get("rag_db", "data/rag.sqlite3")))
                 if not db.is_absolute():
                     db = ROOT / db
                 if db.exists():
-                    rag = RagIndex(db, str(self.cfg["ollama_url"]), str(self.cfg.get("embedding_model", "embeddinggemma")))
-                    context["retrieved_knowledge"] = rag.search(prompt, int(self.cfg.get("rag_top_k", 5)))
+                    rag = RagIndex(db, str(self.cfg["ollama_url"]), str(self.cfg.get("embedding_model", "embeddinggemma")), scope=f"{int(job['workspace_id'])}:{int(job['company_id'])}")
+                    try:
+                        context["retrieved_knowledge"] = rag.search(prompt, int(self.cfg.get("rag_top_k", 5)), max_chars=1000)
+                    finally:
+                        rag.close()
             except Exception as e:
                 print(f"[rag warning] {e}", file=sys.stderr, flush=True)
 
@@ -1025,6 +928,8 @@ from business_skills import install_business_skills as _install_business_skills
 _install_business_skills(Worker)
 from business_supervisor import install_business_supervisor as _install_business_supervisor
 _install_business_supervisor(Worker)
+from agent_intelligence_kernel import install_agent_intelligence_kernel as _install_agent_intelligence_kernel
+_install_agent_intelligence_kernel(Worker)
 from provider_gateway import install_provider_gateway as _install_provider_gateway
 _install_provider_gateway(Worker)
 from commercial_hardening import install_commercial_hardening as _install_commercial_hardening

@@ -1,0 +1,432 @@
+[
+  {
+    "prompt": "کدوم تامین کننده عملکرد بهتری داشته و چرا؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "کدام تأمین‌کننده برای ادامه همکاری مناسب‌تره؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "تامین‌کننده‌های ما رو مقایسه کن",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "بهترین تامین کننده از نظر عملکرد کدومه؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "کدام تامین کننده ریسک کمتری دارد؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "عملکرد تأمین‌کننده‌ها را بررسی کن",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "تامین کننده قابل اعتمادتر کدام است؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "بین تامین کننده ها کدوم بهتر بوده؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "برای ادامه همکاری کدام تأمین‌کننده بهتر است؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "/supplier-review عملکرد تامین کننده ها",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "/compare-suppliers این دو را مقایسه کن",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "ریسک تامین‌کننده‌ها چطوره؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "تامین کننده با عملکرد بهتر رو بگو",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "وضعیت عملکرد تامین کننده های خرید چطوره؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "کدوم تأمین کننده برای خرید بعدی مطمئن تره؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "تامین‌کننده‌هامون رو از نظر عملکرد مقایسه کن",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "مقایسه عملکرد supplier ها",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "برای همکاری بعدی کدام تامین‌کننده مناسب‌تر است؟",
+    "capability": "supplier.performance",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "عملکردش چطوره؟",
+    "capability": "supplier.performance",
+    "entities": [
+      {
+        "type": "party.supplier",
+        "id": 11,
+        "label": "سپهر"
+      }
+    ],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "این رو با قبلی مقایسه کن",
+    "capability": "supplier.performance",
+    "entities": [
+      {
+        "type": "party.supplier",
+        "id": 11,
+        "label": "سپهر"
+      }
+    ],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "برای ادامه همکاری خوبه؟",
+    "capability": "supplier.performance",
+    "entities": [
+      {
+        "type": "party.supplier",
+        "id": 11,
+        "label": "سپهر"
+      }
+    ],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "چه چیزی الان در بازرگانی بیشترین ریسک را دارد و چرا؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "ریسک بازرگانی الان کجاست؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "پرریسک ترین پرونده بازرگانی کدام است؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "کدام محموله بیشترین ریسک را دارد؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "ریسک گمرک و ترخیص را بررسی کن",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "ریسک حمل فعلی چیه؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "/trade-risk وضعیت را بگو",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "/shipment-risk مهم ترین مورد را بگو",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "کدام پرونده بازرگانی نگران کننده است؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "خطر اصلی در محموله ها چیست؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "ریسک ETA و گمرک چطوره؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "کدوم پرونده trade پرریسک تره؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "بیشترین خطر بازرگانی را اولویت بندی کن",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "ریسک landed cost و حمل رو بررسی کن",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "الان در ترخیص چه ریسکی داریم؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "چه پرونده ای در بازرگانی باید اول رسیدگی شود چون ریسک دارد؟",
+    "capability": "trade.risk",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "اگر این محموله دیر برسد کدام تعهدهای فروش تحت تاثیر قرار می گیرند؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "اثر تاخیر این محموله روی مشتری ها چیه؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "اگر shipment دیر برسد چه فروش هایی آسیب می بینند؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "/shipment-impact اثر روی تعهد فروش را بگو",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "این محموله چه اثری روی فروش دارد؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "مشتری های تحت تاثیر تاخیر محموله کدامند؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "اثر ETA این shipment روی commitment فروش چیست؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "اگر حمل دیر شود کدام مشتری در معرض اثر است؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "اثر این پرونده روی تعهدهای فروش را بررسی کن",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "تاخیر محموله روی فروش چه تاثیری دارد؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "این shipment با کدام فروش ها ارتباط دارد؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "اگر محموله نرسد کدام تعهد مشتری متاثر می شود؟",
+    "capability": "shipment.impact",
+    "entities": [],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "اگر دیر برسد روی فروش چه اثری می گذارد؟",
+    "capability": "shipment.impact",
+    "entities": [
+      {
+        "type": "trade.case",
+        "id": 51,
+        "label": "TRD-X"
+      }
+    ],
+    "answer_contract": "decision_first",
+    "must_not_dump_evidence": true
+  },
+  {
+    "prompt": "مانده حساب مشتری آریا چقدره؟",
+    "capability": null,
+    "entities": [],
+    "answer_contract": "delegate",
+    "must_not_dump_evidence": false
+  },
+  {
+    "prompt": "فاکتور فروش ثبت کن",
+    "capability": null,
+    "entities": [],
+    "answer_contract": "delegate",
+    "must_not_dump_evidence": false
+  },
+  {
+    "prompt": "یک سند حسابداری بساز",
+    "capability": null,
+    "entities": [],
+    "answer_contract": "delegate",
+    "must_not_dump_evidence": false
+  },
+  {
+    "prompt": "موجودی PLC چقدره؟",
+    "capability": null,
+    "entities": [],
+    "answer_contract": "delegate",
+    "must_not_dump_evidence": false
+  },
+  {
+    "prompt": "بریف مدیرعامل بده",
+    "capability": null,
+    "entities": [],
+    "answer_contract": "delegate",
+    "must_not_dump_evidence": false
+  },
+  {
+    "prompt": "فرصت های CRM رو بگو",
+    "capability": null,
+    "entities": [],
+    "answer_contract": "delegate",
+    "must_not_dump_evidence": false
+  },
+  {
+    "prompt": "پیش بینی فروش ماه بعد چقدره؟",
+    "capability": null,
+    "entities": [],
+    "answer_contract": "delegate",
+    "must_not_dump_evidence": false
+  },
+  {
+    "prompt": "سلام حالت چطوره؟",
+    "capability": null,
+    "entities": [],
+    "answer_contract": "delegate",
+    "must_not_dump_evidence": false
+  }
+]

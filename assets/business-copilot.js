@@ -5,6 +5,7 @@ let cfg={};try{cfg=JSON.parse(shell.getAttribute('data-copilot-config')||'{}')}c
 const $=(s,r=shell)=>r.querySelector(s),$$=(s,r=shell)=>Array.from(r.querySelectorAll(s));
 const thread=$('[data-copilot-thread]'),input=$('[data-copilot-input]'),chips=$('[data-copilot-chips]'),menu=$('[data-copilot-mention-menu]'),preview=$('[data-copilot-preview]'),pageBox=$('[data-copilot-page-context]');
 const companySelect=$('[data-copilot-company]'),conversationSelect=$('[data-copilot-conversation]'),scopeName=$('[data-copilot-scope-name]');
+const engineSelect=$('[data-ai-engine]'),modelSelect=$('[data-ai-model]');
 const companies=Array.isArray(cfg.companies)?cfg.companies.map(c=>({id:Number(c.id)||0,name:String(c.name||'')})).filter(c=>c.id>0):[];
 const companyById=id=>companies.find(c=>c.id===Number(id))||null;
 const defaultCompanyId=companyById(cfg.company_id)?Number(cfg.company_id):(companies[0]?.id||0);
@@ -134,7 +135,7 @@ async function poll(jobId,node,cid){
 async function send(){
     const prompt=input.value.trim();if(!prompt)return;const cid=scopeId();if(!cid)return;const btn=$('[data-copilot-send]');btn.disabled=true;msg('user',prompt);const pending=msg('pending','در صف پردازش…');
     const refs=state.refs.filter(r=>Number(r.company_id||cid)===cid).map(({type,id})=>({type,id}));const pageRefs=Number(cfg.company_id)===cid?(cfg.current_page_refs||[]).map(({type,id})=>({type,id})):[];
-    const fd=new FormData();fd.set('action','queue');fd.set('csrf',cfg.csrf);fd.set('company_id',cid);fd.set('conversation_id',conversationId()||'');fd.set('prompt',prompt);fd.set('context_refs_json',JSON.stringify(refs));fd.set('page_context_refs_json',JSON.stringify(pageRefs));
+    const fd=new FormData();fd.set('action','queue');fd.set('csrf',cfg.csrf);fd.set('company_id',cid);fd.set('conversation_id',conversationId()||'');fd.set('prompt',prompt);fd.set('context_refs_json',JSON.stringify(refs));fd.set('page_context_refs_json',JSON.stringify(pageRefs));fd.set('engine',engineSelect?.value||'');fd.set('model',modelSelect?.value||'');
     try{
         const response=await fetch(cfg.endpoint,{method:'POST',credentials:'same-origin',body:fd,headers:{'Accept':'application/json'}});const j=await responseJson(response);if(!response.ok||!j.ok)throw new Error(j.error||'queue_failed');
         if(cid!==scopeId())return;setConversationId(Number(j.conversation_id)||0);state.refs=[];save();renderChips();input.value='';input.focus();conversationSelect.value=String(conversationId());refreshConversations({restoreLatest:false,load:false});pending.dataset.jobMessage=String(j.job_id);poll(j.job_id,pending,cid)

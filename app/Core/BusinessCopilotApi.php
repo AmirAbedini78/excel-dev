@@ -125,7 +125,8 @@ final class BusinessCopilotApi
                 $attached=AiContextResolver::decodeRefs((string)($_POST['context_refs_json']??''));
                 $pageRefs=AiContextResolver::decodeRefs((string)($_POST['page_context_refs_json']??''));
                 $jobId=AiRepository::queueCopilotChat(
-                    (string)($_POST['prompt']??''),$cid,(int)($_POST['conversation_id']??0)?:null,$pageRefs,$attached
+                    (string)($_POST['prompt']??''),$cid,(int)($_POST['conversation_id']??0)?:null,$pageRefs,$attached,
+                    (string)($_POST['engine']??''),(string)($_POST['model']??'')
                 );
                 $j=AiRepository::jobForUser($jobId);
                 self::json(['ok'=>true,'job_id'=>$jobId,'conversation_id'=>(int)($j['conversation_id']??0),'status'=>(string)($j['status']??'queued')]);

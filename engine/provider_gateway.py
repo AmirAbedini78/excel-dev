@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import socket
 import time
 import urllib.error
@@ -35,7 +36,14 @@ class ProviderGatewayError(RuntimeError):
 
 def _cloud_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
     raw = cfg.get("cloud_provider")
-    return dict(raw) if isinstance(raw, dict) else {}
+    cloud = dict(raw) if isinstance(raw, dict) else {}
+    key = str(cloud.get("api_key") or "")
+    if key.startswith("env:"):
+        var = key[4:]
+        if not var or not var.replace("_", "").isalnum():
+            raise ProviderGatewayError("cloud_provider_env_name_invalid")
+        cloud["api_key"] = os.environ.get(var, "")
+    return cloud
 
 
 def _cloud_enabled(cfg: dict[str, Any]) -> bool:
@@ -57,6 +65,8 @@ def validate_provider_config(cfg: dict[str, Any]) -> None:
     cloud = _cloud_cfg(cfg)
     base_url = str(cloud.get("base_url") or "").strip()
     api_key = str(cloud.get("api_key") or "").strip()
+    if api_key.startswith("env:") or api_key.startswith("REPLACE_"):
+        raise ProviderGatewayError("cloud_provider_missing_api_key_env")
     chat_model = str(cloud.get("chat_model") or "").strip()
     if not base_url or not api_key or not chat_model:
         raise ProviderGatewayError("cloud_provider_missing_base_url_api_key_or_chat_model")
@@ -94,7 +104,10 @@ def _model_map(cfg: dict[str, Any], provider: str) -> dict[str, str]:
 
 
 def _infer_role(cfg: dict[str, Any], model_name: str, hint: str | None) -> str:
-    if hint in {"fast", "agent", "analysis", "fallback"}:
+    # A previous model_for() call is not allowed to relabel an explicit model.
+    if hint in {"fast", "agent", "analysis", "fallback"} and any(
+        _model_map(cfg, provider).get(hint) == model_name for provider in ("local", "cloud")
+    ):
         return str(hint)
     for provider in ("local", "cloud"):
         for role, model in _model_map(cfg, provider).items():
@@ -109,7 +122,11 @@ def _provider_order(worker: Any, role: str, requested_model: str) -> list[str]:
     cloud_model = worker._cloud_role_models.get(role, "")
 
     # If caller explicitly supplied a cloud-only model, respect it first.
-    if cloud_model and requested_model == cloud_model and requested_model != local_model:
+    if strategy == "cloud_only":
+        first = ["cloud"]
+    elif strategy == "local_only":
+        first = ["local"]
+    elif cloud_model and requested_model == cloud_model and requested_model != local_model:
         first = ["cloud", "local"]
     elif local_model and requested_model == local_model:
         first = ["local", "cloud"]
@@ -225,9 +242,10 @@ def _cloud_chat(
     temperature: float | None,
     timeout_seconds: int | None,
     response_format: Any | None,
+    selected_model: str | None = None,
 ) -> dict[str, Any]:
     cloud = worker._cloud_cfg
-    model_name = str(worker._cloud_role_models.get(role) or worker._cloud_role_models.get("fallback") or "").strip()
+    model_name = str(selected_model or worker._cloud_role_models.get(role) or worker._cloud_role_models.get("fallback") or "").strip()
     if not model_name:
         raise ProviderGatewayError(f"cloud_model_missing_for_role:{role}")
 
@@ -341,8 +359,13 @@ def install_provider_gateway(worker_cls: type) -> None:
     original_process_agent = worker_cls.process_agent
 
     def provider_init(self: Any, cfg: dict[str, Any]) -> None:
-        validate_provider_config(cfg)
-        original_init(self, cfg)
+        # Resolve environment credential before worker starts; validation must fail closed
+        # if the variable is unset, not silently accept an env: placeholder.
+        effective = dict(cfg)
+        effective["cloud_provider"] = _cloud_cfg(cfg)
+        validate_provider_config(effective)
+        original_init(self, effective)
+        cfg = effective
         self._provider_strategy = str(cfg.get("provider_strategy") or "local_first").strip().lower()
         self._cloud_cfg = _cloud_cfg(cfg)
         self._local_role_models = _model_map(cfg, "local")
@@ -370,13 +393,18 @@ def install_provider_gateway(worker_cls: type) -> None:
 
         if self._provider_strategy == "cloud_only" and not self._cloud_available:
             raise ProviderGatewayError("cloud_only_provider_unavailable")
-        if self._provider_strategy == "local_only" and not self._local_available:
-            raise ProviderGatewayError("local_only_provider_unavailable")
-        if not self._local_available and not self._cloud_available:
-            raise ProviderGatewayError("no_model_provider_available")
+        # A temporarily unavailable inference server must not prevent the worker
+        # from serving deterministic ERP reads. Model-dependent routes block below.
 
     def provider_model_for(self: Any, role: str) -> str:
         role = role if role in {"fast", "agent", "analysis", "fallback"} else "fallback"
+        runtime = getattr(self, "local_inference", None)
+        if runtime is not None and self._provider_strategy != "cloud_only":
+            self._local_models = runtime.models()
+            self._local_available = bool(self._local_models)
+            cloud_models = list(self._cloud_role_models.values()) if self._cloud_available else []
+            self.models = list(dict.fromkeys([*self._local_models, *cloud_models]))
+            self.base_payload["models"] = self.models
         self._provider_role_hint = role
         strategy = self._provider_strategy
         local_model = str(self._local_role_models.get(role) or "").strip()
@@ -395,7 +423,9 @@ def install_provider_gateway(worker_cls: type) -> None:
         if self._cloud_available and cloud_model:
             return cloud_model
         # Preserve the old failure semantics when no usable provider exists.
-        return original_model_for(self, role)
+        failure = ProviderGatewayError("no_model_available_for_role:" + role)
+        failure.code = "unavailable"
+        raise failure
 
     def provider_chat(
         self: Any,
@@ -416,6 +446,23 @@ def install_provider_gateway(worker_cls: type) -> None:
         role = _infer_role(self.cfg, requested_model, self._provider_role_hint)
         self._provider_role_hint = None
         providers = _provider_order(self, role, requested_model)
+        selection = (job.get("context") or {}).get("engine_selection") if isinstance(job.get("context"), dict) else None
+        selected_model = None
+        if isinstance(selection, dict):
+            selected_provider = str(selection.get("provider") or "")
+            selected_model = str(selection.get("model") or "").strip()
+            if selected_provider == "gemini":
+                allowed = self._cloud_cfg.get("allowed_models") or [x for x in self._cloud_role_models.values() if x]
+                if (not self._cloud_available or str(self._cloud_cfg.get("name") or "") != "gemini"
+                        or selected_model not in allowed):
+                    raise ProviderGatewayError("gemini_model_not_configured_on_worker")
+                providers = ["cloud"]
+            elif selected_provider == "ollama":
+                if not self._local_available or selected_model not in self._local_models:
+                    raise ProviderGatewayError("ollama_model_not_installed_on_worker")
+                providers = ["local"]
+            else:
+                raise ProviderGatewayError("job_provider_not_allowed")
         if not providers:
             raise ProviderGatewayError(f"no_provider_available_for_role:{role}")
 
@@ -423,7 +470,7 @@ def install_provider_gateway(worker_cls: type) -> None:
         for index, provider in enumerate(providers):
             try:
                 if provider == "local":
-                    local_model = str(self._local_role_models.get(role) or requested_model).strip()
+                    local_model = str(selected_model or (requested_model if requested_model in self._local_models else str(self._local_role_models.get(role) or requested_model))).strip()
                     result = original_ollama_chat(
                         self, job, round_no, messages, tools, fast=fast, model=local_model,
                         num_ctx=num_ctx, num_predict=num_predict, temperature=temperature,
@@ -435,6 +482,7 @@ def install_provider_gateway(worker_cls: type) -> None:
                     result = _cloud_chat(
                         self, job, round_no, messages, tools, role,
                         num_predict, temperature, timeout_seconds, response_format,
+                        **({"selected_model": selected_model} if isinstance(selection, dict) else {}),
                     )
                     actual_provider = str(result.get("_provider") or self._cloud_cfg.get("name") or "openai_compatible")
 
@@ -455,14 +503,33 @@ def install_provider_gateway(worker_cls: type) -> None:
                         "reason": type(exc).__name__,
                     })
                     continue
-                raise ProviderGatewayError("model_provider_chain_failed:" + ",".join(errors)) from exc
+                # Preserve a bounded failure code across the provider boundary.
+                failure = ProviderGatewayError("model_provider_chain_failed:" + ",".join(errors))
+                failure.code = str(getattr(exc, "code", "provider_error"))
+                raise failure from exc
 
         raise ProviderGatewayError("model_provider_chain_exhausted")
 
     def provider_process_agent(self: Any, job: dict[str, Any], tools_desc: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
         self._last_model_provider = "none"
         self._providers_used = []
-        text, meta = original_process_agent(self, job, tools_desc)
+        try:
+            text, meta = original_process_agent(self, job, tools_desc)
+        except Exception as exc:
+            code = str(getattr(exc, "code", ""))
+            capacity_codes = {"memory_admission", "memory_pressure", "deadline", "busy", "endpoint_cooling", "context_budget",
+                              "response_budget", "incomplete_stream", "truncated", "empty_response",
+                              "invalid_stream", "network", "missing_model", "unavailable"}
+            proposal_names = {str(x.get("name")) for x in tools_desc if x.get("mode") == "proposal"}
+            wrote = any(x.get("name") in proposal_names and x.get("status") == "succeeded"
+                        for x in getattr(self, "_commercial_tool_events", []))
+            if code not in capacity_codes or wrote:
+                raise
+            text = ("برای این درخواست پاسخ معتبر مدل آماده نشد؛ ظرفیت یا زمان اجرای مدل کافی نبود. "
+                    "یک خوانش مشخص مانند «ماندهٔ @مشتری» را درخواست کن یا از موتور آمادهٔ دیگری استفاده کن. "
+                    "این پاسخ عملیاتی ایجاد نکرده است.")
+            meta = {"provider": "deterministic", "model": "none", "mode": "model_capacity_blocked",
+                    "tools_used": [], "block_reason": code}
         if isinstance(meta, dict):
             if self._last_model_provider != "none":
                 meta["provider"] = self._last_model_provider

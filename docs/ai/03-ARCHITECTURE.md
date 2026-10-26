@@ -1,5 +1,18 @@
 # 03-ARCHITECTURE — معماری Canonical
 
+## 2026-09-11 — v10.10.3 / Kernel v1.6: bounded stream recovery
+
+Current package: `ERPSMART-v10.10.3-stream-recovery-local-validated.zip`, applied over the exact delivered v10.10.2 working state. Current implementation and incident evidence: **30-STREAM-RECOVERY-20260911.md**; install/rollback: **28-LOW-MEMORY-INSTALL-FA.md**; results: **29-LOW-MEMORY-TEST-REPORT-FA.md**.
+
+The supplied Windows log proves v10.10.2 Docker build, 268 offline tests, file installation and Worker startup PASS. Its model gate is DEGRADED: qwen3.5:0.8b provider_error, qwen3:1.7b deadline, gemma3:4b memory_admission. This does not establish an OOM for the first model. A reproducible cross-thread HTTP chunk cancellation bug is fixed in v1.6; first-request allowance, shared endpoint cooldown and redacted per-case evidence are included. v1.6 remains LOCAL-VALIDATED until tested on that engine. MVP-B semantic acceptance remains open; MVP C Role Brief / Intelligent Home follows that acceptance. Older dated entries below describe historical states.
+
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
 ## 1. Principle
 
 ERPSMART نباید «Accounting UI + ChatGPT box» باشد.
@@ -459,3 +472,37 @@ No Context, Memory or external document can increase authority.
 - exact reads keep deterministic fast paths;
 - large analyses move to Analysis Workspace;
 - Sidecar assets are shell-level and not copied/loaded repeatedly by each module.
+
+## 21. Agent Intelligence Kernel — current orchestration contract
+
+The Agent Intelligence Kernel is the current concrete implementation of the existing canonical `Intent → Capability Retrieval → Supervisor → Tools/Engines` direction. It is not a replacement for the North Star.
+
+```text
+Natural-language Goal
+       ↓
+Validated Entity/Context boundary
+       ↓
+Capability family
+       ↓
+Server-generated Action Menu
+       ↓
+Planner model selects opaque action_id
+       ↓
+Server maps action_id → approved read Tool + typed arguments
+       ↓
+Fresh Tool result / compact Observation
+       ↓
+Re-plan until sufficient evidence or budget exhausted
+       ↓
+Decision Evidence
+       ↓
+Reasoning model → validated business answer
+       ↓
+Deterministic decision-first fallback if model output is invalid
+```
+
+Authority remains server-side. The planner cannot invent Tool names, SQL, ERP IDs, amounts, dates, quantities or write arguments. Tool budget, planner budget and evidence budget are explicit. Proposal descriptors are excluded from the generic kernel.
+
+Runtime source: `engine/agent_intelligence_kernel.py`. Real model capability smoke: `engine/agent_kernel_smoke.py`. The legacy `engine/business_supervisor.py` remains temporarily as compatibility for paths not yet promoted, and the Agent Intelligence Kernel is installed after it so supported capabilities supersede the fixed-report path.
+
+Numerical prediction remains outside this kernel and belongs to statistical/ML engines. Document knowledge remains outside current ERP truth and belongs to the future permission-aware RAG subsystem.

@@ -1,5 +1,23 @@
 # ERPSMART — AI Development Handoff
 
+## 2026-09-11 — v10.10.3 / Kernel v1.6: bounded stream recovery
+
+Current package: `ERPSMART-v10.10.3-stream-recovery-local-validated.zip`, applied over the exact delivered v10.10.2 working state. Current implementation and incident evidence: **30-STREAM-RECOVERY-20260911.md**; install/rollback: **28-LOW-MEMORY-INSTALL-FA.md**; results: **29-LOW-MEMORY-TEST-REPORT-FA.md**.
+
+The supplied Windows log proves v10.10.2 Docker build, 268 offline tests, file installation and Worker startup PASS. Its model gate is DEGRADED: qwen3.5:0.8b provider_error, qwen3:1.7b deadline, gemma3:4b memory_admission. This does not establish an OOM for the first model. A reproducible cross-thread HTTP chunk cancellation bug is fixed in v1.6; first-request allowance, shared endpoint cooldown and redacted per-case evidence are included. v1.6 remains LOCAL-VALIDATED until tested on that engine. MVP-B semantic acceptance remains open; MVP C Role Brief / Intelligent Home follows that acceptance. Older dated entries below describe historical states.
+
+### تکمیل و بسته تحویل — ۲۰۲۶/۰۹/۱۰
+
+بسته فعلی `ERPSMART-v10.10.2-low-memory-intelligence-local-validated.zip` است. راهنمای نصب/بازگشت در `28-LOW-MEMORY-INSTALL-FA.md` و گزارش تست/محدودیت‌ها در `29-LOW-MEMORY-TEST-REPORT-FA.md` قرار دارند. نتیجه محلی: ۲۶۸ تست پروژه و ۹ تست تراکنش بسته موفق؛ Windows/Docker/Ollama واقعی، PHP/CI و پذیرش محصول در این نوبت هنوز تأیید نشده‌اند. ابتدا نصب موتور و سه خوانش محصول؛ پس از پذیرش معنایی، ادامه MVP C — Role Brief / Intelligent Home. حالت DEGRADED موفقیت مدل محسوب نمی‌شود.
+
+
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
 > سند فشرده برای AI/Developer جدید. قبل از استفاده، `00-START-HERE.md` و Master Spec مرجع هستند.
 
 ## Product
@@ -13,18 +31,21 @@ User-facing AI: ERPSMART Business Copilot
 
 ERP/Domainها Source of Truth هستند. Business Copilot لایه همیشه‌حاضر برای Search/Analysis/Orchestration/Guarded Action/Proactive supervision است.
 
-## Current baseline / phase — 2026-08-31
+## Current baseline / phase — 2026-09-08
 
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: 338e13419d091e6e1d3a5e7fd836ac7296e88e6b
+Baseline: 7415f1471573cce6e398317069567894a7209c4a
 Frozen safety milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FROZEN
-Latest fully closed business milestone: v10.4 Cycle 7 CRM-lite / Customer 360 — LIVE-VALIDATED
-v10.5 Cycle 8 r1: PARTIAL — Context Kernel retained; forced dedicated-page UX RETIRED
-Working milestone: v10.6 Cycle 9 Universal Business Copilot Foundation — PLANNED
-Immediate contract: docs/ai/20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md
+Universal Copilot foundation: IMPLEMENTED / live-proven
+Cycle 12.2 grounding/data/UI rescue: committed at 7415f14
+Working milestone: v10.10.1 Cycle 12.3 — Agent Intelligence Kernel v1.4 resilient analyst recovery
+Working status: IMPLEMENTED-CANDIDATE / LOCAL-VALIDATION
+Immediate contract: docs/ai/26-AGENT-INTELLIGENCE-KERNEL.md
+Cadence contract: docs/ai/20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md
 Master architecture: docs/ai/19-ERPSMART-INTELLIGENCE-PLATFORM-MASTER-SPEC.md
+Next after semantic live pass: MVP C — Role Brief / Intelligent Home
 ```
 
 ## Proven business chain
@@ -194,16 +215,23 @@ After edit:
 
 ## Immediate next implementation
 
-D0–D2 MVP A from `20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md`:
+Close Agent Intelligence Kernel v1 before any additional UI/dashboard feature:
 
-- global Sidecar
-- persistent conversation
-- Universal Entity Registry/Resolver
-- `@` mention/search
-- multi-entity chips
-- Context Envelope v2
-- Quick Preview
-- first cross-module Customer Business Review
-- reuse existing Tool/Proposal/Worker stack
+- `supplier.performance`, `trade.risk`, `shipment.impact`;
+- server-declared action menu; model selects only `action_id`;
+- bounded Tool → Observation → re-plan loop;
+- explicit @ entity type/scope correctness;
+- decision-first final answer, no Evidence dump fallback;
+- real planner semantic hard gate + analyst model-or-explicit-degraded capability preflight;
+- semantic benchmark + full regression + live browser gate.
 
-The first runtime patch must be a coherent Universal Copilot vertical, not another page-specific context experiment.
+After this passes, immediately implement MVP C Intelligent Home / Experience Role. Do not reopen Cycle 12 as another cosmetic-polish loop.
+
+Canonical implementation map: `docs/ai/26-AGENT-INTELLIGENCE-KERNEL.md`.
+
+
+### Agent Kernel analyst transport v1.4 — resilient capability route
+
+Live recovery proved a narrower fact than “the Kernel is broken”: the planner contract passes, while every currently configured local analyst can still return truncated/invalid structured JSON. Runtime keeps `compact_decision_v2`, and the smoke now uses the same complete-object extractor as production. If an analyst passes, that model route is persisted. If none passes, preflight persists an explicit `deterministic_decision_fallback` capability route bound to the exact `kernel_version`, `analyst_contract` and configured model list. While that tuple is unchanged, runtime skips repeated slow analyst failures and immediately renders the server-validated decision-first fallback; any model/configuration change automatically reopens analyst evaluation.
+
+The planner remains a hard live capability gate. Analyst degradation is an explicit safe operating mode, **not** semantic live acceptance: Supplier/Trade/Shipment browser gates must still prove that the resulting decision is useful before MVP B closes.

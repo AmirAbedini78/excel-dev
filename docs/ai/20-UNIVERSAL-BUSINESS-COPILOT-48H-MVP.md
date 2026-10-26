@@ -1,6 +1,13 @@
 # 20 — Universal Business Copilot — 48-hour MVP and two-day delivery cadence
 
-Status: `D0-D2 IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
+Status: `MVP A CLOSED / MVP B SEMANTIC RECOVERY ACTIVE / MVP C NEXT`
 
 Baseline for the first implementation candidate:
 
@@ -9,6 +16,27 @@ c443d7d362c1c053978c0aaed803a09c5eb9a10b
 ```
 
 This plan turns the Master Spec into small but **presentable** increments. Every two-day window must produce an end-to-end slice that can be shown without explaining unfinished plumbing.
+
+
+## 2026-09-08 cadence correction — Agent Intelligence Kernel
+
+The visual/transport parts of MVP A/B are implemented. Live browser evidence showed that Supplier/Trade/Shipment answers were still not decision-quality because the bounded Supervisor was effectively a fixed report builder and could fall back to a long Evidence dump. That semantic failure is a **blocking MVP-B acceptance failure**, not a reason to change the North Star.
+
+Cycle 12.3 therefore inserts one short recovery increment:
+
+```text
+D2–D4B  Agent Intelligence Kernel
+        → action-id planner
+        → bounded Tool/Observation/re-plan loop
+        → decision-first synthesis/fallback
+        → semantic benchmark + real model preflight
+        → live Supplier / Trade Risk / Shipment Impact acceptance
+
+then immediately:
+D4–D6   MVP C Intelligent Home / Experience Role
+```
+
+No dashboard/visual polish may delay this semantic gate. No Multi-Agent, production RAG, graph DB or bespoke ML training is added before the kernel and Intelligent Home are demoable.
 
 ## Delivery principle
 

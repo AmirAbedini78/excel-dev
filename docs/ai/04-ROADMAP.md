@@ -1,5 +1,23 @@
 # 04-ROADMAP — Roadmap Canonical فعلی
 
+## 2026-09-11 — v10.10.3 / Kernel v1.6: bounded stream recovery
+
+Current package: `ERPSMART-v10.10.3-stream-recovery-local-validated.zip`, applied over the exact delivered v10.10.2 working state. Current implementation and incident evidence: **30-STREAM-RECOVERY-20260911.md**; install/rollback: **28-LOW-MEMORY-INSTALL-FA.md**; results: **29-LOW-MEMORY-TEST-REPORT-FA.md**.
+
+The supplied Windows log proves v10.10.2 Docker build, 268 offline tests, file installation and Worker startup PASS. Its model gate is DEGRADED: qwen3.5:0.8b provider_error, qwen3:1.7b deadline, gemma3:4b memory_admission. This does not establish an OOM for the first model. A reproducible cross-thread HTTP chunk cancellation bug is fixed in v1.6; first-request allowance, shared endpoint cooldown and redacted per-case evidence are included. v1.6 remains LOCAL-VALIDATED until tested on that engine. MVP-B semantic acceptance remains open; MVP C Role Brief / Intelligent Home follows that acceptance. Older dated entries below describe historical states.
+
+### تکمیل و بسته تحویل — ۲۰۲۶/۰۹/۱۰
+
+بسته فعلی `ERPSMART-v10.10.2-low-memory-intelligence-local-validated.zip` است. راهنمای نصب/بازگشت در `28-LOW-MEMORY-INSTALL-FA.md` و گزارش تست/محدودیت‌ها در `29-LOW-MEMORY-TEST-REPORT-FA.md` قرار دارند. نتیجه محلی: ۲۶۸ تست پروژه و ۹ تست تراکنش بسته موفق؛ Windows/Docker/Ollama واقعی، PHP/CI و پذیرش محصول در این نوبت هنوز تأیید نشده‌اند. ابتدا نصب موتور و سه خوانش محصول؛ پس از پذیرش معنایی، ادامه MVP C — Role Brief / Intelligent Home. حالت DEGRADED موفقیت مدل محسوب نمی‌شود.
+
+
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
 > v9.3 Accounting/Financial AI به‌عنوان هسته اثبات‌شده `FROZEN` است.
 > از v10 Roadmap روی **Wide Platform / Deep Modules** و اولین Vertical تجاری Finance/Trade قفل می‌شود.
 
@@ -16,7 +34,25 @@ ERPSMART Intelligence Platform
 + ERPSMART Business Copilot
 ```
 
-Current source baseline: `338e13419d091e6e1d3a5e7fd836ac7296e88e6b`.
+Current source baseline: `7415f1471573cce6e398317069567894a7209c4a`.
+
+
+### Active blocking correction — Cycle 12.3 / Agent Intelligence Kernel
+
+Status: `IMPLEMENTED-CANDIDATE / LOCAL-VALIDATION`; browser semantic gate pending.
+
+MVP A and the mechanical parts of MVP B are implemented. Cycle 12.2 browser validation proved that **fixed business mini-reports plus Evidence Pack synthesis are not sufficient to close MVP B**. Therefore the cadence is corrected without changing the product destination:
+
+```text
+MVP A Universal Copilot Foundation       CLOSED
+MVP B Skills/Context/Tools               IMPLEMENTED
+MVP B semantic intelligence quality      BLOCKING RECOVERY → Agent Intelligence Kernel v1.6 + model and semantic live gates
+MVP C Intelligent Home                   NEXT immediately after semantic live pass
+```
+
+Cycle 12.3 delivers a bounded single-agent Tool/Observation/Re-plan loop for Supplier, Trade Risk and Shipment Impact; a useful decision-first fallback; a hard planner preflight plus an explicit analyst model-or-degraded capability preflight; and semantic benchmark gates. It explicitly does **not** add a multi-agent swarm, graph DB, production RAG or bespoke Deep Learning model to the critical path.
+
+Two-to-three-day MVP target after this correction: close the three business intelligence live questions, then ship CEO vs Commercial Intelligent Home on the same kernel.
 
 ### Immediate two-day cadence
 

@@ -1,0 +1,17 @@
+name: erpsmart-gemini-worker
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./config.gemini.json:/app/config.json:ro
+      - gemini_state:/app/data
+    environment:
+      TZ: Asia/Tehran
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?Set GEMINI_API_KEY in .env.gemini}
+    stop_grace_period: 40s
+
+volumes:
+  gemini_state:

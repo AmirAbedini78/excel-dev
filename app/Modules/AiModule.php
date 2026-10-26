@@ -6,7 +6,7 @@ final class AiModule
         Tenant::requirePermission('ai.use');
         if($action==='ai_queue_chat'){
             $refs=AiPageContext::decodeRefs((string)($_POST['context_refs_json']??''));
-            $id=AiRepository::queueChat((string)($_POST['prompt']??''),(int)($_POST['company_id']??0)?:null,(int)($_POST['conversation_id']??0)?:null,$refs);
+            $id=AiRepository::queueChat((string)($_POST['prompt']??''),(int)($_POST['company_id']??0)?:null,(int)($_POST['conversation_id']??0)?:null,$refs,(string)($_POST['engine']??''),(string)($_POST['model']??''));
             flash('درخواست به صف موتور AI اضافه شد.');redirect('index.php?page=ai&job_id='.$id);
         }
         if($action==='ai_approve_proposal'){
@@ -15,8 +15,12 @@ final class AiModule
         if($action==='ai_reject_proposal'){
             AiRepository::rejectProposal((int)($_POST['proposal_id']??0));flash('پیشنهاد ایجنت رد شد.','warn');redirect('index.php?page=ai');
         }
+        if($action==='ai_save_engine_settings'){
+            AiEnginePreferences::save((string)($_POST['engine']??''),(string)($_POST['model']??''));
+            flash('موتور و مدل پیش‌فرض محیط کاری ذخیره شد.');redirect('index.php?page=ai&section=engine');
+        }
         if($action==='ai_create_worker_token'){
-            Tenant::requirePermission('ai.workers.manage');$token=AiRepository::createWorkerToken((string)($_POST['label']??'Local AI Worker'));$_SESSION['ai_new_worker_token']=$token;flash('توکن Worker ساخته شد؛ فقط همین یک‌بار متن کامل آن نمایش داده می‌شود.');redirect('index.php?page=ai&section=workers');
+            Tenant::requirePermission('ai.workers.manage');$token=AiRepository::createWorkerToken((string)($_POST['label']??'Local AI Worker'),((string)($_POST['worker_type']??'ollama')==='gemini'?['llm.gemini']:['llm','rag','forecast']));$_SESSION['ai_new_worker_token']=$token;flash('توکن Worker ساخته شد؛ فقط همین یک‌بار متن کامل آن نمایش داده می‌شود.');redirect('index.php?page=ai&section=workers');
         }
         if($action==='ai_revoke_worker_token'){
             Tenant::requirePermission('ai.workers.manage');AiRepository::revokeWorkerToken((int)($_POST['token_id']??0));flash('دسترسی توکن Worker لغو شد.','warn');redirect('index.php?page=ai&section=workers');
@@ -28,11 +32,11 @@ final class AiModule
 
     public static function render(): void
     {
-        Tenant::requirePermission('ai.use');$section=(string)($_GET['section']??'assistant');if(!in_array($section,['assistant','suggestions','workers'],true))$section='assistant';
+        Tenant::requirePermission('ai.use');$section=(string)($_GET['section']??'assistant');if(!in_array($section,['assistant','suggestions','workers','engine'],true))$section='assistant';
         render_header('دستیار هوشمند حسابداری','کنترل‌پلین AI؛ پردازش روی Workerهای محلی و عملیات مالی با تایید انسانی.');
         echo '<nav class="acc-tabs ai-tabs"><a class="'.($section==='assistant'?'active':'').'" href="index.php?page=ai">ایجنت</a><a class="'.($section==='suggestions'?'active':'').'" href="index.php?page=ai&section=suggestions">پیشنهادهای هوشمند</a>';
-        if(Tenant::can('ai.workers.manage'))echo '<a class="'.($section==='workers'?'active':'').'" href="index.php?page=ai&section=workers">Workerها و موتور محلی</a>';echo '</nav>';
-        match($section){'workers'=>self::workers(),'suggestions'=>self::suggestions(),default=>self::assistant()};render_footer();
+        if(Tenant::can('ai.workers.manage'))echo '<a class="'.($section==='workers'?'active':'').'" href="index.php?page=ai&section=workers">Workerها</a><a class="'.($section==='engine'?'active':'').'" href="index.php?page=ai&section=engine">تنظیمات موتور AI</a>';echo '</nav>';
+        match($section){'engine'=>self::engineSettings(),'workers'=>self::workers(),'suggestions'=>self::suggestions(),default=>self::assistant()};render_footer();
     }
 
     private static function assistant(): void
@@ -56,7 +60,14 @@ final class AiModule
             foreach($companies as $c)$companyControl.='<option value="'.(int)$c['id'].'" '.((int)$c['id']===$current?'selected':'').'>'.h($c['name']).'</option>';
             $companyControl.='</select></label>';
         }
-        echo '<section class="card"><form method="post" class="ai-chat-form">'.csrf_field().'<input type="hidden" name="action" value="ai_queue_chat">'.$contextHidden.'<div class="ai-chat-context">'.$companyControl.$contextChip.'<span class="muted">پردازش LLM/RAG بیرون از cPanel انجام می‌شود.</span></div><textarea name="prompt" rows="4" required placeholder="'.($pageContext?'مثلاً: وضعیت 360 این مشتری را بده.':'مثلاً: آخرین خرید و فروش شرکت را تحلیل کن و اگر لازم است پیش‌نویس اقدام پیشنهاد بده...').'"></textarea><button class="btn primary">ارسال به ایجنت</button></form></section>';
+        $aiChoice=AiEnginePreferences::current();$aiModelList=AiEnginePreferences::models();
+        $engineFields='<label>موتور هوش مصنوعی<select name="engine" data-ai-engine>';
+        foreach(['ollama'=>'Ollama محلی','gemini'=>'Gemini API'] as $k=>$label)$engineFields.='<option value="'.h($k).'"'.($aiChoice['provider']===$k?' selected':'').'>'.h($label).'</option>';
+        $engineFields.='</select></label><label>مدل<select name="model" data-ai-model>';
+        foreach($aiModelList as $providerKey=>$modelNames)foreach($modelNames as $modelName)$engineFields.='<option data-engine="'.h($providerKey).'" value="'.h($modelName).'"'.($aiChoice['model']===$modelName?' selected':'').'>'.h($modelName).'</option>';
+        $engineFields.='</select></label>';
+        echo '<section class="card"><form method="post" class="ai-chat-form">'.csrf_field().'<input type="hidden" name="action" value="ai_queue_chat">'.$contextHidden.'<div class="ai-chat-context">'.$companyControl.$contextChip.$engineFields.'<span class="muted">پردازش LLM/RAG بیرون از cPanel انجام می‌شود.</span></div><textarea name="prompt" rows="4" required placeholder="'.($pageContext?'مثلاً: وضعیت 360 این مشتری را بده.':'مثلاً: آخرین خرید و فروش شرکت را تحلیل کن و اگر لازم است پیش‌نویس اقدام پیشنهاد بده...').'"></textarea><button class="btn primary">ارسال به ایجنت</button></form></section>';
+        echo '<script src="assets/ai-engine-selector.js?v=1" defer></script>';
         $jobs=AiRepository::userJobs(25);$liveJobs=array_values(array_filter($jobs,fn($x)=>in_array((string)$x['status'],['queued','leased','running'],true)));
         if($liveJobs){
             echo '<section class="card" id="ai-live-panel"><div class="section-title"><div><h2>گزارش زنده موتور AI</h2><p class="muted">بدون رفرش صفحه؛ اتصال زنده SSE و در صورت محدودیت هاست، Polling سبک خودکار.</p></div><span class="badge" data-ai-transport>در حال اتصال…</span></div>';
@@ -177,11 +188,28 @@ final class AiModule
         if(!$rows)echo '<div class="acc-empty">پیشنهاد فعالی وجود ندارد.</div>';echo '</section>';
     }
 
+    private static function engineSettings(): void
+    {
+        Tenant::requirePermission('ai.workers.manage');
+        $choice=AiEnginePreferences::current();
+        echo '<section class="card"><h2>انتخاب موتور هوش مصنوعی</h2><p class="muted">انتخاب Gemini داده‌های لازم برای تحلیل را از مسیر امن Worker به سرویس بیرونی Google ارسال می‌کند. کلید فقط در Docker Worker می‌ماند و هرگز در cPanel ذخیره نمی‌شود.</p>';
+        echo '<form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="ai_save_engine_settings">';
+        $aiChoice=AiEnginePreferences::current();$aiModelList=AiEnginePreferences::models();
+        $engineFields='<label>موتور هوش مصنوعی<select name="engine" data-ai-engine>';
+        foreach(['ollama'=>'Ollama محلی','gemini'=>'Gemini API'] as $k=>$label)$engineFields.='<option value="'.h($k).'"'.($aiChoice['provider']===$k?' selected':'').'>'.h($label).'</option>';
+        $engineFields.='</select></label><label>مدل<select name="model" data-ai-model>';
+        foreach($aiModelList as $providerKey=>$modelNames)foreach($modelNames as $modelName)$engineFields.='<option data-engine="'.h($providerKey).'" value="'.h($modelName).'"'.($aiChoice['model']===$modelName?' selected':'').'>'.h($modelName).'</option>';
+        $engineFields.='</select></label>';
+        echo $engineFields.'<button class="btn primary" type="submit">ذخیره موتور پیش‌فرض</button></form>';
+        echo '<p class="muted">برای Gemini باید Worker دارای قابلیت llm.gemini آنلاین باشد. برای Ollama یک Worker با llm لازم است.</p></section>';
+        echo '<script src="assets/ai-engine-selector.js?v=1" defer></script>';
+    }
+
     private static function workers(): void
     {
         Tenant::requirePermission('ai.workers.manage');$new=$_SESSION['ai_new_worker_token']??'';unset($_SESSION['ai_new_worker_token']);
         if($new)echo '<section class="card ai-token"><h2>توکن Worker — فقط همین بار</h2><code>'.h($new).'</code><p>این مقدار را در فایل تنظیمات Worker محلی قرار بده و داخل Git ذخیره نکن.</p></section>';
-        echo '<section class="card"><div class="section-title"><h2>ساخت Worker Token</h2></div><form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="ai_create_worker_token"><input name="label" value="Local AI Worker" placeholder="نام توکن"><button class="btn primary">ساخت توکن</button></form></section>';
+        echo '<section class="card"><div class="section-title"><h2>ساخت Worker Token</h2></div><form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="ai_create_worker_token"><input name="label" value="Local AI Worker" placeholder="نام توکن"><label>نوع Worker <select name="worker_type"><option value="ollama">Ollama محلی</option><option value="gemini">Gemini API (فقط llm.gemini)</option></select></label><button class="btn primary">ساخت توکن</button></form></section>';
         echo '<section class="card table-card"><div class="section-title"><h2>نودهای متصل</h2><span class="muted">هر سیستم Worker خودش را اجرا می‌کند؛ صف مرکزی کار را بین نودهای آنلاین تقسیم می‌کند.</span></div><div class="table-wrap"><table><thead><tr><th>نام</th><th>CPU</th><th>RAM</th><th>قابلیت‌ها</th><th>مدل‌ها</th><th>Job فعال</th><th>آخرین Heartbeat</th></tr></thead><tbody>';
         foreach(AiRepository::workers() as $w){$caps=json_decode($w['capabilities_json']??'[]',true)?:[];$models=json_decode($w['models_json']??'[]',true)?:[];echo '<tr><td><b>'.h($w['node_name']).'</b><small>'.h($w['os_name']).'</small></td><td>'.(int)$w['cpu_cores'].'<small>'.h($w['cpu_model']).'</small></td><td>'.number_format(((int)$w['ram_mb'])/1024,1).' GB</td><td>'.h(implode(', ',$caps)).'</td><td>'.h(implode(', ',$models)).'</td><td>'.(int)$w['current_jobs'].'</td><td>'.h($w['last_seen_at']).'</td></tr>';}
         echo '</tbody></table></div></section>';

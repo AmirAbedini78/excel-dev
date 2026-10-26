@@ -1,38 +1,38 @@
 {
   "project": "ERPSMART",
   "canonical_scope": "AI-native Business Operating System for B2B trading/import/distribution; ERPSMART Intelligence Platform + pervasive Business Copilot over trusted modular ERP domains",
-  "baseline_commit": "c443d7d362c1c053978c0aaed803a09c5eb9a10b",
-  "baseline_milestone": "v10.6 Cycle 9 Universal Business Copilot architecture lock",
-  "baseline_status": "PASS_CI_RUN22",
-  "current_milestone": "v10.7 Cycle 10 — Universal Copilot Foundation",
-  "milestone_status": "IMPLEMENTED-CANDIDATE",
+  "baseline_commit": "7415f1471573cce6e398317069567894a7209c4a",
+  "baseline_milestone": "Cycle 12.2 live intelligence fix / Agent Core Rescue baseline",
+  "baseline_status": "PASS_COMMIT_CI_LIVE_UI_BUGFIX_SEMANTIC_GATE_FAILED",
+  "current_milestone": "v10.10.3 Cycle 12.3 — Agent Intelligence Kernel v1.6 stream recovery",
+  "milestone_status": "LOCAL-VALIDATED",
   "live_validation_pending": true,
-  "release_contract": "v10.7-universal-copilot-foundation-r1",
-  "active_task": "Validate D0-D2 Universal Sidecar + Entity Registry/Context Envelope v2 + @ mention/search + persistent conversation + Customer Business Review in product UI.",
+  "release_contract": "v10.10.3-cycle12.3-agent-intelligence-kernel-v1.6",
+  "active_task": "Install v10.10.3 over delivered v10.10.2; validate real model completion and three product flows before MVP C.",
   "in_scope": [
-    "global persistent Business Copilot Sidecar on authenticated enabled-module pages",
-    "Universal Entity Registry and server-side Entity/Context Resolver",
-    "@ mention/search, multi-entity attachments, current-page and selection awareness",
-    "Context Envelope v2 using validated entity pointers rather than business snapshots",
-    "Tool/Skill Registry and deterministic Capability Retrieval foundation",
-    "single Supervisor/Manager planner with constrained workflow grammar",
-    "cross-module grounded Customer/Supplier/Shipment/Executive review skills",
-    "Role Profile v1 and Intelligent Home first slice",
-    "rich response/evidence/proposal cards using existing Proposal/Approval safety",
-    "execution trace, feedback and Experience Store foundation",
-    "two-day presentable increments with full regression and live product gates",
-    "first market vertical Finance/Trade for B2B trading/import/distribution"
+    "bounded single Business Copilot Agent Intelligence Kernel over server-approved read Tools",
+    "server-declared action_id planning; model cannot invent tool names/arguments/ERP IDs",
+    "supplier performance/comparison dynamic evidence drill-down",
+    "trade risk dynamic case/cost/impact drill-down",
+    "shipment/trade-case impact on known sales commitments",
+    "decision-first answer with bounded evidence and useful deterministic fallback",
+    "semantic benchmark plus real planner and analyst model preflight",
+    "all existing Entity/Context/RBAC/Proposal/Approval/recovery safety contracts",
+    "SmartDocs and exact software/file map synchronization",
+    "MVP C Intelligent Home immediately after semantic live pass",
+    "bounded local inference and explicitly configured endpoint failover",
+    "grounded finding selection and per-supplier fallback",
+    "scoped lexical RAG foundation; no production ingestion rollout"
   ],
   "out_of_scope": [
-    "complete reproduction of every Iranian ERP before customer evidence",
-    "frontend framework rewrite during Universal Copilot P0",
+    "multi-agent swarm before single-kernel eval proves need",
+    "direct model SQL or operational DB credentials",
+    "model-generated ERP IDs/tool names/tool arguments",
+    "production document RAG in this blocking recovery",
+    "graph DB/lakehouse in this blocking recovery",
+    "bespoke deep-learning training without a target dataset/backtest",
     "uncontrolled autonomous financial/legal/destructive actions",
-    "direct SQL or operational database credentials for LLM/Worker",
-    "RAG as source of current business truth",
-    "graph database or lakehouse in the first 48-hour critical path",
-    "multi-agent swarm before single-Supervisor eval proves need",
-    "raw online self-learning from every user action",
-    "fine-tuning large proprietary models before sufficient licensed/evaluated data exists"
+    "UI polish unrelated to semantic acceptance"
   ],
   "frozen_subsystems": [
     "v9.3 financial safety invariants",
@@ -43,12 +43,14 @@
     "typed ERP IDs are server-resolved; model-generated IDs remain forbidden"
   ],
   "known_issues": [
-    "Cycle 10 r1 is an IMPLEMENTED-CANDIDATE; real browser/live acceptance is still pending after commit/CI/cPanel deploy.",
-    "AiPageContext remains only as a Cycle 8 compatibility layer; Universal Copilot uses AiEntityRegistry + AiContextResolver + AiContextEnvelope.",
-    "AiModule is still a dedicated page; reusable Copilot composer/thread/rich-response components must be extracted without a frontend framework rewrite.",
-    "SmartDocs prior to this architecture lock lagged the accepted product direction; this package corrects the canonical docs before runtime work resumes.",
-    "Cloud provider live fallback remains credential-dependent; same-process fallback does not solve powered-off local Worker high availability.",
-    "Forecast confidence remains data-limited on the synthetic demo dataset."
+    "v10.10.2 installed and 268 tests passed on target Windows/Docker. All model candidates degraded. v10.10.3 model responsiveness and target timings remain unverified; 5070.08 MB MemAvailable was observed before the v1.5 probe, not total RAM/VRAM.",
+    "The memory estimate is conservative and cannot guarantee that an arbitrary model fits arbitrary hardware.",
+    "The micro-selection model contract does not establish unrestricted general business reasoning or universal Operator coverage.",
+    "Per-company local document retrieval is not a production per-document ACL ingestion pipeline; RAG remains disabled by default.",
+    "Prediction quality requires dedicated real datasets and rolling backtests; this release changes no forecast formula.",
+    "Synchronous ERP tool network timeouts remain separate from the Kernel inference deadline.",
+    "Global context admission can reject oversized legacy model prompts; use supported deterministic reads or explicitly tune max_context for measured capacity. No silent prompt truncation.",
+    "A 60-second first-request allowance may still be insufficient on the target. Shared 30-second endpoint cooldown prevents immediate model load cascades; it does not guarantee daemon cancellation or model capacity."
   ],
   "release_gates": {
     "v9_3_live_closeout": "PASS",
@@ -77,9 +79,18 @@
     "sales_delivery": "PASS_LIVE_JOB84_PROPOSAL13_EXECUTED",
     "page_aware_context_slice": "PARTIAL_KERNEL_RETAINED_UX_RETIRED",
     "universal_copilot_master_spec": "PASS_CI_RUN22_COMMIT_C443D7D",
-    "universal_copilot_mvp_a": "IMPLEMENTED_CANDIDATE_LOCAL_VALIDATION_PENDING"
+    "universal_copilot_mvp_a": "IMPLEMENTED_CANDIDATE_LOCAL_VALIDATION_PENDING",
+    "cycle12_2_code_data_ui_fix": "PASS_COMMIT_7415F14",
+    "cycle12_2_semantic_business_answer": "FAIL_LIVE_REQUIRES_KERNEL",
+    "agent_intelligence_kernel_source": "LOCAL-VALIDATED",
+    "agent_kernel_semantic_benchmark": "LOCAL-VALIDATED_SYNTHETIC_ONLY",
+    "agent_kernel_real_planner_preflight": "AUTO_READ_POLICY_LOCAL_VALIDATED; OPTIONAL_MODEL_MODE_PENDING_TARGET",
+    "agent_kernel_real_analyst_preflight": "V1_5_DEGRADED; V1_6_PENDING_TARGET_OLLAMA",
+    "mvp_c_intelligent_home": "BLOCKED_ONLY_BY_KERNEL_SEMANTIC_LIVE_GATE",
+    "low_memory_transport": "LOCAL-VALIDATED_WITH_CHUNKED_HTTP_CANCELLATION",
+    "patch_file_transactions": "LOCAL-VALIDATED; V1_5_WRAPPER_TARGET_PASS; V1_6_TARGET_PENDING"
   },
-  "updated_at": "2026-08-31",
+  "updated_at": "2026-09-11",
   "last_live_validation_job": 93,
   "live_validation_summary": {
     "v9_3": "Job #54 -> Proposal #3 -> human approval -> balanced AI draft AI-VCH-20260826-202025-9F19 -> exact two-article product UI verification PASS",
@@ -93,6 +104,22 @@
     "cycle_6": "LIVE E2E PASS: Job #79 grounded Manager Brief; Job #81 fulfillment read; Job #82 exposed zero-stock SENSOR-PROX and triggered selective-reservation hotfix; Job #83 Proposal #12 reserved only PLC line 28 qty 2 and was human-approved; Job #84 Proposal #13 delivered only the reserved PLC and human approval created DLV-20260830-163108-188D; UI showed revenue ex-tax 370m, COGS 620m, gross margin -250m, -67.6%, actual_landed; Job #85 inventory reached PLC 0/0/0; Job #86 fulfillment showed PLC delivered2/outstanding0 and SENSOR-PROX outstanding4; Job #87 independently confirmed actual-landed margin at 4.7s budget PASS. Selective reservation hotfix commit 1638c458.",
     "cycle_7": "LIVE E2E PASS: CRM company-context hotfix commit 71c303c + GitHub Commercial MVP Gate Run #19 success; Customer list loaded canonical acc_parties; Job #88 grounded CUS-003 Customer 360 at balance 727.1m debtor, Sales 1,157.2m, 3 docs, undelivered 29; Job #89 Proposal #14 approved Activity تماس برای بررسی سفارش بعدی due 1405/06/12; Job #90 grounded follow-up queue 0 overdue/0 today/1 upcoming; Job #91 Proposal #15 approved Opportunity OPP-20260831-011700-86AC at qualification, 900m, 50%; Job #92 grounded Pipeline 1 open/900m/450m weighted; Job #93 re-read Customer 360 with unchanged Finance/Sales truth plus new CRM facts; manual Contact مخاطب آزمایشی CRM / مسئول خرید persisted in UI.",
     "cycle_8": "PARTIAL: commit 338e134 added typed CRM refs, server workspace/company/RBAC validation, context_json persistence and Worker context consumption. Local candidate passed 124/124 full regression plus focused context tests and was deployed, but product review retired the forced Customer360 -> dedicated AI page UX before the original live gate. Kernel concepts are retained for Universal Entity/Context architecture.",
-    "architecture_lock_2026_08_31": "Accepted product direction: ERPSMART Intelligence Platform + pervasive Business Copilot; Global Sidecar, @ Entity mentions, Universal Entity/Context, Role-Adaptive Intelligent Home, Skills/Capability Retrieval, single Supervisor first, controlled Experience/Eval promotion and two-day demoable increments."
-  }
+    "architecture_lock_2026_08_31": "Accepted product direction: ERPSMART Intelligence Platform + pervasive Business Copilot; Global Sidecar, @ Entity mentions, Universal Entity/Context, Role-Adaptive Intelligent Home, Skills/Capability Retrieval, single Supervisor first, controlled Experience/Eval promotion and two-day demoable increments.",
+    "v10_10_2_target_install_2026_09_11": "Supplied terminal log: Docker Compose v5.3.1, build PASS, 268 tests PASS, 32 files verified, Worker import/start PASS. MODEL=DEGRADED: provider_error / deadline / memory_admission. ERP_LIVE=PENDING. No v1.6 or real ERP response validation inferred."
+  },
+  "checks": {
+    "agent_kernel_semantic_benchmark": "LOCAL-VALIDATED_ROUTING_AND_SYNTHETIC_BEHAVIOR",
+    "agent_kernel_real_planner_preflight": "R6_HISTORY_PASS_71_7S; V1_5_AUTO_READ_POLICY",
+    "agent_kernel_real_analyst_preflight": "V1_5_DEGRADED; V1_6_PENDING",
+    "agent_kernel_model_route": "V1_6_VERSION_AND_RUNTIME_FINGERPRINT_INVALIDATE_OLDER_ROUTES",
+    "local_repository_tests": 281,
+    "local_low_memory_subset_tests": 26,
+    "local_patch_transaction_tests": 9,
+    "powershell_docker_execution": "V1_5_TARGET_INSTALL_PASS; V1_6_PENDING",
+    "php_lint_and_behavior": "NOT_RUN_PHP_UNAVAILABLE",
+    "local_stream_recovery_tests": 13
+  },
+  "current_package": "ERPSMART-v10.10.3-stream-recovery-local-validated.zip",
+  "installation_guide": "docs/ai/28-LOW-MEMORY-INSTALL-FA.md",
+  "validation_report": "docs/ai/29-LOW-MEMORY-TEST-REPORT-FA.md"
 }

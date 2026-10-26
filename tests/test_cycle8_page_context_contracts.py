@@ -44,7 +44,7 @@ class Cycle8PageContextContracts(unittest.TestCase):
     def test_cycle8_kernel_is_retained_while_page_jump_ux_is_retired(self):
         s=json.loads((ROOT/"docs/ai/04-docops/task_state.json").read_text(encoding="utf-8"))
         self.assertEqual(s["release_gates"]["page_aware_context_slice"],"PARTIAL_KERNEL_RETAINED_UX_RETIRED")
-        self.assertTrue(s["current_milestone"].startswith("v10.7 Cycle 10"))
+        self.assertIn("Agent Intelligence Kernel",s["current_milestone"])
         self.assertEqual(s["release_gates"]["page_aware_context_slice"],"PARTIAL_KERNEL_RETAINED_UX_RETIRED")
         self.assertIn("Status: `PARTIAL`",self.doc)
         self.assertIn("RETIRED",self.doc)

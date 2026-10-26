@@ -1,0 +1,36 @@
+{
+  "server_url": "https://excel2.bcsrp.ir/ai_api.php",
+  "worker_token": "PASTE_TOKEN_FROM_WEB_PANEL",
+  "provider": "gateway",
+  "provider_strategy": "cloud_only",
+  "ollama_url": "http://127.0.0.1:11434",
+  "chat_model": "unused-local-model",
+  "fast_model": "unused-local-model",
+  "agent_model": "unused-local-model",
+  "analysis_model": "unused-local-model",
+  "cloud_provider": {
+    "enabled": true,
+    "name": "gemini",
+    "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "api_key": "env:GEMINI_API_KEY",
+    "chat_model": "gemini-3.8-flash",
+    "fast_model": "gemini-3.8-flash",
+    "agent_model": "gemini-3.8-flash",
+    "analysis_model": "gemini-3.8-flash",
+    "allowed_models": ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"],
+    "timeout_seconds": 150,
+    "extra_headers": {}
+  },
+  "node_uid": "laptop-gen9-gemini-01",
+  "node_name": "Windows-Laptop-Gemini",
+  "capabilities": ["llm.gemini"],
+  "poll_seconds": 8,
+  "lease_seconds": 900,
+  "max_tool_rounds": 8,
+  "request_timeout_seconds": 900,
+  "rag_enabled": false,
+  "api_retry_attempts": 3,
+  "latency_budgets_seconds": {
+    "deterministic": 5, "read_model": 150, "action": 150, "deep": 240, "fallback": 150
+  }
+}

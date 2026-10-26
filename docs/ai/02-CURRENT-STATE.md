@@ -1,5 +1,23 @@
 # 02-CURRENT-STATE — Snapshot زنده پروژه
 
+## 2026-09-11 — v10.10.3 / Kernel v1.6: bounded stream recovery
+
+Current package: `ERPSMART-v10.10.3-stream-recovery-local-validated.zip`, applied over the exact delivered v10.10.2 working state. Current implementation and incident evidence: **30-STREAM-RECOVERY-20260911.md**; install/rollback: **28-LOW-MEMORY-INSTALL-FA.md**; results: **29-LOW-MEMORY-TEST-REPORT-FA.md**.
+
+The supplied Windows log proves v10.10.2 Docker build, 268 offline tests, file installation and Worker startup PASS. Its model gate is DEGRADED: qwen3.5:0.8b provider_error, qwen3:1.7b deadline, gemma3:4b memory_admission. This does not establish an OOM for the first model. A reproducible cross-thread HTTP chunk cancellation bug is fixed in v1.6; first-request allowance, shared endpoint cooldown and redacted per-case evidence are included. v1.6 remains LOCAL-VALIDATED until tested on that engine. MVP-B semantic acceptance remains open; MVP C Role Brief / Intelligent Home follows that acceptance. Older dated entries below describe historical states.
+
+### تکمیل و بسته تحویل — ۲۰۲۶/۰۹/۱۰
+
+بسته فعلی `ERPSMART-v10.10.2-low-memory-intelligence-local-validated.zip` است. راهنمای نصب/بازگشت در `28-LOW-MEMORY-INSTALL-FA.md` و گزارش تست/محدودیت‌ها در `29-LOW-MEMORY-TEST-REPORT-FA.md` قرار دارند. نتیجه محلی: ۲۶۸ تست پروژه و ۹ تست تراکنش بسته موفق؛ Windows/Docker/Ollama واقعی، PHP/CI و پذیرش محصول در این نوبت هنوز تأیید نشده‌اند. ابتدا نصب موتور و سه خوانش محصول؛ پس از پذیرش معنایی، ادامه MVP C — Role Brief / Intelligent Home. حالت DEGRADED موفقیت مدل محسوب نمی‌شود.
+
+
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
 > این فایل باید بعد از هر Milestone معتبر به‌روزرسانی شود.
 
 ## Baseline / Working Milestone
@@ -7,14 +25,13 @@
 ```text
 Repository: AmirAbedini78/excel-dev
 Branch: main
-Baseline: 338e13419d091e6e1d3a5e7fd836ac7296e88e6b
-Frozen milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FROZEN
-Latest closed milestone: v10.4 CRM-lite / Customer 360 — LIVE-VALIDATED
-v10.5 Cycle 8 r1: PARTIAL — Context Kernel retained; forced dedicated-page UX RETIRED
-Working milestone: v10.6 Cycle 9 Universal Business Copilot Foundation
-Working status: PLANNED
-Current cycle: Master Product/Architecture Spec lock → D0–D2 Universal Copilot Foundation
-Next cycles: Sidecar/@/Entity Registry → Skills/Capability Retrieval → Intelligent Home → Guarded Operator → Watchers
+Baseline: 7415f1471573cce6e398317069567894a7209c4a
+Frozen safety milestone: v9.3 Commercial MVP — LIVE-VALIDATED / FROZEN
+Latest committed milestone: Cycle 12.2 Live Intelligence Fix — commit 7415f14
+Working milestone: v10.10.3 Cycle 12.3 — Agent Intelligence Kernel v1.6 stream recovery
+Working status: LOCAL-VALIDATED; v10.10.2 installed / models DEGRADED
+Blocking gate: MVP-B semantic intelligence quality
+Next after live pass: MVP C — Role Brief / Intelligent Home
 ```
 
 ## Scope فعال
@@ -375,3 +392,39 @@ Status: `LIVE E2E CLOSED`.
 ## v10.7 Cycle 10 — Universal Copilot Foundation
 
 Status: `IMPLEMENTED-CANDIDATE / LIVE-VALIDATION-PENDING`. Baseline: `c443d7d362c1c053978c0aaed803a09c5eb9a10b`. The candidate introduces one global Business Copilot Sidecar, Universal Entity Registry v1, deterministic `@` search, multi-entity Context chips, Context Envelope v2, Quick Preview and persistent conversation reuse. Cycle 8 typed-ref/server-validation principles remain preserved; forced navigation to the dedicated AI page is no longer the normal Customer 360 UX. See `21-UNIVERSAL-COPILOT-FOUNDATION-CANDIDATE.md`.
+
+## v10.10 Cycle 12.3 — Agent Intelligence Kernel v1
+
+Status: `IMPLEMENTED-CANDIDATE / LOCAL-VALIDATION`; live browser acceptance pending.
+
+The Cycle 12.2 live gate fixed data and Sidecar correctness, but management questions still returned Evidence dumps when the final analysis model failed and the Supplier flow behaved as a fixed mini-report. The correction preserves every ERP/Policy boundary while moving the supported MVP-B reads to a bounded single-agent loop:
+
+```text
+Goal
+→ validated Context / explicit @
+→ capability retrieval
+→ server-declared action menu
+→ LLM selects action_id only
+→ server compiles Tool + arguments
+→ Tool observation
+→ re-plan (bounded)
+→ decision evidence
+→ validated reasoning or useful deterministic decision fallback
+```
+
+Initial kernel capabilities: `supplier.performance`, `trade.risk`, `shipment.impact`. The model never creates Tool names, operational IDs or mutation arguments. Write requests bypass the kernel and continue through the existing guarded Proposal/Approval stack. Exact source/file map and acceptance contract are in `26-AGENT-INTELLIGENCE-KERNEL.md`.
+
+First real Windows/Docker validation on 2026-09-08 proved the planner contract on `qwen3.5:0.8b` in about 34 seconds, then exposed that the nominal `gemma3:4b` analysis model can exceed the 150-second full decision-schema budget. Candidate v1.1 therefore adds a capability-proven runtime analyst route: bounded current-config candidates are tested against the actual decision/Evidence-ID schema, the first passing analyst is persisted only in gitignored Worker data, and stale routes are ignored. Live browser semantic acceptance is still pending.
+
+The 2026-09-09 r4/r5 recovery sequence then proved that the remaining installer failure was a release-contract mismatch: the applied payload was already Kernel `v1.3`, while the installer still asserted the stale `v1.2` marker and still treated “no passing analyst” as fatal. v1.4 repairs the release/runtime contract rather than weakening evidence validation: planner stays hard-gated, analyst uses production-equivalent safe extraction, and an exact-config degraded route circuit-breaks repeated invalid local analyst calls.
+
+
+### Agent Kernel analyst transport v1.4 — resilient capability route
+
+Live recovery proved a narrower fact than “the Kernel is broken”: the planner contract passes, while every currently configured local analyst can still return truncated/invalid structured JSON. Runtime keeps `compact_decision_v2`, and the smoke now uses the same complete-object extractor as production. If an analyst passes, that model route is persisted. If none passes, preflight persists an explicit `deterministic_decision_fallback` capability route bound to the exact `kernel_version`, `analyst_contract` and configured model list. While that tuple is unchanged, runtime skips repeated slow analyst failures and immediately renders the server-validated decision-first fallback; any model/configuration change automatically reopens analyst evaluation.
+
+The planner remains a hard live capability gate. Analyst degradation is an explicit safe operating mode, **not** semantic live acceptance: Supplier/Trade/Shipment browser gates must still prove that the resulting decision is useful before MVP B closes.
+
+
+## Gemini API candidate (not yet deployed; 2026-10-26)
+Provider and model switch is staged for a separate `llm.gemini`-capability Worker. This is a candidate, not a verified ERP Live Gate. See `31-GEMINI-PROVIDER-CANDIDATE.md`.

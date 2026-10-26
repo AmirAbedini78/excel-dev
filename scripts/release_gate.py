@@ -102,7 +102,7 @@ def main() -> int:
     if not (root / "engine/worker.py").is_file():
         raise SystemExit("release root is invalid")
 
-    print("ERPSMART AI v9.3 — Commercial MVP Closeout Gate")
+    print("ERPSMART — Source regression and release gate")
     py_count = python_syntax(root)
     print(f"[1/6] Python syntax: PASS ({py_count} files)")
     json_count = json_syntax(root)
@@ -119,7 +119,10 @@ def main() -> int:
     print(f"[5/6] PHP lint: {php_state}" + (f" ({php_count} files)" if php_count else ""))
     js_count, js_state = javascript_syntax(root, args.require_node)
     print(f"[6/6] JavaScript syntax: {js_state}" + (f" ({js_count} files)" if js_count else ""))
-    print("ALL V9.3 COMMERCIAL MVP CLOSEOUT GATES PASSED.")
+    if php_state == "PASS" and js_state == "PASS":
+        print("ALL SOURCE VALIDATION GATES PASSED. Model/product live acceptance is separate.")
+    else:
+        print("AVAILABLE LOCAL GATES PASSED. FULL SOURCE VALIDATION INCOMPLETE: see skipped runtimes above.")
     return 0
 
 

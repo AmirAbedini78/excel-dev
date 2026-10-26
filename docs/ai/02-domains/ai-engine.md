@@ -1,4 +1,11 @@
 ---
+
+## 2026-09-11 — v10.10.3 / Kernel v1.6: bounded stream recovery
+
+Current package: `ERPSMART-v10.10.3-stream-recovery-local-validated.zip`, applied over the exact delivered v10.10.2 working state. Current implementation and incident evidence: **30-STREAM-RECOVERY-20260911.md**; install/rollback: **28-LOW-MEMORY-INSTALL-FA.md**; results: **29-LOW-MEMORY-TEST-REPORT-FA.md**.
+
+The supplied Windows log proves v10.10.2 Docker build, 268 offline tests, file installation and Worker startup PASS. Its model gate is DEGRADED: qwen3.5:0.8b provider_error, qwen3:1.7b deadline, gemma3:4b memory_admission. This does not establish an OOM for the first model. A reproducible cross-thread HTTP chunk cancellation bug is fixed in v1.6; first-request allowance, shared endpoint cooldown and redacted per-case evidence are included. v1.6 remains LOCAL-VALIDATED until tested on that engine. MVP-B semantic acceptance remains open; MVP C Role Brief / Intelligent Home follows that acceptance. Older dated entries below describe historical states.
+
 id: ai_engine
 status: LOCAL-VALIDATED
 touches_code:
@@ -189,3 +196,11 @@ Remote Control Plane بدون HTTPS (به‌جز loopback test) و Worker token 
 ## v9.3.0.1 live metadata transport
 
 Job #49 ثابت کرد Worker قرارداد hardening را می‌سازد، اما v9.3.0 endpoint/renderer زنده آن را بدون refresh نشان نمی‌دهد. Hotfix فیلد redacted `commercial_hardening` را از `liveJobStateForUser` عبور می‌دهد و یک renderer مشترک برای SSE/Polling دارد. Route/stageهای کل Guard Stack، total time، budget status و risk در terminal event محلی‌سازی می‌شوند. Worker bootstrap و مدل‌ها تغییر نکرده‌اند.
+
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+LocalInference capacity/streaming limits and optional trusted endpoint failover are implemented. Worker-level job distribution remains the control-plane lease queue.

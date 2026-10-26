@@ -1,6 +1,13 @@
 # 19 — ERPSMART Intelligence Platform / Business Copilot — Master Product & Architecture Spec
 
-Status: `PLANNED`
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
+Status: `ACTIVE / PARTIALLY IMPLEMENTED`
 
 Product decision: accepted on 2026-08-31. This document is the canonical product/architecture bridge from the proven v10 trading vertical to the next ERPSMART interaction model.
 
@@ -994,3 +1001,24 @@ useful user workflow
 ```
 
 Cycle 8 r1 is the explicit example: its kernel primitive is useful, but its forced page-navigation UX was not product-accepted.
+
+## 35. Current implementation bridge — Agent Intelligence Kernel
+
+As of Cycle 12.3, the Agent Intelligence Kernel is the concrete P0 implementation of Sections 14–16 for the first semantic recovery slice. It keeps the Master Spec unchanged: one Business Copilot, one bounded Supervisor first, deterministic Tools/Domain truth, server authority and controlled Evals.
+
+Implementation files:
+
+```text
+engine/agent_intelligence_kernel.py        bounded action-id / Tool / Observation loop
+engine/agent_kernel_smoke.py               real planner + analyst model capability gate
+engine/business_supervisor.py              legacy fixed Supervisor compatibility layer
+app/Core/AiToolRegistry.php                typed server Tool catalog
+app/Core/AiCapabilityRegistry.php          Skill/capability metadata
+app/Core/AiEntityRegistry.php              universal typed entity providers
+app/Core/AiContextResolver.php             server validation/RBAC/company resolution
+app/Core/AiContextEnvelope.php             persisted Context contract
+tests/test_cycle12_3_agent_intelligence_kernel.py
+tests/fixtures/agent_intelligence_kernel_benchmark.json
+```
+
+The current kernel does not claim production ML, production RAG or multi-agent autonomy. Forecast numeric output remains owned by statistical/ML engines; RAG remains document knowledge; Multi-Agent remains eval-gated.

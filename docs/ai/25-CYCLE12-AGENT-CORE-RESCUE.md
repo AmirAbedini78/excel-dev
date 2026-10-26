@@ -170,3 +170,11 @@ No write boundary, schema, migration, RAG, or autonomy scope changed.
 ## Runtime route hardening (v10.9.3 r6)
 
 The model proven by the local structured-output preflight is only a preference while it remains one of the Worker's currently configured `analysis` / `fallback` models. Stale runtime route metadata is ignored so it can never displace the configured fallback after a model/config change.
+
+## Cycle 12.3 semantic closeout decision
+
+The Cycle 12.2 data/UI blockers were fixed and commit `7415f1471573cce6e398317069567894a7209c4a` became the clean baseline, but the subsequent browser gate did **not** close MVP B semantically. The observed failure mode was valid ERP evidence without a usable managerial conclusion.
+
+Therefore `business_supervisor.py` remains a compatibility layer but is no longer the target intelligence architecture for Supplier/Trade/Shipment. The new **Agent Intelligence Kernel** supersedes those supported reads with bounded `action_id → Tool → Observation → re-plan` orchestration. See `26-AGENT-INTELLIGENCE-KERNEL.md`.
+
+Cycle 12.2 is retained as an important grounding/security foundation; it is not discarded. Its fixed Evidence-Pack renderer is simply no longer sufficient for final acceptance.

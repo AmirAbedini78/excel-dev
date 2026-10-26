@@ -1,5 +1,17 @@
 # 00-START-HERE — ERPSMART AI Development Entrypoint
 
+### تکمیل و بسته تحویل — ۲۰۲۶/۰۹/۱۰
+
+بسته فعلی `ERPSMART-v10.10.2-low-memory-intelligence-local-validated.zip` است. راهنمای نصب/بازگشت در `28-LOW-MEMORY-INSTALL-FA.md` و گزارش تست/محدودیت‌ها در `29-LOW-MEMORY-TEST-REPORT-FA.md` قرار دارند. نتیجه محلی: ۲۶۸ تست پروژه و ۹ تست تراکنش بسته موفق؛ Windows/Docker/Ollama واقعی، PHP/CI و پذیرش محصول در این نوبت هنوز تأیید نشده‌اند. ابتدا نصب موتور و سه خوانش محصول؛ پس از پذیرش معنایی، ادامه MVP C — Role Brief / Intelligent Home. حالت DEGRADED موفقیت مدل محسوب نمی‌شود.
+
+
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
 > این فایل نقطه شروع اجباری هر Session توسعه است.
 
 ## ترتیب مطالعه
@@ -22,6 +34,10 @@
 14. برای Context Spike قبلی: `18-PAGE-AWARE-AI-CONTEXT-PICKER.md`
 15. برای معماری محصول فعلی: `19-ERPSMART-INTELLIGENCE-PLATFORM-MASTER-SPEC.md`
 16. برای اجرای کوتاه‌مدت: `20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md`
+17. برای سابقه هسته Agent: `26-AGENT-INTELLIGENCE-KERNEL.md`
+18. قرارداد فعلی کم‌حافظه: `27-LOW-MEMORY-INTELLIGENCE.md`
+19. نصب و بازگشت نسخه فعلی: `28-LOW-MEMORY-INSTALL-FA.md`
+20. نتایج و محدودیت‌ها: `29-LOW-MEMORY-TEST-REPORT-FA.md`
 
 برای انتقال سریع Context به AI/Developer جدید، بعد از موارد بالا:
 
@@ -66,17 +82,17 @@ conversation history
 
 History برای فهم علت تصمیم‌هاست، نه جایگزین وضعیت فعلی سورس.
 
-## Current snapshot — 2026-08-31
+## Historical snapshot — 2026-09-08 (superseded by the v1.5 entry above)
 
 - Repository: `AmirAbedini78/excel-dev`
-- Current source baseline: `338e13419d091e6e1d3a5e7fd836ac7296e88e6b`.
-- v9.3 final baseline remains `LIVE-VALIDATED / FROZEN`; all financial safety/recovery invariants remain binding.
-- Latest fully closed business milestone: **v10.4 Cycle 7 — CRM-lite / Customer 360 — LIVE-VALIDATED**.
-- v10.5 Cycle 8 r1 is `PARTIAL`: typed context/kernel transport is retained; the forced `Customer360 → dedicated AI page` product UX is `RETIRED` and its original Live Gate is no longer the acceptance target.
-- Current milestone: **v10.6 Cycle 9 — Universal Business Copilot Foundation — PLANNED**.
-- Product architecture: **ERPSMART Intelligence Platform**; user-facing intelligent layer: **ERPSMART Business Copilot**.
-- First commercial wedge remains Finance/Trade for B2B trading/import/distribution companies; the new Copilot architecture connects the already-proven Finance, Inventory, Procurement, Trade/Logistics, Sales and CRM slices instead of abandoning them.
-- Immediate implementation contract: `20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md`.
+- Current committed source baseline: `7415f1471573cce6e398317069567894a7209c4a`.
+- v9.3 Commercial safety/recovery baseline remains `LIVE-VALIDATED / FROZEN`.
+- MVP A Universal Copilot foundation and Cycle 11 workspace conversation/context are implemented and live-proven.
+- Cycle 12/12.1/12.2 implemented Skills, capability retrieval, grounded evidence and bounded Supervisor, but browser Live Gate showed that the fixed report → Evidence Pack → LLM pattern is **not sufficient as the final intelligence architecture**.
+- Current working milestone: **v10.10.1 Cycle 12.3 — Agent Intelligence Kernel v1.4 — RESILIENT-ANALYST RECOVERY / LOCAL-VALIDATION**.
+- Agent Intelligence Kernel is a blocking correction inside MVP B, not a North Star change. Planner capability remains a hard live gate; analyst may run in an explicit deterministic-fallback capability mode when the exact configured local model set fails the structured contract. After semantic live acceptance, roadmap continues immediately to **MVP C — Role Brief / Intelligent Home**.
+- Product architecture remains **ERPSMART Intelligence Platform** with **ERPSMART Business Copilot** as the pervasive user-facing layer.
+- Immediate implementation contract: `26-AGENT-INTELLIGENCE-KERNEL.md`; cadence remains governed by `20-UNIVERSAL-BUSINESS-COPILOT-48H-MVP.md`.
 
 ## Frozen invariants
 

@@ -1,5 +1,18 @@
 # 07-DECISION-LOG — تصمیم‌های معماری و محصول
 
+## 2026-09-11 — v10.10.3 / Kernel v1.6: bounded stream recovery
+
+Current package: `ERPSMART-v10.10.3-stream-recovery-local-validated.zip`, applied over the exact delivered v10.10.2 working state. Current implementation and incident evidence: **30-STREAM-RECOVERY-20260911.md**; install/rollback: **28-LOW-MEMORY-INSTALL-FA.md**; results: **29-LOW-MEMORY-TEST-REPORT-FA.md**.
+
+The supplied Windows log proves v10.10.2 Docker build, 268 offline tests, file installation and Worker startup PASS. Its model gate is DEGRADED: qwen3.5:0.8b provider_error, qwen3:1.7b deadline, gemma3:4b memory_admission. This does not establish an OOM for the first model. A reproducible cross-thread HTTP chunk cancellation bug is fixed in v1.6; first-request allowance, shared endpoint cooldown and redacted per-case evidence are included. v1.6 remains LOCAL-VALIDATED until tested on that engine. MVP-B semantic acceptance remains open; MVP C Role Brief / Intelligent Home follows that acceptance. Older dated entries below describe historical states.
+
+## 2026-09-10 — v10.10.2 / Kernel v1.5 low-memory candidate
+
+Current implementation contract: **27-LOW-MEMORY-INTELLIGENCE.md**. Status: **LOCAL-VALIDATED**; Windows/Docker/Ollama and product Live Gate remain pending. This entry supersedes earlier r6/v1.4 working-state and transport descriptions, without changing the North Star or frozen financial/approval contracts.
+
+The candidate fixes explicit-model routing, uses grounded_selection_v3 (finding/action IDs only), removes unnecessary known-route planner calls, bounds local inference and endpoint failover, preserves per-supplier comparisons during degradation, and isolates bounded lexical RAG by workspace/company. Model qualification, installation integrity and ERP semantic acceptance are separate gates. See the new contract for settings, limitations, measured synthetic input reduction and file map.
+
+
 ## ADR-001 — AI-first Vertical Slice
 Status: ACCEPTED
 
@@ -174,3 +187,46 @@ Production does not learn policy directly from every user action. Runs are trace
 Status: ACCEPTED — 2026-08-31
 
 Short-term speed is achieved through coherent vertical increments, not demo-only hacks. D0–D2 starts with Global Sidecar + Universal Entity/Context + `@` mentions + one real cross-module Skill. Each following two-day increment adds a presentable layer while preserving exact-baseline patching, full regression, server trust boundaries and live acceptance.
+
+## 2026-09-08 — Cycle 12.3 Agent Intelligence Kernel correction
+
+Decision: keep the accepted North Star and safety boundaries, but replace the fixed Supplier/Trade/Shipment mini-report path as the target intelligence runtime with a bounded single-agent Tool/Observation/re-plan kernel.
+
+Reason: commit `7415f1471573cce6e398317069567894a7209c4a` fixed the proven data/UI blockers, yet live management questions still returned grounded Evidence without a usable decision. This is an implementation deviation from the existing Master Spec, not evidence that the product direction is wrong.
+
+Consequences:
+- `business_supervisor.py` remains compatibility only;
+- `agent_intelligence_kernel.py` is authoritative for the first promoted capability families;
+- model selects opaque server-declared action IDs only;
+- existing Proposal/Approval and deterministic Tool authority remain unchanged;
+- MVP C Intelligent Home follows immediately after semantic live acceptance;
+- ML/RAG/Multi-Agent remain separate eval-gated subsystems.
+
+## ADR-031 — Capability-proven decision model route, configuration remains authoritative
+Status: ACCEPTED — 2026-09-08
+
+The Agent Intelligence Kernel must not assume that the nominal `analysis_model` is suitable merely because Ollama reports it as installed. A real preflight on the user Worker showed the planner contract passing on the small local model while the heavyweight analysis model exceeded the bounded timeout on the full decision schema.
+
+Decision: test the actual decision/Evidence-ID contract across a bounded current-config model chain, persist only the first passing analyst model in the existing gitignored Worker data volume, and prefer it at runtime only while it remains one of the currently configured models. Stale runtime routes are ignored. This is a capability/latency route only; it does not own business truth, permissions or authorization.
+
+
+### Agent Kernel analyst transport v1.4 — resilient capability route
+
+Live recovery proved a narrower fact than “the Kernel is broken”: the planner contract passes, while every currently configured local analyst can still return truncated/invalid structured JSON. Runtime keeps `compact_decision_v2`, and the smoke now uses the same complete-object extractor as production. If an analyst passes, that model route is persisted. If none passes, preflight persists an explicit `deterministic_decision_fallback` capability route bound to the exact `kernel_version`, `analyst_contract` and configured model list. While that tuple is unchanged, runtime skips repeated slow analyst failures and immediately renders the server-validated decision-first fallback; any model/configuration change automatically reopens analyst evaluation.
+
+The planner remains a hard live capability gate. Analyst degradation is an explicit safe operating mode, **not** semantic live acceptance: Supplier/Trade/Shipment browser gates must still prove that the resulting decision is useful before MVP B closes.
+
+## ADR-032 — Analyst model is an optional reasoning accelerator; planner capability remains the hard Kernel gate
+Status: ACCEPTED — 2026-09-09
+
+The Cycle 12.3 live evidence showed `qwen3.5:0.8b` satisfying the bounded planner action contract while the configured analyst chain returned truncated/invalid JSON. Failing the whole release after deterministic ERP evidence, claim guards and deterministic decision rendering have already passed creates a false availability dependency on local model formatting.
+
+Decision: planner semantics remain a hard preflight gate. Analyst preflight must use the same safe complete-object extraction as production. A passing analyst is preferred; if all current analysts fail, persist an exact-config `deterministic_decision_fallback` route and circuit-break those model calls until the configured model set or kernel/contract changes or preflight is deliberately rerun. This degradation never expands authority, never bypasses Evidence-ID validation, and never counts as semantic live acceptance.
+
+## 2026-09-10 — Final packaging and review of v1.5
+
+- Candidate-first installation stages source outside the project, without runtime secrets, and builds/tests before stopping the existing Worker. Byte-exact rollback retains the previous Worker image and restores the previous model route, including absence.
+- Base compatibility uses exact normalized content digests from the submitted r6 working tree, not a fragile exact porcelain filename boundary. Unknown source differences remain a blocking preflight conflict; neither Git history nor user edits are reset.
+- Corrected HTTP resource closure, wall-bounded inventory reads, legacy configured context/output preferences within capacity ceilings, and consistent Persian/Arabic FTS normalization.
+- Source release gate distinguishes skipped PHP/Node from a full pass. Model qualification is three production-contract selections; default known-route planning is deterministic auto mode. Neither mode is evidence of unrestricted reasoning.
+- Validation and remaining live gates: see 29-LOW-MEMORY-TEST-REPORT-FA.md. Roadmap remains semantic product acceptance, then MVP C.
