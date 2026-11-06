@@ -27,6 +27,7 @@ engine/config.json
 engine/data/
 engine/.venv/
 engine/__pycache__/
+tests/__pycache__/
 
 # Optional cloud-only Worker secret config
 engine/config.cloud.json
@@ -34,3 +35,6 @@ engine/config.cloud.json
 # Gemini runtime secrets, must not be committed
 engine/config.gemini.json
 engine/.env.gemini
+
+# Cursor API key for local scripts / future integrations (never commit)
+engine/.env.cursor

@@ -63,6 +63,15 @@ Copy-Item config.example.json config.json
 
 Token را Commit نکنید. `engine/config.json` در `.gitignore` است.
 
+### کلید API کرسر (مسیر Cloud Agent در Worker)
+
+برای استفاده از **Cursor Cloud Agent** داخل Worker (کنار Gemini در `provider_gateway`):
+
+1. در **`engine/.env.gemini`** (یا همان فایلی که به Docker پاس می‌دهید) اضافه کنید: **`CURSOR_API_KEY=...`** از [داشبورد کرسر](https://cursor.com/dashboard).
+2. در **`config.gemini.json`** بلوک **`cursor_cloud_agent`** را از نمونه کپی کنید (`config.gemini.example.json`).
+3. در پنل وب یک **Worker Token** با نوع **Cursor Cloud** بسازید (`llm.cursor`) **یا** روی همان نود هر دو قابلیت **`llm.gemini`** و **`llm.cursor`** را داشته باشید تا هر دو صف پاس شوند.
+4. **مدل‌های مجاز** با IDs واقعی از `GET https://api.cursor.com/v1/models` را در `allowed_models` بگذارید؛ مقادیر نمونه فقط راهنما هستند.
+
 ## 3. اجرا
 
 ```powershell

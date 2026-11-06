@@ -21,9 +21,19 @@
     "timeout_seconds": 150,
     "extra_headers": {}
   },
+  "cursor_cloud_agent": {
+    "enabled": true,
+    "api_key": "env:CURSOR_API_KEY",
+    "api_base": "https://api.cursor.com",
+    "default_model": "composer-2",
+    "allowed_models": ["composer-2", "claude-4-sonnet-thinking"],
+    "env_type": "cloud",
+    "poll_timeout_seconds": 420,
+    "poll_interval_seconds": 2.0
+  },
   "node_uid": "laptop-gen9-gemini-01",
   "node_name": "Windows-Laptop-Gemini",
-  "capabilities": ["llm.gemini"],
+  "capabilities": ["llm.gemini", "llm.cursor"],
   "poll_seconds": 8,
   "lease_seconds": 900,
   "max_tool_rounds": 8,

@@ -20,7 +20,7 @@ final class AiModule
             flash('موتور و مدل پیش‌فرض محیط کاری ذخیره شد.');redirect('index.php?page=ai&section=engine');
         }
         if($action==='ai_create_worker_token'){
-            Tenant::requirePermission('ai.workers.manage');$token=AiRepository::createWorkerToken((string)($_POST['label']??'Local AI Worker'),((string)($_POST['worker_type']??'ollama')==='gemini'?['llm.gemini']:['llm','rag','forecast']));$_SESSION['ai_new_worker_token']=$token;flash('توکن Worker ساخته شد؛ فقط همین یک‌بار متن کامل آن نمایش داده می‌شود.');redirect('index.php?page=ai&section=workers');
+            Tenant::requirePermission('ai.workers.manage');$wt=(string)($_POST['worker_type']??'ollama');$caps=match($wt){'gemini'=>['llm.gemini'],'cursor'=>['llm.cursor'],'gemini_cursor'=>['llm.gemini','llm.cursor'],default=>['llm','rag','forecast']};$token=AiRepository::createWorkerToken((string)($_POST['label']??'Local AI Worker'),$caps);$_SESSION['ai_new_worker_token']=$token;flash('توکن Worker ساخته شد؛ فقط همین یک‌بار متن کامل آن نمایش داده می‌شود.');redirect('index.php?page=ai&section=workers');
         }
         if($action==='ai_revoke_worker_token'){
             Tenant::requirePermission('ai.workers.manage');AiRepository::revokeWorkerToken((int)($_POST['token_id']??0));flash('دسترسی توکن Worker لغو شد.','warn');redirect('index.php?page=ai&section=workers');
@@ -62,7 +62,7 @@ final class AiModule
         }
         $aiChoice=AiEnginePreferences::current();$aiModelList=AiEnginePreferences::models();
         $engineFields='<label>موتور هوش مصنوعی<select name="engine" data-ai-engine>';
-        foreach(['ollama'=>'Ollama محلی','gemini'=>'Gemini API'] as $k=>$label)$engineFields.='<option value="'.h($k).'"'.($aiChoice['provider']===$k?' selected':'').'>'.h($label).'</option>';
+        foreach(['ollama'=>'Ollama محلی','gemini'=>'Gemini API','cursor'=>'Cursor Cloud'] as $k=>$label)$engineFields.='<option value="'.h($k).'"'.($aiChoice['provider']===$k?' selected':'').'>'.h($label).'</option>';
         $engineFields.='</select></label><label>مدل<select name="model" data-ai-model>';
         foreach($aiModelList as $providerKey=>$modelNames)foreach($modelNames as $modelName)$engineFields.='<option data-engine="'.h($providerKey).'" value="'.h($modelName).'"'.($aiChoice['model']===$modelName?' selected':'').'>'.h($modelName).'</option>';
         $engineFields.='</select></label>';
@@ -196,12 +196,12 @@ final class AiModule
         echo '<form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="ai_save_engine_settings">';
         $aiChoice=AiEnginePreferences::current();$aiModelList=AiEnginePreferences::models();
         $engineFields='<label>موتور هوش مصنوعی<select name="engine" data-ai-engine>';
-        foreach(['ollama'=>'Ollama محلی','gemini'=>'Gemini API'] as $k=>$label)$engineFields.='<option value="'.h($k).'"'.($aiChoice['provider']===$k?' selected':'').'>'.h($label).'</option>';
+        foreach(['ollama'=>'Ollama محلی','gemini'=>'Gemini API','cursor'=>'Cursor Cloud'] as $k=>$label)$engineFields.='<option value="'.h($k).'"'.($aiChoice['provider']===$k?' selected':'').'>'.h($label).'</option>';
         $engineFields.='</select></label><label>مدل<select name="model" data-ai-model>';
         foreach($aiModelList as $providerKey=>$modelNames)foreach($modelNames as $modelName)$engineFields.='<option data-engine="'.h($providerKey).'" value="'.h($modelName).'"'.($aiChoice['model']===$modelName?' selected':'').'>'.h($modelName).'</option>';
         $engineFields.='</select></label>';
         echo $engineFields.'<button class="btn primary" type="submit">ذخیره موتور پیش‌فرض</button></form>';
-        echo '<p class="muted">برای Gemini باید Worker دارای قابلیت llm.gemini آنلاین باشد. برای Ollama یک Worker با llm لازم است.</p></section>';
+        echo '<p class="muted">برای Gemini باید Worker دارای قابلیت llm.gemini آنلاین باشد. برای Cursor باید Worker دارای llm.cursor باشد. برای Ollama یک Worker با llm لازم است.</p></section>';
         echo '<script src="assets/ai-engine-selector.js?v=1" defer></script>';
     }
 
@@ -209,7 +209,7 @@ final class AiModule
     {
         Tenant::requirePermission('ai.workers.manage');$new=$_SESSION['ai_new_worker_token']??'';unset($_SESSION['ai_new_worker_token']);
         if($new)echo '<section class="card ai-token"><h2>توکن Worker — فقط همین بار</h2><code>'.h($new).'</code><p>این مقدار را در فایل تنظیمات Worker محلی قرار بده و داخل Git ذخیره نکن.</p></section>';
-        echo '<section class="card"><div class="section-title"><h2>ساخت Worker Token</h2></div><form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="ai_create_worker_token"><input name="label" value="Local AI Worker" placeholder="نام توکن"><label>نوع Worker <select name="worker_type"><option value="ollama">Ollama محلی</option><option value="gemini">Gemini API (فقط llm.gemini)</option></select></label><button class="btn primary">ساخت توکن</button></form></section>';
+        echo '<section class="card"><div class="section-title"><h2>ساخت Worker Token</h2></div><form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="ai_create_worker_token"><input name="label" value="Local AI Worker" placeholder="نام توکن"><label>نوع Worker <select name="worker_type"><option value="ollama">Ollama محلی</option><option value="gemini">Gemini API (فقط llm.gemini)</option><option value="cursor">Cursor Cloud (فقط llm.cursor)</option><option value="gemini_cursor">Gemini + Cursor (llm.gemini و llm.cursor)</option></select></label><button class="btn primary">ساخت توکن</button></form></section>';
         echo '<section class="card table-card"><div class="section-title"><h2>نودهای متصل</h2><span class="muted">هر سیستم Worker خودش را اجرا می‌کند؛ صف مرکزی کار را بین نودهای آنلاین تقسیم می‌کند.</span></div><div class="table-wrap"><table><thead><tr><th>نام</th><th>CPU</th><th>RAM</th><th>قابلیت‌ها</th><th>مدل‌ها</th><th>Job فعال</th><th>آخرین Heartbeat</th></tr></thead><tbody>';
         foreach(AiRepository::workers() as $w){$caps=json_decode($w['capabilities_json']??'[]',true)?:[];$models=json_decode($w['models_json']??'[]',true)?:[];echo '<tr><td><b>'.h($w['node_name']).'</b><small>'.h($w['os_name']).'</small></td><td>'.(int)$w['cpu_cores'].'<small>'.h($w['cpu_model']).'</small></td><td>'.number_format(((int)$w['ram_mb'])/1024,1).' GB</td><td>'.h(implode(', ',$caps)).'</td><td>'.h(implode(', ',$models)).'</td><td>'.(int)$w['current_jobs'].'</td><td>'.h($w['last_seen_at']).'</td></tr>';}
         echo '</tbody></table></div></section>';

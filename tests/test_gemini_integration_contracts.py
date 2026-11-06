@@ -5,7 +5,8 @@ R=Path(__file__).resolve().parents[1]
 class Contract(unittest.TestCase):
     def test_db_queue_routes_by_capability(self):
         src=(R/'app/Core/AiRepository.php').read_text(encoding='utf-8')
-        self.assertIn("'llm.gemini':'llm'",src)
+        self.assertIn("'gemini'=>'llm.gemini'",src)
+        self.assertIn("'cursor'=>'llm.cursor'",src)
         self.assertEqual(src.count("$context['engine_selection']=$selection"),2)
         self.assertEqual(src.count("VALUES (?,?,?,?, 'agent_chat'"),2)
     def test_no_default_gemini_privilege(self):

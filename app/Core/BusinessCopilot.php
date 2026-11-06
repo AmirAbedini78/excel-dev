@@ -57,7 +57,7 @@ final class BusinessCopilot
         echo '</select></label><label><span>گفتگو</span><select data-copilot-conversation><option value="0">گفتگوی جدید</option></select></label><button type="button" class="btn tiny" data-copilot-new>＋ جدید</button></div>';
         echo '<div class="copilot-scopebar"><label>موتور<select data-ai-engine>';
         $sel=AiEnginePreferences::current();
-        foreach(['ollama'=>'Ollama','gemini'=>'Gemini API'] as $name=>$label)echo '<option value="'.h($name).'"'.($sel['provider']===$name?' selected':'').'>'.h($label).'</option>';
+        foreach(['ollama'=>'Ollama','gemini'=>'Gemini API','cursor'=>'Cursor Cloud'] as $name=>$label)echo '<option value="'.h($name).'"'.($sel['provider']===$name?' selected':'').'>'.h($label).'</option>';
         echo '</select></label><label>مدل<select data-ai-model>';
         foreach(AiEnginePreferences::models() as $prov=>$models)foreach($models as $m)echo '<option data-engine="'.h($prov).'" value="'.h($m).'"'.($m===$sel['model']?' selected':'').'>'.h($m).'</option>';
         echo '</select></label></div>';

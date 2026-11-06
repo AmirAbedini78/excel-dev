@@ -16,12 +16,14 @@ transport used for planning/explanation/tool calling.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
 import socket
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from typing import Any
 from urllib.parse import urlsplit
@@ -46,9 +48,26 @@ def _cloud_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
     return cloud
 
 
+def _cursor_agent_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
+    raw = cfg.get("cursor_cloud_agent")
+    block = dict(raw) if isinstance(raw, dict) else {}
+    key = str(block.get("api_key") or "")
+    if key.startswith("env:"):
+        var = key[4:]
+        if not var or not var.replace("_", "").isalnum():
+            raise ProviderGatewayError("cursor_agent_env_name_invalid")
+        block["api_key"] = os.environ.get(var, "")
+    return block
+
+
 def _cloud_enabled(cfg: dict[str, Any]) -> bool:
     cloud = _cloud_cfg(cfg)
     return bool(cloud.get("enabled"))
+
+
+def _cursor_agent_enabled(cfg: dict[str, Any]) -> bool:
+    c = _cursor_agent_cfg(cfg)
+    return bool(c.get("enabled")) and bool(str(c.get("api_key") or "").strip())
 
 
 def validate_provider_config(cfg: dict[str, Any]) -> None:
@@ -56,31 +75,43 @@ def validate_provider_config(cfg: dict[str, Any]) -> None:
     if strategy not in VALID_STRATEGIES:
         raise ProviderGatewayError(f"provider_strategy_invalid:{strategy}")
 
-    if strategy in {"cloud_first", "cloud_only"} and not _cloud_enabled(cfg):
+    if strategy in {"cloud_first", "cloud_only"} and not (_cloud_enabled(cfg) or _cursor_agent_enabled(cfg)):
         raise ProviderGatewayError("cloud_provider_required_by_strategy")
 
-    if not _cloud_enabled(cfg):
+    if not _cloud_enabled(cfg) and not _cursor_agent_enabled(cfg):
         return
 
-    cloud = _cloud_cfg(cfg)
-    base_url = str(cloud.get("base_url") or "").strip()
-    api_key = str(cloud.get("api_key") or "").strip()
-    if api_key.startswith("env:") or api_key.startswith("REPLACE_"):
-        raise ProviderGatewayError("cloud_provider_missing_api_key_env")
-    chat_model = str(cloud.get("chat_model") or "").strip()
-    if not base_url or not api_key or not chat_model:
-        raise ProviderGatewayError("cloud_provider_missing_base_url_api_key_or_chat_model")
+    if _cloud_enabled(cfg):
+        cloud = _cloud_cfg(cfg)
+        base_url = str(cloud.get("base_url") or "").strip()
+        api_key = str(cloud.get("api_key") or "").strip()
+        if api_key.startswith("env:") or api_key.startswith("REPLACE_"):
+            raise ProviderGatewayError("cloud_provider_missing_api_key_env")
+        chat_model = str(cloud.get("chat_model") or "").strip()
+        if not base_url or not api_key or not chat_model:
+            raise ProviderGatewayError("cloud_provider_missing_base_url_api_key_or_chat_model")
 
-    parsed = urlsplit(base_url)
-    host = (parsed.hostname or "").lower()
-    if parsed.scheme not in {"http", "https"} or not host:
-        raise ProviderGatewayError("cloud_provider_base_url_invalid")
-    if parsed.scheme != "https" and host not in {"localhost", "127.0.0.1", "::1"}:
-        raise ProviderGatewayError("cloud_provider_remote_requires_https")
+        parsed = urlsplit(base_url)
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme not in {"http", "https"} or not host:
+            raise ProviderGatewayError("cloud_provider_base_url_invalid")
+        if parsed.scheme != "https" and host not in {"localhost", "127.0.0.1", "::1"}:
+            raise ProviderGatewayError("cloud_provider_remote_requires_https")
 
-    extra_headers = cloud.get("extra_headers")
-    if extra_headers is not None and not isinstance(extra_headers, dict):
-        raise ProviderGatewayError("cloud_provider_extra_headers_must_be_object")
+        extra_headers = cloud.get("extra_headers")
+        if extra_headers is not None and not isinstance(extra_headers, dict):
+            raise ProviderGatewayError("cloud_provider_extra_headers_must_be_object")
+
+    if _cursor_agent_enabled(cfg):
+        cc = _cursor_agent_cfg(cfg)
+        ckey = str(cc.get("api_key") or "").strip()
+        if ckey.startswith("env:") or ckey.startswith("REPLACE_"):
+            raise ProviderGatewayError("cursor_agent_missing_api_key_env")
+        if not ckey:
+            raise ProviderGatewayError("cursor_agent_missing_api_key_env")
+        default_model = str(cc.get("default_model") or "composer-2").strip()
+        if not default_model:
+            raise ProviderGatewayError("cursor_agent_default_model_required")
 
 
 def _model_map(cfg: dict[str, Any], provider: str) -> dict[str, str]:
@@ -103,16 +134,35 @@ def _model_map(cfg: dict[str, Any], provider: str) -> dict[str, str]:
     }
 
 
+def _cursor_model_ids(cfg: dict[str, Any]) -> set[str]:
+    cc = _cursor_agent_cfg(cfg)
+    if not bool(cc.get("enabled")) or not str(cc.get("api_key") or "").strip():
+        return set()
+    out: set[str] = set()
+    for x in cc.get("allowed_models") or []:
+        s = str(x).strip()
+        if s:
+            out.add(s)
+    dm = str(cc.get("default_model") or "").strip()
+    if dm:
+        out.add(dm)
+    return out
+
+
 def _infer_role(cfg: dict[str, Any], model_name: str, hint: str | None) -> str:
     # A previous model_for() call is not allowed to relabel an explicit model.
     if hint in {"fast", "agent", "analysis", "fallback"} and any(
         _model_map(cfg, provider).get(hint) == model_name for provider in ("local", "cloud")
     ):
         return str(hint)
+    if hint in {"fast", "agent", "analysis", "fallback"} and model_name in _cursor_model_ids(cfg):
+        return str(hint)
     for provider in ("local", "cloud"):
         for role, model in _model_map(cfg, provider).items():
             if model and model_name == model:
                 return role
+    if model_name in _cursor_model_ids(cfg):
+        return str(hint) if hint in {"fast", "agent", "analysis", "fallback"} else "agent"
     return "fallback"
 
 
@@ -120,8 +170,13 @@ def _provider_order(worker: Any, role: str, requested_model: str) -> list[str]:
     strategy = str(worker._provider_strategy)
     local_model = worker._local_role_models.get(role, "")
     cloud_model = worker._cloud_role_models.get(role, "")
+    cursor_ids = _cursor_model_ids(worker.cfg)
+    is_cursor_model = bool(requested_model and requested_model in cursor_ids)
+    cursor_ok = bool(getattr(worker, "_cursor_available", False))
 
-    # If caller explicitly supplied a cloud-only model, respect it first.
+    if cursor_ok and is_cursor_model:
+        return ["cursor"]
+
     if strategy == "cloud_only":
         first = ["cloud"]
     elif strategy == "local_only":
@@ -130,12 +185,8 @@ def _provider_order(worker: Any, role: str, requested_model: str) -> list[str]:
         first = ["cloud", "local"]
     elif local_model and requested_model == local_model:
         first = ["local", "cloud"]
-    elif strategy == "cloud_only":
-        first = ["cloud"]
     elif strategy == "cloud_first":
         first = ["cloud", "local"]
-    elif strategy == "local_only":
-        first = ["local"]
     else:
         first = ["local", "cloud"]
 
@@ -208,6 +259,148 @@ def _openai_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
         result.append(msg)
 
     return result
+
+
+def _last_user_text_from_messages(messages: list[dict[str, Any]]) -> str:
+    for raw in reversed(messages):
+        if not isinstance(raw, dict):
+            continue
+        if str(raw.get("role") or "") != "user":
+            continue
+        content = raw.get("content")
+        if isinstance(content, str) and content.strip():
+            return content.strip()
+    return ""
+
+
+def _cursor_basic_auth_header(api_key: str) -> str:
+    token = base64.b64encode(f"{api_key}:".encode("utf-8")).decode("ascii")
+    return "Basic " + token
+
+
+def _cursor_agent_chat(
+    worker: Any,
+    job: dict[str, Any],
+    round_no: int,
+    messages: list[dict[str, Any]],
+    selected_model: str | None,
+) -> dict[str, Any]:
+    cc = getattr(worker, "_cursor_cfg", {}) or _cursor_agent_cfg(worker.cfg)
+    if not isinstance(cc, dict) or not str(cc.get("api_key") or "").strip():
+        raise ProviderGatewayError("cursor_agent_not_configured")
+
+    api_key = str(cc.get("api_key") or "").strip()
+    base = str(cc.get("api_base") or "https://api.cursor.com").rstrip("/")
+    model_id = str(selected_model or cc.get("default_model") or "composer-2").strip()
+    if not model_id:
+        raise ProviderGatewayError("cursor_agent_model_missing")
+
+    prompt_text = _last_user_text_from_messages(messages)
+    if not prompt_text:
+        raise ProviderGatewayError("cursor_agent_empty_prompt")
+
+    timeout = max(30, min(900, int(cc.get("poll_timeout_seconds", 300))))
+    interval = max(1.0, float(cc.get("poll_interval_seconds", 2.0)))
+
+    env_type = str(cc.get("env_type") or "cloud").strip()
+    body: dict[str, Any] = {
+        "prompt": {"text": prompt_text},
+        "model": {"id": model_id},
+    }
+    if env_type == "pool":
+        pool_name = str(cc.get("pool_name") or "default").strip() or "default"
+        body["env"] = {"type": "pool", "name": pool_name}
+    else:
+        body["env"] = {"type": "cloud"}
+
+    url_create = base + "/v1/agents"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": _cursor_basic_auth_header(api_key),
+        "User-Agent": "ERPSMART-ProviderGateway/10.0",
+    }
+
+    started = time.monotonic()
+    try:
+        req = urllib.request.Request(
+            url_create,
+            data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            created = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise ProviderGatewayError(f"cursor_agent_http_{exc.code}") from exc
+    except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as exc:
+        raise ProviderGatewayError(f"cursor_agent_network_error:{type(exc).__name__}") from exc
+    except json.JSONDecodeError as exc:
+        raise ProviderGatewayError("cursor_agent_invalid_json") from exc
+
+    if not isinstance(created, dict):
+        raise ProviderGatewayError("cursor_agent_non_object_response")
+
+    run = created.get("run")
+    agent = created.get("agent")
+    if not isinstance(run, dict) or not isinstance(agent, dict):
+        raise ProviderGatewayError("cursor_agent_missing_run_or_agent")
+
+    agent_id = str(agent.get("id") or "").strip()
+    run_id = str(run.get("id") or "").strip()
+    if not agent_id or not run_id:
+        raise ProviderGatewayError("cursor_agent_missing_ids")
+
+    url_run = f"{base}/v1/agents/{urllib.parse.quote(agent_id, safe='')}/runs/{urllib.parse.quote(run_id, safe='')}"
+    deadline = time.monotonic() + timeout
+    terminal = {"FINISHED", "ERROR", "CANCELLED", "EXPIRED"}
+    last_state: dict[str, Any] | None = None
+    while time.monotonic() < deadline:
+        try:
+            poll_headers = {"Accept": "application/json", "Authorization": headers["Authorization"], "User-Agent": headers["User-Agent"]}
+            req_poll = urllib.request.Request(url_run, headers=poll_headers, method="GET")
+            with urllib.request.urlopen(req_poll, timeout=60) as resp:
+                last_state = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            raise ProviderGatewayError(f"cursor_agent_http_{exc.code}") from exc
+        except (urllib.error.URLError, TimeoutError, socket.timeout, OSError):
+            time.sleep(interval)
+            continue
+        except json.JSONDecodeError:
+            raise ProviderGatewayError("cursor_agent_invalid_json")
+
+        if isinstance(last_state, dict):
+            status = str(last_state.get("status") or "")
+            if status in terminal:
+                break
+        time.sleep(interval)
+
+    if not isinstance(last_state, dict):
+        raise ProviderGatewayError("cursor_agent_no_final_state")
+
+    status = str(last_state.get("status") or "")
+    result_text = str(last_state.get("result") or "")
+    if status == "ERROR" or status == "CANCELLED" or status == "EXPIRED":
+        raise ProviderGatewayError(f"cursor_agent_run_{status.lower()}")
+    if status != "FINISHED":
+        raise ProviderGatewayError("cursor_agent_run_timeout")
+
+    elapsed = round(time.monotonic() - started, 2)
+    metrics = {
+        "provider": "cursor_cloud_agent",
+        "model": model_id,
+        "round": round_no + 1,
+        "elapsed_seconds": elapsed,
+        "first_chunk_seconds": elapsed,
+        "prompt_eval_count": None,
+        "eval_count": None,
+    }
+    worker.trace(job, "llm_done", "Cursor Cloud Agent response received", metrics)
+    return {
+        "message": {"role": "assistant", "content": result_text or "(پاسخ خالی از Cursor Agent)"},
+        "_metrics": metrics,
+        "_provider": "cursor_cloud_agent",
+    }
 
 
 def _response_format_variants(response_format: Any | None) -> list[dict[str, Any] | None]:
@@ -363,11 +556,14 @@ def install_provider_gateway(worker_cls: type) -> None:
         # if the variable is unset, not silently accept an env: placeholder.
         effective = dict(cfg)
         effective["cloud_provider"] = _cloud_cfg(cfg)
+        effective["cursor_cloud_agent"] = _cursor_agent_cfg(cfg)
         validate_provider_config(effective)
         original_init(self, effective)
         cfg = effective
         self._provider_strategy = str(cfg.get("provider_strategy") or "local_first").strip().lower()
         self._cloud_cfg = _cloud_cfg(cfg)
+        self._cursor_cfg = _cursor_agent_cfg(cfg)
+        self._cursor_available = _cursor_agent_enabled(cfg) and self._provider_strategy != "local_only"
         self._local_role_models = _model_map(cfg, "local")
         self._cloud_role_models = _model_map(cfg, "cloud")
         self._local_models = list(self.models)
@@ -378,20 +574,34 @@ def install_provider_gateway(worker_cls: type) -> None:
         self._providers_used: list[str] = []
 
         cloud_models = [m for m in self._cloud_role_models.values() if m] if self._cloud_available else []
-        self.models = list(dict.fromkeys([*self._local_models, *cloud_models]))
+        cursor_models: list[str] = []
+        if self._cursor_available:
+            cc = self._cursor_cfg
+            cursor_models = [str(x).strip() for x in (cc.get("allowed_models") or []) if str(x).strip()]
+            dm = str(cc.get("default_model") or "").strip()
+            if dm and dm not in cursor_models:
+                cursor_models.insert(0, dm)
+            elif not cursor_models and dm:
+                cursor_models = [dm]
+        self.models = list(dict.fromkeys([*self._local_models, *cloud_models, *cursor_models]))
         self.base_payload["models"] = self.models
         meta = dict(self.base_payload.get("metadata") or {})
+        cloud_name = str(self._cloud_cfg.get("name") or "openai_compatible").strip() or "openai_compatible"
         meta.update({
             "provider": "gateway",
             "provider_strategy": self._provider_strategy,
             "providers_available": [
-                p for p, enabled in (("ollama", self._local_available), (str(self._cloud_cfg.get("name") or "openai_compatible"), self._cloud_available))
+                p for p, enabled in (
+                    ("ollama", self._local_available),
+                    (cloud_name, self._cloud_available),
+                    ("cursor_cloud_agent", self._cursor_available),
+                )
                 if enabled
             ],
         })
         self.base_payload["metadata"] = meta
 
-        if self._provider_strategy == "cloud_only" and not self._cloud_available:
+        if self._provider_strategy == "cloud_only" and not (self._cloud_available or self._cursor_available):
             raise ProviderGatewayError("cloud_only_provider_unavailable")
         # A temporarily unavailable inference server must not prevent the worker
         # from serving deterministic ERP reads. Model-dependent routes block below.
@@ -403,16 +613,29 @@ def install_provider_gateway(worker_cls: type) -> None:
             self._local_models = runtime.models()
             self._local_available = bool(self._local_models)
             cloud_models = list(self._cloud_role_models.values()) if self._cloud_available else []
-            self.models = list(dict.fromkeys([*self._local_models, *cloud_models]))
+            cursor_models = []
+            if self._cursor_available:
+                cc = self._cursor_cfg
+                cursor_models = [str(x).strip() for x in (cc.get("allowed_models") or []) if str(x).strip()]
+                dm = str(cc.get("default_model") or "").strip()
+                if dm and dm not in cursor_models:
+                    cursor_models.insert(0, dm)
+            self.models = list(dict.fromkeys([*self._local_models, *cloud_models, *cursor_models]))
             self.base_payload["models"] = self.models
         self._provider_role_hint = role
         strategy = self._provider_strategy
         local_model = str(self._local_role_models.get(role) or "").strip()
         local_fallback = str(self._local_role_models.get("fallback") or "").strip()
         cloud_model = str(self._cloud_role_models.get(role) or "").strip()
+        cursor_default = ""
+        if self._cursor_available:
+            cursor_default = str(self._cursor_cfg.get("default_model") or "").strip()
 
-        if strategy in {"cloud_only", "cloud_first"} and self._cloud_available and cloud_model:
-            return cloud_model
+        if strategy in {"cloud_only", "cloud_first"}:
+            if self._cloud_available and cloud_model:
+                return cloud_model
+            if self._cursor_available and cursor_default:
+                return cursor_default
         if self._local_available:
             if local_model in self._local_models:
                 return local_model
@@ -422,6 +645,8 @@ def install_provider_gateway(worker_cls: type) -> None:
                 raise RuntimeError(f"required_model_not_installed:{local_model}")
         if self._cloud_available and cloud_model:
             return cloud_model
+        if self._cursor_available and cursor_default:
+            return cursor_default
         # Preserve the old failure semantics when no usable provider exists.
         failure = ProviderGatewayError("no_model_available_for_role:" + role)
         failure.code = "unavailable"
@@ -457,6 +682,13 @@ def install_provider_gateway(worker_cls: type) -> None:
                         or selected_model not in allowed):
                     raise ProviderGatewayError("gemini_model_not_configured_on_worker")
                 providers = ["cloud"]
+            elif selected_provider == "cursor":
+                cursor_ids = _cursor_model_ids(self.cfg)
+                allowed_c = list(cursor_ids) if cursor_ids else []
+                if (not self._cursor_available or not selected_model
+                        or (allowed_c and selected_model not in allowed_c)):
+                    raise ProviderGatewayError("cursor_model_not_configured_on_worker")
+                providers = ["cursor"]
             elif selected_provider == "ollama":
                 if not self._local_available or selected_model not in self._local_models:
                     raise ProviderGatewayError("ollama_model_not_installed_on_worker")
@@ -478,6 +710,12 @@ def install_provider_gateway(worker_cls: type) -> None:
                         think_override=think_override,
                     )
                     actual_provider = "ollama"
+                elif provider == "cursor":
+                    sm = str(selected_model or requested_model).strip()
+                    result = _cursor_agent_chat(
+                        self, job, round_no, messages, sm,
+                    )
+                    actual_provider = str(result.get("_provider") or "cursor_cloud_agent")
                 else:
                     result = _cloud_chat(
                         self, job, round_no, messages, tools, role,

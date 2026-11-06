@@ -22,7 +22,7 @@ final class AiRepository
         $context=AiToolRegistry::bootstrapContext($wid,$companyId);
         if($pageContext)$context['page_context']=$pageContext;
         $selection=AiEnginePreferences::choice($engine,$model);$context['engine_selection']=$selection;
-        $capability=$selection['provider']==='gemini'?'llm.gemini':'llm';
+        $capability=match($selection['provider']??''){'gemini'=>'llm.gemini','cursor'=>'llm.cursor',default=>'llm'};
         $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at)
             VALUES (?,?,?,?, 'agent_chat',?,'queued',100,?,?,NOW(),NOW())");
         $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,$capability,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
@@ -50,7 +50,7 @@ final class AiRepository
         $history=self::conversationHistoryForQueue($wid,$uid,$companyId,$conversationId);
         if($history)$context['conversation_history']=$history;
         $selection=AiEnginePreferences::choice($engine,$model);$context['engine_selection']=$selection;
-        $capability=$selection['provider']==='gemini'?'llm.gemini':'llm';
+        $capability=match($selection['provider']??''){'gemini'=>'llm.gemini','cursor'=>'llm.cursor',default=>'llm'};
 
         $legacy=AiContextEnvelope::legacyPageContext($envelope);if($legacy)$context['page_context']=$legacy;
         $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at) VALUES (?,?,?,?, 'agent_chat',?,'queued',100,?,?,NOW(),NOW())");
