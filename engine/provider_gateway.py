@@ -951,9 +951,14 @@ def install_provider_gateway(worker_cls: type) -> None:
                         for x in getattr(self, "_commercial_tool_events", []))
             if code not in capacity_codes or wrote:
                 raise
-            text = ("برای این درخواست پاسخ معتبر مدل آماده نشد؛ ظرفیت یا زمان اجرای مدل کافی نبود. "
-                    "یک خوانش مشخص مانند «ماندهٔ @مشتری» را درخواست کن یا از موتور آمادهٔ دیگری استفاده کن. "
-                    "این پاسخ عملیاتی ایجاد نکرده است.")
+            text = (
+                "در حال حاضر مدل انتخاب‌شده پاسخ معتبر نداد (ظرفیت یا زمان کافی نبود).\n\n"
+                "می‌توانید همین الان از مسیر ابزارهای ERP استفاده کنید؛ مثلاً:\n"
+                "• دکمهٔ «گزارش مالی ماه» یا «فاکتور فروش»\n"
+                "• پرسش grounded مثل «ماندهٔ @مشتری» یا «/financial-report»\n\n"
+                "اگر Grok یا Gemini روی Worker فعال است، موتور را در دستیار عوض کنید و دوباره بفرستید. "
+                "این پیام هیچ ثبت عملیاتی در ERP ایجاد نکرده است."
+            )
             meta = {"provider": "deterministic", "model": "none", "mode": "model_capacity_blocked",
                     "tools_used": [], "block_reason": code}
         if isinstance(meta, dict):

@@ -21,6 +21,8 @@ import time
 from typing import Any
 from urllib.parse import urlsplit
 
+import response_persona as _response_persona
+
 
 PATCH_VERSION = "v9.3.0"
 RELEASE_CONTRACT = "commercial-mvp-v1"
@@ -345,6 +347,7 @@ def install_commercial_hardening(worker_cls: type) -> None:
                 "tools_attempted": attempted,
             })
             meta["trace"] = list(getattr(self, "current_trace", []) or [])[-60:]
+            text = _response_persona.polish_final_delivery(job, text, meta)
             safe_meta, redaction_count = redact_metadata(meta)
             safe_meta["commercial_hardening"] = {
                 "version": PATCH_VERSION,

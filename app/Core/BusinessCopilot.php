@@ -69,6 +69,6 @@ final class BusinessCopilot
         echo '<textarea rows="3" data-copilot-input placeholder="مثلاً: وضعیت معاملاتمون با @کارخانه ... چطوره؟"></textarea><div class="copilot-compose-actions"><span class="muted">@ جست‌وجوی سراسری موجودیت • داده‌ها هر بار از ERP تازه خوانده می‌شوند</span><button class="btn primary" type="button" data-copilot-send>ارسال</button></div></div>';
         echo '</aside>';
         echo '<script src="assets/ai-engine-selector.js?v=1" defer></script>';
-        echo '<script src="assets/business-copilot-cycle12.js?v=10.10.0" defer></script>';
+        echo '<script src="assets/business-copilot-cycle12.js?v=10.11.0" defer></script>';
     }
 }

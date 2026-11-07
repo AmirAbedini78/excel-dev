@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import business_skills as BS
+import response_persona as RP
 
 PATCH_VERSION = "v10.9.3-cycle12.2-live-gate-r6"
 
@@ -288,14 +289,20 @@ def _synthesize(worker: Any, job: dict[str, Any], prompt: str, pack: dict[str, A
     grounded=_render_pack(pack);facts=pack["facts_by_id"];ids=list(facts)
     if not ids:return grounded,{**base_meta,"synthesis":"deterministic_fallback","synthesis_error":"empty_evidence_pack"}
     public={"kind":pack["kind"],"request":prompt,"facts":pack["facts"],"limitations":pack.get("limitations") or []}
-    system=(
+    tier = RP.delivery_tier(job, worker)
+    base_meta["delivery_tier"] = tier
+    system = (
         "You are ERPSMART Business Analyst. Use ONLY the supplied structured ERP facts. "
         "Every summary, finding and action must cite one or more Evidence IDs that directly support it. "
         "Do not invent business facts, IDs, dates, quantities, money or percentages. Keep narrative qualitative and do NOT repeat numeric values; exact numbers stay in the Evidence Pack. If evidence is insufficient, say so. "
         "For supplier comparison, do not equate higher purchase volume with better performance; weigh reliability, receipt acceptance, open quantity and trade risk. "
         "For shipment impact, distinguish potential exposure from proven causality and use inventory/reservation coverage. "
-        "For trade risk, explain the highest-priority reason from risk reasons/status, not merely the largest amount. Answer in concise Persian."
+        "For trade risk, explain the highest-priority reason from risk reasons/status, not merely the largest amount."
     )
+    if tier == "premium":
+        system += " Answer in fluent, warm Persian suited for executives; match USER intent."
+    else:
+        system += " Answer in concise Persian."
     schema=_analysis_schema(ids)
     models=_runtime_analysis_models(worker)
     last_error="analysis_model_unavailable"

@@ -20,7 +20,9 @@ import inventory_procurement as IP
 import sales_fulfillment as SF
 import trade_logistics as TL
 
-PATCH_VERSION = "v10.10-cycle12.2-professional-tools-r1"
+import response_persona as RP
+
+PATCH_VERSION = "v10.11-conversational-mvp-r1"
 DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 
 CAPABILITIES: dict[str, dict[str, Any]] = {
@@ -500,7 +502,17 @@ def grounded_synthesis(
     if str(base_meta.get("mode") or "").endswith("_blocked") or skill_id == "explain-previous":
         return evidence_text, base_meta
 
-    model = worker.model_for("analysis")
+    tier = RP.delivery_tier(job, worker)
+    base_meta["delivery_tier"] = tier
+    if tier == "deterministic_only":
+        base_meta.update({
+            "synthesis": "deterministic_only",
+            "synthesis_guard": "tool_template",
+            "persona": RP.PATCH_VERSION,
+        })
+        return RP.wrap_deterministic_fallback(evidence_text, prompt, tier), base_meta
+
+    model = RP.synthesis_model(worker, job)
     schema = {
         "type": "object",
         "properties": {
@@ -512,13 +524,7 @@ def grounded_synthesis(
         "required": ["summary", "findings", "actions", "limitations"],
         "additionalProperties": False,
     }
-    system = (
-        "You are ERPSMART's grounded business analyst. Answer only from the ERP evidence supplied. "
-        "Do not calculate, invent, transform, or infer numeric values, dates, percentages, currency amounts, "
-        "document numbers, business IDs, or codes. You may quote a value only when it is already present in the evidence. "
-        "Your job is qualitative interpretation: what matters, why it matters, what to inspect next, and what cannot "
-        "be concluded from the available evidence. Answer in concise Persian. Never claim evidence that is absent."
-    )
+    system = RP.grounded_system_prompt(tier, skill_id)
     user = (
         "USER_REQUEST:\n" + str(prompt or "")[:1200] +
         "\n\nSKILL:" + skill_id +
@@ -535,8 +541,8 @@ def grounded_synthesis(
             fast=False,
             model=model,
             num_ctx=2600,
-            num_predict=360,
-            temperature=0.1,
+            num_predict=RP.synthesis_num_predict(tier),
+            temperature=RP.synthesis_temperature(tier),
             timeout_seconds=120,
             response_format=schema,
             think_override=False,
@@ -555,25 +561,16 @@ def grounded_synthesis(
         if any(not _numbers_grounded_in_evidence(x, evidence_text) for x in rendered_parts):
             raise ValueError("grounded_synthesis_numeric_guard")
 
-        lines = [evidence_text, "", "تحلیل هوشمند روی شواهد ERP:", f"• {summary}"]
-        if findings:
-            lines.append("• برداشت‌های کلیدی:")
-            lines.extend(f"  - {x}" for x in findings)
-        if actions:
-            lines.append("• اقدام‌های پیشنهادی:")
-            lines.extend(f"  - {x}" for x in actions)
-        if limitations:
-            lines.append("• محدودیت داده:")
-            lines.extend(f"  - {x}" for x in limitations)
-        lines.append("• اعداد و شناسه‌های دقیق فقط از بخش Grounded بالا معتبرند؛ مدل فقط مجاز به ارجاع به مقادیر موجود در همان شواهد است.")
+        rendered = RP.render_grounded_hybrid(evidence_text, summary, findings, actions, limitations, tier)
 
         base_meta.update({
             "provider": "grounded_hybrid",
             "model": model,
             "synthesis": "analysis_model",
             "synthesis_guard": "evidence_numeric_provenance",
+            "persona": RP.PATCH_VERSION,
         })
-        return "\n".join(lines), base_meta
+        return rendered, base_meta
     except Exception as exc:
         worker.trace(job, "grounded_synthesis_fallback", "Analysis synthesis unavailable; deterministic evidence preserved", {
             "skill_id": skill_id, "model": model, "error_type": type(exc).__name__,
@@ -583,7 +580,8 @@ def grounded_synthesis(
             "synthesis_error": type(exc).__name__,
             "model": model,
         })
-        return evidence_text + "\n\nیادداشت: تحلیل زبانی تکمیلی در این اجرا در دسترس نبود؛ داده‌های Grounded بالا همچنان معتبرند.", base_meta
+        note = "تحلیل زبانی تکمیلی در این اجرا در دسترس نبود؛ داده‌های Grounded بالا همچنان معتبرند."
+        return RP.wrap_deterministic_fallback(evidence_text, prompt, tier, note=note), base_meta
 
 
 def _customer_facts(worker: Any, job: dict[str, Any], entity: dict[str, Any], tools: list[str]) -> dict[str, Any]:
@@ -1142,7 +1140,7 @@ def install_business_skills(worker_cls: type) -> None:
             meta["capability_retrieval"] = {"selected": selected, "source": source}
             skill_id = str(meta.get("skill_id") or (selected[0] if selected else ""))
             text, meta = grounded_synthesis(self, job, prompt, text, meta, skill_id)
-            return text, meta
+            return RP.polish_final_delivery(job, text, meta), meta
 
         narrowed = _filter_tools(tools_desc, selected)
         text, meta = original(self, job, narrowed)
@@ -1153,6 +1151,7 @@ def install_business_skills(worker_cls: type) -> None:
             "descriptor_count_before": len(tools_desc),
             "descriptor_count_after": len(narrowed),
         }
+        text = RP.polish_final_delivery(job, text, meta)
         return text, meta
 
     worker_cls.process_agent = patched

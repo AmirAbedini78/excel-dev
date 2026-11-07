@@ -93,6 +93,6 @@ class Cycle11WorkspaceCopilotMvp(unittest.TestCase):
     def test_assets_are_cache_busted_for_cycle11(self):
         idx=read('index.php')
         self.assertIn('business-copilot.css?v=10.8.0',idx)
-        self.assertIn('business-copilot.js?v=10.10.0',idx)
+        self.assertIn('business-copilot.js?v=10.11.0',idx)
 
 if __name__=='__main__': unittest.main()

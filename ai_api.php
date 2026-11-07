@@ -12,20 +12,23 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 
-function ai_request_id(): string
+function ai_request_id()
 {
-    static $id=null;if($id!==null)return$id;
-    $candidate=trim((string)($_SERVER['HTTP_X_AI_REQUEST_ID']??''));
-    $id=preg_match('/^[A-Za-z0-9._-]{8,80}$/',$candidate)?$candidate:bin2hex(random_bytes(8));
-    return$id;
+    static $id = null;
+    if ($id !== null) {
+        return $id;
+    }
+    $candidate = trim((string)($_SERVER['HTTP_X_AI_REQUEST_ID'] ?? ''));
+    $id = preg_match('/^[A-Za-z0-9._-]{8,80}$/', $candidate) ? $candidate : bin2hex(random_bytes(8));
+    return $id;
 }
 
-function ai_json(array $payload, int $status=200): never
+function ai_json(array $payload, $status = 200)
 {
-    $payload['request_id']=$payload['request_id']??ai_request_id();
-    header('X-Request-ID: '.ai_request_id());
-    http_response_code($status);
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+    $payload['request_id'] = $payload['request_id'] ?? ai_request_id();
+    header('X-Request-ID: ' . ai_request_id());
+    http_response_code((int) $status);
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
