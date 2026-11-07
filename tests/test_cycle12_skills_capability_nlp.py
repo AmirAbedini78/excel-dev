@@ -74,6 +74,8 @@ class Cycle12SkillsCapabilityNlp(unittest.TestCase):
     def test_catalog_has_roadmap_skills(self):
         for cid in ["customer-review","compare-customers","supplier-review","compare-suppliers","trade-risk","inventory-risk","executive-brief"]:
             self.assertIn(cid,BS.CAPABILITIES)
+        for cid in ("sales-invoice-review", "financial-report", "assistant-help"):
+            self.assertIn(cid, BS.CAPABILITIES)
 
     def test_slash_explicit_skill(self):
         self.assertEqual(BS.explicit_skill("/supplier-review @تامین"),"supplier-review")
@@ -315,10 +317,10 @@ class Cycle12SourceContracts(unittest.TestCase):
         self.assertIn("/ مهارت‌ها",js)
         self.assertIn("fitFloating",js)
         self.assertIn("ResizeObserver",js)
-        self.assertIn("business-copilot-cycle12.css?v=10.9.3",idx)
-        self.assertIn("business-copilot-cycle12.js?v=10.9.3",cop)
-        self.assertEqual(idx.count("business-copilot-cycle12.css?v=10.9.3"),1)
-        self.assertEqual(cop.count("business-copilot-cycle12.js?v=10.9.3"),1)
+        self.assertIn("business-copilot-cycle12.css?v=10.10.0",idx)
+        self.assertIn("business-copilot-cycle12.js?v=10.10.0",cop)
+        self.assertEqual(idx.count("business-copilot-cycle12.css?v=10.10.0"),1)
+        self.assertEqual(cop.count("business-copilot-cycle12.js?v=10.10.0"),1)
         self.assertIn('link[href*="business-copilot-cycle12.css"]',js)
         self.assertIn("max-height",css)
         self.assertIn("height:100dvh",css)

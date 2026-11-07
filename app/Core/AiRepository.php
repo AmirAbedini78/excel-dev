@@ -164,6 +164,9 @@ final class AiRepository
             'tools_used'=>self::safeToolNames($meta['tools_used']??[]),
             'tools_attempted'=>self::safeToolNames($meta['tools_attempted']??[]),
             'commercial_hardening'=>(array)($meta['commercial_hardening']??[]),
+            'proposal_id'=>max(0,(int)($meta['proposal_id']??0)),
+            'awaiting_human_approval'=>(bool)($meta['awaiting_human_approval']??false),
+            'proposals'=>self::proposalsForJob((int)$row['id']),
             'terminal'=>in_array($status,['succeeded','failed'],true),
         ];
     }

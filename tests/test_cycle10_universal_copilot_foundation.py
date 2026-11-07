@@ -35,7 +35,7 @@ class Cycle10UniversalCopilotFoundation(unittest.TestCase):
         self.assertIn('در حال جست‌وجو',js);self.assertIn('request_id',js);self.assertIn('HTTP',js);self.assertIn('response.text()',js);self.assertIn('compositionend',js)
         self.assertIn('textSlice',api);self.assertIn('searchWorkspaceDetailed',api);self.assertIn('JSON_INVALID_UTF8_SUBSTITUTE',api)
         self.assertIn('failed_provider_count',reg);self.assertIn('entity search provider failed',reg);self.assertIn("function_exists('mb_substr')",reg)
-        self.assertIn('business-copilot.js?v=10.8.0',idx)
+        self.assertIn('business-copilot.js?v=10.10.0',idx)
     def test_copilot_api_keeps_php80_compatible_return_syntax(self):
         api=read('app/Core/BusinessCopilotApi.php');wrapper=read('copilot_api.php')
         self.assertIn('final class BusinessCopilotApi',api)

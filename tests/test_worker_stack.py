@@ -47,6 +47,25 @@ class ActualWorkerStackTests(unittest.TestCase):
             self.assertTrue(selected)
             self.assertTrue(all(row.get("mode") != "proposal" for row in selected))
 
+    def test_invoice_prompt_includes_document_detail_tools(self):
+        descriptors = [
+            {"name": "sales_document_detail", "mode": "read"},
+            {"name": "search_parties", "mode": "read"},
+            {"name": "create_sales_invoice_draft", "mode": "proposal"},
+        ]
+        selected = worker.Worker.select_tool_descriptors("جزئیات فاکتور فروش را بگو", descriptors)
+        names = {str(row.get("name")) for row in selected}
+        self.assertIn("sales_document_detail", names)
+
+    def test_report_prompt_includes_periodic_report(self):
+        descriptors = [
+            {"name": "periodic_business_report", "mode": "read"},
+            {"name": "company_snapshot", "mode": "read"},
+        ]
+        selected = worker.Worker.select_tool_descriptors("گزارش مالی ماه جاری", descriptors)
+        names = {str(row.get("name")) for row in selected}
+        self.assertIn("periodic_business_report", names)
+
     def test_commercial_wrapper_is_the_public_process_agent(self):
         self.assertEqual(worker.Worker.process_agent.__name__, "hardened_process_agent")
         self.assertEqual(worker.Worker.tool.__name__, "hardened_tool")

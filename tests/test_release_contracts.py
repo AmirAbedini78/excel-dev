@@ -21,6 +21,8 @@ class ServerBoundaryTests(unittest.TestCase):
 
     def test_proposal_tools_are_explicitly_risk_classified(self):
         self.assertRegex(self.registry, r"'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium'")
+        self.assertIn("'sales_document_detail','mode'=>'read'", self.registry)
+        self.assertIn("'periodic_business_report','mode'=>'read'", self.registry)
         self.assertRegex(self.registry, r"'create_voucher_draft','mode'=>'proposal','risk'=>'high'")
         self.assertRegex(self.registry, r"'create_purchase_invoice_draft','mode'=>'proposal','risk'=>'medium'")
         self.assertRegex(self.registry, r"'create_check','mode'=>'proposal','risk'=>'high'")

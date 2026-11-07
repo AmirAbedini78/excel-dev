@@ -86,6 +86,16 @@ final class AiToolRegistry
                 'voucher_date'=>['type'=>'string'],'description'=>['type'=>'string'],
                 'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['account_id'=>['type'=>'integer'],'party_id'=>['type'=>'integer'],'description'=>['type'=>'string'],'debit'=>['type'=>'number'],'credit'=>['type'=>'number']],'required'=>['account_id']]]
             ],'required'=>['lines']]],
+            ['name'=>'sales_document_detail','mode'=>'read','risk'=>'low','description'=>'جزئیات قطعی یک فاکتور/پیش‌فاکتور فروش با خطوط، وضعیت گردش‌کار و جمع‌ها (با sales_doc_id یا جستجوی شماره/مشتری)','parameters'=>['type'=>'object','properties'=>[
+                'sales_doc_id'=>['type'=>'integer'],'query'=>['type'=>'string'],'include_fulfillment'=>['type'=>'boolean']
+            ]]],
+            ['name'=>'purchase_document_detail','mode'=>'read','risk'=>'low','description'=>'جزئیات قطعی سند خرید/فاکتور خرید با خطوط و وضعیت (با purchase_doc_id یا جستجو)','parameters'=>['type'=>'object','properties'=>[
+                'purchase_doc_id'=>['type'=>'integer'],'query'=>['type'=>'string']
+            ]]],
+            ['name'=>'periodic_business_report','mode'=>'read','risk'=>'low','description'=>'گزارش مدیریتی یک‌جا: خلاصه شرکت، تراز آزمایشی، تحلیل فروش/خرید ماه جاری شمسی و چک‌های باز','parameters'=>['type'=>'object','properties'=>[
+                'months'=>['type'=>'integer'],'include_checks'=>['type'=>'boolean']
+            ]]],
+            ['name'=>'copilot_capabilities','mode'=>'read','risk'=>'low','description'=>'فهرست مهارت‌ها و قابلیت‌های Business Copilot برای پاسخ محاوره‌ای «چه کارهایی می‌توانی انجام دهی؟»','parameters'=>['type'=>'object','properties'=>[]]],
         ];
     }
 
@@ -150,6 +160,10 @@ final class AiToolRegistry
             'recent_sales'=>self::recentSales($wid,$cid,(int)($args['limit']??20)),
             'recent_purchases'=>self::recentPurchases($wid,$cid,(int)($args['limit']??20)),
             'document_analytics'=>self::documentAnalytics($wid,$cid,$args),
+            'sales_document_detail'=>self::salesDocumentDetail($wid,$cid,$args),
+            'purchase_document_detail'=>self::purchaseDocumentDetail($wid,$cid,$args),
+            'periodic_business_report'=>self::periodicBusinessReport($wid,$cid,$args),
+            'copilot_capabilities'=>['version'=>AiCapabilityRegistry::VERSION,'skills'=>AiCapabilityRegistry::catalog(),'tools_count'=>count(self::descriptors())],
             default=>throw new RuntimeException('tool_not_implemented')
         };
     }
@@ -471,6 +485,108 @@ final class AiToolRegistry
         $st=pdo()->prepare($sql);$st->execute($params);$rows=$st->fetchAll();$total=0;
         foreach($rows as &$r){$total+=(float)($r['amount']??0);$r['due_date_fa']=AccountingRepository::faDate($r['due_date']??null);}unset($r);
         return ['direction'=>$direction,'status'=>$status,'due_scope'=>$due,'total_count'=>count($rows),'total_amount'=>$total,'rows'=>$rows];
+    }
+
+    private static function resolveDocumentIdFromSearch(array $rows,string $label): array
+    {
+        if(!$rows)return['status'=>'not_found','message'=>"هیچ $label با این عبارت پیدا نشد."];
+        $unique=[];
+        foreach($rows as $r){$id=(int)($r['id']??$r['sales_doc_id']??$r['purchase_doc_id']??0);if($id>0)$unique[$id]=$r;}
+        if(count($unique)===1)return['status'=>'ok','id'=>(int)array_key_first($unique),'row'=>reset($unique)];
+        $choices=[];
+        foreach(array_slice($unique,0,8) as $r){
+            $choices[]=[
+                'id'=>(int)($r['id']??$r['sales_doc_id']??$r['purchase_doc_id']??0),
+                'document_no'=>(string)($r['document_no']??''),
+                'party_name'=>(string)($r['party_name']??$r['supplier_name']??''),
+                'document_date'=>(string)($r['document_date']??''),
+                'net_total'=>(float)($r['net_total']??0),
+            ];
+        }
+        return['status'=>'ambiguous','message'=>"چند $label پیدا شد؛ یکی را با شماره سند مشخص کنید.",'choices'=>$choices];
+    }
+
+    private static function salesDocumentDetail(int $wid,int $cid,array $args): array
+    {
+        self::assertCompany($wid,$cid);
+        $docId=(int)($args['sales_doc_id']??0);
+        $query=trim((string)($args['query']??''));
+        if($docId<=0&&$query!==''){
+            $resolved=self::resolveDocumentIdFromSearch(SalesDomain::searchDocuments($wid,$cid,$query),'سند فروش');
+            if(($resolved['status']??'')!=='ok')return$resolved;
+            $docId=(int)$resolved['id'];
+        }
+        if($docId<=0)throw new RuntimeException('sales_doc_id_or_query_required');
+        $doc=SalesDomain::document($wid,$cid,$docId);
+        if(!$doc)throw new RuntimeException('سند فروش پیدا نشد.');
+        $lines=[];
+        foreach((array)($doc['lines']??[]) as $line){
+            $lines[]=[
+                'line_no'=>(int)($line['line_no']??0),'item_id'=>(int)($line['item_id']??0),
+                'item_code'=>(string)($line['item_code']??''),'item_name'=>(string)($line['item_name']??''),
+                'quantity'=>(float)($line['quantity']??0),'unit_price'=>(float)($line['unit_price']??0),
+                'discount_amount'=>(float)($line['discount_amount']??0),'tax_amount'=>(float)($line['tax_amount']??0),
+                'line_total'=>(float)($line['line_total']??0),
+            ];
+        }
+        $out=[
+            'sales_doc_id'=>$docId,'document_no'=>(string)($doc['document_no']??''),'doc_type'=>(string)($doc['doc_type']??''),
+            'document_date'=>(string)($doc['document_date']??''),'due_date'=>(string)($doc['due_date']??''),
+            'workflow_status'=>(string)($doc['workflow_status']??''),'party_id'=>(int)($doc['party_id']??0),
+            'party_code'=>(string)($doc['party_code']??''),'party_name'=>(string)($doc['party_name']??''),
+            'net_total'=>(float)($doc['net_total']??0),'tax_total'=>(float)($doc['tax_total']??0),
+            'line_count'=>count($lines),'lines'=>$lines,
+        ];
+        if(!empty($args['include_fulfillment'])){
+            try{$out['fulfillment']=SalesDomain::fulfillment($wid,$cid,['sales_doc_id'=>$docId]);}catch(Throwable $e){$out['fulfillment_error']=$e->getMessage();}
+        }
+        return$out;
+    }
+
+    private static function purchaseDocumentDetail(int $wid,int $cid,array $args): array
+    {
+        self::assertCompany($wid,$cid);
+        $docId=(int)($args['purchase_doc_id']??0);
+        $query=trim((string)($args['query']??''));
+        if($docId<=0&&$query!==''){
+            $resolved=self::resolveDocumentIdFromSearch(InventoryDomain::searchPurchaseDocuments($wid,$cid,$query),'سند خرید');
+            if(($resolved['status']??'')!=='ok')return$resolved;
+            $docId=(int)$resolved['id'];
+        }
+        if($docId<=0)throw new RuntimeException('purchase_doc_id_or_query_required');
+        $doc=InventoryDomain::purchaseDocument($wid,$cid,$docId);
+        if(!$doc)throw new RuntimeException('سند خرید پیدا نشد.');
+        $lines=[];
+        foreach((array)($doc['lines']??[]) as $line){
+            $lines[]=[
+                'line_no'=>(int)($line['line_no']??0),'item_id'=>(int)($line['item_id']??0),
+                'item_code'=>(string)($line['item_code']??''),'item_name'=>(string)($line['item_name']??''),
+                'quantity'=>(float)($line['quantity']??0),'unit_price'=>(float)($line['unit_price']??0),
+                'line_total'=>(float)($line['line_total']??0),
+            ];
+        }
+        return[
+            'purchase_doc_id'=>$docId,'document_no'=>(string)($doc['document_no']??''),'doc_type'=>(string)($doc['doc_type']??''),
+            'document_date'=>(string)($doc['document_date']??''),'workflow_status'=>(string)($doc['workflow_status']??''),
+            'party_id'=>(int)($doc['party_id']??0),'supplier_name'=>(string)($doc['supplier_name']??''),
+            'net_total'=>(float)($doc['net_total']??0),'line_count'=>count($lines),'lines'=>$lines,
+        ];
+    }
+
+    private static function periodicBusinessReport(int $wid,int $cid,array $args): array
+    {
+        self::assertCompany($wid,$cid);
+        $months=max(1,min(24,(int)($args['months']??1)));
+        $includeChecks=!array_key_exists('include_checks',$args)||filter_var($args['include_checks'],FILTER_VALIDATE_BOOLEAN);
+        return[
+            'company_snapshot'=>self::companySnapshot($wid,$cid),
+            'trial_balance'=>self::trialBalance($wid,$cid),
+            'financial_analysis_bundle'=>self::financialAnalysisBundle($wid,$cid),
+            'sales_current_jalali_month'=>self::documentAnalytics($wid,$cid,['kind'=>'sales','period'=>'current_jalali_month','group_by'=>'none','limit'=>15]),
+            'purchases_current_jalali_month'=>self::documentAnalytics($wid,$cid,['kind'=>'purchases','period'=>'current_jalali_month','group_by'=>'none','limit'=>15]),
+            'sales_rolling_months'=>self::documentAnalytics($wid,$cid,['kind'=>'sales','period'=>'rolling_jalali_months','months'=>$months,'group_by'=>'jalali_month','limit'=>12]),
+            'checks_open'=>$includeChecks?self::checkAnalytics($wid,$cid,['direction'=>'all','status'=>'open','due_scope'=>'all','limit'=>25]):null,
+        ];
     }
 
     private static function recentSales(int $wid,int $cid,int $limit): array

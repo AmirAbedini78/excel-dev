@@ -379,29 +379,53 @@ class Worker:
         # writes are executed only by agent_guard/action_orchestrator after
         # deterministic grounding; unsupported writes must fail closed.
         safe_descriptors = [d for d in descriptors if str(d.get("mode") or "read") != "proposal"]
+        by_name = {str(d.get("name") or ""): d for d in safe_descriptors if str(d.get("name") or "")}
+
+        wanted: set[str] = set()
+        try:
+            import business_skills as _bs
+
+            for cid in _bs.lexical_retrieve(prompt, []):
+                wanted.update(_bs.CAPABILITIES.get(cid, {}).get("tools") or set())
+        except Exception:
+            pass
 
         def has(*terms: str) -> bool:
             return any(term in p for term in terms)
 
-        if has("فاکتور", "invoice"):
-            wanted = {"search_parties", "search_items"}
+        if has("چه کار", "چه کارهایی", "راهنما", "مهارت", "help"):
+            wanted.update({"copilot_capabilities", "company_snapshot"})
+        if has("گزارش", "تحلیل مالی", "بریف", "dashboard"):
+            wanted.update({"periodic_business_report", "financial_analysis_bundle", "document_analytics", "trial_balance"})
+        if has("چک", "نقدینگی", "سررسید"):
+            wanted.update({"check_analytics", "party_ledger", "search_cash_accounts"})
+        if has("جزئیات", "بررسی کن", "نمایش", "detail") and has("فاکتور", "invoice"):
+            wanted.update({"sales_document_detail", "purchase_document_detail", "search_sales_documents", "search_purchase_documents"})
+        elif has("فاکتور", "invoice"):
+            wanted.update({"search_parties", "search_items", "sales_document_detail", "purchase_document_detail", "search_sales_documents"})
         elif has("سند حسابداری", "voucher"):
-            wanted = {"trial_balance"}
+            wanted.update({"trial_balance", "financial_analysis_bundle"})
         elif has("مشتری", "تامین", "طرف حساب", "party"):
-            wanted = {"search_parties", "party_ledger"}
+            wanted.update({"search_parties", "party_ledger", "crm_customer_360"})
         elif has("کالا", "خدمت", "item"):
-            wanted = {"search_items"}
+            wanted.update({"search_items", "inventory_position", "replenishment_risk"})
         elif has("تراز", "trial balance"):
-            wanted = {"trial_balance"}
+            wanted.update({"trial_balance", "financial_analysis_bundle"})
         elif has("فروش", "sales"):
-            wanted = {"recent_sales", "company_snapshot"}
+            wanted.update({"recent_sales", "sales_document_detail", "document_analytics", "company_snapshot"})
         elif has("خرید", "purchase"):
-            wanted = {"recent_purchases", "company_snapshot"}
-        else:
-            wanted = {"company_snapshot", "search_parties", "search_items", "recent_sales", "recent_purchases"}
+            wanted.update({"recent_purchases", "purchase_document_detail", "document_analytics", "company_snapshot"})
+        elif not wanted:
+            wanted = {"company_snapshot", "search_parties", "search_items", "recent_sales", "recent_purchases", "periodic_business_report"}
 
-        selected = [d for d in safe_descriptors if str(d.get("name")) in wanted]
-        return selected or safe_descriptors[:4]
+        selected = [by_name[name] for name in wanted if name in by_name]
+        if len(selected) < 4:
+            for fallback in ("company_snapshot", "search_parties", "search_items", "periodic_business_report"):
+                if fallback in by_name and by_name[fallback] not in selected:
+                    selected.append(by_name[fallback])
+                if len(selected) >= 8:
+                    break
+        return selected[:12] or safe_descriptors[:8]
 
     @staticmethod
     def analysis_depth(prompt: str) -> str:

@@ -125,10 +125,29 @@ async function selectMention(r){
 }
 function queueMentionSearch(){const t=mentionToken();clearTimeout(searchTimer);if(!t){menu.hidden=true;return}mentionStatus(t.query?'در حال جست‌وجوی همه شرکت‌ها…':'دسته‌بندی موجودیت‌ها');searchTimer=setTimeout(()=>searchMention(t.query),130)}
 input.addEventListener('input',queueMentionSearch);input.addEventListener('compositionend',queueMentionSearch);input.addEventListener('focus',()=>{if(mentionToken())queueMentionSearch()});input.addEventListener('keydown',e=>{if(e.key==='Escape')menu.hidden=true;if((e.ctrlKey||e.metaKey)&&e.key==='Enter')send()});document.addEventListener('click',e=>{if(!shell.contains(e.target))menu.hidden=true});
+function renderProposalActions(host,job){
+    const proposals=Array.isArray(job.proposals)?job.proposals.filter(p=>p&&String(p.status||'')==='proposed'):[];
+    const pid=Number(job.proposal_id)||Number(proposals[0]?.id)||0;
+    if(!pid&&!proposals.length)return;
+    const box=document.createElement('div');box.className='copilot-proposal-actions';
+    const summary=proposals[0]?.summary||proposals[0]?.tool_name||'پیشنهاد عملیاتی';
+    box.innerHTML=`<p class="copilot-proposal-summary">${esc(summary)}</p><div class="copilot-proposal-buttons"><button type="button" class="btn tiny primary" data-proposal-approve="${pid||proposals[0].id}">تأیید و اجرا</button><button type="button" class="btn tiny" data-proposal-reject="${pid||proposals[0].id}">رد</button></div>`;
+    host.appendChild(box);
+    box.querySelector('[data-proposal-approve]')?.addEventListener('click',async()=>{const id=Number(box.querySelector('[data-proposal-approve]').getAttribute('data-proposal-approve'));await proposalAction('approve_proposal',id,box)});
+    box.querySelector('[data-proposal-reject]')?.addEventListener('click',async()=>{const id=Number(box.querySelector('[data-proposal-reject]').getAttribute('data-proposal-reject'));await proposalAction('reject_proposal',id,box)});
+}
+async function proposalAction(action,pid,box){
+    if(!pid||!cfg.csrf)return;const fd=new FormData();fd.set('action',action);fd.set('csrf',cfg.csrf);fd.set('proposal_id',String(pid));
+    try{const response=await fetch(cfg.endpoint,{method:'POST',credentials:'same-origin',body:fd,headers:{'Accept':'application/json'}});const j=await responseJson(response);if(!response.ok||!j.ok)throw new Error(j.error||'proposal_action_failed');
+        if(box&&box.parentElement){const note=document.createElement('p');note.className='copilot-proposal-done';note.textContent=action==='approve_proposal'?'پیشنهاد تأیید و اجرا شد.':'پیشنهاد رد شد.';box.replaceWith(note)}
+    }catch(e){alert('عملیات پیشنهاد ناموفق بود: '+e.message)}
+}
 async function poll(jobId,node,cid){
     for(let i=0;i<180;i++){
         await new Promise(r=>setTimeout(r,i?1100:300));const u=new URL(cfg.endpoint,location.href);u.searchParams.set('action','job');u.searchParams.set('company_id',cid);u.searchParams.set('job_id',jobId);
-        try{const response=await fetch(u,{credentials:'same-origin'});const j=await responseJson(response);if(!response.ok||!j.ok)continue;const x=j.job;if(x.terminal){if(cid===scopeId()&&document.body.contains(node)){node.classList.remove('pending');if(x.status==='succeeded'){node.classList.add('ai');node.textContent=x.result_text||'پاسخ بدون متن پایان یافت.'}else{node.classList.add('error');node.textContent=x.error_text||'پردازش ناموفق بود.'}thread.scrollTop=thread.scrollHeight}if(cid===scopeId())refreshConversations({restoreLatest:false,load:false});return}else if(cid===scopeId()&&document.body.contains(node)){node.textContent=(x.live&&x.live.message)||'در حال پردازش…'}}catch(e){}
+        try{const response=await fetch(u,{credentials:'same-origin'});const j=await responseJson(response);if(!response.ok||!j.ok)continue;const x=j.job;if(x.terminal){if(cid===scopeId()&&document.body.contains(node)){node.classList.remove('pending');if(x.status==='succeeded'){node.classList.add('ai');node.textContent='';const text=document.createElement('div');text.className='copilot-ai-text';text.textContent=x.result_text||'پاسخ بدون متن پایان یافت.';node.appendChild(text);
+                if(x.awaiting_human_approval||x.proposal_id||(x.proposals&&x.proposals.length))renderProposalActions(node,x);
+            }else{node.classList.add('error');node.textContent=x.error_text||'پردازش ناموفق بود.'}thread.scrollTop=thread.scrollHeight}if(cid===scopeId())refreshConversations({restoreLatest:false,load:false});return}else if(cid===scopeId()&&document.body.contains(node)){node.textContent=(x.live&&x.live.message)||'در حال پردازش…'}}catch(e){}
     }
     if(cid===scopeId()&&document.body.contains(node)){node.classList.remove('pending');node.classList.add('error');node.textContent='پیگیری پاسخ بیش از حد طول کشید؛ نتیجه در مرکز فرمان قابل مشاهده است.'}
 }

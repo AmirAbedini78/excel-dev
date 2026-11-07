@@ -1,7 +1,7 @@
 <?php
 final class AiCapabilityRegistry
 {
-    public const VERSION='v1';
+    public const VERSION='v2';
 
     public static function definitions(): array
     {
@@ -59,6 +59,66 @@ final class AiCapabilityRegistry
                 'category_title'=>'گفتگو','permission'=>'ai.use','risk'=>'read',
                 'description'=>'بر اساس metadata و Toolهای پاسخ قبلی توضیح می‌دهد نتیجه از چه داده‌ای آمده است.',
                 'entities'=>[],'example'=>'/explain-previous'
+            ],
+            [
+                'id'=>'sales-fulfillment','title'=>'وضعیت تأمین و تحویل فروش','icon'=>'🚚','category'=>'sales',
+                'category_title'=>'فروش و تحویل','permission'=>'sales.view','risk'=>'read',
+                'description'=>'وضعیت رزرو، تحویل و باقیمانده سفارش/فاکتور فروش را از داده ERP گزارش می‌کند.',
+                'entities'=>['sales.document','delivery'],'example'=>'/sales-fulfillment @مشتری'
+            ],
+            [
+                'id'=>'sales-margin','title'=>'حاشیه سود فروش','icon'=>'📈','category'=>'sales',
+                'category_title'=>'فروش و تحویل','permission'=>'sales.view','risk'=>'read',
+                'description'=>'حاشیه سود تحویل‌شده و COGS را برای سند فروش تحلیل می‌کند.',
+                'entities'=>['sales.document'],'example'=>'/sales-margin'
+            ],
+            [
+                'id'=>'sales-invoice-review','title'=>'بررسی فاکتور فروش','icon'=>'🧾','category'=>'sales',
+                'category_title'=>'فروش و تحویل','permission'=>'sales.view','risk'=>'read',
+                'description'=>'جزئیات فاکتور فروش، خطوط، وضعیت و در صورت نیاز تحویل/رزرو را می‌خواند.',
+                'entities'=>['sales.document','party.customer'],'example'=>'فاکتور فروش شماره ۱۰۲۳ را بررسی کن'
+            ],
+            [
+                'id'=>'purchase-invoice-review','title'=>'بررسی فاکتور/سند خرید','icon'=>'📥','category'=>'procurement',
+                'category_title'=>'خرید و تأمین','permission'=>'procurement.view','risk'=>'read',
+                'description'=>'جزئیات سند خرید و خطوط کالا را با جستجوی شماره یا تأمین‌کننده برمی‌گرداند.',
+                'entities'=>['purchase.document','party.supplier'],'example'=>'آخرین فاکتور خرید @تأمین‌کننده'
+            ],
+            [
+                'id'=>'financial-report','title'=>'گزارش مدیریتی دوره‌ای','icon'=>'📊','category'=>'finance',
+                'category_title'=>'مالی و گزارش','permission'=>'accounting.view','risk'=>'read',
+                'description'=>'بسته گزارش: خلاصه شرکت، تراز، فروش/خرید ماه جاری و چک‌های باز.',
+                'entities'=>['company'],'example'=>'گزارش مالی این ماه را بده'
+            ],
+            [
+                'id'=>'cashflow-checks','title'=>'نقدینگی و چک','icon'=>'💳','category'=>'finance',
+                'category_title'=>'مالی و گزارش','permission'=>'accounting.view','risk'=>'read',
+                'description'=>'چک‌های باز، سررسید و حساب‌های نقد/بانک را برای ارزیابی فشار نقدینگی بررسی می‌کند.',
+                'entities'=>['party.customer','party.supplier'],'example'=>'چک‌های سررسید گذشته را بگو'
+            ],
+            [
+                'id'=>'create-sales-invoice','title'=>'پیش‌نویس فاکتور فروش','icon'=>'✍️','category'=>'sales',
+                'category_title'=>'فروش و تحویل','permission'=>'sales.edit','risk'=>'proposal',
+                'description'=>'از زبان طبیعی طرف و اقلام را پیدا می‌کند و پیش‌نویس فاکتور می‌سازد؛ اجرا فقط پس از تأیید انسانی.',
+                'entities'=>['party.customer','item'],'example'=>'برای @مشتری فاکتور فروش ۵ عدد کالای X بزن'
+            ],
+            [
+                'id'=>'crm-followup','title'=>'پیگیری‌های CRM','icon'=>'📞','category'=>'crm',
+                'category_title'=>'مشتری و CRM','permission'=>'crm.view','risk'=>'read',
+                'description'=>'صف پیگیری‌های سررسید و عقب‌افتاده CRM.',
+                'entities'=>['party.customer','crm.activity'],'example'=>'/crm-followup'
+            ],
+            [
+                'id'=>'crm-pipeline','title'=>'Pipeline فروش','icon'=>'🎯','category'=>'crm',
+                'category_title'=>'مشتری و CRM','permission'=>'crm.view','risk'=>'read',
+                'description'=>'خلاصه فرصت‌های فروش و ارزش Pipeline.',
+                'entities'=>['crm.opportunity'],'example'=>'/crm-pipeline'
+            ],
+            [
+                'id'=>'assistant-help','title'=>'راهنمای دستیار','icon'=>'❓','category'=>'conversation',
+                'category_title'=>'گفتگو','permission'=>'ai.use','risk'=>'read',
+                'description'=>'فهرست مهارت‌ها و نمونه درخواست‌های محاوره‌ای (فاکتور، گزارش، موجودی، CRM).',
+                'entities'=>[],'example'=>'چه کارهایی می‌توانی انجام بدهی؟'
             ],
         ];
     }

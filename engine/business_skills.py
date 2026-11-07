@@ -20,7 +20,7 @@ import inventory_procurement as IP
 import sales_fulfillment as SF
 import trade_logistics as TL
 
-PATCH_VERSION = "v10.9-cycle12.1-live-intelligence-r1"
+PATCH_VERSION = "v10.10-cycle12.2-professional-tools-r1"
 DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 
 CAPABILITIES: dict[str, dict[str, Any]] = {
@@ -102,6 +102,42 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
         "entity_types": {"crm.opportunity", "party.customer"},
         "keywords": ("pipeline", "پایپ", "فرصت فروش", "فرصت", "فروش احتمالی"),
     },
+    "sales-invoice-review": {
+        "title": "بررسی فاکتور فروش",
+        "tools": {"sales_document_detail", "search_sales_documents", "sales_fulfillment", "recent_sales"},
+        "entity_types": {"sales.document", "party.customer"},
+        "keywords": ("فاکتور فروش", "صورتحساب", "شماره فاکتور", "جزئیات فاکتور", "invoice", "فاکتور را"),
+    },
+    "purchase-invoice-review": {
+        "title": "بررسی فاکتور خرید",
+        "tools": {"purchase_document_detail", "search_purchase_documents", "recent_purchases", "purchase_pipeline"},
+        "entity_types": {"purchase.document", "party.supplier"},
+        "keywords": ("فاکتور خرید", "سند خرید", "خرید کالا", "purchase invoice"),
+    },
+    "financial-report": {
+        "title": "گزارش مدیریتی",
+        "tools": {"periodic_business_report", "financial_analysis_bundle", "document_analytics", "trial_balance"},
+        "entity_types": {"company"},
+        "keywords": ("گزارش", "تحلیل مالی", "ماه جاری", "دوره", "خلاصه مالی", "عملکرد مالی"),
+    },
+    "cashflow-checks": {
+        "title": "نقدینگی و چک",
+        "tools": {"check_analytics", "party_ledger", "search_cash_accounts", "trial_balance"},
+        "entity_types": {"party.customer", "party.supplier"},
+        "keywords": ("چک", "سررسید", "نقدینگی", "وصول", "پرداخت", "چک دریافتنی", "چک پرداختنی"),
+    },
+    "create-sales-invoice": {
+        "title": "پیش‌نویس فاکتور فروش",
+        "tools": {"search_parties", "search_items", "sales_document_detail"},
+        "entity_types": {"party.customer", "item"},
+        "keywords": ("فاکتور بساز", "فاکتور جدید", "ثبت فاکتور", "ایجاد فاکتور فروش", "فاکتور بزن"),
+    },
+    "assistant-help": {
+        "title": "راهنمای دستیار",
+        "tools": {"copilot_capabilities"},
+        "entity_types": set(),
+        "keywords": ("چه کار", "چه کارهایی", "چیکار", "راهنما", "مهارت", "کمک", "help", "قابلیت"),
+    },
 }
 
 EXPLICIT_ALIASES = {
@@ -124,6 +160,17 @@ EXPLICIT_ALIASES = {
     "explain-previous": "explain-previous",
     "crm-followup": "crm-followup",
     "crm-pipeline": "crm-pipeline",
+    "sales-invoice": "sales-invoice-review",
+    "sales-invoice-review": "sales-invoice-review",
+    "purchase-invoice": "purchase-invoice-review",
+    "purchase-invoice-review": "purchase-invoice-review",
+    "financial-report": "financial-report",
+    "report": "financial-report",
+    "cashflow": "cashflow-checks",
+    "cashflow-checks": "cashflow-checks",
+    "create-sales-invoice": "create-sales-invoice",
+    "help": "assistant-help",
+    "assistant-help": "assistant-help",
 }
 
 WRITE_WORDS = (

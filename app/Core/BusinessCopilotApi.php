@@ -43,7 +43,8 @@ final class BusinessCopilotApi
             'job_not_found','unknown_action','copilot_company_required','copilot_company_not_found',
             'copilot_entity_type_unsupported','copilot_entity_id_invalid','copilot_entity_forbidden',
             'copilot_entity_not_found','copilot_context_invalid','copilot_context_too_many_refs',
-            'copilot_context_ref_invalid','copilot_context_company_mismatch'
+            'copilot_context_ref_invalid','copilot_context_company_mismatch',
+            'proposal_not_found','proposal_not_actionable'
         ];
         if(in_array($msg,$allowed,true))return[$msg,400];
         error_log('[ERPSMART Copilot API '.self::requestId().'] '.get_class($e).': '.$e->getMessage());
@@ -130,6 +131,21 @@ final class BusinessCopilotApi
                 );
                 $j=AiRepository::jobForUser($jobId);
                 self::json(['ok'=>true,'job_id'=>$jobId,'conversation_id'=>(int)($j['conversation_id']??0),'status'=>(string)($j['status']??'queued')]);
+            }
+
+            if($action==='approve_proposal'){
+                if($_SERVER['REQUEST_METHOD']!=='POST')self::json(['ok'=>false,'error'=>'method_not_allowed'],405);
+                if((string)($_POST['csrf']??'')!==(string)($_SESSION['_csrf']??''))self::json(['ok'=>false,'error'=>'csrf_mismatch'],419);
+                $pid=(int)($_POST['proposal_id']??0);if($pid<=0)self::json(['ok'=>false,'error'=>'proposal_not_found'],404);
+                self::json(['ok'=>true,'result'=>AiRepository::approveProposal($pid)]);
+            }
+
+            if($action==='reject_proposal'){
+                if($_SERVER['REQUEST_METHOD']!=='POST')self::json(['ok'=>false,'error'=>'method_not_allowed'],405);
+                if((string)($_POST['csrf']??'')!==(string)($_SESSION['_csrf']??''))self::json(['ok'=>false,'error'=>'csrf_mismatch'],419);
+                $pid=(int)($_POST['proposal_id']??0);if($pid<=0)self::json(['ok'=>false,'error'=>'proposal_not_found'],404);
+                AiRepository::rejectProposal($pid);
+                self::json(['ok'=>true,'status'=>'rejected','proposal_id'=>$pid]);
             }
 
             self::json(['ok'=>false,'error'=>'unknown_action'],404);
