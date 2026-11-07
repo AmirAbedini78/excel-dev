@@ -14,7 +14,7 @@ final class AiEnginePreferences
 
     public static function current(): array
     {
-        $defaults=['provider'=>'ollama','model'=>'qwen3.5:0.8b'];
+        $defaults=['provider'=>'gemini','model'=>'gemini-3.5-flash-lite'];
         $st=pdo()->prepare('SELECT settings_json FROM workspaces WHERE id=? LIMIT 1');
         $st->execute([Tenant::id()]);
         $data=json_decode((string)$st->fetchColumn(),true);

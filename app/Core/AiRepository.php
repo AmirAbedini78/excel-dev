@@ -21,8 +21,8 @@ final class AiRepository
         $conversationId=self::conversationIdForQueue($wid,$uid,$companyId,$conversationId,$prompt);
         $context=AiToolRegistry::bootstrapContext($wid,$companyId);
         if($pageContext)$context['page_context']=$pageContext;
-        $selection=AiEnginePreferences::choice($engine,$model);$context['engine_selection']=$selection;
-        $capability=match($selection['provider']??''){'gemini'=>'llm.gemini','cursor'=>'llm.cursor','grok'=>'llm.grok',default=>'llm'};
+        $selection=self::queueEngineSelection($engine,$model);$context['engine_selection']=$selection;
+        $capability=self::requiredCapabilityForProvider((string)($selection['provider']??''));
         $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at)
             VALUES (?,?,?,?, 'agent_chat',?,'queued',100,?,?,NOW(),NOW())");
         $st->execute([$wid,$companyId,$conversationId,$uid,$prompt,$capability,json_encode($context,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
@@ -49,8 +49,8 @@ final class AiRepository
         $context=AiToolRegistry::bootstrapContext($wid,$companyId);$context['context_envelope']=$envelope;
         $history=self::conversationHistoryForQueue($wid,$uid,$companyId,$conversationId);
         if($history)$context['conversation_history']=$history;
-        $selection=AiEnginePreferences::choice($engine,$model);$context['engine_selection']=$selection;
-        $capability=match($selection['provider']??''){'gemini'=>'llm.gemini','cursor'=>'llm.cursor','grok'=>'llm.grok',default=>'llm'};
+        $selection=self::queueEngineSelection($engine,$model);$context['engine_selection']=$selection;
+        $capability=self::requiredCapabilityForProvider((string)($selection['provider']??''));
 
         $legacy=AiContextEnvelope::legacyPageContext($envelope);if($legacy)$context['page_context']=$legacy;
         $st=pdo()->prepare("INSERT INTO ai_jobs (workspace_id,company_id,conversation_id,requested_by,job_type,prompt,status,priority,required_capability,context_json,created_at,updated_at) VALUES (?,?,?,?, 'agent_chat',?,'queued',100,?,?,NOW(),NOW())");
@@ -244,9 +244,48 @@ final class AiRepository
         return$node;
     }
 
+    private static function requiredCapabilityForProvider(string $provider): string
+    {
+        return match($provider){'gemini'=>'llm.gemini','cursor'=>'llm.cursor','grok'=>'llm.grok',default=>'llm'};
+    }
+
+    /** When Ollama is selected but no local worker is online, fall back to an available cloud capability. */
+    private static function queueEngineSelection(?string $engine,?string $model): array
+    {
+        $selection=AiEnginePreferences::choice($engine,$model);
+        $provider=(string)($selection['provider']??'');
+        if($provider!=='ollama'||self::workspaceHasOnlineCapability('llm'))return$selection;
+        foreach(['llm.gemini'=>'gemini','llm.grok'=>'grok','llm.cursor'=>'cursor'] as $cap=>$prov){
+            if(!self::workspaceHasOnlineCapability($cap))continue;
+            $models=AiEnginePreferences::models()[$prov]??[];
+            $fallback=(string)($models[0]??$selection['model']??'');
+            if($fallback==='')continue;
+            return['provider'=>$prov,'model'=>$fallback];
+        }
+        return$selection;
+    }
+
+    public static function workspaceHasOnlineCapability(string $capability): bool
+    {
+        $capability=trim($capability);if($capability==='')return false;
+        $st=pdo()->prepare("SELECT 1 FROM ai_worker_nodes WHERE workspace_id=? AND status='online' AND last_seen_at>=DATE_SUB(NOW(),INTERVAL 3 MINUTE) AND capabilities_json LIKE ? LIMIT 1");
+        $st->execute([Tenant::id(),'%"'.addcslashes($capability,'%"\\').'"%']);
+        return(bool)$st->fetchColumn();
+    }
+
+    private static function leaseCapabilities(array $caps): array
+    {
+        $out=array_values(array_unique(array_map('strval',$caps)));
+        foreach($caps as $cap){
+            $c=(string)$cap;
+            if(str_starts_with($c,'llm.')&&!in_array('llm',$out,true))$out[]='llm';
+        }
+        return$out;
+    }
+
     public static function leaseJob(array $token,array $node,int $seconds=180): ?array
     {
-        $wid=(int)$token['workspace_id'];$nid=(int)$node['id'];$caps=json_decode($node['capabilities_json']??'[]',true)?:[];$seconds=max(30,min(900,$seconds));
+        $wid=(int)$token['workspace_id'];$nid=(int)$node['id'];$caps=self::leaseCapabilities(json_decode($node['capabilities_json']??'[]',true)?:[]);$seconds=max(30,min(900,$seconds));
         $pdo=pdo();$pdo->beginTransaction();
         try{
             // Requeue expired work before leasing. A stale result cannot complete without its lease secret.
