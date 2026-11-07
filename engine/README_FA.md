@@ -63,14 +63,33 @@ Copy-Item config.example.json config.json
 
 Token را Commit نکنید. `engine/config.json` در `.gitignore` است.
 
-### کلید API کرسر (مسیر Cloud Agent در Worker)
+### موتورهای ابری در Worker (Gemini + Grok + Cursor)
 
-برای استفاده از **Cursor Cloud Agent** داخل Worker (کنار Gemini در `provider_gateway`):
+Worker از **`provider_gateway`** سه مسیر جدا پشتیبانی می‌کند:
 
-1. در **`engine/.env.gemini`** (یا همان فایلی که به Docker پاس می‌دهید) اضافه کنید: **`CURSOR_API_KEY=...`** از [داشبورد کرسر](https://cursor.com/dashboard).
-2. در **`config.gemini.json`** بلوک **`cursor_cloud_agent`** را از نمونه کپی کنید (`config.gemini.example.json`).
-3. در پنل وب یک **Worker Token** با نوع **Cursor Cloud** بسازید (`llm.cursor`) **یا** روی همان نود هر دو قابلیت **`llm.gemini`** و **`llm.cursor`** را داشته باشید تا هر دو صف پاس شوند.
-4. **مدل‌های مجاز** با IDs واقعی از `GET https://api.cursor.com/v1/models` را در `allowed_models` بگذارید؛ مقادیر نمونه فقط راهنما هستند.
+| موتور در پنل | بلوک config | متغیر env | پروتکل |
+|--------------|-------------|-----------|--------|
+| Gemini API | `cloud_provider` (`name: gemini`) | `GEMINI_API_KEY` | OpenAI-compatible chat/completions |
+| Grok (x.ai) | `xai_provider` (`name: grok`) | `XAI_API_KEY` | [OpenAI-compatible](https://docs.x.ai/overview) روی `https://api.x.ai/v1` |
+| Cursor Cloud | `cursor_cloud_agent` | `CURSOR_API_KEY` | [Cloud Agents API v1](https://cursor.com/docs/cloud-agent/api/endpoints) `POST /v1/agents` |
+
+**Cursor:** برای چت ERP بدون ریپو، `env_type: cloud` و `repos: []` کافی است (no-repo agent). برای کار روی ریپو، در `cursor_cloud_agent.repos` آدرس گیت را بگذارید. مدل‌ها را با:
+
+```powershell
+$env:CURSOR_API_KEY="..."
+python engine/list_provider_models.py --cursor
+```
+
+**Grok:** کلید از [console.x.ai](https://console.x.ai/) → در `.env.gemini` مقدار **`XAI_API_KEY`** → بلوک **`xai_provider`** در `config.gemini.json`. لیست مدل:
+
+```powershell
+$env:XAI_API_KEY="..."
+python engine/list_provider_models.py --xai
+```
+
+**پنل وب:** توکن Worker با **`cloud_all`** (یا ترکیب‌های جدا) تا `llm.gemini` / `llm.grok` / `llm.cursor` با صف Copilot هم‌خوان باشد.
+
+TypeScript SDK (`@cursor/sdk`) برای Node است؛ Worker پایتون مستقیماً REST بالا را صدا می‌زند — همان API که [SDK TypeScript](https://cursor.com/docs/sdk/typescript) برای cloud روی آن سوار است.
 
 ## 3. اجرا
 

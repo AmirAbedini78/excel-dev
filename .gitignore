@@ -38,3 +38,6 @@ engine/.env.gemini
 
 # Cursor API key for local scripts / future integrations (never commit)
 engine/.env.cursor
+
+# x.ai / Grok API key (never commit)
+engine/.env.xai

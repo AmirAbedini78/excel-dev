@@ -60,6 +60,18 @@ def _cursor_agent_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
     return block
 
 
+def _xai_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
+    raw = cfg.get("xai_provider")
+    block = dict(raw) if isinstance(raw, dict) else {}
+    key = str(block.get("api_key") or "")
+    if key.startswith("env:"):
+        var = key[4:]
+        if not var or not var.replace("_", "").isalnum():
+            raise ProviderGatewayError("xai_provider_env_name_invalid")
+        block["api_key"] = os.environ.get(var, "")
+    return block
+
+
 def _cloud_enabled(cfg: dict[str, Any]) -> bool:
     cloud = _cloud_cfg(cfg)
     return bool(cloud.get("enabled"))
@@ -70,15 +82,22 @@ def _cursor_agent_enabled(cfg: dict[str, Any]) -> bool:
     return bool(c.get("enabled")) and bool(str(c.get("api_key") or "").strip())
 
 
+def _xai_enabled(cfg: dict[str, Any]) -> bool:
+    x = _xai_cfg(cfg)
+    return bool(x.get("enabled")) and bool(str(x.get("api_key") or "").strip())
+
+
 def validate_provider_config(cfg: dict[str, Any]) -> None:
     strategy = str(cfg.get("provider_strategy") or "local_first").strip().lower()
     if strategy not in VALID_STRATEGIES:
         raise ProviderGatewayError(f"provider_strategy_invalid:{strategy}")
 
-    if strategy in {"cloud_first", "cloud_only"} and not (_cloud_enabled(cfg) or _cursor_agent_enabled(cfg)):
+    if strategy in {"cloud_first", "cloud_only"} and not (
+        _cloud_enabled(cfg) or _cursor_agent_enabled(cfg) or _xai_enabled(cfg)
+    ):
         raise ProviderGatewayError("cloud_provider_required_by_strategy")
 
-    if not _cloud_enabled(cfg) and not _cursor_agent_enabled(cfg):
+    if not _cloud_enabled(cfg) and not _cursor_agent_enabled(cfg) and not _xai_enabled(cfg):
         return
 
     if _cloud_enabled(cfg):
@@ -113,6 +132,22 @@ def validate_provider_config(cfg: dict[str, Any]) -> None:
         if not default_model:
             raise ProviderGatewayError("cursor_agent_default_model_required")
 
+    if _xai_enabled(cfg):
+        xai = _xai_cfg(cfg)
+        base_url = str(xai.get("base_url") or "").strip()
+        api_key = str(xai.get("api_key") or "").strip()
+        if api_key.startswith("env:") or api_key.startswith("REPLACE_"):
+            raise ProviderGatewayError("xai_provider_missing_api_key_env")
+        chat_model = str(xai.get("chat_model") or "").strip()
+        if not base_url or not api_key or not chat_model:
+            raise ProviderGatewayError("xai_provider_missing_base_url_api_key_or_chat_model")
+        parsed = urlsplit(base_url)
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme not in {"http", "https"} or not host:
+            raise ProviderGatewayError("xai_provider_base_url_invalid")
+        if parsed.scheme != "https" and host not in {"localhost", "127.0.0.1", "::1"}:
+            raise ProviderGatewayError("xai_provider_remote_requires_https")
+
 
 def _model_map(cfg: dict[str, Any], provider: str) -> dict[str, str]:
     if provider == "cloud":
@@ -122,6 +157,16 @@ def _model_map(cfg: dict[str, Any], provider: str) -> dict[str, str]:
             "fast": str(cloud.get("fast_model") or chat).strip(),
             "agent": str(cloud.get("agent_model") or chat).strip(),
             "analysis": str(cloud.get("analysis_model") or chat).strip(),
+            "fallback": chat,
+        }
+
+    if provider == "xai":
+        xai = _xai_cfg(cfg)
+        chat = str(xai.get("chat_model") or "").strip()
+        return {
+            "fast": str(xai.get("fast_model") or chat).strip(),
+            "agent": str(xai.get("agent_model") or chat).strip(),
+            "analysis": str(xai.get("analysis_model") or chat).strip(),
             "fallback": chat,
         }
 
@@ -149,6 +194,22 @@ def _cursor_model_ids(cfg: dict[str, Any]) -> set[str]:
     return out
 
 
+def _xai_model_ids(cfg: dict[str, Any]) -> set[str]:
+    xai = _xai_cfg(cfg)
+    if not bool(xai.get("enabled")) or not str(xai.get("api_key") or "").strip():
+        return set()
+    out: set[str] = set()
+    for x in xai.get("allowed_models") or []:
+        s = str(x).strip()
+        if s:
+            out.add(s)
+    for role_model in _model_map(cfg, "xai").values():
+        s = str(role_model or "").strip()
+        if s:
+            out.add(s)
+    return out
+
+
 def _infer_role(cfg: dict[str, Any], model_name: str, hint: str | None) -> str:
     # A previous model_for() call is not allowed to relabel an explicit model.
     if hint in {"fast", "agent", "analysis", "fallback"} and any(
@@ -157,11 +218,15 @@ def _infer_role(cfg: dict[str, Any], model_name: str, hint: str | None) -> str:
         return str(hint)
     if hint in {"fast", "agent", "analysis", "fallback"} and model_name in _cursor_model_ids(cfg):
         return str(hint)
-    for provider in ("local", "cloud"):
+    if hint in {"fast", "agent", "analysis", "fallback"} and model_name in _xai_model_ids(cfg):
+        return str(hint)
+    for provider in ("local", "cloud", "xai"):
         for role, model in _model_map(cfg, provider).items():
             if model and model_name == model:
                 return role
     if model_name in _cursor_model_ids(cfg):
+        return str(hint) if hint in {"fast", "agent", "analysis", "fallback"} else "agent"
+    if model_name in _xai_model_ids(cfg):
         return str(hint) if hint in {"fast", "agent", "analysis", "fallback"} else "agent"
     return "fallback"
 
@@ -173,9 +238,14 @@ def _provider_order(worker: Any, role: str, requested_model: str) -> list[str]:
     cursor_ids = _cursor_model_ids(worker.cfg)
     is_cursor_model = bool(requested_model and requested_model in cursor_ids)
     cursor_ok = bool(getattr(worker, "_cursor_available", False))
+    xai_ids = _xai_model_ids(worker.cfg)
+    is_xai_model = bool(requested_model and requested_model in xai_ids)
+    xai_ok = bool(getattr(worker, "_xai_available", False))
 
     if cursor_ok and is_cursor_model:
         return ["cursor"]
+    if xai_ok and is_xai_model:
+        return ["xai"]
 
     if strategy == "cloud_only":
         first = ["cloud"]
@@ -313,6 +383,26 @@ def _cursor_agent_chat(
     else:
         body["env"] = {"type": "cloud"}
 
+    repos_raw = cc.get("repos")
+    if isinstance(repos_raw, list) and repos_raw:
+        repos: list[dict[str, Any]] = []
+        for item in repos_raw:
+            if not isinstance(item, dict):
+                continue
+            url = str(item.get("url") or "").strip()
+            if not url:
+                continue
+            entry: dict[str, Any] = {"url": url}
+            ref = str(item.get("startingRef") or item.get("starting_ref") or "").strip()
+            if ref:
+                entry["startingRef"] = ref
+            pr_url = str(item.get("prUrl") or item.get("pr_url") or "").strip()
+            if pr_url:
+                entry["prUrl"] = pr_url
+            repos.append(entry)
+        if repos:
+            body["repos"] = repos
+
     url_create = base + "/v1/agents"
     headers = {
         "Content-Type": "application/json",
@@ -424,7 +514,7 @@ def _response_format_variants(response_format: Any | None) -> list[dict[str, Any
     return [None]
 
 
-def _cloud_chat(
+def _openai_compatible_chat(
     worker: Any,
     job: dict[str, Any],
     round_no: int,
@@ -435,10 +525,11 @@ def _cloud_chat(
     temperature: float | None,
     timeout_seconds: int | None,
     response_format: Any | None,
+    cloud: dict[str, Any],
+    role_models: dict[str, str],
     selected_model: str | None = None,
 ) -> dict[str, Any]:
-    cloud = worker._cloud_cfg
-    model_name = str(selected_model or worker._cloud_role_models.get(role) or worker._cloud_role_models.get("fallback") or "").strip()
+    model_name = str(selected_model or role_models.get(role) or role_models.get("fallback") or "").strip()
     if not model_name:
         raise ProviderGatewayError(f"cloud_model_missing_for_role:{role}")
 
@@ -542,6 +633,66 @@ def _cloud_chat(
     return {"message": message, "_metrics": metrics, "_provider": metrics["provider"]}
 
 
+def _cloud_chat(
+    worker: Any,
+    job: dict[str, Any],
+    round_no: int,
+    messages: list[dict[str, Any]],
+    tools: list[dict[str, Any]],
+    role: str,
+    num_predict: int | None,
+    temperature: float | None,
+    timeout_seconds: int | None,
+    response_format: Any | None,
+    selected_model: str | None = None,
+) -> dict[str, Any]:
+    return _openai_compatible_chat(
+        worker,
+        job,
+        round_no,
+        messages,
+        tools,
+        role,
+        num_predict,
+        temperature,
+        timeout_seconds,
+        response_format,
+        worker._cloud_cfg,
+        worker._cloud_role_models,
+        selected_model=selected_model,
+    )
+
+
+def _xai_chat(
+    worker: Any,
+    job: dict[str, Any],
+    round_no: int,
+    messages: list[dict[str, Any]],
+    tools: list[dict[str, Any]],
+    role: str,
+    num_predict: int | None,
+    temperature: float | None,
+    timeout_seconds: int | None,
+    response_format: Any | None,
+    selected_model: str | None = None,
+) -> dict[str, Any]:
+    return _openai_compatible_chat(
+        worker,
+        job,
+        round_no,
+        messages,
+        tools,
+        role,
+        num_predict,
+        temperature,
+        timeout_seconds,
+        response_format,
+        worker._xai_cfg,
+        worker._xai_role_models,
+        selected_model=selected_model,
+    )
+
+
 def install_provider_gateway(worker_cls: type) -> None:
     if getattr(worker_cls, "_provider_gateway_v1_installed", False):
         return
@@ -557,15 +708,19 @@ def install_provider_gateway(worker_cls: type) -> None:
         effective = dict(cfg)
         effective["cloud_provider"] = _cloud_cfg(cfg)
         effective["cursor_cloud_agent"] = _cursor_agent_cfg(cfg)
+        effective["xai_provider"] = _xai_cfg(cfg)
         validate_provider_config(effective)
         original_init(self, effective)
         cfg = effective
         self._provider_strategy = str(cfg.get("provider_strategy") or "local_first").strip().lower()
         self._cloud_cfg = _cloud_cfg(cfg)
         self._cursor_cfg = _cursor_agent_cfg(cfg)
+        self._xai_cfg = _xai_cfg(cfg)
         self._cursor_available = _cursor_agent_enabled(cfg) and self._provider_strategy != "local_only"
+        self._xai_available = _xai_enabled(cfg) and self._provider_strategy != "local_only"
         self._local_role_models = _model_map(cfg, "local")
         self._cloud_role_models = _model_map(cfg, "cloud")
+        self._xai_role_models = _model_map(cfg, "xai")
         self._local_models = list(self.models)
         self._local_available = bool(self._local_models) and self._provider_strategy != "cloud_only"
         self._cloud_available = _cloud_enabled(cfg) and self._provider_strategy != "local_only"
@@ -583,10 +738,18 @@ def install_provider_gateway(worker_cls: type) -> None:
                 cursor_models.insert(0, dm)
             elif not cursor_models and dm:
                 cursor_models = [dm]
-        self.models = list(dict.fromkeys([*self._local_models, *cloud_models, *cursor_models]))
+        xai_models: list[str] = []
+        if self._xai_available:
+            xai_models = [str(x).strip() for x in (self._xai_cfg.get("allowed_models") or []) if str(x).strip()]
+            for rm in self._xai_role_models.values():
+                s = str(rm or "").strip()
+                if s and s not in xai_models:
+                    xai_models.append(s)
+        self.models = list(dict.fromkeys([*self._local_models, *cloud_models, *cursor_models, *xai_models]))
         self.base_payload["models"] = self.models
         meta = dict(self.base_payload.get("metadata") or {})
         cloud_name = str(self._cloud_cfg.get("name") or "openai_compatible").strip() or "openai_compatible"
+        xai_name = str(self._xai_cfg.get("name") or "grok").strip() or "grok"
         meta.update({
             "provider": "gateway",
             "provider_strategy": self._provider_strategy,
@@ -594,6 +757,7 @@ def install_provider_gateway(worker_cls: type) -> None:
                 p for p, enabled in (
                     ("ollama", self._local_available),
                     (cloud_name, self._cloud_available),
+                    (xai_name, self._xai_available),
                     ("cursor_cloud_agent", self._cursor_available),
                 )
                 if enabled
@@ -601,7 +765,9 @@ def install_provider_gateway(worker_cls: type) -> None:
         })
         self.base_payload["metadata"] = meta
 
-        if self._provider_strategy == "cloud_only" and not (self._cloud_available or self._cursor_available):
+        if self._provider_strategy == "cloud_only" and not (
+            self._cloud_available or self._cursor_available or self._xai_available
+        ):
             raise ProviderGatewayError("cloud_only_provider_unavailable")
         # A temporarily unavailable inference server must not prevent the worker
         # from serving deterministic ERP reads. Model-dependent routes block below.
@@ -620,13 +786,17 @@ def install_provider_gateway(worker_cls: type) -> None:
                 dm = str(cc.get("default_model") or "").strip()
                 if dm and dm not in cursor_models:
                     cursor_models.insert(0, dm)
-            self.models = list(dict.fromkeys([*self._local_models, *cloud_models, *cursor_models]))
+            xai_models = []
+            if self._xai_available:
+                xai_models = [str(x).strip() for x in (self._xai_cfg.get("allowed_models") or []) if str(x).strip()]
+            self.models = list(dict.fromkeys([*self._local_models, *cloud_models, *cursor_models, *xai_models]))
             self.base_payload["models"] = self.models
         self._provider_role_hint = role
         strategy = self._provider_strategy
         local_model = str(self._local_role_models.get(role) or "").strip()
         local_fallback = str(self._local_role_models.get("fallback") or "").strip()
         cloud_model = str(self._cloud_role_models.get(role) or "").strip()
+        xai_model = str(self._xai_role_models.get(role) or "").strip()
         cursor_default = ""
         if self._cursor_available:
             cursor_default = str(self._cursor_cfg.get("default_model") or "").strip()
@@ -634,6 +804,8 @@ def install_provider_gateway(worker_cls: type) -> None:
         if strategy in {"cloud_only", "cloud_first"}:
             if self._cloud_available and cloud_model:
                 return cloud_model
+            if self._xai_available and xai_model:
+                return xai_model
             if self._cursor_available and cursor_default:
                 return cursor_default
         if self._local_available:
@@ -645,6 +817,8 @@ def install_provider_gateway(worker_cls: type) -> None:
                 raise RuntimeError(f"required_model_not_installed:{local_model}")
         if self._cloud_available and cloud_model:
             return cloud_model
+        if self._xai_available and xai_model:
+            return xai_model
         if self._cursor_available and cursor_default:
             return cursor_default
         # Preserve the old failure semantics when no usable provider exists.
@@ -689,6 +863,13 @@ def install_provider_gateway(worker_cls: type) -> None:
                         or (allowed_c and selected_model not in allowed_c)):
                     raise ProviderGatewayError("cursor_model_not_configured_on_worker")
                 providers = ["cursor"]
+            elif selected_provider == "grok":
+                allowed_g = list(_xai_model_ids(self.cfg)) or list(self._xai_role_models.values())
+                if (not self._xai_available or str(self._xai_cfg.get("name") or "grok") != "grok"
+                        or not selected_model
+                        or (allowed_g and selected_model not in allowed_g)):
+                    raise ProviderGatewayError("grok_model_not_configured_on_worker")
+                providers = ["xai"]
             elif selected_provider == "ollama":
                 if not self._local_available or selected_model not in self._local_models:
                     raise ProviderGatewayError("ollama_model_not_installed_on_worker")
@@ -716,6 +897,13 @@ def install_provider_gateway(worker_cls: type) -> None:
                         self, job, round_no, messages, sm,
                     )
                     actual_provider = str(result.get("_provider") or "cursor_cloud_agent")
+                elif provider == "xai":
+                    result = _xai_chat(
+                        self, job, round_no, messages, tools, role,
+                        num_predict, temperature, timeout_seconds, response_format,
+                        selected_model=str(selected_model) if selected_model else None,
+                    )
+                    actual_provider = str(result.get("_provider") or self._xai_cfg.get("name") or "grok")
                 else:
                     result = _cloud_chat(
                         self, job, round_no, messages, tools, role,

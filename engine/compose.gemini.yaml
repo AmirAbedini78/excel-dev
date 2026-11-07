@@ -5,6 +5,10 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    env_file:
+      - .env.gemini
+      - .env.cursor
+      - .env.xai
     volumes:
       - ./config.gemini.json:/app/config.json:ro
       - gemini_state:/app/data
@@ -12,6 +16,7 @@ services:
       TZ: Asia/Tehran
       GEMINI_API_KEY: ${GEMINI_API_KEY:?Set GEMINI_API_KEY in .env.gemini}
       CURSOR_API_KEY: ${CURSOR_API_KEY:-}
+      XAI_API_KEY: ${XAI_API_KEY:-}
     stop_grace_period: 40s
 
 volumes:

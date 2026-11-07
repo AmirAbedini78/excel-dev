@@ -7,6 +7,7 @@ class Contract(unittest.TestCase):
         src=(R/'app/Core/AiRepository.php').read_text(encoding='utf-8')
         self.assertIn("'gemini'=>'llm.gemini'",src)
         self.assertIn("'cursor'=>'llm.cursor'",src)
+        self.assertIn("'grok'=>'llm.grok'",src)
         self.assertEqual(src.count("$context['engine_selection']=$selection"),2)
         self.assertEqual(src.count("VALUES (?,?,?,?, 'agent_chat'"),2)
     def test_no_default_gemini_privilege(self):
