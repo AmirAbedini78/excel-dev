@@ -230,8 +230,17 @@ final class AiRepository
         $wid=(int)$token['workspace_id'];$uid=trim((string)($payload['node_uid']??''));if($uid==='')throw new RuntimeException('node_uid_required');
         $name=trim((string)($payload['node_name']??$uid));
         $requestedCaps=array_values(array_unique(array_map('strval',(array)($payload['capabilities']??[]))));
-        $tokenCaps=json_decode((string)($token['capabilities_json']??'[]'),true)?:[];
-        $cap=$tokenCaps ? array_values(array_intersect($requestedCaps,array_map('strval',$tokenCaps))) : $requestedCaps;
+        $tokenCaps=array_values(array_map('strval',json_decode((string)($token['capabilities_json']??'[]'),true)?:[]));
+        $cap=$requestedCaps;
+        if($tokenCaps){
+            $allowed=[];
+            foreach($requestedCaps as $rc){
+                if(in_array($rc,$tokenCaps,true)){$allowed[]=$rc;continue;}
+                // Legacy Gemini-only tokens: allow cloud worker config to advertise sibling llm.* caps.
+                if(in_array('llm.gemini',$tokenCaps,true)&&in_array($rc,['llm.grok','llm.cursor'],true))$allowed[]=$rc;
+            }
+            $cap=$allowed?:array_values(array_intersect($requestedCaps,$tokenCaps));
+        }
         $models=array_values(array_map('strval',(array)($payload['models']??[])));
         $st=pdo()->prepare("INSERT INTO ai_worker_nodes (workspace_id,token_id,node_uid,node_name,status,os_name,cpu_model,cpu_cores,ram_mb,capabilities_json,models_json,metadata_json,current_jobs,last_seen_at,created_at,updated_at)
             VALUES (?,?,?,?,'online',?,?,?,?,?,?,?,0,NOW(),NOW(),NOW())

@@ -8,7 +8,7 @@ final class AiEnginePreferences
             'ollama'=>['qwen3.5:0.8b','qwen3:1.7b','gemma3:4b'],
             'gemini'=>['gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite'],
             'cursor'=>['composer-2.5','claude-sonnet-5-5','grok-4.7','gemini-3.8-flash'],
-            'grok'=>['grok-4-7','grok-4.6','grok-4.20-0309-reasoning','grok-build-0.1'],
+            'grok'=>['grok-4.7','grok-4.6','grok-4.20-0309-reasoning','grok-build-0.1'],
         ];
     }
 
