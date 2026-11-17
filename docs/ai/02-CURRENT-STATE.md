@@ -1,5 +1,10 @@
 # 02-CURRENT-STATE — Snapshot زنده پروژه
 
+## 2026-11-17 — v10.12.0 Manufacturing Planning Pilot / Agent-First ERP blueprint (candidate)
+
+GitHub baseline `621507ca2a2f93cc9e7fdefe71c118b10ab89cc7` (v10.11.0). Previous cloud/Grok releases exist; the latest GitHub Actions release gate failed on stale asset-test expectation and a local-only provider test. This pilot fixes those two defects and introduces a **disabled-by-default**, tenant-scoped production BOM/draft plan UI, with non-posting material readiness and opt-in DEMO seeding. It is not a complete manufacturing release; cPanel/MySQL, Docker Worker, data migrations and product live tests remain pending. See `32-ERP-AGENT-FIRST-TRANSFORMATION.md` for evidence, gaps and staged roadmap. Earlier historical snapshots below are preserved.
+
+
 ## 2026-09-11 — v10.10.3 / Kernel v1.6: bounded stream recovery
 
 Current package: `ERPSMART-v10.10.3-stream-recovery-local-validated.zip`, applied over the exact delivered v10.10.2 working state. Current implementation and incident evidence: **30-STREAM-RECOVERY-20260911.md**; install/rollback: **28-LOW-MEMORY-INSTALL-FA.md**; results: **29-LOW-MEMORY-TEST-REPORT-FA.md**.

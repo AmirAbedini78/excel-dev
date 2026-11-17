@@ -51,14 +51,30 @@ def json_syntax(root: Path) -> int:
 
 
 def secret_scan(root: Path) -> int:
+    # Git is the release boundary: scan tracked/staged files plus untracked
+    # non-ignored files. Local .gitignored config may contain real secrets,
+    # but forcing one into the index must still fail the release gate.
+    result = subprocess.run(
+        ["git", "-C", str(root), "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        raise RuntimeError("git_source_inventory_required_for_secret_scan")
     count = 0
-    for path in files(root, TEXT_SUFFIXES):
-        if path.relative_to(root) in RUNTIME_SECRET_SCAN_EXCLUDES:
+    for raw_rel in result.stdout.split(b"\0"):
+        if not raw_rel:
+            continue
+        rel = Path(os.fsdecode(raw_rel))
+        path = root / rel
+        if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
+            continue
+        if any(x in SKIP_PARTS for x in rel.parts):
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         for name, pattern in SECRET_PATTERNS.items():
             if pattern.search(text):
-                raise RuntimeError(f"secret_pattern:{name}:{path.relative_to(root)}")
+                raise RuntimeError(f"secret_pattern:{name}:{rel}")
         count += 1
     return count
 

@@ -40,7 +40,7 @@ final class ModuleRegistry
             ],
             'production'=>[
                 'title'=>'تولید','description'=>'BOM، دستور تولید، مصرف، رسید تولید، بهای تمام‌شده و MRP-lite.',
-                'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>['inventory'], 'pages'=>[],
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['inventory'], 'pages'=>['production'],
             ],
             'projects'=>[
                 'title'=>'مدیریت پروژه','description'=>'پروژه، Task، زمان، هزینه، بودجه و سودآوری.',

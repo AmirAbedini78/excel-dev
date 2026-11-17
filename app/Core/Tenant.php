@@ -214,9 +214,18 @@ final class Tenant
             ['accounting.reports.view','مشاهده گزارش های مالی','accounting',210],
             ['accounting.settings.manage','مدیریت تنظیمات ماژول حسابداری','accounting',211],
             ['accounting.taxkeys.manage','مدیریت کلیدهای سامانه مودیان','accounting',212],
+            ['production.view','مشاهده برنامه تولید و فرمول ساخت','production',220],
+            ['production.manage','مدیریت پیش‌نویس فرمول و برنامه تولید','production',221],
         ];
         $st=$pdo->prepare("INSERT INTO workspace_permissions (permission_key,title,group_key,sort_order) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),group_key=VALUES(group_key),sort_order=VALUES(sort_order)");
         foreach($defs as $d)$st->execute($d);
+        // Existing workspaces: grant the NEW, opt-in manufacturing permissions only
+        // to their owner role. Other roles require explicit administrator grants.
+        $grant=$pdo->prepare("INSERT IGNORE INTO workspace_role_permissions (role_id,permission_id)
+            SELECT r.id,p.id FROM workspace_roles r JOIN workspace_permissions p
+            ON p.permission_key IN ('production.view','production.manage')
+            WHERE r.role_key='owner'");
+        $grant->execute();
     }
 
     private static function bootstrapExistingData(PDO $pdo): void

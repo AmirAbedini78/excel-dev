@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import sys
 import threading
-import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -138,17 +138,34 @@ class MetadataTests(unittest.TestCase):
 
     def test_latency_budget_is_emitted(self):
         def process(self, job, tools_desc):
-            time.sleep(0.003)
             return "ok", {"mode": "deterministic_financial_report", "tools_used": []}
 
         Worker = worker_class(process)
         worker = Worker()
-        worker.cfg = {"latency_budgets_seconds": {"deterministic": 0.000001}}
-        _, meta = worker.process_agent({"id": 1}, [])
+        worker.cfg = {"latency_budgets_seconds": {"deterministic": 0.0002}}
+        # A deterministic sub-millisecond duration catches the previous bug:
+        # round(0.0004, 3) == 0, but 0.0004 > the configured budget.
+        with mock.patch.object(CH.time, "monotonic", side_effect=[100.0, 100.0004]):
+            _, meta = worker.process_agent({"id": 1}, [])
         hard = meta["commercial_hardening"]
         self.assertEqual(hard["latency_budget_class"], "deterministic")
+        self.assertEqual(hard["latency_budget_seconds"], 0.0002)
         self.assertEqual(hard["latency_status"], "exceeded")
         self.assertIn("end_to_end_seconds", hard)
+        self.assertEqual(hard["end_to_end_seconds"], 0.0)
+
+    def test_latency_budget_within_boundary_is_not_exceeded(self):
+        def process(self, job, tools_desc):
+            return "ok", {"mode": "deterministic_financial_report", "tools_used": []}
+
+        Worker = worker_class(process)
+        worker = Worker()
+        worker.cfg = {"latency_budgets_seconds": {"deterministic": 0.0002}}
+        with mock.patch.object(CH.time, "monotonic", side_effect=[100.0, 100.0001]):
+            _, meta = worker.process_agent({"id": 1}, [])
+        hard = meta["commercial_hardening"]
+        self.assertEqual(hard["latency_budget_class"], "deterministic")
+        self.assertEqual(hard["latency_status"], "within_budget")
 
 
 if __name__ == "__main__":

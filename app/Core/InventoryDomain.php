@@ -76,8 +76,15 @@ final class InventoryDomain
     public static function inventoryPosition(int $wid,int $cid,array $args=[]): array
     {
         self::assertCompany($wid,$cid);$itemId=max(0,(int)($args['item_id']??0));$warehouseId=max(0,(int)($args['warehouse_id']??0));$limit=max(1,min(300,(int)($args['limit']??100)));
+        // Optional bounded item batch for production planning; same stock ledger truth.
+        $rawIds=$args['item_ids']??[];
+        if (!is_array($rawIds)) throw new RuntimeException('inventory_item_ids_invalid');
+        $itemIds=array_values(array_unique(array_map('intval',$rawIds)));
+        if (count($itemIds)>30 || in_array(0,$itemIds,true) || min(array_merge([1],$itemIds))<1 || ($itemId && $itemIds)) throw new RuntimeException('inventory_item_ids_invalid');
+        $limit=$itemIds?count($itemIds):$limit;
         if($itemId)self::assertOwned($wid,$cid,'acc_items',$itemId);if($warehouseId)self::assertOwned($wid,$cid,'acc_warehouses',$warehouseId);
         $where='workspace_id=? AND company_id=? AND active=1';$params=[$wid,$cid];if($itemId){$where.=' AND id=?';$params[]=$itemId;}
+        if ($itemIds) {$where.=' AND id IN ('.implode(',',array_fill(0,count($itemIds),'?')).')';$params=array_merge($params,$itemIds);}
         $st=pdo()->prepare("SELECT id,code,name,item_type,min_stock,max_stock,purchase_price_1 FROM acc_items WHERE $where ORDER BY name LIMIT $limit");$st->execute($params);$items=$st->fetchAll();if(!$items)return ['rows'=>[],'warehouse_id'=>$warehouseId?:null];
         $ids=array_map(static fn($r)=>(int)$r['id'],$items);$ph=implode(',',array_fill(0,count($ids),'?'));
         $moveWhere="workspace_id=? AND company_id=? AND status='posted' AND item_id IN ($ph)";$moveParams=array_merge([$wid,$cid],$ids);if($warehouseId){$moveWhere.=' AND warehouse_id=?';$moveParams[]=$warehouseId;}

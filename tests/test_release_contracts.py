@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -134,17 +135,25 @@ class ReleaseArtifactTests(unittest.TestCase):
         token = re.compile(r"aiw_[A-Fa-f0-9]{24,}")
         private_key = re.compile(r"BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY")
         allowed_suffixes = {".py", ".php", ".js", ".json", ".md", ".yml", ".yaml", ".ps1"}
-        runtime_only = {Path("engine/config.json"), Path("engine/config.cloud.json")}
-        for path in ROOT.rglob("*"):
+        # Scan everything that Git could commit, including new untracked files,
+        # but do not read ignored local runtime secrets from the developer's machine.
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+            capture_output=True,
+            check=True,
+        )
+        for raw_rel in result.stdout.split(b"\0"):
+            if not raw_rel:
+                continue
+            rel = Path(raw_rel.decode("utf-8", errors="surrogateescape"))
+            path = ROOT / rel
             if not path.is_file() or path.suffix.lower() not in allowed_suffixes:
                 continue
-            if any(part in {".git", "__pycache__", "sample_import"} for part in path.parts):
-                continue
-            if path.relative_to(ROOT) in runtime_only:
+            if any(part in {".git", "__pycache__", "sample_import"} for part in rel.parts):
                 continue
             text = path.read_text(encoding="utf-8", errors="ignore")
-            self.assertIsNone(token.search(text), str(path.relative_to(ROOT)))
-            self.assertIsNone(private_key.search(text), str(path.relative_to(ROOT)))
+            self.assertIsNone(token.search(text), str(rel))
+            self.assertIsNone(private_key.search(text), str(rel))
 
     def test_accounting_voucher_delete_is_draft_only(self):
         module = (ROOT / "app/Modules/AccountingIndustrialModule.php").read_text(encoding="utf-8")
