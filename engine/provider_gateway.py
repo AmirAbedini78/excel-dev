@@ -235,10 +235,15 @@ def _provider_order(worker: Any, role: str, requested_model: str) -> list[str]:
     strategy = str(worker._provider_strategy)
     local_model = worker._local_role_models.get(role, "")
     cloud_model = worker._cloud_role_models.get(role, "")
-    cursor_ids = _cursor_model_ids(worker.cfg)
+    # Fail closed on strategy before resolving explicit cloud model IDs.
+    # A model name may never override a local_only installation.
+    if strategy == 'local_only':
+        return ['local'] if bool(getattr(worker, '_local_available', False)) else []
+    cfg = getattr(worker, 'cfg', {}) or {}
+    cursor_ids = _cursor_model_ids(cfg)
     is_cursor_model = bool(requested_model and requested_model in cursor_ids)
     cursor_ok = bool(getattr(worker, "_cursor_available", False))
-    xai_ids = _xai_model_ids(worker.cfg)
+    xai_ids = _xai_model_ids(cfg)
     is_xai_model = bool(requested_model and requested_model in xai_ids)
     xai_ok = bool(getattr(worker, "_xai_available", False))
 
@@ -846,6 +851,9 @@ def install_provider_gateway(worker_cls: type) -> None:
         self._provider_role_hint = None
         providers = _provider_order(self, role, requested_model)
         selection = (job.get("context") or {}).get("engine_selection") if isinstance(job.get("context"), dict) else None
+        # An explicit cloud selection must not bypass the runtime's local-only policy.
+        if isinstance(selection, dict) and str(selection.get('provider') or '') in ('gemini', 'cursor', 'grok') and self._provider_strategy == 'local_only':
+            raise ProviderGatewayError('provider_blocked_by_local_only_policy')
         selected_model = None
         if isinstance(selection, dict):
             selected_provider = str(selection.get("provider") or "")

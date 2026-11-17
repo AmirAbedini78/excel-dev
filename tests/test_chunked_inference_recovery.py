@@ -126,10 +126,58 @@ class ChunkedTransportTests(unittest.TestCase):
         self.assertIn(caught.exception.code, {"network", "incomplete_stream"})
 
     def test_header_wait_is_bounded_and_distinguished_from_generation(self):
-        with chunked_server("headers_deadline") as (url, _):
+        # A live loopback socket can be reset before the intentionally tiny
+        # deadline on Windows; that is correctly classified as "network", not
+        # "deadline". Isolate the timeout/cancellation contract instead.
+        interrupted = threading.Event()
+
+        class CancelSocket:
+            def shutdown(self, _how):
+                interrupted.set()
+
+        class HeaderStall:
+            def __init__(self):
+                self.sock = CancelSocket()
+
+            def request(self, *_args, **_kwargs):
+                pass
+
+            def getresponse(self):
+                if not interrupted.wait(timeout=2):
+                    raise AssertionError("header deadline timer failed to interrupt I/O")
+                raise ConnectionAbortedError("simulated timeout cancellation")
+
+            def close(self):
+                pass
+
+        started = time.monotonic()
+        with patch.object(L, "_connection", return_value=HeaderStall()):
             with self.assertRaises(L.InferenceError) as caught:
-                L.stream_chat(url, {"model": "tiny"}, time.monotonic() + .12)
+                L.stream_chat("http://127.0.0.1:1", {"model": "tiny"}, started + .08)
+        self.assertTrue(interrupted.is_set())
         self.assertEqual(caught.exception.code, "deadline")
+        self.assertEqual(caught.exception.diagnostics["phase"], "headers")
+        self.assertIsNone(caught.exception.diagnostics["first_chunk_seconds"])
+        self.assertLess(time.monotonic() - started, 1)
+
+    def test_early_header_reset_remains_network_not_deadline(self):
+        # Do not hide a genuine early transport failure as a timeout.
+        class EarlyReset:
+            sock = None
+
+            def request(self, *_args, **_kwargs):
+                pass
+
+            def getresponse(self):
+                raise ConnectionResetError("simulated early network reset")
+
+            def close(self):
+                pass
+
+        with patch.object(L, "_connection", return_value=EarlyReset()):
+            with self.assertRaises(L.InferenceError) as caught:
+                L.stream_chat("http://127.0.0.1:1", {"model": "tiny"}, time.monotonic() + 3)
+        self.assertEqual(caught.exception.code, "network")
         self.assertEqual(caught.exception.diagnostics["phase"], "headers")
         self.assertIsNone(caught.exception.diagnostics["first_chunk_seconds"])
 

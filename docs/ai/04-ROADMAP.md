@@ -1,5 +1,7 @@
 # 04-ROADMAP — Roadmap Canonical فعلی
 
+> 2026-11-17: اجرای جدید ERP-first و Agent-first در `32-ERP-AGENT-FIRST-TRANSFORMATION.md` تعریف شد. ابتدا رفع Release Gate و پایلوت امن BOM/Planning (v10.12.0)، سپس تکمیل دامنه‌های مالی/تولید و بعد گسترش Tools/MCP/RAG. این یادداشت تعهدات و نسخه‌های قبلی رودمپ را پاک نمی‌کند.
+
 ## 2026-09-11 — v10.10.3 / Kernel v1.6: bounded stream recovery
 
 Current package: `ERPSMART-v10.10.3-stream-recovery-local-validated.zip`, applied over the exact delivered v10.10.2 working state. Current implementation and incident evidence: **30-STREAM-RECOVERY-20260911.md**; install/rollback: **28-LOW-MEMORY-INSTALL-FA.md**; results: **29-LOW-MEMORY-TEST-REPORT-FA.md**.

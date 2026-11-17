@@ -304,7 +304,8 @@ def install_commercial_hardening(worker_cls: type) -> None:
             if not isinstance(text, str) or not isinstance(raw_meta, dict):
                 raise CommercialContractError("agent_result_shape_invalid")
 
-            elapsed = round(time.monotonic() - started, 3)
+            elapsed_raw = max(0.0, time.monotonic() - started)
+            elapsed = round(elapsed_raw, 3)
             tool_events = list(getattr(self, "_commercial_tool_events", []) or [])
             successful = list(dict.fromkeys(
                 str(event.get("name")) for event in tool_events
@@ -335,7 +336,7 @@ def install_commercial_hardening(worker_cls: type) -> None:
             _validate_result_contract(mode, meta, successful)
             budget_class, budget = _latency_budget(getattr(self, "cfg", {}) or {}, mode)
             policy = _policy(mode, successful, int(meta.get("proposal_id") or 0) > 0)
-            latency_status = "within_budget" if elapsed <= budget else "exceeded"
+            latency_status = "within_budget" if elapsed_raw <= budget else "exceeded"
 
             self.trace(job, "commercial_hardening_complete", "Commercial MVP runtime contract verified", {
                 "release_contract": RELEASE_CONTRACT,
