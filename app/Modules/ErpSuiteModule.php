@@ -169,6 +169,10 @@ final class ErpSuiteModule
             }
             if($canManage){
                 echo '<td><a class="btn tiny" href="'.h(self::internalUrl($page,$entity,(int)$r['id'])).'#erp-'.h($entity).'">ویرایش</a>';
+                $workflowSubject=['projects'=>'project','tasks'=>'task','leave'=>'leave','expenses'=>'expense','tickets'=>'service','assets'=>'asset'][$entity]??null;
+                if($workflowSubject && ModuleRegistry::enabled('workflows') && Tenant::can('workflow.manage')){
+                    echo '<a class="btn tiny" href="index.php?page=workflows&ref='.h($workflowSubject).'&ref_id='.(int)$r['id'].'">ارجاع به فرآیند</a>';
+                }
                 $locked=!empty($spec['canonical']) || (!empty($spec['approval'])&&$r['status']!=='pending');
                 if(!$locked){
                     echo '<form method="post" class="erp-suite-inline">'.csrf_field().'<input type="hidden" name="action" value="erp_archive"><input type="hidden" name="module" value="'.h($page).'"><input type="hidden" name="entity" value="'.h($entity).'"><input type="hidden" name="id" value="'.(int)$r['id'].'"><button class="btn tiny danger" onclick="return confirm(\'این رکورد بایگانی شود؟\')">بایگانی</button></form>';
