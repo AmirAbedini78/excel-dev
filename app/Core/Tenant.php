@@ -216,6 +216,13 @@ final class Tenant
             ['accounting.taxkeys.manage','مدیریت کلیدهای سامانه مودیان','accounting',212],
             ['production.view','مشاهده برنامه تولید و فرمول ساخت','production',220],
             ['production.manage','مدیریت پیش‌نویس فرمول و برنامه تولید','production',221],
+            ['hr.view','مشاهده منابع انسانی','hr',230],['hr.manage','مدیریت کارکنان و کارکرد','hr',231],['hr.approve','تأیید مرخصی','hr',232],
+            ['projects.view','مشاهده پروژه‌ها','projects',240],['projects.manage','مدیریت پروژه و ثبت ساعت','projects',241],
+            ['pos.view','مشاهده صندوق','pos',250],['pos.manage','مدیریت پیش‌سبد فروش','pos',251],
+            ['service.view','مشاهده تیکت خدمات','service',260],['service.manage','مدیریت تیکت خدمات','service',261],
+            ['assets.view','مشاهده دارایی‌های ثابت','assets',270],['assets.manage','مدیریت دارایی‌های ثابت','assets',271],
+            ['expenses.view','مشاهده درخواست هزینه','expenses',280],['expenses.manage','ایجاد و ویرایش درخواست هزینه','expenses',281],['expenses.approve','تأیید درخواست هزینه','expenses',282],
+            ['operations.view','نمای مدیریتی ERP','operations',290],
         ];
         $st=$pdo->prepare("INSERT INTO workspace_permissions (permission_key,title,group_key,sort_order) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),group_key=VALUES(group_key),sort_order=VALUES(sort_order)");
         foreach($defs as $d)$st->execute($d);
@@ -223,7 +230,7 @@ final class Tenant
         // to their owner role. Other roles require explicit administrator grants.
         $grant=$pdo->prepare("INSERT IGNORE INTO workspace_role_permissions (role_id,permission_id)
             SELECT r.id,p.id FROM workspace_roles r JOIN workspace_permissions p
-            ON p.permission_key IN ('production.view','production.manage')
+            ON p.permission_key IN ('production.view','production.manage','hr.view','hr.manage','hr.approve','projects.view','projects.manage','pos.view','pos.manage','service.view','service.manage','assets.view','assets.manage','expenses.view','expenses.manage','expenses.approve','operations.view')
             WHERE r.role_key='owner'");
         $grant->execute();
     }

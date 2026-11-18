@@ -1,4 +1,6 @@
 # 02-CURRENT-STATE — Snapshot زنده پروژه
+> **2026-11-18 / v10.13.0 candidate:** ERP Operations Suite MVP adds opt-in HR, projects/time, POS draft-to-preinvoice, service, assets, expense approval and managerial KPI pages; scope and unimplemented legal/financial workflows: [33-ERP-OPERATIONS-SUITE-MVP.md](33-ERP-OPERATIONS-SUITE-MVP.md). Offline source tests only; MySQL live acceptance pending.
+
 
 ## 2026-11-17 — v10.12.0 Manufacturing Planning Pilot / Agent-First ERP blueprint (candidate)
 

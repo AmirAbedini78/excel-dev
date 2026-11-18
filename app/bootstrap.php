@@ -29,6 +29,7 @@ require_once APP_ROOT . '/app/Core/AccountingExtendedSchema.php';
 require_once APP_ROOT . '/app/Core/AccountingRepository.php';
 require_once APP_ROOT . '/app/Core/InventoryDomain.php';
 require_once APP_ROOT . '/app/Core/ProductionDomain.php';
+require_once APP_ROOT . '/app/Core/ErpSuiteDomain.php';
 require_once APP_ROOT . '/app/Core/TradeDomain.php';
 require_once APP_ROOT . '/app/Core/SalesDomain.php';
 require_once APP_ROOT . '/app/Core/BusinessIntelligenceDomain.php';
@@ -66,6 +67,7 @@ if (file_exists($configFile)) {
         SalesDomain::migrate(pdo());
         CrmDomain::migrate(pdo());
         ProductionDomain::migrate(pdo());
+        ErpSuiteDomain::migrate(pdo());
         AiSchema::migrate(pdo());
         ModuleRegistry::ensureSchema();
         RuntimeCache::markSchema(RuntimeCache::SCHEMA_VERSION);

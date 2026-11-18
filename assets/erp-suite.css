@@ -1,0 +1,27 @@
+/* ERPSMART Operations Suite — restrained RTL application layer */
+.erp-suite-intro{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:linear-gradient(120deg,#eff6ff,#f8fafc);border:1px solid #dbeafe}
+.erp-suite-intro strong{font-size:1.12rem;color:#183f66}.erp-suite-intro p{color:#526479;margin:8px 0 0}
+.erp-suite-pill{border-radius:30px;background:#e1ebfc;color:#274a77;padding:8px 14px;font-size:.82rem}
+.erp-suite-company{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.erp-suite-company label{min-width:230px;flex:1}
+.erp-suite-tabs,.erp-suite-anchor{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.erp-suite-tabs a,.erp-suite-anchor a{padding:10px 14px;border:1px solid #cbd5e1;border-radius:12px;color:#355373;text-decoration:none;background:#fff;font-weight:600;font-size:.88rem}
+.erp-suite-tabs a.active,.erp-suite-tabs a:hover,.erp-suite-anchor a:hover{background:#124e7b;color:#fff;border-color:#124e7b}
+.erp-suite-section{margin:16px 0;border:1px solid #e2e8f0}
+.erp-suite-section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.erp-suite-section h2{margin:0 0 6px;font-size:1.15rem}.erp-suite-section-head p{margin:0 0 12px}
+.erp-suite-editor{border:1px solid #d5e2ef;background:#f8fbff;border-radius:14px;margin:15px 0;padding:14px}
+.erp-suite-editor summary{cursor:pointer;font-weight:700;padding:2px 0 12px}
+.erp-suite-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:end}
+.erp-suite-form label{display:flex;flex-direction:column;gap:7px;color:#334155;font-size:.88rem}
+.erp-suite-form input,.erp-suite-form select,.erp-suite-form textarea{width:100%;max-width:100%;box-sizing:border-box;min-height:40px;border:1px solid #cbd5e1;border-radius:9px;background:white;padding:8px;color:#152b43}
+.erp-suite-form textarea{min-height:66px}.erp-suite-actions{display:flex;gap:8px;align-items:center}
+.erp-suite-table-wrap{max-width:100%;overflow-x:auto}.erp-suite-table{width:100%;border-collapse:collapse;min-width:690px;font-size:.88rem}
+.erp-suite-table th{background:#eff5fb;color:#244e74;text-align:right;padding:11px 10px;white-space:nowrap}
+.erp-suite-table td{padding:11px 10px;border-bottom:1px solid #e7edf5;vertical-align:middle}
+.erp-suite-table tr:hover td{background:#f8fbfd}.erp-suite-inline{display:inline-flex;vertical-align:middle;margin:3px}
+.erp-suite-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:16px 0}
+.erp-suite-metrics a{text-decoration:none;display:flex;flex-direction:column;gap:7px;border:1px solid #e2e8f0;transition:box-shadow .2s}
+.erp-suite-metrics a:hover{box-shadow:0 5px 20px #0b3b681a}.erp-suite-metrics small{color:#64748b}.erp-suite-metrics strong{color:#123f6c;font-size:1.9rem}
+@media(max-width:760px){.erp-suite-intro{padding:15px}.erp-suite-form{grid-template-columns:1fr}.erp-suite-tabs a{flex:1;text-align:center}}
+
+.erp-suite-cart{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid #e2e8f0;padding:12px 0}.erp-suite-cart strong{color:#12527e;font-size:.86rem}

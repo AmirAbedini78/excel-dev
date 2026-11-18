@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.4.0';
+    public const VERSION='10.13.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -43,16 +43,32 @@ final class ModuleRegistry
                 'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['inventory'], 'pages'=>['production'],
             ],
             'projects'=>[
-                'title'=>'مدیریت پروژه','description'=>'پروژه، Task، زمان، هزینه، بودجه و سودآوری.',
-                'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>[],
+                'title'=>'مدیریت پروژه','description'=>'پروژه‌های مشترک با حسابداری، وظیفه و ثبت زمان؛ بدون محاسبه سود حسابداری.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>['projects'],
             ],
             'hr'=>[
-                'title'=>'منابع انسانی','description'=>'پرسنل، قرارداد، حضور و غیاب، مرخصی و حقوق.',
-                'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>[],
+                'title'=>'منابع انسانی','description'=>'پرونده کارکنان، حضور و درخواست مرخصی؛ حقوق و دستمزد قانونی هنوز فعال نیست.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>['hr'],
             ],
             'service'=>[
-                'title'=>'خدمات و پشتیبانی','description'=>'Ticket، SLA، Warranty و خدمات پس از فروش.',
-                'stage'=>'planned','implemented'=>false,'default_enabled'=>false,'locked'=>false,'depends'=>['crm'], 'pages'=>[],
+                'title'=>'خدمات و پشتیبانی','description'=>'تیکت مشتری، مسئول رسیدگی، اولویت، وضعیت و سررسید.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['crm'], 'pages'=>['service'],
+            ],
+            'pos'=>[
+                'title'=>'صندوق و نقطه فروش','description'=>'صندوق، پیش‌سبد فروش و اقلام پیشنهادی؛ بدون ثبت قطعی فاکتور/پرداخت/موجودی.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['finance','inventory'], 'pages'=>['pos'],
+            ],
+            'assets'=>[
+                'title'=>'دارایی‌های ثابت','description'=>'ثبت و نگهداری شناسنامه دارایی‌ها؛ بدون ثبت استهلاک حسابداری.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['finance'], 'pages'=>['assets'],
+            ],
+            'expenses'=>[
+                'title'=>'درخواست هزینه','description'=>'درخواست و تأیید هزینه کارکنان؛ بدون پرداخت یا ثبت سند حسابداری.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['hr','finance'], 'pages'=>['expenses'],
+            ],
+            'operations'=>[
+                'title'=>'مرکز عملیات مدیریتی','description'=>'پیگیری وظایف معوق، خدمات، درخواست‌ها، سبد فروش و کارکنان بر مبنای داده واقعی شرکت.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>['operations'],
             ],
             'marketing'=>[
                 'title'=>'بازاریابی و محتوا','description'=>'Campaign، Segment، Content/Social Agent و Lead Capture.',
