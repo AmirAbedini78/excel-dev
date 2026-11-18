@@ -223,6 +223,9 @@ final class Tenant
             ['assets.view','مشاهده دارایی‌های ثابت','assets',270],['assets.manage','مدیریت دارایی‌های ثابت','assets',271],
             ['expenses.view','مشاهده درخواست هزینه','expenses',280],['expenses.manage','ایجاد و ویرایش درخواست هزینه','expenses',281],['expenses.approve','تأیید درخواست هزینه','expenses',282],
             ['operations.view','نمای مدیریتی ERP','operations',290],
+            ['workflow.view','مشاهده گردش‌کارها و تاریخچه تأیید','workflow',300],
+            ['workflow.manage','مدیریت تعریف و پرونده فرآیند','workflow',301],
+            ['workflow.approve','تأیید یا رد مرحله فرایند','workflow',302],
         ];
         $st=$pdo->prepare("INSERT INTO workspace_permissions (permission_key,title,group_key,sort_order) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),group_key=VALUES(group_key),sort_order=VALUES(sort_order)");
         foreach($defs as $d)$st->execute($d);
@@ -230,7 +233,7 @@ final class Tenant
         // to their owner role. Other roles require explicit administrator grants.
         $grant=$pdo->prepare("INSERT IGNORE INTO workspace_role_permissions (role_id,permission_id)
             SELECT r.id,p.id FROM workspace_roles r JOIN workspace_permissions p
-            ON p.permission_key IN ('production.view','production.manage','hr.view','hr.manage','hr.approve','projects.view','projects.manage','pos.view','pos.manage','service.view','service.manage','assets.view','assets.manage','expenses.view','expenses.manage','expenses.approve','operations.view')
+            ON p.permission_key IN ('production.view','production.manage','hr.view','hr.manage','hr.approve','projects.view','projects.manage','pos.view','pos.manage','service.view','service.manage','assets.view','assets.manage','expenses.view','expenses.manage','expenses.approve','operations.view','workflow.view','workflow.manage','workflow.approve')
             WHERE r.role_key='owner'");
         $grant->execute();
     }

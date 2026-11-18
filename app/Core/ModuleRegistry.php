@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.13.0';
+    public const VERSION='10.14.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -69,6 +69,10 @@ final class ModuleRegistry
             'operations'=>[
                 'title'=>'مرکز عملیات مدیریتی','description'=>'پیگیری وظایف معوق، خدمات، درخواست‌ها، سبد فروش و کارکنان بر مبنای داده واقعی شرکت.',
                 'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>['operations'],
+            ],
+            'workflows'=>[
+                'title'=>'طراحی و اجرای فرآیندهای کاری','description'=>'تعریف مراحل تأیید، تخصیص مسئول، سررسید، سوابق و پرونده‌های وابسته به اسناد واقعی؛ بدون ثبت خودکار سند مالی.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>['workflows'],
             ],
             'marketing'=>[
                 'title'=>'بازاریابی و محتوا','description'=>'Campaign، Segment، Content/Social Agent و Lead Capture.',
