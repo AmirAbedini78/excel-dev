@@ -1,4 +1,6 @@
 # 04-ROADMAP — Roadmap Canonical فعلی
+> **v10.13.0 candidate:** Additive ERP Operations Suite (HR/projects/POS/service/assets/expenses/dashboard) delivered as opt-in pilot; payroll, POS settlement, production posting, statutory accounting and corresponding Agent write tools **remain future milestones**. See [Operations Suite implementation contract](33-ERP-OPERATIONS-SUITE-MVP.md).
+
 
 > 2026-11-17: اجرای جدید ERP-first و Agent-first در `32-ERP-AGENT-FIRST-TRANSFORMATION.md` تعریف شد. ابتدا رفع Release Gate و پایلوت امن BOM/Planning (v10.12.0)، سپس تکمیل دامنه‌های مالی/تولید و بعد گسترش Tools/MCP/RAG. این یادداشت تعهدات و نسخه‌های قبلی رودمپ را پاک نمی‌کند.
 
