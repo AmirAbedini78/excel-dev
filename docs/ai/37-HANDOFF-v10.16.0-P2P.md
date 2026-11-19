@@ -9,9 +9,10 @@ Machine-readable companion to the chat HANDOFF REPORT. Generated on system-2.
 | System | system-2 (Windows user `h`) |
 | Repo | `C:\Projects\excel-dev` |
 | Branch | `feature/erp-p2p-three-way-v10.16.0` |
-| Feature HEAD | `5da53bf2405e11aa5937db59262a5d97adc50a93` |
+| Feature commit (18 patch files) | `5da53bf2405e11aa5937db59262a5d97adc50a93` |
+| Branch HEAD (includes docs) | `12f280809990f0a449f38c590cbe98bd09df01a6` |
 | origin/main (at cut) | `aed25a29afe6862e291b4b7c87f82cfdeee5ba13` |
-| Working tree after feature commit | Clean of the 18 patch paths; follow-up docs may be appended |
+| Working tree | Clean after docs commit |
 
 ## 2. Version / release
 
@@ -22,7 +23,8 @@ Machine-readable companion to the chat HANDOFF REPORT. Generated on system-2.
 | Installer backup | `C:\Projects\excel-dev-patch-backups\v10.16.0-p2p-before-20261119-225105-0a507f` |
 | Patch integrity | PASS — 18 files match installer manifest SHA256 |
 | PR | https://github.com/AmirAbedini78/excel-dev/pull/5 |
-| CI run | https://github.com/AmirAbedini78/excel-dev/actions/runs/44601189666 |
+| CI (feature commit) | success — https://github.com/AmirAbedini78/excel-dev/actions/runs/44601189666 |
+| CI (branch HEAD incl. docs) | success — https://github.com/AmirAbedini78/excel-dev/actions/runs/44601762317 |
 | Deploy | **NOT_DEPLOYED** (no cPanel, no production DB migration) |
 | Merge | **NOT MERGED** (awaits user approval) |
 
@@ -51,7 +53,7 @@ Machine-readable companion to the chat HANDOFF REPORT. Generated on system-2.
 
 | Capability | Before (main) | After (this branch, evidence-based) |
 |---|---|---|
-| P2P three-way matching | `NOT_STARTED` | `TRANSACTIONAL_TESTED` (source + local release_gate; PHP/CI pending confirmation) |
+| P2P three-way matching | `NOT_STARTED` | `TRANSACTIONAL_TESTED` (source + local release_gate + GitHub Actions release-gate success on branch HEAD) |
 | Manual invoice bypass | Present | Still present — documented Gap for v10.17 |
 | Enterprise suite | As PR #4 | Unchanged by this PR |
 
@@ -95,5 +97,5 @@ Skipped locally must not be reported as proven.
 ## 10. Exact next actions for user
 
 1. Review PR: https://github.com/AmirAbedini78/excel-dev/pull/5
-2. Confirm CI run green: https://github.com/AmirAbedini78/excel-dev/actions/runs/44601189666
-3. If green and accepted: merge PR yourself (Cursor will not merge); then authorize staging DB backup before any deploy. **Do not deploy production yet.**
+2. Confirm CI green on HEAD: https://github.com/AmirAbedini78/excel-dev/actions/runs/44601762317
+3. If accepted: merge PR yourself (Cursor will not merge); then authorize staging DB backup before any deploy. **Do not deploy production yet.**

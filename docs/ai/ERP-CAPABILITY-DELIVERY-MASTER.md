@@ -3,7 +3,7 @@
 **Maintained:** 2026-11-19 (system-2)
 **Repo:** `C:\Projects\excel-dev`
 **Baseline at matrix write:** `origin/main` = `aed25a29afe6862e291b4b7c87f82cfdeee5ba13` (merged PR #4 / v10.15)
-**In-flight release:** v10.16.0 P2P Three-Way Matching — branch `feature/erp-p2p-three-way-v10.16.0` / commit `5da53bf2405e11aa5937db59262a5d97adc50a93` / PR #5 (**not merged**; **NOT_DEPLOYED**)
+**In-flight release:** v10.16.0 P2P Three-Way Matching — branch `feature/erp-p2p-three-way-v10.16.0` / HEAD `12f280809990f0a449f38c590cbe98bd09df01a6` (feature `5da53bf…`) / PR #5 (**not merged**; **NOT_DEPLOYED**; CI release-gate success on HEAD)
 
 Status vocabulary (exactly one per capability):
 
@@ -25,7 +25,7 @@ Status vocabulary (exactly one per capability):
 
 | Capability / Cycle | Status | Primary files | Tables | Page / route | Permissions | Prerequisites | Tests / evidence | Gap |
 |---|---|---|---|---|---|---|---|---|
-| P2P Three-Way Matching (PO→Receipt→Vendor Bill→draft invoice) | `TRANSACTIONAL_TESTED` (source/CI pending) | `app/Core/PurchaseMatchingDomain.php`, `app/Modules/PurchaseMatchingModule.php` | `acc_purchase_docs/lines`, `acc_inventory_receipts/lines`, `erp_p2p_vendor_bills`, `erp_p2p_vendor_bill_lines` | `index.php?page=p2p` | `accounting.purchase.view/manage`, `procurement.view`; module `p2p` opt-in | finance + procurement (+ inventory via depends) | `tests/test_p2p_three_way.py`, `tests/php_p2p_contract_test.php`, `scripts/p2p_preflight.php`, doc `36-*` | No GL/AP/payment; manual invoice bypass remains; rejected bill no resubmit same number; no MySQL concurrency suite on system-2 |
+| P2P Three-Way Matching (PO→Receipt→Vendor Bill→draft invoice) | `TRANSACTIONAL_TESTED` (source + CI green; staging DB not verified) | `app/Core/PurchaseMatchingDomain.php`, `app/Modules/PurchaseMatchingModule.php` | `acc_purchase_docs/lines`, `acc_inventory_receipts/lines`, `erp_p2p_vendor_bills`, `erp_p2p_vendor_bill_lines` | `index.php?page=p2p` | `accounting.purchase.view/manage`, `procurement.view`; module `p2p` opt-in | finance + procurement (+ inventory via depends) | `tests/test_p2p_three_way.py`, `tests/php_p2p_contract_test.php`, `scripts/p2p_preflight.php`, doc `36-*`, Actions run 44601762317 | No GL/AP/payment; manual invoice bypass remains; rejected bill no resubmit same number; no MySQL concurrency suite on system-2 |
 | Enterprise operational extensions (8 modules / 41 tables) | `CRUD_PILOT` (+ one `INTEGRATED_DRAFT` PO bridge) | `EnterpriseDomain.php`, `EnterpriseModule.php`, `EnterpriseCatalog.php` | `erp_ext_*` (41) | `enterprise_*` pages | `enterprise.*.view/manage/approve` | modules opt-in | `tests/test_enterprise_extensions.py`, `tests/php_enterprise_suite_contract_test.php`, doc `35-*` | No stock/GL/payroll/payment posting; RFQ→draft PO only |
 | Workflow Studio | `CRUD_PILOT` | `WorkflowDomain.php` + module | `erp_wf_*` (4 additive) | workflow pages | workflow permissions + pilot opt-in | — | `tests/test_workflow_studio.py` | No auto GL/inventory from case approval |
 | Purchase Order / Receipt (canonical) | `TRANSACTIONAL_TESTED` (existing) | `InventoryDomain.php`, Accounting purchase paths | `acc_purchase_*`, `acc_inventory_receipts*`, `acc_stock_movements` | accounting / inventory | purchase + inventory perms | finance/inventory | existing suite + P2P guards | Concurrent PO edit not globally locked for all editors |
