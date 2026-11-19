@@ -43,6 +43,13 @@ final class WorkflowDomain
             'service'=>['تیکت خدمات', 'erp_service_tickets', 'service.view'],
             'asset'=>['دارایی ثابت', 'erp_fixed_assets', 'assets.view'],
             'customer'=>['طرف‌حساب', 'acc_parties', 'accounting.view'],
+            'vendor_offer'=>['پیشنهاد تأمین‌کننده', 'erp_ext_vendor_offers', 'enterprise.commerce.view'],
+            'warehouse_count'=>['صورتجلسه انبارگردانی', 'erp_ext_cycle_counts', 'enterprise.warehouse.view'],
+            'engineering_change'=>['درخواست تغییر مهندسی', 'erp_ext_engineering_changes', 'enterprise.factory.view'],
+            'commercial_contract'=>['قرارداد بازرگانی', 'erp_ext_contract_register', 'enterprise.knowledge.view'],
+            'repair_order'=>['سفارش تعمیر', 'erp_ext_repair_orders', 'enterprise.service.view'],
+            'employee_contract'=>['قرارداد کارمند', 'erp_ext_contracts', 'enterprise.people.view'],
+
         ];
     }
 

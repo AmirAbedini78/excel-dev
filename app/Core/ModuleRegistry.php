@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.14.0';
+    public const VERSION='10.15.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -73,6 +73,38 @@ final class ModuleRegistry
             'workflows'=>[
                 'title'=>'طراحی و اجرای فرآیندهای کاری','description'=>'تعریف مراحل تأیید، تخصیص مسئول، سررسید، سوابق و پرونده‌های وابسته به اسناد واقعی؛ بدون ثبت خودکار سند مالی.',
                 'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>[], 'pages'=>['workflows'],
+            ],
+            'enterprise_commerce'=>[
+                'title'=>'فروش پیشرفته و تجاری','description'=>'مجموعه عملیاتی 6 زیربخش رکوردمحور؛ بدون ثبت قطعی مالی یا انبار.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['crm'], 'pages'=>['enterprise_sales'],
+            ],
+            'enterprise_warehouse'=>[
+                'title'=>'انبارداری و WMS','description'=>'مجموعه عملیاتی 6 زیربخش رکوردمحور؛ بدون ثبت قطعی مالی یا انبار.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['inventory'], 'pages'=>['enterprise_wms'],
+            ],
+            'enterprise_factory'=>[
+                'title'=>'تولید، کیفیت، نگهداری','description'=>'مجموعه عملیاتی 5 زیربخش رکوردمحور؛ بدون ثبت قطعی مالی یا انبار.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['production'], 'pages'=>['enterprise_factory'],
+            ],
+            'enterprise_people'=>[
+                'title'=>'منابع انسانی پیشرفته','description'=>'مجموعه عملیاتی 6 زیربخش رکوردمحور؛ بدون ثبت قطعی مالی یا انبار.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['hr'], 'pages'=>['enterprise_people'],
+            ],
+            'enterprise_service'=>[
+                'title'=>'خدمات در محل و تعمیر','description'=>'مجموعه عملیاتی 4 زیربخش رکوردمحور؛ بدون ثبت قطعی مالی یا انبار.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['service'], 'pages'=>['enterprise_service_plus'],
+            ],
+            'enterprise_growth'=>[
+                'title'=>'بازاریابی، رویداد و نظرسنجی','description'=>'مجموعه عملیاتی 5 زیربخش رکوردمحور؛ بدون ثبت قطعی مالی یا انبار.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['crm'], 'pages'=>['enterprise_growth'],
+            ],
+            'enterprise_knowledge'=>[
+                'title'=>'اسناد، قرارداد و دانش','description'=>'مجموعه عملیاتی 4 زیربخش رکوردمحور؛ بدون ثبت قطعی مالی یا انبار.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['operations'], 'pages'=>['enterprise_knowledge'],
+            ],
+            'enterprise_governance'=>[
+                'title'=>'ناوگان، پایداری و پذیرش','description'=>'مجموعه عملیاتی 3 زیربخش رکوردمحور؛ بدون ثبت قطعی مالی یا انبار.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['operations'], 'pages'=>['enterprise_governance'],
             ],
             'marketing'=>[
                 'title'=>'بازاریابی و محتوا','description'=>'Campaign، Segment، Content/Social Agent و Lead Capture.',
