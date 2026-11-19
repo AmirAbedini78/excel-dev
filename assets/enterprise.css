@@ -1,0 +1,14 @@
+.erp-ext-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}.erp-ext-tabs a{white-space:normal}
+.erp-ext-filters{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin:1rem 0}
+.erp-ext-filters input,.erp-ext-filters select{max-width:19rem}
+.erp-ext-editor{border:1px solid var(--border,#ccd5dc);padding:1rem;margin-bottom:1rem;border-radius:12px}
+.erp-ext-editor summary{cursor:pointer;font-weight:650}
+.erp-ext-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:1rem;padding:1rem 0}
+.erp-ext-form label{display:flex;flex-direction:column;gap:.35rem;min-width:0}
+.erp-ext-form label input,.erp-ext-form label select,.erp-ext-form label textarea{max-width:100%;width:100%;box-sizing:border-box}
+.erp-ext-form-footer{grid-column:1/-1;display:flex;gap:.75rem;justify-content:flex-start}
+.erp-ext-scroll{overflow:auto;max-width:100%}.erp-ext-scroll table{min-width:850px;width:100%}
+.erp-ext-scroll td{vertical-align:top}.erp-ext-scroll td small{display:block;color:#64748b}
+.erp-ext-actions{min-width:160px}.erp-ext-actions form{display:inline-flex;flex-wrap:wrap;gap:.3rem;margin:.15rem}
+.erp-ext-actions input[name="note"]{max-width:160px}.erp-ext-actions a{display:inline-block;margin:.2rem}
+@media(max-width:700px){.erp-ext-filters input,.erp-ext-filters select{max-width:100%;width:100%}.erp-ext-form{grid-template-columns:1fr}}

@@ -226,6 +226,30 @@ final class Tenant
             ['workflow.view','مشاهده گردش‌کارها و تاریخچه تأیید','workflow',300],
             ['workflow.manage','مدیریت تعریف و پرونده فرآیند','workflow',301],
             ['workflow.approve','تأیید یا رد مرحله فرایند','workflow',302],
+            ['enterprise.commerce.view','مشاهده فروش پیشرفته و تجاری','enterprise_commerce',350],
+            ['enterprise.commerce.manage','مدیریت فروش پیشرفته و تجاری','enterprise_commerce',351],
+            ['enterprise.commerce.approve','بررسی و تأیید فروش پیشرفته و تجاری','enterprise_commerce',352],
+            ['enterprise.warehouse.view','مشاهده انبارداری و WMS','enterprise_warehouse',355],
+            ['enterprise.warehouse.manage','مدیریت انبارداری و WMS','enterprise_warehouse',356],
+            ['enterprise.warehouse.approve','بررسی و تأیید انبارداری و WMS','enterprise_warehouse',357],
+            ['enterprise.factory.view','مشاهده تولید، کیفیت، نگهداری','enterprise_factory',360],
+            ['enterprise.factory.manage','مدیریت تولید، کیفیت، نگهداری','enterprise_factory',361],
+            ['enterprise.factory.approve','بررسی و تأیید تولید، کیفیت، نگهداری','enterprise_factory',362],
+            ['enterprise.people.view','مشاهده منابع انسانی پیشرفته','enterprise_people',365],
+            ['enterprise.people.manage','مدیریت منابع انسانی پیشرفته','enterprise_people',366],
+            ['enterprise.people.approve','بررسی و تأیید منابع انسانی پیشرفته','enterprise_people',367],
+            ['enterprise.service.view','مشاهده خدمات در محل و تعمیر','enterprise_service',370],
+            ['enterprise.service.manage','مدیریت خدمات در محل و تعمیر','enterprise_service',371],
+            ['enterprise.service.approve','بررسی و تأیید خدمات در محل و تعمیر','enterprise_service',372],
+            ['enterprise.growth.view','مشاهده بازاریابی، رویداد و نظرسنجی','enterprise_growth',375],
+            ['enterprise.growth.manage','مدیریت بازاریابی، رویداد و نظرسنجی','enterprise_growth',376],
+            ['enterprise.growth.approve','بررسی و تأیید بازاریابی، رویداد و نظرسنجی','enterprise_growth',377],
+            ['enterprise.knowledge.view','مشاهده اسناد، قرارداد و دانش','enterprise_knowledge',380],
+            ['enterprise.knowledge.manage','مدیریت اسناد، قرارداد و دانش','enterprise_knowledge',381],
+            ['enterprise.knowledge.approve','بررسی و تأیید اسناد، قرارداد و دانش','enterprise_knowledge',382],
+            ['enterprise.governance.view','مشاهده ناوگان، پایداری و پذیرش','enterprise_governance',385],
+            ['enterprise.governance.manage','مدیریت ناوگان، پایداری و پذیرش','enterprise_governance',386],
+            ['enterprise.governance.approve','بررسی و تأیید ناوگان، پایداری و پذیرش','enterprise_governance',387],
         ];
         $st=$pdo->prepare("INSERT INTO workspace_permissions (permission_key,title,group_key,sort_order) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),group_key=VALUES(group_key),sort_order=VALUES(sort_order)");
         foreach($defs as $d)$st->execute($d);
@@ -233,7 +257,7 @@ final class Tenant
         // to their owner role. Other roles require explicit administrator grants.
         $grant=$pdo->prepare("INSERT IGNORE INTO workspace_role_permissions (role_id,permission_id)
             SELECT r.id,p.id FROM workspace_roles r JOIN workspace_permissions p
-            ON p.permission_key IN ('production.view','production.manage','hr.view','hr.manage','hr.approve','projects.view','projects.manage','pos.view','pos.manage','service.view','service.manage','assets.view','assets.manage','expenses.view','expenses.manage','expenses.approve','operations.view','workflow.view','workflow.manage','workflow.approve')
+            ON p.permission_key IN ('production.view','production.manage','hr.view','hr.manage','hr.approve','projects.view','projects.manage','pos.view','pos.manage','service.view','service.manage','assets.view','assets.manage','expenses.view','expenses.manage','expenses.approve','operations.view','workflow.view','workflow.manage','workflow.approve','enterprise.commerce.view','enterprise.commerce.manage','enterprise.commerce.approve','enterprise.warehouse.view','enterprise.warehouse.manage','enterprise.warehouse.approve','enterprise.factory.view','enterprise.factory.manage','enterprise.factory.approve','enterprise.people.view','enterprise.people.manage','enterprise.people.approve','enterprise.service.view','enterprise.service.manage','enterprise.service.approve','enterprise.growth.view','enterprise.growth.manage','enterprise.growth.approve','enterprise.knowledge.view','enterprise.knowledge.manage','enterprise.knowledge.approve','enterprise.governance.view','enterprise.governance.manage','enterprise.governance.approve')
             WHERE r.role_key='owner'");
         $grant->execute();
     }
