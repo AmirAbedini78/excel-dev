@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.15.0';
+    public const VERSION='10.16.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -29,6 +29,12 @@ final class ModuleRegistry
             'procurement'=>[
                 'title'=>'تأمین و خرید','description'=>'جریان اسناد خرید، Expected Inbound، دریافت و Replenishment Intelligence.',
                 'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>['inventory'], 'pages'=>['procurement'],
+            ],
+            'p2p'=>[
+                'title'=>'تطبیق سه‌طرفه خرید و فاکتور تأمین‌کننده',
+                'description'=>'تأیید دونفره سفارش و تطبیق فاکتور با رسید قطعی و مقدار پذیرفته‌شده؛ خروجی فقط فاکتور خرید پیش‌نویس، بدون پرداخت/سند قطعی.',
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,
+                'depends'=>['procurement','finance'],'pages'=>['p2p'],
             ],
             'crm'=>[
                 'title'=>'CRM و فروش','description'=>'Customer 360، Contact، Opportunity، Pipeline، Activity و پیگیری فروش روی طرف‌حساب‌های واقعی.',
