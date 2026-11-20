@@ -34,7 +34,7 @@ class ManufacturingPilotContracts(unittest.TestCase):
         self.assertIn('InventoryDomain::inventoryPosition', domain)
         self.assertNotIn('acc_stock_movements SET', domain)
         self.assertIn('ProductionDomain::migrate(pdo());', (ROOT / 'app/bootstrap.php').read_text(encoding='utf-8'))
-        self.assertIn('10.20.0', (ROOT / 'app/Core/RuntimeCache.php').read_text(encoding='utf-8'))  # Additive suite migration advances schema gate
+        self.assertIn('10.20.1', (ROOT / 'app/Core/RuntimeCache.php').read_text(encoding='utf-8'))  # Additive suite migration advances schema gate
 
     def test_demo_seeder_requires_explicit_demo_scope(self):
         seed = (ROOT / 'scripts/seed_manufacturing_demo.php').read_text(encoding='utf-8')

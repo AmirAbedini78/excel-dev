@@ -13,8 +13,8 @@ def source(path):
 
 class P2PHardening1017Tests(unittest.TestCase):
     def test_version_gate(self):
-        self.assertIn("SCHEMA_VERSION = '10.20.0'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.20.0'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.20.1'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.20.1'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("10.17.0-hardening", source("app/Core/PurchaseMatchingDomain.php"))
 
     def test_fail_closed_domain_api(self):

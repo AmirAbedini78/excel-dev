@@ -13,7 +13,7 @@
  */
 final class SalesDomain
 {
-    public const VERSION='10.20.0';
+    public const VERSION='10.20.1';
 
     public static function migrate(PDO $pdo): void
     {

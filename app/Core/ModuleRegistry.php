@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.20.0';
+    public const VERSION='10.20.1';
     private static array $cache=[];
 
     public static function definitions(): array

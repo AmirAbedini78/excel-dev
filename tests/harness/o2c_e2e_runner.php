@@ -212,6 +212,45 @@ try {
             o2c_json_out(['ok' => true]);
             break;
 
+        case 'ar_set_cash_account_gl':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => 2, 'is_platform_admin' => 1]);
+            ArSettlementDomain::setCashAccountGl(
+                10, 1, 2,
+                (int)($args['cash_account_id'] ?? 1),
+                (int)($args['gl_account_id'] ?? 6)
+            );
+            o2c_json_out(['ok' => true]);
+            break;
+
+        case 'receipt_reverse':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
+            o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::reverseReceipt(
+                10, 1, (int)($args['user_id'] ?? 2), (int)$args['receipt_id'],
+                (string)($args['reversal_date'] ?? '')
+            )]);
+            break;
+
+        case 'customer_breakdown':
+            o2c_e2e_connect_reuse();
+            o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::customerBalanceBreakdown(10, 1, (int)($args['party_id'] ?? 1))]);
+            break;
+
+        case 'voucher_lines':
+            o2c_e2e_connect_reuse();
+            $st = pdo()->prepare('SELECT line_no,account_id,party_id,debit,credit FROM acc_voucher_lines WHERE voucher_id=? AND workspace_id=10 ORDER BY line_no');
+            $st->execute([(int)$args['voucher_id']]);
+            o2c_json_out(['ok' => true, 'rows' => $st->fetchAll()]);
+            break;
+
+        case 'cash_tx_status':
+            o2c_e2e_connect_reuse();
+            $st2 = pdo()->prepare("SELECT id,status,method,direction,amount,source_type FROM acc_cash_transactions WHERE workspace_id=10 AND company_id=1 AND source_id=? AND source_type IN ('ar_receipt','ar_receipt_reversal') ORDER BY id");
+            $st2->execute([(int)$args['source_id']]);
+            o2c_json_out(['ok' => true, 'rows' => $st2->fetchAll()]);
+            break;
+
         case 'receipt_draft':
             o2c_e2e_connect_reuse();
             Auth::setUser(['id' => (int)($args['user_id'] ?? 1), 'is_platform_admin' => 1]);
@@ -244,12 +283,6 @@ try {
         case 'invoice_settlement':
             o2c_e2e_connect_reuse();
             o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::invoiceSettlementStatus(10, 1, (int)$args['invoice_doc_id'])]);
-            break;
-
-        case 'receipt_reverse':
-            o2c_e2e_connect_reuse();
-            Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
-            o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::reverseReceipt(10, 1, (int)($args['user_id'] ?? 2), (int)$args['receipt_id'])]);
             break;
 
         case 'tamper_invoice_line':
