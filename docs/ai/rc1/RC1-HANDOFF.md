@@ -2,7 +2,7 @@
 
 **Verdict:** `RC1_ACCEPTED`
 **Release branch:** `release/erpsmart-rc1`
-**Final SHA:** f0293553f0e6d2b0f1e3ebdda8ff176a5a13ad99
+**Final SHA:** `511092df85e16d56404ddfba555bf0ff71b0ab44` (evidence pack `f029355`; tip includes this handoff)
 **Date:** 2026-11-20
 **Deploy:** `NOT_DEPLOYED`
 
