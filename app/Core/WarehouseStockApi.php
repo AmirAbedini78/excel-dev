@@ -143,6 +143,21 @@ final class WarehouseStockApi
             ->execute([$wid, $cid, $sourceType, $sourceId, $key, $hash, json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $eventId]);
     }
 
+    /** Release named locks acquired by OrderToCashDomain::lockStockTargets (connection-scoped). */
+    private static function releaseStockTargets(PDO $db, int $wid, int $cid, int $warehouseId, array $itemIds): void
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $itemIds), static fn($x) => $x > 0)));
+        sort($ids);
+        foreach ($ids as $itemId) {
+            $name = sprintf('o2c_res_%d_%d_%d_%d', $wid, $cid, $warehouseId, $itemId);
+            try {
+                $db->query('SELECT RELEASE_LOCK('.$db->quote($name).')');
+            } catch (Throwable $e) {
+                // best-effort; connection close also releases
+            }
+        }
+    }
+
     private static function onHandUnits(PDO $db, int $wid, int $cid, int $warehouseId, int $itemId): int
     {
         $st = $db->prepare("SELECT COALESCE(SUM(CASE WHEN direction='in' THEN quantity ELSE -quantity END),0) FROM acc_stock_movements WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='posted'");
@@ -270,6 +285,8 @@ final class WarehouseStockApi
         if ($owns) {
             $pdo->beginTransaction();
         }
+        $lockedWh = 0;
+        $lockedItems = [];
         try {
             $poId = (int)($args['production_order_id'] ?? 0);
             $warehouseId = (int)($args['warehouse_id'] ?? 0);
@@ -307,7 +324,9 @@ final class WarehouseStockApi
                 return $hit;
             }
 
-            OrderToCashDomain::lockStockTargets($pdo, $wid, $cid, $warehouseId, array_keys($parsed['by_item']));
+            $lockedWh = $warehouseId;
+            $lockedItems = array_keys($parsed['by_item']);
+            OrderToCashDomain::lockStockTargets($pdo, $wid, $cid, $warehouseId, $lockedItems);
 
             foreach ($parsed['by_item'] as $itemId => $need) {
                 $itemId = (int)$itemId;
@@ -357,6 +376,10 @@ final class WarehouseStockApi
                 $pdo->rollBack();
             }
             throw $e;
+        } finally {
+            if ($lockedWh > 0 && $lockedItems) {
+                self::releaseStockTargets($pdo, $wid, $cid, $lockedWh, $lockedItems);
+            }
         }
     }
 
@@ -378,6 +401,8 @@ final class WarehouseStockApi
         if ($owns) {
             $pdo->beginTransaction();
         }
+        $lockedWh = 0;
+        $lockedItems = [];
         try {
             $poId = (int)($args['production_order_id'] ?? 0);
             $warehouseId = (int)($args['warehouse_id'] ?? 0);
@@ -424,7 +449,9 @@ final class WarehouseStockApi
             $resLock->execute([$wid, $cid, self::SOURCE_PRODUCTION_ORDER, $poId]);
             $resLock->fetchAll();
 
-            OrderToCashDomain::lockStockTargets($pdo, $wid, $cid, $warehouseId, array_keys($parsed['by_item']));
+            $lockedWh = $warehouseId;
+            $lockedItems = array_keys($parsed['by_item']);
+            OrderToCashDomain::lockStockTargets($pdo, $wid, $cid, $warehouseId, $lockedItems);
 
             foreach ($parsed['by_item'] as $itemId => $need) {
                 $itemId = (int)$itemId;
@@ -497,6 +524,10 @@ final class WarehouseStockApi
                 $pdo->rollBack();
             }
             throw $e;
+        } finally {
+            if ($lockedWh > 0 && $lockedItems) {
+                self::releaseStockTargets($pdo, $wid, $cid, $lockedWh, $lockedItems);
+            }
         }
     }
 
@@ -517,6 +548,8 @@ final class WarehouseStockApi
         if ($owns) {
             $pdo->beginTransaction();
         }
+        $lockedWh = 0;
+        $lockedItems = [];
         try {
             $poId = (int)($args['production_order_id'] ?? 0);
             $warehouseId = (int)($args['warehouse_id'] ?? 0);
@@ -559,7 +592,9 @@ final class WarehouseStockApi
                 return $hit;
             }
 
-            OrderToCashDomain::lockStockTargets($pdo, $wid, $cid, $warehouseId, array_keys($parsed['by_item']));
+            $lockedWh = $warehouseId;
+            $lockedItems = array_keys($parsed['by_item']);
+            OrderToCashDomain::lockStockTargets($pdo, $wid, $cid, $warehouseId, $lockedItems);
 
             $notes = mb_substr(trim((string)($args['notes'] ?? '')), 0, 1000);
             $pdo->prepare("INSERT INTO erp_wms_stock_events (workspace_id,company_id,event_type,production_order_id,warehouse_id,movement_date,status,notes,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,'posted',?,?,NOW(),NOW())")
@@ -610,6 +645,10 @@ final class WarehouseStockApi
                 $pdo->rollBack();
             }
             throw $e;
+        } finally {
+            if ($lockedWh > 0 && $lockedItems) {
+                self::releaseStockTargets($pdo, $wid, $cid, $lockedWh, $lockedItems);
+            }
         }
     }
 
@@ -630,6 +669,8 @@ final class WarehouseStockApi
         if ($owns) {
             $pdo->beginTransaction();
         }
+        $lockedWh = 0;
+        $lockedItems = [];
         try {
             $lockCo = $pdo->prepare('SELECT id FROM companies WHERE workspace_id=? AND id=? AND active=1 LIMIT 1 FOR UPDATE');
             $lockCo->execute([$wid, $cid]);
@@ -691,7 +732,9 @@ final class WarehouseStockApi
             }
 
             $itemIds = array_values(array_unique(array_map(static fn($r) => (int)$r['item_id'], $rows)));
-            OrderToCashDomain::lockStockTargets($pdo, $wid, $cid, $warehouseId, $itemIds);
+            $lockedWh = $warehouseId;
+            $lockedItems = $itemIds;
+            OrderToCashDomain::lockStockTargets($pdo, $wid, $cid, $warehouseId, $lockedItems);
 
             // Nonnegative guard for reversing inbound (FG) or any net stock reduction.
             foreach ($rows as $r) {
@@ -778,6 +821,10 @@ final class WarehouseStockApi
                 $pdo->rollBack();
             }
             throw $e;
+        } finally {
+            if ($lockedWh > 0 && $lockedItems) {
+                self::releaseStockTargets($pdo, $wid, $cid, $lockedWh, $lockedItems);
+            }
         }
     }
 }
