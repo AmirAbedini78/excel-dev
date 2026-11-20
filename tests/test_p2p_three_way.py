@@ -13,8 +13,8 @@ def source(path):
 class ThreeWayPurchaseTests(unittest.TestCase):
     def test_version_and_migration_order(self):
         b = source('app/bootstrap.php')
-        self.assertIn("SCHEMA_VERSION = '10.18.0'", source('app/Core/RuntimeCache.php'))
-        self.assertIn("VERSION='10.18.0'", source('app/Core/ModuleRegistry.php'))
+        self.assertIn("SCHEMA_VERSION = '10.18.1'", source('app/Core/RuntimeCache.php'))
+        self.assertIn("VERSION='10.18.1'", source('app/Core/ModuleRegistry.php'))
         self.assertLess(b.index('AccountingSchema::migrate(pdo())'),b.index('PurchaseMatchingDomain::migrate(pdo())'))
         self.assertLess(b.index('EnterpriseDomain::migrate(pdo())'),b.index('PurchaseMatchingDomain::migrate(pdo())'))
 

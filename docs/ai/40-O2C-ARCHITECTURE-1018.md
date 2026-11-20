@@ -3,7 +3,8 @@
 **Status:** SOURCE_TESTED + DATABASE_TESTED (sandbox) — **NOT_DEPLOYED**  
 **Branch:** `feature/erp-o2c-v10.18.0`  
 **AR_POSTING:** `BLOCKED`  
-**SETTLEMENT:** `NOT_IMPLEMENTED`
+**SETTLEMENT:** `NOT_IMPLEMENTED`  
+**Hotfix:** see `docs/ai/42-O2C-HOTFIX-1018-1.md` (v10.18.1 partial invoice / billing isolation / locks / idempotency)
 
 ## Semantics (evidence-based)
 

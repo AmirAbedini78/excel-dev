@@ -27,10 +27,14 @@ class O2CContracts1018(unittest.TestCase):
         cls.hard = source("engine/commercial_hardening.py")
 
     def test_version_gate(self):
-        self.assertIn("SCHEMA_VERSION = '10.18.0'", self.runtime)
-        self.assertIn("VERSION='10.18.0'", self.registry)
-        self.assertIn("VERSION = '10.18.0-o2c'", self.o2c)
-        self.assertIn("VERSION='10.18.0'", self.sales)
+        self.assertIn("SCHEMA_VERSION = '10.18.1'", self.runtime)
+        self.assertIn("VERSION='10.18.1'", self.registry)
+        self.assertIn("VERSION = '10.18.1-o2c'", self.o2c)
+        self.assertIn("VERSION='10.18.1'", self.sales)
+        self.assertIn("uq_o2c_invoice_line", self.o2c)
+        self.assertIn("erp_o2c_stock_locks", self.o2c)
+        self.assertIn("BILLING_NOTE_MARKER", self.o2c)
+        self.assertIn("request_hash", self.o2c)
 
     def test_bootstrap_wires_o2c(self):
         self.assertIn("OrderToCashDomain.php", self.boot)
@@ -56,7 +60,8 @@ class O2CContracts1018(unittest.TestCase):
     def test_invoice_links_and_idempotency_tables(self):
         self.assertIn("erp_o2c_invoice_links", self.o2c)
         self.assertIn("erp_o2c_delivery_idempotency", self.o2c)
-        self.assertIn("uq_o2c_delivery_line", self.o2c)
+        self.assertIn("uq_o2c_invoice_line", self.o2c)
+        self.assertIn("erp_o2c_invoice_idempotency", self.o2c)
         self.assertIn("erp_o2c_delivery_idempotency", self.sales)
 
     def test_delivery_invoice_is_draft_only(self):
@@ -128,7 +133,7 @@ class O2CContracts1018(unittest.TestCase):
     def test_schema_gate_monotonic(self):
         m = re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)'", self.runtime)
         self.assertIsNotNone(m)
-        self.assertGreaterEqual(tuple(map(int, m.groups())), (10, 18, 0))
+        self.assertGreaterEqual(tuple(map(int, m.groups())), (10, 18, 1))
 
 
 if __name__ == "__main__":

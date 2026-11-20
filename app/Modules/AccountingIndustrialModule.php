@@ -323,10 +323,12 @@ final class AccountingIndustrialModule
         $st=pdo()->prepare("SELECT d.*,p.name party_name FROM acc_sales_docs d LEFT JOIN acc_parties p ON p.id=d.party_id WHERE d.id=? AND d.workspace_id=? AND d.company_id=? LIMIT 1");$st->execute([$id,$wid,$cid]);$d=$st->fetch();if(!$d)return;
         $st=pdo()->prepare("SELECT l.*,i.code item_code,i.name item_name,u.name unit_name FROM acc_sales_lines l LEFT JOIN acc_items i ON i.id=l.item_id LEFT JOIN acc_units u ON u.id=l.unit_id WHERE l.workspace_id=? AND l.sales_doc_id=? ORDER BY l.line_no");$st->execute([$wid,$id]);$lines=$st->fetchAll();
         $status=(string)$d['workflow_status'];$canManage=Tenant::can('accounting.sales.manage');
-        echo '<section class="card"><div class="section-title"><div><h2>'.h(self::salesTypeLabel($d['doc_type']).' '.$d['document_no']).'</h2><div class="muted">'.h($d['party_name']).' • '.h(AccountingRepository::faDate($d['document_date'])).' • '.h($status).' • O2C AR='.h(OrderToCashDomain::AR_POSTING).'</div></div><b>'.number_format((float)$d['net_total']).'</b></div>';
-        if($canManage && $status==='draft' && in_array((string)$d['doc_type'],['preinvoice','invoice'],true)){
+        $isBilling=OrderToCashDomain::isBillingDocument($wid,$cid,$id);
+        echo '<section class="card"><div class="section-title"><div><h2>'.h(self::salesTypeLabel($d['doc_type']).' '.$d['document_no']).'</h2><div class="muted">'.h($d['party_name']).' • '.h(AccountingRepository::faDate($d['document_date'])).' • '.h($status).($isBilling?' • صورتحساب O2C':'').' • O2C AR='.h(OrderToCashDomain::AR_POSTING).'</div></div><b>'.number_format((float)$d['net_total']).'</b></div>';
+        if($canManage && !$isBilling && $status==='draft' && in_array((string)$d['doc_type'],['preinvoice','invoice'],true)){
             echo '<form method="post" class="inline-form" onsubmit="return confirm(\'تأیید سفارش توسط شخص دوم؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_confirm_order"><input type="hidden" name="sales_doc_id" value="'.$id.'"><button class="btn primary">تأیید سفارش (Maker/Checker)</button></form>';
         }
+        if($isBilling)echo '<p class="muted">این سند فاکتور صورتحساب O2C است و برای رزرو/تحویل قابل استفاده نیست.</p>';
         echo '<div class="table-wrap"><table><thead><tr><th>#</th><th>کد</th><th>کالا/خدمت</th><th>مقدار</th><th>واحد</th><th>فی</th><th>تخفیف</th><th>مالیات</th><th>جمع</th></tr></thead><tbody>';
         foreach($lines as $l)echo '<tr><td>'.(int)$l['line_no'].'</td><td>'.h($l['item_code']).'</td><td>'.h($l['item_name']).'</td><td>'.h($l['quantity']).'</td><td>'.h($l['unit_name']).'</td><td>'.number_format((float)$l['unit_price']).'</td><td>'.number_format((float)$l['discount_amount']).'</td><td>'.number_format((float)$l['tax_amount']).'</td><td>'.number_format((float)$l['line_total']).'</td></tr>';echo '</tbody></table></div></section>';
         try{
@@ -338,7 +340,7 @@ final class AccountingIndustrialModule
             echo '<div class="table-wrap"><table><thead><tr><th>ردیف</th><th>کالا</th><th>سفارش</th><th>رزرو</th><th>تحویل</th><th>قابل فاکتور</th><th>فاکتور شده</th><th>باقیمانده</th></tr></thead><tbody>';
             foreach($f['rows'] as $r)echo '<tr><td>'.(int)$r['sales_line_id'].'</td><td>'.h(($r['item_code']??'').' '.($r['item_name']??'')).'</td><td>'.h($r['ordered_qty']).'</td><td>'.h($r['reserved_qty']).'</td><td>'.h($r['delivered_qty']).'</td><td>'.h($r['invoiceable_qty']).'</td><td>'.h($r['invoiced_qty']).'</td><td>'.h($r['outstanding_qty']).'</td></tr>';
             echo '</tbody></table></div>';
-            if($canManage && in_array($status,['approved','final'],true) && (float)$f['outstanding_quantity']>0){
+            if($canManage && !$isBilling && in_array($status,['approved','final'],true) && (float)$f['outstanding_quantity']>0){
                 echo '<details open><summary>رزرو موجودی</summary><form method="post">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_reserve"><input type="hidden" name="sales_doc_id" value="'.$id.'"><div class="grid-form compact">';
                 self::selectRows('warehouse_id','انبار *',$warehouses,true);
                 echo '</div><div class="table-wrap"><table><thead><tr><th>ردیف</th><th>کالا</th><th>باقیمانده</th><th>مقدار رزرو</th></tr></thead><tbody>';
@@ -361,8 +363,8 @@ final class AccountingIndustrialModule
                 echo '<div class="table-wrap"><table><thead><tr><th>تحویل</th><th>تاریخ</th><th>انبار</th><th>مقدار</th><th>COGS</th><th>وضعیت</th><th>فاکتور</th></tr></thead><tbody>';
                 foreach($deliveries as $x){
                     echo '<tr><td>'.h($x['delivery_no']).'</td><td>'.h(AccountingRepository::faDate($x['delivery_date'])).'</td><td>'.h($x['warehouse_name']).'</td><td>'.number_format((float)$x['delivered_quantity'],4).'</td><td>'.number_format((float)$x['cogs_irr']).'</td><td>'.h($x['status']).'</td><td>';
-                    if($canManage && in_array($status,['approved','final'],true) && (float)$f['invoiceable_quantity']>0){
-                        echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_invoice_delivery"><input type="hidden" name="sales_doc_id" value="'.$id.'"><input type="hidden" name="delivery_id" value="'.(int)$x['id'].'">';
+                    if($canManage && !$isBilling && in_array($status,['approved','final'],true) && (float)$f['invoiceable_quantity']>0){
+                        echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_invoice_delivery"><input type="hidden" name="sales_doc_id" value="'.$id.'"><input type="hidden" name="delivery_id" value="'.(int)$x['id'].'"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'">';
                         foreach($f['rows'] as $r){
                             $elig=(float)$r['invoiceable_qty'];if($elig<=0)continue;
                             echo '<input type="hidden" name="lines['.(int)$r['sales_line_id'].'][quantity]" value="'.h($r['invoiceable_qty']).'">';
@@ -734,8 +736,8 @@ final class AccountingIndustrialModule
         Tenant::requirePermission('accounting.sales.manage');
         $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
         $salesDocId=(int)($_POST['sales_doc_id']??0);$deliveryId=(int)($_POST['delivery_id']??0);
-        $raw=(array)($_POST['lines']??[]);
-        $out=OrderToCashDomain::createInvoiceFromDelivery($wid,$cid,$uid,$salesDocId,$deliveryId,$raw);
+        $raw=(array)($_POST['lines']??[]);$idem=trim((string)($_POST['idempotency_key']??''));
+        $out=OrderToCashDomain::createInvoiceFromDelivery($wid,$cid,$uid,$salesDocId,$deliveryId,$raw,$idem);
         self::audit('o2c.invoice.draft','acc_sales_docs',(int)$out['id'],'پیش‌نویس فاکتور O2C از تحویل',[
             'source_sales_doc_id'=>$salesDocId,'delivery_id'=>$deliveryId,'ar_posting'=>$out['ar_posting'],
         ]);
