@@ -1,7 +1,7 @@
 {
   "gate": "RC1_REQUIRED",
-  "started": "2026-11-20T15:55:11Z",
-  "finished": "2026-11-20T15:56:04Z",
+  "started": "2026-11-20T17:36:02Z",
+  "finished": "2026-11-20T17:37:10Z",
   "DATABASE_TESTED": true,
   "sandbox": {
     "expected_name": "erpsmart-p2p-mysql-test",
@@ -10,7 +10,7 @@
     "port": "3307",
     "php_image": "erpsmart-o2c-php:8.2",
     "relax": false,
-    "verified_at": "2026-11-20T15:55:11Z",
+    "verified_at": "2026-11-20T17:36:02Z",
     "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
     "status": "running",
     "image": "mysql:8.0",
