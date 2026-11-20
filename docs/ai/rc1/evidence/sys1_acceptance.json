@@ -1,11 +1,12 @@
 {
   "contract": "SYS-1",
   "status": "PASS",
-  "independent_class": "BLOCKED_EXTERNAL",
+  "independent_class": "PASS_EXISTING_EVIDENCE_VERIFIED",
+  "browser_class": "LOCAL_BROWSER_VERIFIED",
   "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
-  "scope": "profile_smoke_php_mysql",
-  "browser_agent_b": "BLOCKED_EXTERNAL",
-  "LOCAL_BROWSER_VERIFIED": false,
+  "scope": "profile_smoke_php_mysql + local authenticated browser UAT",
+  "browser_agent_b": "LOCAL_BROWSER_VERIFIED",
+  "LOCAL_BROWSER_VERIFIED": true,
   "STAGING_VERIFIED": false,
   "result": {
     "ok": true,
@@ -33,7 +34,7 @@
       "acc_items": true
     },
     "functional_currency": "IRR",
-    "note": "SYS-1 profile smoke only; full browser login deferred to T6/OPS browser walkthrough."
+    "note": "SYS-1 profile smoke PASS; Agent B local authenticated browser UAT LOCAL_BROWSER_VERIFIED (not STAGING_VERIFIED). See T6-BROWSER-NOTES.md + evidence/browser/."
   },
   "sandbox": {
     "expected_name": "erpsmart-p2p-mysql-test",
@@ -49,5 +50,5 @@
     "ok": true,
     "DATABASE_TESTED": true
   },
-  "residual": "Browser login walkthrough + full permission matrix still OPS/T6."
+  "residual": "STAGING_VERIFIED still open (no staging URL). Local browser closed. OPS-1 provenance remains separate P1."
 }

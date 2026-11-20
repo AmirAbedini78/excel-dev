@@ -1,20 +1,53 @@
 {
   "lane": "Agent B — Authenticated browser UAT",
-  "verified_at_utc": "2026-11-20T20:48:00Z",
-  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
-  "classification": "BLOCKED_EXTERNAL",
-  "LOCAL_BROWSER_VERIFIED": false,
+  "verified_at_utc": "2026-11-20T20:54:00Z",
+  "agent_head_sha": "d75dd6abb88086c34613472ace247d87369839d0",
+  "expected_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
+  "docs_main_sha_at_integration": "7455b7074c05c0ba63683fc8e435d3db6a069620",
+  "classification": "LOCAL_BROWSER_VERIFIED",
+  "LOCAL_BROWSER_VERIFIED": true,
   "STAGING_VERIFIED": false,
-  "screenshots": [],
-  "screenshot_dir": "docs/ai/rc1/screenshots",
-  "screenshot_dir_exists": false,
-  "blockers": [
-    "host PHP CLI missing",
-    "app/config.php absent (gitignored; required for HTTP bootstrap)",
-    "no docker-compose/HTTP serve path for index.php",
-    "Cursor browser tabs empty",
-    "no staging URL / seeded non-prod credentials"
+  "browser_tool": "cursor-ide-browser MCP",
+  "local_url": "http://127.0.0.1:8765",
+  "container": "erpsmart-rc1-browser-uat",
+  "disposable_db": "erpsmart_rc1_browser_uat",
+  "sandbox_mysql": {
+    "name": "erpsmart-p2p-mysql-test",
+    "id_prefix": "02eb215a87f6",
+    "port": 3307,
+    "server_uuid": "a73a8a84-e4bd-11f1-ad33-7e073bee960b"
+  },
+  "cases": {
+    "login_logout": "DONE",
+    "company_select": "DONE",
+    "trading_cockpit": "DONE",
+    "manufacturing_cockpit": "DONE",
+    "service_retail": "DONE",
+    "rtl": "DONE",
+    "jalali": "DONE",
+    "irr_toman": "DONE",
+    "isolation": "DONE",
+    "negative_perms": "DONE",
+    "csrf": "DONE_HTTP_419",
+    "errors_empty": "DONE",
+    "e2e_ui_action": "DONE",
+    "staging": "BLOCKED_NO_URL"
+  },
+  "screenshots": [
+    "docs/ai/rc1/evidence/browser/01-login-jalali-calendar.png",
+    "docs/ai/rc1/evidence/browser/02-trading-cockpit-rtl-empty.png",
+    "docs/ai/rc1/evidence/browser/03-manufacturing-cockpit-blocked.png",
+    "docs/ai/rc1/evidence/browser/04-service-empty.png",
+    "docs/ai/rc1/evidence/browser/05-retail-irr-profile.png",
+    "docs/ai/rc1/evidence/browser/06-company-isolation-calendar.png",
+    "docs/ai/rc1/evidence/browser/07-service-toman-profile.png",
+    "docs/ai/rc1/evidence/browser/08-logout-login.png",
+    "docs/ai/rc1/evidence/browser/09-limited-viewer-trading.png"
   ],
-  "sys1_recommendation": "BLOCKED_EXTERNAL",
+  "logs": [
+    "docs/ai/rc1/evidence/browser/csrf_probe.log",
+    "docs/ai/rc1/evidence/browser/session.log"
+  ],
+  "sys1_recommendation": "LOCAL_BROWSER_VERIFIED — do not claim STAGING_VERIFIED or redefine SYS-1 staging PASS",
   "evidence_notes": "docs/ai/rc1/T6-BROWSER-NOTES.md"
 }

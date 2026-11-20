@@ -1,0 +1,11 @@
+﻿RC1 LOCAL browser UAT session
+App: docker erpsmart-rc1-browser-uat php -S 0.0.0.0:8765 -t /app (image erpsmart-o2c-php:8.2)
+MySQL: erpsmart-p2p-mysql-test / 02eb215a87f6… / port 3307 / DB erpsmart_rc1_browser_uat
+Install: install.php -> admin rc1.uat@example.local (disposable)
+Modules enabled for UAT: production, service, p2p (via workspace_modules)
+Profiles seeded: company2 retail/IRR; company1 service/TOMAN
+Limited user: rc1.limited@example.local / role rc1_viewer (no accounting.purchase.manage)
+Tool: cursor-ide-browser MCP
+HEAD during run: 7455b7074c05c0ba63683fc8e435d3db6a069620
+Expected main SHA (campaign): 52fa7f12f465653d6e445d484f1a8dda48215f45
+Classification: LOCAL_BROWSER_VERIFIED (not STAGING_VERIFIED — no staging URL)

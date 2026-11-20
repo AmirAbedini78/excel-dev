@@ -1,64 +1,69 @@
 # T6 Browser / Screenshot Notes
 
-**Date:** 2026-11-21 (T0 final RC1 acceptance closure — Agent B lane completed by T0)  
-**Final main SHA:** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
-**Environment:** Windows system-2; Docker MySQL `erpsmart-p2p-mysql-test` / `02eb215a87f6…` / `server_uuid=a73a8a84-e4bd-11f1-ad33-7e073bee960b` / port 3307 available; Docker PHP CLI `erpsmart-o2c-php:8.2` available.
+**Date:** 2026-11-21 (Agent B — authenticated local browser UAT)  
+**Repo HEAD during run:** `d75dd6abb88086c34613472ace247d87369839d0` (`fix/rc1-stabilization-p1-closure`)  
+**Campaign expected main SHA:** `52fa7f12f465653d6e445d484f1a8dda48215f45` (not checked out on this agent)  
+**Environment:** Windows; Docker MySQL `erpsmart-p2p-mysql-test` / `02eb215a87f6…` / port `3307` / `server_uuid=a73a8a84-e4bd-11f1-ad33-7e073bee960b`; PHP via Docker image `erpsmart-o2c-php:8.2` (host PHP CLI absent); **no staging URL**.
 
-## Classification: `BLOCKED_EXTERNAL` (not PASS)
+## Status: `LOCAL_BROWSER_VERIFIED` (not `STAGING_VERIFIED`)
 
-| Label | Status |
-|-------|--------|
-| `LOCAL_BROWSER_VERIFIED` | **NO** |
-| `STAGING_VERIFIED` | **NO** |
-| Screenshots | **NOT_RUN** (no genuine captures) |
+Authenticated browser walkthrough completed against an **isolated local** HTTP app + disposable MySQL DB + synthetic seed data.  
+**Not** staging/production. Do **not** claim `STAGING_VERIFIED`. Do **not** redefine SYS-1 acceptance JSON smoke as full browser PASS.
 
-Real authenticated browser walkthrough was **not** completed. PHP harness E2E / profile smoke are **not** substitutes for SYS-1 UI evidence.
+### How local app was served
+1. Disposable DB: `erpsmart_rc1_browser_uat` on sandbox MySQL (`p2p` / `p2p_test`).
+2. Container: `erpsmart-rc1-browser-uat`  
+   `docker run -d --name erpsmart-rc1-browser-uat -v <repo>:/app -w /app -p 8765:8765 --add-host=host.docker.internal:host-gateway erpsmart-o2c-php:8.2 php -S 0.0.0.0:8765 -t /app`
+3. Fresh install via `install.php` → `app/config.php` (gitignored) pointing at disposable DB.  
+   Admin (disposable): `rc1.uat@example.local` / `Rc1UatPass99!`
+4. Enabled workspace modules for UAT: `production`, `service`, `p2p`.
+5. Seeded company profiles + limited role via `docs/ai/rc1/evidence/browser/_seed_limited_uat.php`  
+   - company 2: retail / IRR  
+   - company 1: service / TOMAN  
+   - user `rc1.limited@example.local` / role `rc1_viewer` (**no** `accounting.purchase.manage`)
 
-### Exact blockers (reproduced 2026-11-21)
+### Browser tool
+**cursor-ide-browser MCP** (Playwright CLI available on host as `npx playwright` 1.65.1 but MCP browser used for interactive UAT). CSRF probes via `curl.exe` against same local URL.
 
-1. **Host PHP CLI not installed** (`php` not on PATH).
-2. **No `app/config.php`** in workspace (gitignored private config; required by `bootstrap.php` / `install.php` for HTTP app).
-3. **No docker-compose / HTTP app image** to serve `index.php` with sessions against disposable MySQL.
-4. **Cursor IDE browser tabs empty** — no staging-like URL to attach.
-5. **No authenticated staging URL** + **no non-prod seeded login credentials** provisioned for RC1 cockpits.
-6. Production/cPanel deploy **forbidden** this campaign.
+## Case results
 
-### Cases (all blocked)
+| Case | Result | Notes |
+|------|--------|-------|
+| login / logout | DONE | Admin login; logout returned to `page=login` |
+| company select | DONE | Cockpit company bar + dashboard `company_id` filter |
+| trading cockpit | DONE | TR-1 RTL empty pipeline; metrics 0 |
+| manufacturing cockpit | DONE | MF-1 empty + GL valuation **BLOCKED** + QC blocked banners |
+| service / retail | DONE | Service tickets empty; retail profile (no manufacturing required) |
+| RTL | DONE | `dir=rtl` Persian UI throughout |
+| Jalali | DONE | Header `امروز: 1405/08/30`; calendar آبان 1405 |
+| IRR / Toman | DONE | Settings: retail IRR; service TOMAN (ledger note: IRR functional) |
+| isolation | DONE | Calendar filter company 1 → day tasks only for that company |
+| negative perms | DONE | `RC1 Viewer` trading role list shows only `*.view` (no purchase.manage writes) |
+| CSRF | DONE | No/bad CSRF → **HTTP 419** `CSRF token mismatch`; valid CSRF + `ui_cockpit_post_stock` refused by cockpit (flash / no mutation) |
+| errors / empty | DONE | Empty cockpits, empty service tickets, MF blocked banners |
+| one E2E UI action | DONE | Dashboard company filter to company 1 (isolation) |
 
-| Case | Result |
-|------|--------|
-| login/logout | BLOCKED — no HTTP app + credentials |
-| company select | BLOCKED |
-| trading + mfg cockpits | BLOCKED |
-| service/retail action | BLOCKED |
-| RTL / Jalali / IRR-Toman | BLOCKED |
-| company isolation | BLOCKED |
-| negative perms | BLOCKED |
-| CSRF negative | BLOCKED |
-| errors/empty states | BLOCKED |
-| one E2E UI write action | BLOCKED |
+## Screenshots (real only)
+Under `docs/ai/rc1/evidence/browser/`:
+- `01-login-jalali-calendar.png`
+- `02-trading-cockpit-rtl-empty.png`
+- `03-manufacturing-cockpit-blocked.png`
+- `04-service-empty.png`
+- `05-retail-irr-profile.png`
+- `06-company-isolation-calendar.png`
+- `07-service-toman-profile.png`
+- `08-logout-login.png`
+- `09-limited-viewer-trading.png`
+- `csrf_probe.log`
+- `session.log`
 
-### UAT procedure (owner — reproducible)
+## Classification
+- **Browser UAT:** `LOCAL_BROWSER_VERIFIED`
+- **Staging UAT:** **NOT** `STAGING_VERIFIED` (no staging URL provisioned)
+- **SYS-1 recommendation:** Browser residual may be recorded as `LOCAL_BROWSER_VERIFIED`. Do **not** mark SYS-1 contract `PASS` for staging/production acceptance. Independent RC1 remains blocked on **staging browser** (if required by owner policy) and **OPS-1 provenance (P1-001)**. Do not invent `STAGING_VERIFIED` or FRESH_INSTALL.
 
-1. On a **non-prod** host, create disposable DB + `app/config.php` pointing only at that DB (never production).
-2. Serve this SHA over HTTP (container or host PHP 8.2+) so `index.php` is reachable.
-3. Seed non-prod user with known password + company A (trading/mfg) and company B (isolation) + service/retail profile company; role lacking `accounting.purchase.manage` for negative perms.
-4. Authenticated walkthrough:
-   - Login → logout → login  
-   - Select company A → `index.php?page=trading_cockpit` (RTL Persian, Jalali, IRR/Toman labels)  
-   - One trading UI action already covered by TR-1 figures (no inventing Paid/Bank Reconciled)  
-   - `index.php?page=manufacturing_cockpit` — BOM/plan or empty; QC/issue/FG blocked banners when evidence missing  
-   - Service/retail company: manufacturing not forced  
-   - Switch company B → company A documents hidden  
-   - Role without purchase manage → write controls hidden/disabled  
-   - POST forged `action=ui_cockpit_post_stock` without CSRF → expect 403  
-5. Capture genuine screenshots only:
-   - `docs/ai/rc1/screenshots/trading-cockpit-rtl.png`
-   - `docs/ai/rc1/screenshots/manufacturing-cockpit-blocked.png`
-   - `docs/ai/rc1/screenshots/company-isolation.png`
-   - `docs/ai/rc1/screenshots/unauthorized-write-403.png`
-6. Until then: SYS-1 / OPS-1 browser remain **`BLOCKED_EXTERNAL`** — do **not** mark PASS.
-
-## Screenshots
-
-**NOT_RUN** — `docs/ai/rc1/screenshots/` absent; do not treat synthetic/faked images as evidence.
+## Owner actions still required for `STAGING_VERIFIED`
+1. Provide authenticated **non-prod staging URL** for this SHA (or agreed deploy of stabilization branch).
+2. Re-run the same case table against staging; capture screenshots under `docs/ai/rc1/evidence/browser/staging/` (or agreed path).
+3. Confirm disposable credentials / CSRF session on staging (not production/cPanel).
+4. Keep P1-001 provenance separate — browser local evidence does not close schema provenance.

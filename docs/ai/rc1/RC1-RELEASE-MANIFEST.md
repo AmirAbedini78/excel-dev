@@ -1,6 +1,6 @@
 # RC1 Release Manifest
 
-**Decision:** `RC1_BLOCKED` — engineering P1-005 closed on Final main via PR #32; **acceptance incomplete** (browser + provenance + GHA MySQL workflow)  
+**Decision:** `RC1_BLOCKED` — engineering P1-005 closed on Final main via PR #32; local browser **LOCAL_BROWSER_VERIFIED**; **acceptance incomplete** (provenance + GHA MySQL workflow; staging browser optional)  
 **Production deployment:** **NOT_DEPLOYED** (forbidden this campaign)
 
 ## Identity
@@ -24,7 +24,7 @@
 | TR-1 | PASS_REPRODUCED |
 | TR-2 | PASS_REPRODUCED |
 | MF-1 | PASS_REPRODUCED (lifecycle; WIP/FG valuation not fully supported; no auto GL) |
-| SYS-1 | BLOCKED_EXTERNAL |
+| SYS-1 | PASS_EXISTING_EVIDENCE_VERIFIED + LOCAL_BROWSER_VERIFIED (not STAGING_VERIFIED) |
 | OPS-1 | BLOCKED_EXTERNAL (restore eng CLOSED) |
 
 ## Runtime requirements
@@ -62,4 +62,4 @@
 
 ## Zero production deploy statement
 
-No cPanel, production DB, live bank/tax/Sayad, or production credentials were used. Staging UAT and commercial go-live require **explicit user action** after external blockers clear. Browser evidence remains **NOT_RUN** / `BLOCKED_EXTERNAL`.
+No cPanel, production DB, live bank/tax/Sayad, or production credentials were used. Local browser UAT is **LOCAL_BROWSER_VERIFIED** (`evidence/browser/`). Staging UAT and commercial go-live still require **explicit user action** after provenance + GHA blockers clear.
