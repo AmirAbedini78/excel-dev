@@ -1,7 +1,12 @@
 {
   "contract": "SYS-1",
   "status": "PASS",
+  "independent_class": "BLOCKED_EXTERNAL",
+  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
   "scope": "profile_smoke_php_mysql",
+  "browser_agent_b": "BLOCKED_EXTERNAL",
+  "LOCAL_BROWSER_VERIFIED": false,
+  "STAGING_VERIFIED": false,
   "result": {
     "ok": true,
     "service_initial": {

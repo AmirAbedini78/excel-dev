@@ -17,25 +17,38 @@
     "ok": true,
     "DATABASE_TESTED": true
   },
+  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
+  "pr_merged": 32,
+  "independent_verdict": "RC1_BLOCKED",
+  "production": "NOT_DEPLOYED",
   "contracts": {
     "TR-1": {
       "status": "PASS",
+      "independent_class": "PASS_REPRODUCED",
       "tests": 1
     },
     "TR-2": {
       "status": "PASS",
+      "independent_class": "PASS_REPRODUCED",
       "tests": 1
     },
     "MF-1": {
       "status": "PASS",
+      "independent_class": "PASS_REPRODUCED",
+      "valuation_note": "Lifecycle tested; WIP/FG valuation not fully supported; UNVALUED / GL BLOCKED; no unsupported auto GL",
       "tests": 1
     },
     "SYS-1": {
       "status": "PASS",
+      "independent_class": "BLOCKED_EXTERNAL",
+      "note": "Profile smoke only; browser AWAITING Agent B",
       "tests": 1
     },
     "OPS-1": {
       "status": "PASS",
+      "independent_class": "BLOCKED_EXTERNAL",
+      "restore_engineering": "CLOSED",
+      "note": "Provenance UNAVAILABLE; browser AWAITING Agent B; GHA AWAITING Agent A",
       "tests": 1
     }
   },
@@ -45,5 +58,13 @@
     "BLOCKED": 0,
     "SKIP": 0
   },
-  "commercial_mvp_gate_note": "scripts/release_gate.py + commercial-mvp-gate.yml validate source/runtime only; they do not prove PHP domain E2E on MySQL."
+  "independent_class_counts": {
+    "PASS_REPRODUCED": 3,
+    "BLOCKED_EXTERNAL": 2
+  },
+  "commercial_mvp_gate_note": "scripts/release_gate.py + commercial-mvp-gate.yml validate source/runtime only; they do not prove PHP domain E2E on MySQL.",
+  "peer_placeholders": {
+    "agent_a_gha": "AWAITING",
+    "agent_b_browser": "AWAITING"
+  }
 }

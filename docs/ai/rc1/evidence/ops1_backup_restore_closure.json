@@ -42,8 +42,14 @@
     "db": "erpsmart_rc1_ops1_rollback_drill",
     "tables_after": 32
   },
-  "production_schema_provenance": "UNAVAILABLE_NOT_DEPLOYED",
-  "fresh_install_claim": "CANDIDATE_ONLY — campaign confirms NOT_DEPLOYED; no anonymized staging/prod dump provided by owner; do not invent dump id",
+  "production_schema_provenance": "UNAVAILABLE",
+  "fresh_install_claim": "NOT_ASSUMED — NOT_DEPLOYED campaign label is not Path1 owner confirmation; do not invent FRESH_INSTALL or dump id",
   "status": "RESTORE_PASS_PROVENANCE_EXTERNAL",
-  "note": "Privileged dump/restore + migrate×2 + rollback restore PASS on disposable sandbox. Prior deployed schema provenance remains unavailable (NOT_DEPLOYED)."
+  "engineering_restore_class": "CLOSED",
+  "provenance_class": "BLOCKED_EXTERNAL",
+  "ops1_independent_class": "BLOCKED_EXTERNAL",
+  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
+  "reverify": "docs/ai/rc1/evidence/ops1_backup_restore_reverify.json",
+  "owner_actions": "docs/ai/rc1/OPS1-OWNER-ACTIONS.md",
+  "note": "Privileged dump/restore + migrate×2 + rollback restore PASS on disposable sandbox (eng CLOSED; Agent C reverify PASS). Prior deployed schema provenance remains UNAVAILABLE / BLOCKED_EXTERNAL."
 }

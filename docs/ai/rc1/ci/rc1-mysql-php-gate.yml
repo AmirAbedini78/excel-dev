@@ -1,6 +1,10 @@
 name: RC1 MySQL+PHP Gate
 
 # Mandatory for RC1 closure PRs — fails if E2E is skipped.
+# INSTALL: copy to .github/workflows/ ONLY after token has `workflow` scope.
+# Owner one-time auth if push of workflow files is rejected:
+#   gh auth refresh -h github.com -s workflow
+# Do NOT claim GHA E2E enabled until a real Actions run on this workflow is SUCCESS.
 on:
   pull_request:
   push:
@@ -31,7 +35,9 @@ jobs:
     env:
       RC1_ALLOW_ANY_MYSQL: "1"
       RC1_REQUIRED: "1"
-      O2C_DB_HOST: host.docker.internal
+      # Linux GHA: job + docker --network host see the service on 127.0.0.1.
+      # Do NOT use host.docker.internal here (often unresolved on ubuntu-latest).
+      O2C_DB_HOST: "127.0.0.1"
       O2C_DB_PORT: "3306"
       O2C_DB_USER: p2p
       O2C_DB_PASS: p2p_test

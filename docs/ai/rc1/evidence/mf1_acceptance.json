@@ -1,6 +1,9 @@
 {
   "contract": "MF-1",
   "status": "PASS",
+  "independent_class": "PASS_REPRODUCED",
+  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
+  "valuation_note": "Lifecycle tested; WIP/FG valuation not fully supported; cost_class UNVALUED; gl_valuation BLOCKED; no unsupported auto GL (T5-VALUATION-DECISION.md)",
   "sandbox": {
     "expected_name": "erpsmart-p2p-mysql-test",
     "expected_id_prefix": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",

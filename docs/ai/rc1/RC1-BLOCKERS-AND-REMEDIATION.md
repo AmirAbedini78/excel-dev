@@ -1,9 +1,20 @@
 # RC1 Blockers and Remediation
 
 **Independent open P0:** **0**  
-**Independent open P1 (blocking RC1 acceptance):** **2** (browser + provenance)  
-**Independent open P2:** **1** (PR #29 supersede pending close)  
-**Verdict impact:** `RC1_BLOCKED`
+**Independent open P1 (blocking RC1 acceptance):** **3** (browser + provenance + GHA MySQL workflow not installed)  
+**Independent open P2:** **0** (PR #29 superseded/closed after PR #32)  
+**Final `main` SHA:** `52fa7f12f465653d6e445d484f1a8dda48215f45` (PR #32 merged)  
+**Verdict impact:** `RC1_BLOCKED` — `NOT_DEPLOYED`
+
+## Contract class summary (independent)
+
+| Contract | Class | Residual |
+|----------|-------|----------|
+| TR-1 | **PASS_REPRODUCED** | none blocking |
+| TR-2 | **PASS_REPRODUCED** | none blocking |
+| MF-1 | **PASS_REPRODUCED** | Valid residual: WIP/FG valuation not fully supported; `UNVALUED` / GL `BLOCKED`; no auto GL |
+| SYS-1 | **BLOCKED_EXTERNAL** | Browser login+RTL missing (`T6-BROWSER-NOTES.md`) |
+| OPS-1 | **BLOCKED_EXTERNAL** | Provenance UNAVAILABLE; restore eng **CLOSED**; browser missing |
 
 ## P1 — Blocking (independent acceptance)
 
@@ -15,11 +26,15 @@
 | Contract | OPS-1 |
 | Class | **BLOCKED_EXTERNAL** |
 | Owner | User/staging ops |
-| Status | **OPEN** (engineering restore closed) |
+| Status | **OPEN** (engineering restore **CLOSED**) |
 
-**Repro:** No anonymized staging/prod dump id provided; campaign `NOT_DEPLOYED`.
+**Repro:** No anonymized staging/prod dump id provided; campaign `NOT_DEPLOYED`. Owner has **not** confirmed never-installed → provenance class **UNAVAILABLE** → **do not invent** `FRESH_INSTALL`.
 
-**Closure progress:** Disposable dump/restore with privileged admin **PASS** (`ops1_backup_restore_closure.json`); migrate×2 + rollback restore **PASS**. Provenance still unresolved — **do not invent** dump id; `FRESH_INSTALL` only after owner written confirmation that no prior deploy exists. Script may PASS under `RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED`; independent acceptance remains blocked until owner confirms.
+**Closure progress:** Disposable dump/restore with privileged admin **CLOSED** (`ops1_backup_restore_closure.json` + Agent C reverify `ops1_backup_restore_reverify.json`); migrate×2 + rollback restore **PASS**. Full Path1/Path2 wording: `OPS1-OWNER-ACTIONS.md`.
+
+**Owner Path1 (only if true):** paste exact English confirmation in `OPS1-OWNER-ACTIONS.md` (or FA equivalent: *«تأیید می‌کنم ERPSMART/excel-dev هرگز روی staging/production نصب/استقرار نشده؛ provenance می‌تواند FRESH_INSTALL باشد.»*).
+
+**Owner Path2:** authorized anonymized dump + SHA-256 + `RC1_PROD_SCHEMA_PROVENANCE=<id>` + disposable restore/migrate×2 rehearsal (checklist in `OPS1-OWNER-ACTIONS.md`).
 
 ### RC1-P1-004 — SYS-1 / OPS-1 browser login+RTL walkthrough missing
 
@@ -28,12 +43,27 @@
 | Severity | **P1** |
 | Contract | SYS-1 + OPS-1 |
 | Class | **BLOCKED_EXTERNAL** |
-| Owner | T6/T7 + user staging URL |
+| Owner | User staging-like / T6 |
 | Status | **OPEN** |
 
-**Evidence:** `T6-BROWSER-NOTES.md` — host PHP missing; no authenticated staging URL; screenshots **NOT_RUN**. Code/PHP harness E2E is **not** a substitute.
+**Evidence:** `T6-BROWSER-NOTES.md`, `agent_b_browser_status.json` — host PHP missing; no `app/config.php`; no HTTP serve; no staging URL/credentials; screenshots **NOT_RUN**. Classification: neither `LOCAL_BROWSER_VERIFIED` nor `STAGING_VERIFIED`.
 
-## P1 — Engineering closed on stabilization branch
+### RC1-P1-006 — Mandatory GHA MySQL+PHP workflow not installed on Actions
+
+| Field | Value |
+|-------|-------|
+| Severity | **P1** |
+| Contract | OPS-1 / CI gate |
+| Class | **BLOCKED_EXTERNAL** |
+| Owner | Repo owner (OAuth `workflow` scope) |
+| Status | **OPEN** |
+
+**Evidence:** `agent_a_gha_status.json`. `.github/workflows/` contains only `commercial-mvp-gate.yml`. Proposed mandatory gate lives at `docs/ai/rc1/ci/rc1-mysql-php-gate.yml` (Linux `O2C_DB_HOST=127.0.0.1`). Token scopes: `gist`, `read:org`, `repo` — **no `workflow`**.
+
+**One-time owner auth:** `gh auth refresh -h github.com -s workflow`  
+Then copy YAML → `.github/workflows/rc1-mysql-php-gate.yml`, push, and obtain a real Actions **SUCCESS** before claiming GHA E2E enabled. Local green ≠ GHA green. Real run today: **NOT_RUN**.
+
+## P1 — Engineering closed (on main via PR #32)
 
 ### RC1-P1-005 — Disposable backup restore + local release_gate E2E
 
@@ -43,20 +73,20 @@
 | Contract | OPS-1 / regression |
 | Class | **CLOSED** (engineering) |
 | Owner | T7 / T1 / T3 → T0 |
-| Status | **CLOSED** on `fix/rc1-stabilization-p1-closure` |
+| Status | **CLOSED** on Final main `52fa7f12…` (merged PR #32) |
 
 **Closed items:**
-1. Privileged dump/restore + migrate×2 + rollback restore — PASS (`ops1_backup_restore_closure.json`). Restricted `p2p` restore without grant — expected Access denied.
-2. `test_06_concurrent_issue_two_orders` — deterministic fixture (o1 reserved / o2 force-released); WMS error codes; locking read absorb from PR #29; on_hand A=4.
-3. `test_tr1_exact_figures_and_cockpit_timeline` — `P2P_SUPPLIER_INVOICE_DUPLICATE` code + UTF-8 subprocess decode for Persian UI (duplicate reject kept).
-4. Mandatory CI workflow `docs/ai/rc1/ci/rc1-mysql-php-gate.yml (copy into .github/workflows/)` + `scripts/rc1_ci_mysql_php_gate.py` (fails on skip; isolated MF/trading DBs).
-5. `release_gate.py` clears leftover `RC1_REQUIRED` so commercial discover does not race shared RC1 schemas.
+1. Privileged dump/restore + migrate×2 + rollback restore — PASS (`ops1_backup_restore_closure.json`).
+2. `test_06_concurrent_issue_two_orders` — deterministic; WMS codes; on_hand A=4.
+3. `test_tr1_exact_figures_and_cockpit_timeline` — `P2P_SUPPLIER_INVOICE_DUPLICATE` + Persian.
+4. Local `scripts/rc1_ci_mysql_php_gate.py` fail-on-skip + isolated MF/trading DBs.
+5. `release_gate.py` clears leftover `RC1_REQUIRED` for commercial discover.
 
 ## P2 — Non-blocking
 
-| ID | Issue | Owner |
-|----|-------|-------|
-| P2-002 | Open PR #29 late T1 vs release; CONFLICTING; superseded by stabilization | T0 close after merge |
+| ID | Issue | Owner | Status |
+|----|-------|-------|--------|
+| P2-002 | Late T1 PR #29 CONFLICTING vs release | T0 | **CLOSED** — superseded by PR #32; PR #29 closed |
 
 ## P0
 
@@ -64,5 +94,6 @@
 
 ## Valid residual product states (do not weaken)
 
-- MF valuation: `UNVALUED`
-- MF GL posting: `BLOCKED` / `GL_BLOCKED`
+- MF lifecycle: tested / PASS_REPRODUCED
+- MF valuation: WIP/FG **not fully supported** in RC1 — cost may be `UNVALUED`
+- MF GL posting: `BLOCKED` / `GL_BLOCKED` — **no unsupported automatic WIP/FG GL** (`T5-VALUATION-DECISION.md`)

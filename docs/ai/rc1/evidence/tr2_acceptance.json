@@ -1,6 +1,8 @@
 {
   "contract": "TR-2",
   "status": "PASS",
+  "independent_class": "PASS_REPRODUCED",
+  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
   "result": {
     "ok": true,
     "contract": "TR-2",

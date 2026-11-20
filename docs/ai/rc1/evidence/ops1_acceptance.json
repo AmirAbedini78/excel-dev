@@ -1,5 +1,10 @@
 {
   "contract": "OPS-1",
+  "independent_class": "BLOCKED_EXTERNAL",
+  "restore_engineering": "CLOSED",
+  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
+  "browser_agent_b": "BLOCKED_EXTERNAL",
+  "gha_agent_a": "NOT_RUN_NO_WORKFLOW_SCOPE",
   "sandbox": {
     "expected_name": "erpsmart-p2p-mysql-test",
     "expected_id_prefix": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
@@ -16,18 +21,19 @@
   },
   "disposable_migrate_idempotency": "COVERED_BY_TR1_TR2_RESET",
   "production_schema_provenance": "UNAVAILABLE_NOT_DEPLOYED",
+  "engineering_restore": "CLOSED",
   "probe": {
     "ok": true,
     "contract": "OPS-1",
     "repo_schema_version": "10.24.0-rc1",
-    "production_schema_provenance": "UNAVAILABLE_NOT_DEPLOYED",
+    "production_schema_provenance": "UNAVAILABLE",
     "status": "PROVENANCE_UNAVAILABLE_DOCUMENTED",
-    "note": "Never pretend repo main is production schema. UNAVAILABLE_* allowed only when staging/prod never deployed."
+    "note": "Never pretend repo main is production schema. Do not invent FRESH_INSTALL. Path1 requires owner confirmation; Path2 requires anonymized dump — see OPS1-OWNER-ACTIONS.md."
   },
   "cpanel_prod_deploy": "NOT_RUN",
-  "browser_walkthrough": "PENDING_T6",
+  "browser_walkthrough": "BLOCKED_EXTERNAL",
   "security_suite": "PENDING_PARTIAL",
-  "status": "PASS",
+  "status": "BLOCKED_EXTERNAL",
   "residual": "RC1-P1-001",
-  "reason": "Explicit UNAVAILABLE provenance: no prior deployed schema exists. Disposable migrate/reset covered by TR-1/TR-2/MF-1 harnesses. Staging dump rehearsal remains POST_RC1 before production deploy."
+  "reason": "Provenance class UNAVAILABLE / BLOCKED_EXTERNAL: no owner Path1 confirmation and no Path2 dump. Engineering disposable restore+migrate×2 CLOSED (ops1_backup_restore_closure.json / ops1_backup_restore_reverify.json). Script-level UNAVAILABLE_NOT_DEPLOYED PASS is not independent acceptance."
 }
