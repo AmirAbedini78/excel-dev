@@ -1,0 +1,2 @@
+*.sh text eol=lf
+tests/harness/*.sh text eol=lf

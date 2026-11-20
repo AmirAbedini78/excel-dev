@@ -1,18 +1,19 @@
 <?php
 /**
- * ERPSMART Sales Fulfillment domain (hardened in v10.18 O2C).
+ * ERPSMART Sales Fulfillment domain (hardened in v10.18.1 O2C).
  *
  * Invariants:
  * - canonical commercial documents remain acc_sales_docs / acc_sales_lines;
  * - reservations reuse acc_inventory_reservations and never move stock;
  * - delivery is the only operation that posts outbound stock movement;
- * - reserve/deliver require workflow approved|final (see OrderToCashDomain);
- * - landed-cost valuation is an overlay/read bridge; inbound history is never rewritten;
+ * - reserve/deliver require fulfillable approved|final orders (not O2C billing docs);
+ * - availability is revalidated after warehouse/item locks;
+ * - delivery idempotency is checked before quantity revalidation;
  * - no GL voucher or AR posting is performed by this domain.
  */
 final class SalesDomain
 {
-    public const VERSION='10.18.0';
+    public const VERSION='10.18.1';
 
     public static function migrate(PDO $pdo): void
     {
@@ -211,18 +212,44 @@ final class SalesDomain
         self::assertCompany($wid,$cid);$pdo=pdo();$owns=!$pdo->inTransaction();if($owns)$pdo->beginTransaction();
         try{
             $salesDocId=(int)($args['sales_doc_id']??0);
+            $warehouseId=(int)($args['warehouse_id']??0);
             $lock=$pdo->prepare("SELECT id FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? FOR UPDATE");
             $lock->execute([$salesDocId,$wid,$cid]);if(!$lock->fetchColumn())throw new RuntimeException('سند فروش پیدا نشد.');
-            $norm=self::normalizeReservationArgs($wid,$cid,$args);
-            // Serialize competing reservations for the same warehouse+items across orders.
-            $itemIds=array_map('intval',array_keys($norm['by_item']));
-            if($itemIds){
-                $in=implode(',',array_fill(0,count($itemIds),'?'));
-                $params=array_merge([$wid,$cid,(int)$norm['warehouse_id']],$itemIds);
-                $pdo->prepare("SELECT id FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id IN ($in) AND status='active' FOR UPDATE")->execute($params);
+            // Resolve item ids for lock targets without availability check.
+            $doc=self::document($wid,$cid,$salesDocId);
+            if(!$doc)throw new RuntimeException('سند فروش برای رزرو معتبر نیست.');
+            OrderToCashDomain::requireFulfillableStatus($doc);
+            self::assertOwned($wid,$cid,'acc_warehouses',$warehouseId);
+            $lineItems=[];
+            foreach((array)$doc['lines'] as $l)$lineItems[(int)$l['id']]=(int)$l['item_id'];
+            $itemIds=[];
+            foreach((array)($args['lines']??[]) as $raw){
+                $lid=(int)($raw['sales_line_id']??0);
+                if($lid>0&&isset($lineItems[$lid]))$itemIds[]=$lineItems[$lid];
             }
-            // Replace active reservations atomically under sales-doc lock (already held).
-            $pdo->prepare("DELETE FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND source_type='sales_doc' AND source_id=? AND status='active'")->execute([$wid,$cid,$salesDocId]);
+            // Lock warehouse/item targets BEFORE availability validation.
+            OrderToCashDomain::lockStockTargets($pdo,$wid,$cid,$warehouseId,$itemIds);
+            // Structural + outstanding validation (also reads available; rechecked below under locks).
+            $norm=self::normalizeReservationArgs($wid,$cid,$args);
+            // Hard availability revalidation under locks with locked reservation rows + stock sum.
+            foreach($norm['by_item'] as $itemId=>$amount){
+                $itemId=(int)$itemId;
+                $need=OrderToCashDomain::scaledQty((string)$amount);
+                $st=$pdo->prepare("SELECT id,quantity,source_id FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='active' FOR UPDATE");
+                $st->execute([$wid,$cid,$warehouseId,$itemId]);
+                $others=0;$own=0;
+                foreach($st->fetchAll() as $r){
+                    $q=OrderToCashDomain::scaledQty((string)$r['quantity']);
+                    if((int)$r['source_id']===$salesDocId)$own+=$q; else $others+=$q;
+                }
+                $st=$pdo->prepare("SELECT COALESCE(SUM(CASE WHEN direction='in' THEN quantity ELSE -quantity END),0) FROM acc_stock_movements WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='posted'");
+                $st->execute([$wid,$cid,$warehouseId,$itemId]);
+                $onHand=OrderToCashDomain::scaledQty((string)$st->fetchColumn());
+                $available=$onHand-$others; // exclude own (will be replaced)
+                if($need>$available)throw new RuntimeException('موجودی قابل رزرو برای یکی از اقلام کافی نیست.');
+            }
+            $pdo->prepare("DELETE FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND source_type='sales_doc' AND source_id=? AND warehouse_id=? AND status='active'")
+                ->execute([$wid,$cid,$salesDocId,(int)$norm['warehouse_id']]);
             $ins=$pdo->prepare("INSERT INTO acc_inventory_reservations (workspace_id,company_id,warehouse_id,item_id,source_type,source_id,quantity,status,notes,created_by,created_at,updated_at) VALUES (?,?,?,?,'sales_doc',?,?,'active',?,?,NOW(),NOW())");
             $qtyUnits=0;
             foreach($norm['by_item'] as $itemId=>$amount){
@@ -271,7 +298,12 @@ final class SalesDomain
         $byItemFixed=[];foreach($byItem as $iid=>$u)$byItemFixed[$iid]=OrderToCashDomain::fixedQty((int)$u);
         $idem=trim((string)($args['idempotency_key']??''));
         if($idem!==''&&!preg_match('/^[a-f0-9]{16,64}$/i',$idem))throw new RuntimeException('کلید idempotency نامعتبر است.');
-        return ['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'document_no'=>$doc['document_no'],'delivery_date'=>$date,'lines'=>$lines,'by_item'=>$byItemFixed,'notes'=>mb_substr(trim((string)($args['notes']??'')),0,1000),'idempotency_key'=>$idem];
+        $fpLines=[];foreach($lines as $l)$fpLines[(string)$l['sales_line_id']]=$l['quantity'];
+        ksort($fpLines);
+        $requestHash=OrderToCashDomain::requestHash([
+            'sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'delivery_date'=>$date,'lines'=>$fpLines,
+        ]);
+        return ['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'document_no'=>$doc['document_no'],'delivery_date'=>$date,'lines'=>$lines,'by_item'=>$byItemFixed,'notes'=>mb_substr(trim((string)($args['notes']??'')),0,1000),'idempotency_key'=>$idem,'request_hash'=>$requestHash];
     }
 
     private static function costBasis(int $wid,int $cid,int $itemId,int $warehouseId=0): array
@@ -311,24 +343,41 @@ final class SalesDomain
             $salesDocId=(int)($args['sales_doc_id']??0);
             $lock=$pdo->prepare("SELECT id FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? FOR UPDATE");
             $lock->execute([$salesDocId,$wid,$cid]);if(!$lock->fetchColumn())throw new RuntimeException('سند فروش پیدا نشد.');
+            $idemEarly=trim((string)($args['idempotency_key']??''));
+            // Idempotency lookup BEFORE quantity validation so retries after full delivery succeed.
+            if($idemEarly!==''){
+                if(!preg_match('/^[a-f0-9]{16,64}$/i',$idemEarly))throw new RuntimeException('کلید idempotency نامعتبر است.');
+                $q=$pdo->prepare('SELECT delivery_id,request_hash FROM erp_o2c_delivery_idempotency WHERE workspace_id=? AND company_id=? AND sales_doc_id=? AND idempotency_key=? LIMIT 1 FOR UPDATE');
+                $q->execute([$wid,$cid,$salesDocId,$idemEarly]);$ex=$q->fetch();
+                if($ex){
+                    // Fingerprint must match; compute lightweight hash from args without qty gates.
+                    $fpLines=[];
+                    foreach((array)($args['lines']??[]) as $raw){
+                        $lid=(int)($raw['sales_line_id']??0);
+                        if($lid<1)continue;
+                        $fpLines[(string)$lid]=OrderToCashDomain::fixedQty(OrderToCashDomain::scaledQty((string)($raw['quantity']??'0')));
+                    }
+                    ksort($fpLines);
+                    $wh=(int)($args['warehouse_id']??0);
+                    $date=AccountingRepository::date((string)($args['delivery_date']??''))?:date('Y-m-d');
+                    $hash=OrderToCashDomain::requestHash(['sales_doc_id'=>$salesDocId,'warehouse_id'=>$wh,'delivery_date'=>$date,'lines'=>$fpLines]);
+                    if((string)$ex['request_hash']!=='' && (string)$ex['request_hash']!==$hash)
+                        throw new RuntimeException('کلید idempotency با محتوای درخواست متفاوت استفاده شده است.');
+                    if($owns)$pdo->commit();
+                    return ['entity'=>'acc_sales_deliveries','id'=>(int)$ex['delivery_id'],'existing'=>true,'status'=>'posted','sales_doc_id'=>$salesDocId];
+                }
+            }
             $resLock=$pdo->prepare("SELECT id FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND source_type='sales_doc' AND source_id=? AND status='active' FOR UPDATE");
             $resLock->execute([$wid,$cid,$salesDocId]);$resLock->fetchAll();
             $norm=self::normalizeDeliveryArgs($wid,$cid,$args);
-            if($norm['idempotency_key']!==''){
-                $q=$pdo->prepare('SELECT delivery_id FROM erp_o2c_delivery_idempotency WHERE workspace_id=? AND company_id=? AND sales_doc_id=? AND idempotency_key=? LIMIT 1');
-                $q->execute([$wid,$cid,$salesDocId,$norm['idempotency_key']]);$existing=(int)$q->fetchColumn();
-                if($existing>0){
-                    if($owns)$pdo->commit();
-                    return ['entity'=>'acc_sales_deliveries','id'=>$existing,'existing'=>true,'status'=>'posted','sales_doc_id'=>$salesDocId];
-                }
-            }
+            OrderToCashDomain::lockStockTargets($pdo,$wid,$cid,(int)$norm['warehouse_id'],array_keys($norm['by_item']));
             $no='DLV-'.date('Ymd-His').'-'.strtoupper(bin2hex(random_bytes(2)));
             $pdo->prepare("INSERT INTO acc_sales_deliveries (workspace_id,company_id,delivery_no,delivery_date,sales_doc_id,warehouse_id,status,notes,created_by,posted_at,created_at,updated_at) VALUES (?,?,?,?,?,?,'posted',?,?,NOW(),NOW(),NOW())")
                 ->execute([$wid,$cid,$no,$norm['delivery_date'],$salesDocId,$norm['warehouse_id'],$norm['notes']?:null,$userId]);
             $deliveryId=(int)$pdo->lastInsertId();
             if($norm['idempotency_key']!==''){
-                $pdo->prepare('INSERT INTO erp_o2c_delivery_idempotency (workspace_id,company_id,sales_doc_id,idempotency_key,delivery_id,created_at) VALUES (?,?,?,?,?,NOW())')
-                    ->execute([$wid,$cid,$salesDocId,$norm['idempotency_key'],$deliveryId]);
+                $pdo->prepare('INSERT INTO erp_o2c_delivery_idempotency (workspace_id,company_id,sales_doc_id,idempotency_key,request_hash,delivery_id,created_at) VALUES (?,?,?,?,?,?,NOW())')
+                    ->execute([$wid,$cid,$salesDocId,$norm['idempotency_key'],$norm['request_hash'],$deliveryId]);
             }
             $ins=$pdo->prepare("INSERT INTO acc_sales_delivery_lines (workspace_id,delivery_id,sales_line_id,item_id,quantity,unit_cost_irr,cost_basis,line_cost_irr,created_at) VALUES (?,?,?,?,?,?,?,?,NOW())");
             $move=$pdo->prepare("INSERT INTO acc_stock_movements (workspace_id,company_id,movement_date,movement_type,direction,warehouse_id,item_id,quantity,unit_cost,source_type,source_id,source_line_id,reference_no,status,created_by,created_at) VALUES (?,?,?,'sales_delivery','out',?,?,?,?, 'sales_delivery',?,?,?,'posted',?,NOW())");

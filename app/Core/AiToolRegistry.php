@@ -71,7 +71,7 @@ final class AiToolRegistry
             ['name'=>'reserve_sales_stock','mode'=>'proposal','risk'=>'medium','description'=>'رزرو موجودی برای سند فروش تأییدشده؛ بدون تایید انسانی موجودی رزرو نمی‌شود','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
             ['name'=>'deliver_sales_stock','mode'=>'proposal','risk'=>'high','description'=>'تحویل موجودی رزروشده و ثبت خروج انبار؛ فقط پس از تایید انسانی','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'delivery_date'=>['type'=>'string'],'idempotency_key'=>['type'=>'string'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
             ['name'=>'create_o2c_invoice_from_delivery','mode'=>'proposal','risk'=>'medium','description'=>'صدور پیش‌نویس فاکتور مشتری از تحویل قطعی؛ AR/GL ثبت نمی‌شود','parameters'=>['type'=>'object','properties'=>[
-                'sales_doc_id'=>['type'=>'integer'],'delivery_id'=>['type'=>'integer'],
+                'sales_doc_id'=>['type'=>'integer'],'delivery_id'=>['type'=>'integer'],'idempotency_key'=>['type'=>'string'],
                 'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]
             ],'required'=>['sales_doc_id','delivery_id','lines']]],
             ['name'=>'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پیش‌نویس فاکتور فروش؛ بدون تایید انسانی ثبت نهایی نمی‌شود','parameters'=>['type'=>'object','properties'=>[
@@ -948,7 +948,8 @@ final class AiToolRegistry
             $lineId=(int)($l['sales_line_id']??0);if($lineId<1)continue;
             $rawLines[$lineId]=['quantity'=>(string)($l['quantity']??'0')];
         }
-        return OrderToCashDomain::createInvoiceFromDelivery($wid,$cid,$userId,$salesDocId,$deliveryId,$rawLines)+['entity'=>'acc_sales_docs'];
+        $idem=trim((string)($args['idempotency_key']??''));
+        return OrderToCashDomain::createInvoiceFromDelivery($wid,$cid,$userId,$salesDocId,$deliveryId,$rawLines,$idem)+['entity'=>'acc_sales_docs'];
     }
 
     private static function createSalesDraft(int $wid,int $cid,int $userId,array $args): array
