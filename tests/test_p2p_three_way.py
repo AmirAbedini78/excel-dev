@@ -1,4 +1,4 @@
-﻿"""v10.16 procurement matching source and safe boundary contracts."""
+"""v10.16 procurement matching source and safe boundary contracts."""
 import pathlib
 import shutil
 import subprocess

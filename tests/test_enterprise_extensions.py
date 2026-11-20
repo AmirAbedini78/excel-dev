@@ -1,4 +1,4 @@
-﻿"""Source-and-PHP behavioral release contracts for v10.15 enterprise extensions."""
+"""Source-and-PHP behavioral release contracts for v10.15 enterprise extensions."""
 from pathlib import Path
 import json, subprocess, unittest, shutil
 

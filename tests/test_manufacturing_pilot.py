@@ -1,4 +1,4 @@
-﻿"""Opt-in manufacturing planning and policy gates, no live database needed."""
+"""Opt-in manufacturing planning and policy gates, no live database needed."""
 from __future__ import annotations
 
 import shutil

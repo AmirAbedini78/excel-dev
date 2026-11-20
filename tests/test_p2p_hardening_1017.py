@@ -1,4 +1,4 @@
-﻿"""v10.17 P2P hardening source contracts: fail-closed policy, amend, entry-point guards."""
+"""v10.17 P2P hardening source contracts: fail-closed policy, amend, entry-point guards."""
 import pathlib
 import shutil
 import subprocess

@@ -1,4 +1,4 @@
-﻿"""ERP Suite 10.13 contract guards; not a substitute for MySQL integration tests."""
+"""ERP Suite 10.13 contract guards; not a substitute for MySQL integration tests."""
 import pathlib
 import re
 import shutil

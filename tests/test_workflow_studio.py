@@ -1,4 +1,4 @@
-﻿"""Workflow Studio source and behavior gate without live company data."""
+"""Workflow Studio source and behavior gate without live company data."""
 import re
 import shutil
 import subprocess

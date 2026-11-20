@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 import json,unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
