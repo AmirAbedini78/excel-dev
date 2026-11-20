@@ -10,6 +10,8 @@
 | Worktree | `C:\Projects\erp-worktrees\rc1-t4` |
 | Integration target | `release/erpsmart-rc1` |
 | Author | AmirHosein `<abedinnezhad1999@gmail.com>` |
+| Feature commit | `5d7194ad6740375c68b1133c9fa39bbb7af13fa4` |
+| PR | https://github.com/AmirAbedini78/excel-dev/pull/19 |
 
 ## Delivered
 ### Localization APIs
@@ -57,7 +59,7 @@ None. No schema version bump (T0-owned). Profile table already exists from 10.21
 | Suite | Command | Result |
 |---|---|---|
 | PHP unit | `docker run --rm -v <repo>:/app -w /app erpsmart-o2c-php:8.2 php tests/php_iran_localization_rc1_test.php` | **PASS** (`IRAN_LOCALIZATION_PHP=PASS`; leap/boundary/invalid dates; IRR/Toman; RTL doc; SYS-1) |
-| Python contracts | `python -m unittest tests.test_iran_localization_rc1` | run at handoff |
+| Python contracts | `python -m unittest tests.test_iran_localization_rc1 tests.test_iran_first_contracts_1021` | **PASS** (12 tests) |
 | DATABASE_TESTED | — | **none** (localization helpers are pure PHP; no disposable MySQL mutations) |
 
 Container identity (available, unused for T4 mutations): `erpsmart-p2p-mysql-test` / `02eb215a87f6…` / DB `erpsmart_p2p_test` per RC1 contracts.
