@@ -30,7 +30,7 @@
 | TR-2 | PASS | **PASS_REPRODUCED** | invoice/receipt settle to outstanding `0.00` |
 | MF-1 | PASS | **PASS_REPRODUCED** | Manufacturing **lifecycle** tested (BOM→plan→issue→FG/QC); concurrent issue 1+1; on_hand A=4; cost class `UNVALUED`; WIP/FG valuation **not fully supported**; GL posting `BLOCKED` — **no unsupported auto GL** (see `T5-VALUATION-DECISION.md`) |
 | SYS-1 | PASS (smoke) | **BLOCKED_EXTERNAL** | Profile/tenant smoke only; authenticated browser **NOT_RUN** (`T6-BROWSER-NOTES.md`, `agent_b_browser_status.json`) |
-| OPS-1 | PASS (script w/ UNAVAILABLE) | **BLOCKED_EXTERNAL** | Restore drill engineering **CLOSED**; provenance `UNAVAILABLE_NOT_DEPLOYED` — **no invented FRESH_INSTALL**; browser PENDING |
+| OPS-1 | PASS (script w/ UNAVAILABLE env) | **BLOCKED_EXTERNAL** | Eng restore **CLOSED** (+ reverify); provenance class **UNAVAILABLE** — **no invented FRESH_INSTALL**; Path1/Path2 in `OPS1-OWNER-ACTIONS.md`; browser PENDING |
 
 **Mandatory E2E skipped in acceptance gate:** **0** (under RC1_REQUIRED).
 
@@ -52,7 +52,7 @@
 |------|--------|--------|
 | Agent A — GHA | **DONE** | Workflow **not** under `.github/workflows/`; GHA E2E **not** enabled; one-time `gh auth refresh -h github.com -s workflow` |
 | Agent B — Browser | **DONE** | `BLOCKED_EXTERNAL`; no screenshots; exact blockers in `T6-BROWSER-NOTES.md` |
-| Agent C — Provenance | **DONE** | Provenance `UNAVAILABLE_NOT_DEPLOYED`; restore eng CLOSED; no FRESH_INSTALL |
+| Agent C — Provenance | **DONE** | Provenance **UNAVAILABLE** / `BLOCKED_EXTERNAL`; restore eng **CLOSED**; no FRESH_INSTALL; `OPS1-OWNER-ACTIONS.md` |
 | Agent D — Docs | **DONE** | Classes/SHA/MF wording reconciled; verdict remains `RC1_BLOCKED` |
 
 ### Evidence paths
@@ -63,8 +63,10 @@
 - `docs/ai/rc1/evidence/sys1_acceptance.json`
 - `docs/ai/rc1/evidence/ops1_acceptance.json`
 - `docs/ai/rc1/evidence/ops1_backup_restore_closure.json`
+- `docs/ai/rc1/evidence/ops1_backup_restore_reverify.json`
+- `docs/ai/rc1/evidence/agent_c_provenance_status.json`
+- `docs/ai/rc1/OPS1-OWNER-ACTIONS.md`
 - `docs/ai/rc1/evidence/agent_a_gha_status.json`
 - `docs/ai/rc1/evidence/agent_b_browser_status.json`
-- `docs/ai/rc1/evidence/agent_c_provenance_status.json`
 - `docs/ai/rc1/T6-BROWSER-NOTES.md`
 - `docs/ai/rc1/T5-VALUATION-DECISION.md`
