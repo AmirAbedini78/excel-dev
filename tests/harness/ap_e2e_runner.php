@@ -272,6 +272,7 @@ try {
                     (string)$line => ['quantity' => '4.0000', 'unit_price' => '1000.00'],
                 ]);
                 $dupError = null;
+                $dupErrorCode = null;
                 try {
                     PurchaseMatchingDomain::submit(10, 1, 1, $po, 'RC1-T-INV-4', '2026-11-20', [
                         (string)$line => ['quantity' => '1.0000', 'unit_price' => '1000.00'],
@@ -279,6 +280,9 @@ try {
                     $dupError = 'expected_duplicate_failure';
                 } catch (Throwable $e) {
                     $dupError = $e->getMessage();
+                    if (preg_match('/^([A-Z][A-Z0-9_]+):/u', $dupError, $m)) {
+                        $dupErrorCode = $m[1];
+                    }
                 }
                 $inv4 = (int)PurchaseMatchingDomain::approve(10, 1, 2, (int)$b1['id'])['id'];
                 $b2 = PurchaseMatchingDomain::submit(10, 1, 1, $po, 'RC1-T-INV-2', '2026-11-20', [
@@ -345,6 +349,7 @@ try {
                     'inv4' => $inv4,
                     'inv2' => $inv2,
                     'duplicate_error' => $dupError,
+                    'duplicate_error_code' => $dupErrorCode,
                     'outstanding_after_ap' => $outAfterAp,
                     'outstanding_after_pay1' => $outAfterPay1,
                     'inv4_after_pay1' => $inv4AfterPay1,

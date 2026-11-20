@@ -157,6 +157,15 @@ final class ManufacturingExecutionDomain
             created_at DATETIME NOT NULL,
             PRIMARY KEY (workspace_id,company_id,source_type,source_id,idempotency_key)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        // Ensure stock lock table exists before nested TX (CREATE TABLE would implicit-commit). PR #29 absorb.
+        $db->exec("CREATE TABLE IF NOT EXISTS erp_o2c_stock_locks (
+            workspace_id INT NOT NULL,
+            company_id INT NOT NULL,
+            warehouse_id BIGINT NOT NULL,
+            item_id BIGINT NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (workspace_id,company_id,warehouse_id,item_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     private static function assertCompany(int $wid, int $cid): void

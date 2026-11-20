@@ -1,7 +1,7 @@
 # RC1 Independent Verification
 
-**Auditor:** Independent RC1 closure (post–PR #30)  
-**Verified at (UTC):** 2026-11-20T17:15–17:35Z (gate) / docs 2026-11-20T17:45Z  
+**Auditor:** T0 RC1 P1 closure (local tools; prior agent region-denied)  
+**Verified at (UTC):** 2026-11-20 (closure)  
 **Decision:** `RC1_BLOCKED`  
 **Production:** `NOT_DEPLOYED`
 
@@ -9,75 +9,32 @@
 
 | Item | Verified value |
 |------|----------------|
-| `origin/main` SHA | `6da6a03796e1f89b5279424899adad5b5a23915c` |
-| Local `main` | Same SHA; dirty only with this audit’s evidence/docs before commit |
-| PR #30 | **MERGED** into `main` at `6da6a03…` ([PR](https://github.com/AmirAbedini78/excel-dev/pull/30)) |
-| PR #30 CI | Commercial MVP Gate / `release-gate` **SUCCESS** — run [44770790058](https://github.com/AmirAbedini78/excel-dev/actions/runs/44770790058) (PR) / push [44770814148](https://github.com/AmirAbedini78/excel-dev/actions/runs/44770814148) |
-| CI scope | **Source-only** (`scripts/release_gate.py`). Docker PHP+MySQL E2E **skipped** in Actions (no sandbox). Green CI ≠ RC1 acceptance. |
-| `release/erpsmart-rc1` tip | `829770317c98bc220440551af38ecb856c8a4104` (parent of merge #30) |
-| Prior handoff Final SHA | `c9f6eaf…` in `RC1-HANDOFF.md` — **stale** vs merge tip `6da6a03` |
+| Baseline `origin/main` SHA (pre-closure) | `2a30f5abac6291af2e6d3ccf1f87446335c84bad` |
+| Closure branch | `fix/rc1-stabilization-p1-closure` |
+| PR #30 | MERGED (product RC1) |
+| PR #31 | MERGED (audit docs) |
+| PR #29 | OPEN/CONFLICTING vs release — **superseded**; lock/DDL ideas absorbed; close after stabilization merge |
 | Schema constant | `RuntimeCache::SCHEMA_VERSION = 10.24.0-rc1` |
-| Central wiring | `app/bootstrap.php` calls `InventoryDomain::migrate`, `ManufacturingExecutionDomain::migrate`, `CostingAccountingDomain::migrate`; `InventoryDomain` delegates WMS API to `WarehouseStockApi` |
 
-## PR lineage (RC1 tasks)
+## Contract classification (closure re-check)
 
-| Task | PR | State | Notes |
-|------|-----|-------|-------|
-| T4 Iran-first | #19 | MERGED → release | Localization |
-| T6 Platform UX | #20 | MERGED → release | Cockpits |
-| T2 Warehouse | #21 | MERGED → release | Stock API |
-| T5 Financial/costing | #22 | MERGED → release | WIP/FG GL **BLOCKED** by design |
-| T1 Manufacturing | #23 | MERGED → release | MF-1 execution |
-| T3 Trading | #24 | MERGED → release | Cockpit / TR-1 traceability |
-| T7 QA gate | #25 | MERGED → release | `rc1_acceptance_gate.py` |
-| Dup T3/T7/T2 | #26/#27/#28 | CLOSED | Superseded |
-| Late T1 | #29 | **OPEN** vs `release/erpsmart-rc1` | Extra commits not required for gate PASS on main; leave open/out of scope |
-| Release → main | #30 | MERGED | RC1 bundle |
+| Contract | Classification | Evidence |
+|----------|----------------|----------|
+| TR-1 | **PASS_REPRODUCED** | trading cockpit E2E + duplicate code `P2P_SUPPLIER_INVOICE_DUPLICATE`; balances unchanged |
+| TR-2 | **PASS_REPRODUCED** | `rc1_acceptance_gate` TR-2 PASS |
+| MF-1 | **PASS_REPRODUCED** | concurrent issue test_06 → 1 ok + 1 reservation/insufficient reject; on_hand A=4; valuation **UNVALUED** / GL **BLOCKED** |
+| SYS-1 | **BLOCKED_EXTERNAL** | profile smoke script PASS only; **no** authenticated browser; `T6-BROWSER-NOTES.md` |
+| OPS-1 | **BLOCKED_EXTERNAL** (partial engineering PASS) | restore/migrate×2 PASS; provenance UNAVAILABLE_NOT_DEPLOYED; browser NOT_RUN |
 
-## Independent acceptance re-run (mandatory gate)
+## Local mandatory gates (this closure)
 
-Command (local, disposable sandbox):
-
-```text
-RC1_REQUIRED=1
-O2C_DB_HOST=host.docker.internal O2C_DB_PORT=3307
-O2C_DB_USER=p2p O2C_DB_PASS=*** O2C_DB_NAME=erpsmart_rc1_test
-RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED
-python scripts/rc1_acceptance_gate.py --strict-pass
-```
-
-| Contract | Gate script | Independent classification |
-|----------|-------------|----------------------------|
-| TR-1 | PASS (exit 0) | **PASS_REPRODUCED** — AP 6000 → settle 0; stock_movements=1; receipt_gl=0 |
-| TR-2 | PASS | **PASS_REPRODUCED** — invoice 1000; receipts 400+600; outstanding 0 |
-| MF-1 | PASS | **PASS_REPRODUCED** — FG/issue/QC; `cost_class=UNVALUED`; `gl_posting=BLOCKED` |
-| SYS-1 | PASS (profile smoke) | **FAIL_REPRODUCED** vs strict matrix — no real login/UI+business action |
-| OPS-1 | PASS (env UNAVAILABLE) | **BLOCKED_EXTERNAL** — provenance unresolved; browser NOT_RUN; restore incomplete |
-
-Sandbox identity: container `erpsmart-p2p-mysql-test` id `02eb215a87f6…`, MySQL `server_uuid=a73a8a84-e4bd-11f1-ad33-7e073bee960b`, port `3307`, PHP image `erpsmart-o2c-php:8.2`.
-
-## Local full `release_gate.py` (not CI)
-
-`python scripts/release_gate.py --require-php --require-node` on HEAD → **FAILED** (453 tests, 2 failures, ~923s):
-
-1. `test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_06_concurrent_issue_two_orders` — both issues rejected (reservation-scoped); expected 1 success / 1 insufficient.
-2. `test_trading_cockpit_php_e2e_rc1…test_tr1_exact_figures_and_cockpit_timeline` — Persian substring assert mismatch (`تکراری` / yeh encoding) despite duplicate error payload present.
-
-CI does not execute these Docker E2E cases.
-
-## Discrepancies vs prior RC1_ACCEPTED claim
-
-1. Prior campaign marked OPS-1 **PASS** with `UNAVAILABLE_NOT_DEPLOYED` — **redefines DONE**; independent audit rejects that for OPS-1 completeness.
-2. SYS-1 documented residual: browser deferred — fails strict SYS-1 (login/UI).
-3. Six durable deliverables were incomplete before this audit; this verification adds them.
-4. Handoff Final SHA not equal to `origin/main` merge SHA.
-
-## Architecture spot-check
-
-- No parallel stock/GL ledgers introduced for RC1 paths reviewed.
-- T5 costing: WIP/FG automatic GL remains **BLOCKED** / UNVALUED when evidence missing — correct non-claim.
-- T2 stock API wired through `InventoryDomain` + bootstrap migrate.
+| Command | Result |
+|---------|--------|
+| `python scripts/rc1_ci_mysql_php_gate.py` | **PASS** (MF concurrent + trading TR-1; isolated DBs) |
+| `python scripts/rc1_acceptance_gate.py --strict-pass` | script **PASS=5** under `RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED` — independent acceptance still **BLOCKED** on SYS-1 browser + provenance honesty |
+| `python scripts/release_gate.py --require-php --require-node` | unittest PASS (453, skipped=13); Docker PHP lint + Node required on tip |
+| Disposable sandbox | `erpsmart-p2p-mysql-test` / `02eb215a87f6…` / `server_uuid=a73a8a84-e4bd-11f1-ad33-7e073bee960b` / port 3307 |
 
 ## Verdict rationale
 
-Engineering domain scenarios TR-1/TR-2/MF-1 **reproduce** on disposable MySQL. Mandatory OPS-1 (deployed-schema provenance + staging browser + complete restore drill) and SYS-1 UI login **do not**. Therefore **`RC1_BLOCKED`**, `NOT_DEPLOYED`.
+Engineering P1-005 (MF concurrency, trading Unicode/code, restore drill, CI MySQL gate) **closed**. Mandatory SYS-1 browser + OPS-1 deployed-schema provenance **remain external**. Therefore **`RC1_BLOCKED`**, `NOT_DEPLOYED`. Do **not** accept on source-only Commercial MVP CI alone.

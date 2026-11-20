@@ -294,8 +294,9 @@ try {
 
         case 'concurrent_issue_prepare':
             mf_e2e_reset_schema();
-            // Physical stock of A = 10; two released orders each will try to issue 6 of A concurrently.
-            // Order1 gets a real reservation; order2 is force-released without reservation so both compete on free stock.
+            // WMS issueMaterial is reservation-scoped (own production_order reserve only).
+            // Defined outcome: o1 released+reserved (6A of 10); o2 force-released WITHOUT reserve.
+            // Concurrent issue → exactly one success (o1) + one reject (o2); on_hand A → 4; no negative stock.
             mf_seed_stock(2, '10.0000', 1, 1, '100.00');
             mf_seed_stock(3, '20.0000', 1, 1, '50.00');
             $bomId = mf_create_approved_bom();
@@ -307,11 +308,11 @@ try {
             ]);
             ManufacturingExecutionDomain::approveOrder(10, 1, 2, (int)$o1['id']);
             ManufacturingExecutionDomain::approveOrder(10, 1, 2, (int)$o2['id']);
-            // Force both to released WITHOUT reservations so they race on the same free on_hand (10).
-            // Real release+reserve would serialize demand; concurrent issue needs shared free stock contention.
+            ManufacturingExecutionDomain::releaseOrder(10, 1, 1, (int)$o1['id'], hash('sha256', 'conc-rel-o1'));
+            // o2 cannot full-reserve 6A after o1 holds 6 of 10 — force status only (no reservation rows).
             pdo()->prepare("UPDATE erp_mf_production_orders SET status='released',released_at=NOW(),updated_at=NOW()
-                WHERE workspace_id=10 AND company_id=1 AND id IN (?,?)")
-                ->execute([(int)$o1['id'], (int)$o2['id']]);
+                WHERE workspace_id=10 AND company_id=1 AND id=?")
+                ->execute([(int)$o2['id']]);
             $s1 = ManufacturingExecutionDomain::getOrder(10, 1, (int)$o1['id'])['bom_snapshot'];
             $s2 = ManufacturingExecutionDomain::getOrder(10, 1, (int)$o2['id'])['bom_snapshot'];
             $pack = static function (array $snap): array {
@@ -325,12 +326,15 @@ try {
                 }
                 return $out;
             };
+            $resCount = (int)pdo()->query("SELECT COUNT(*) FROM acc_inventory_reservations WHERE workspace_id=10 AND company_id=1 AND status='active'")->fetchColumn();
             mf_json_out([
                 'ok' => true,
                 'order1' => (int)$o1['id'],
                 'order2' => (int)$o2['id'],
                 'lines1' => $pack($s1),
                 'lines2' => $pack($s2),
+                'active_reservations' => $resCount,
+                'fixture' => 'o1_reserved_o2_force_released',
             ]);
             break;
 
@@ -339,9 +343,24 @@ try {
             $lines = $args['lines'] ?? [];
             try {
                 $out = ManufacturingExecutionDomain::issueMaterials(10, 1, 1, $oid, $lines, (string)$args['idempotency_key']);
-                mf_json_out(['ok' => true, 'result' => $out]);
+                mf_json_out([
+                    'ok' => true,
+                    'result' => $out,
+                    'on_hand_a' => mf_on_hand(2),
+                    'issue_moves' => (int)pdo()->query("SELECT COUNT(*) FROM acc_stock_movements WHERE workspace_id=10 AND company_id=1 AND movement_type='production_issue' AND status='posted'")->fetchColumn(),
+                ]);
             } catch (Throwable $e) {
-                mf_json_out(['ok' => false, 'error' => $e->getMessage()]);
+                $msg = $e->getMessage();
+                $code = null;
+                if (preg_match('/^([A-Z][A-Z0-9_]+):/', $msg, $m)) {
+                    $code = $m[1];
+                }
+                mf_json_out([
+                    'ok' => false,
+                    'error' => $msg,
+                    'error_code' => $code,
+                    'on_hand_a' => mf_on_hand(2),
+                ]);
             }
             break;
 

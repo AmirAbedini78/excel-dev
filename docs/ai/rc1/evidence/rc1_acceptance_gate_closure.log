@@ -1,0 +1,63 @@
+ERPSMART ù RC1 REQUIRED acceptance gate
+NOTE: Commercial MVP release_gate.py is source-only and insufficient for RC1.
+[sandbox] PASS container=02eb215a87f6 db=erpsmart_rc1_test
+
+=== TR-1 (tests.rc1.test_rc1_tr1_acceptance) ===
+python : test_tr1_po10_gr6_ap6000_pay_settle 
+(tests.rc1.test_rc1_tr1_acceptance.Rc1Tr1Acceptance.test_tr1_po10_gr6_ap6000_pay_settle) ... ok
+At C:\Users\h\AppData\Local\Temp\ps-script-0438beb0-e3ed-4d04-a530-ab1701b717e0.ps1:92 char:1
++ python scripts/rc1_acceptance_gate.py --strict-pass 2>&1 | Tee-Object ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test_tr1_po10_g..._settle) ... ok:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+----------------------------------------------------------------------
+Ran 1 test in 10.896s
+
+OK
+[TR-1] PASS
+
+=== TR-2 (tests.rc1.test_rc1_tr2_acceptance) ===
+test_tr2_sales_ar_400_600_settle (tests.rc1.test_rc1_tr2_acceptance.Rc1Tr2Acceptance.test_tr2_sales_ar_400_600_settle) 
+... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 11.262s
+
+OK
+[TR-2] PASS
+
+=== MF-1 (tests.rc1.test_rc1_mf1_acceptance) ===
+test_mf1_capability_and_php_e2e (tests.rc1.test_rc1_mf1_acceptance.Rc1Mf1Acceptance.test_mf1_capability_and_php_e2e) 
+... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 13.576s
+
+OK
+[MF-1] PASS
+
+=== SYS-1 (tests.rc1.test_rc1_sys1_acceptance) ===
+test_sys1_service_retail_profile_smoke 
+(tests.rc1.test_rc1_sys1_acceptance.Rc1Sys1Acceptance.test_sys1_service_retail_profile_smoke) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 11.460s
+
+OK
+[SYS-1] PASS
+
+=== OPS-1 (tests.rc1.test_rc1_ops1_acceptance) ===
+test_ops1_sandbox_and_provenance_gate 
+(tests.rc1.test_rc1_ops1_acceptance.Rc1Ops1Acceptance.test_ops1_sandbox_and_provenance_gate) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.057s
+
+OK
+[OPS-1] PASS
+
+Evidence: C:\Projects\excel-dev\docs\ai\rc1\evidence\rc1_gate_report.json
+Summary: PASS=5 FAIL=0 BLOCKED=0 SKIP=0
+RC1 GATE PASS ù all five acceptance contracts PASS.

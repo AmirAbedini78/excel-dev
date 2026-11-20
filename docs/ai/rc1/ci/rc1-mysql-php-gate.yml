@@ -1,0 +1,63 @@
+name: RC1 MySQL+PHP Gate
+
+# Mandatory for RC1 closure PRs — fails if E2E is skipped.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  rc1-mysql-php:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: p2p_test_root
+          MYSQL_DATABASE: erpsmart_mf1_test
+          MYSQL_USER: p2p
+          MYSQL_PASSWORD: p2p_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pp2p_test_root"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      RC1_ALLOW_ANY_MYSQL: "1"
+      RC1_REQUIRED: "1"
+      O2C_DB_HOST: host.docker.internal
+      O2C_DB_PORT: "3306"
+      O2C_DB_USER: p2p
+      O2C_DB_PASS: p2p_test
+      O2C_DB_NAME: erpsmart_mf1_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pymysql
+        run: pip install pymysql
+      - name: Build erpsmart-o2c-php:8.2
+        run: docker build -t erpsmart-o2c-php:8.2 -f tests/harness/Dockerfile.o2c-php tests/harness
+      - name: Provision disposable schemas
+        run: |
+          docker run --rm --network host mysql:8.0 \
+            mysqladmin ping -h127.0.0.1 -P3306 -uroot -pp2p_test_root --wait=60
+          docker run --rm --network host mysql:8.0 \
+            mysql -h127.0.0.1 -P3306 -uroot -pp2p_test_root -e "
+              CREATE DATABASE IF NOT EXISTS erpsmart_mf1_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+              CREATE DATABASE IF NOT EXISTS erpsmart_t3_trading_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+              GRANT ALL PRIVILEGES ON erpsmart_mf1_test.* TO 'p2p'@'%';
+              GRANT ALL PRIVILEGES ON erpsmart_t3_trading_test.* TO 'p2p'@'%';
+              FLUSH PRIVILEGES;
+            "
+      - name: RC1 mandatory PHP+MySQL gate (fail on skip)
+        run: |
+          export O2C_DB_NAME=erpsmart_mf1_test
+          python scripts/rc1_ci_mysql_php_gate.py

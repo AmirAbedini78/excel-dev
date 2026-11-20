@@ -20,11 +20,11 @@
   "sandbox": {
     "expected_name": "erpsmart-p2p-mysql-test",
     "expected_id_prefix": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
-    "database": "erpsmart_rc1_test",
+    "database": "erpsmart_rc1_tr1_test",
     "port": "3307",
     "php_image": "erpsmart-o2c-php:8.2",
     "relax": false,
-    "verified_at": "2026-11-20T17:38:04Z",
+    "verified_at": "2026-11-20T19:15:11Z",
     "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
     "status": "running",
     "image": "mysql:8.0",

@@ -79,14 +79,59 @@ def secret_scan(root: Path) -> int:
     return count
 
 
+def _docker_php_image() -> str | None:
+    try:
+        completed = subprocess.run(
+            ["docker", "image", "inspect", "erpsmart-o2c-php:8.2"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        return "erpsmart-o2c-php:8.2" if completed.returncode == 0 else None
+    except Exception:
+        return None
+
+
 def php_lint(root: Path, required: bool) -> tuple[int, str]:
     php = shutil.which("php")
+    paths = list(files(root, {".php"}))
     if not php:
+        image = _docker_php_image()
+        if image:
+            # Batch lint inside disposable PHP image (Windows hosts often lack php.exe).
+            # LF-only list + shell script avoids CRLF / PowerShell quoting hazards.
+            lint_list = root / ".rc1_php_lint_list.txt"
+            lint_list.write_bytes(
+                ("\n".join(p.relative_to(root).as_posix() for p in paths) + "\n").encode("utf-8")
+            )
+            mount = str(root).replace("\\", "/")
+            try:
+                run(
+                    [
+                        "docker",
+                        "run",
+                        "--rm",
+                        "-v",
+                        f"{mount}:/app",
+                        "-w",
+                        "/app",
+                        image,
+                        "bash",
+                        "scripts/rc1_docker_php_lint.sh",
+                    ],
+                    root,
+                )
+            finally:
+                try:
+                    lint_list.unlink()
+                except OSError:
+                    pass
+            return len(paths), "PASS (docker erpsmart-o2c-php:8.2)"
         if required:
             raise RuntimeError("php_cli_required_but_missing")
         return 0, "SKIPPED (php CLI unavailable; CI/cPanel lint is still mandatory)"
     count = 0
-    for path in files(root, {".php"}):
+    for path in paths:
         run([php, "-l", str(path)], root)
         count += 1
     behavior_test = root / "tests/php_live_observability_test.php"
@@ -128,6 +173,10 @@ def main() -> int:
 
     env = dict(os.environ)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    # Commercial MVP gate must not enable RC1 acceptance modules: those require
+    # per-contract disposable schemas (see scripts/rc1_acceptance_gate.py). A leftover
+    # RC1_REQUIRED=1 in the shell causes shared-DB races and false FAIL under discover.
+    env.pop("RC1_REQUIRED", None)
     run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py", "-v"], root, env)
     print("[4/6] Regression + contract suite: PASS")
 
@@ -135,7 +184,9 @@ def main() -> int:
     print(f"[5/6] PHP lint: {php_state}" + (f" ({php_count} files)" if php_count else ""))
     js_count, js_state = javascript_syntax(root, args.require_node)
     print(f"[6/6] JavaScript syntax: {js_state}" + (f" ({js_count} files)" if js_count else ""))
-    if php_state == "PASS" and js_state == "PASS":
+    php_ok = php_state == "PASS" or php_state.startswith("PASS ")
+    js_ok = js_state == "PASS" or js_state.startswith("PASS ")
+    if php_ok and js_ok:
         print("ALL SOURCE VALIDATION GATES PASSED. Model/product live acceptance is separate.")
     else:
         print("AVAILABLE LOCAL GATES PASSED. FULL SOURCE VALIDATION INCOMPLETE: see skipped runtimes above.")
