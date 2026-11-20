@@ -34,6 +34,11 @@ final class AccountingIndustrialModule
         if($action==='acc_ar_receipt_reverse')self::arReceiptReverse();
         if($action==='acc_ar_set_cash_gl')self::arSetCashGl();
         if($action==='acc_ar_set_cash_account_gl')self::arSetCashAccountGl();
+        if($action==='acc_ap_set_map')self::apSetMap();
+        if($action==='acc_ap_validate_invoice')self::apValidateInvoice();
+        if($action==='acc_ap_approve_invoice')self::apApproveInvoice();
+        if($action==='acc_ap_post_invoice')self::apPostInvoice();
+        if($action==='acc_ap_reverse_invoice')self::apReverseInvoice();
         if($action==='acc_save_voucher')self::saveVoucher();
         if($action==='acc_delete_voucher')self::deleteVoucher();
         if($action==='acc_save_bom')self::saveBom();
@@ -297,11 +302,31 @@ final class AccountingIndustrialModule
 
     private static function purchaseView(int $id): void
     {
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();
         $st=pdo()->prepare("SELECT d.*,p.name party_name FROM acc_purchase_docs d LEFT JOIN acc_parties p ON p.id=d.party_id WHERE d.id=? AND d.workspace_id=? AND d.company_id=?");
-        $st->execute([$id,Tenant::id(),AccountingRepository::companyId()]);$d=$st->fetch();if(!$d)return;
-        $st=pdo()->prepare("SELECT l.*,i.code item_code,i.name item_name,u.name unit_name FROM acc_purchase_lines l LEFT JOIN acc_items i ON i.id=l.item_id LEFT JOIN acc_units u ON u.id=l.unit_id WHERE l.workspace_id=? AND l.purchase_doc_id=? ORDER BY l.line_no");
-        $st->execute([Tenant::id(),$id]);$lines=$st->fetchAll();
-        echo '<section class="card"><div class="section-title"><div><h2>'.h(self::docTypeLabel($d['doc_type']).' '.$d['document_no']).'</h2><div class="muted">'.h($d['party_name']).' • '.h(AccountingRepository::faDate($d['document_date'])).'</div></div><b>'.number_format((float)$d['net_total']).'</b></div><div class="table-wrap"><table><thead><tr><th>#</th><th>کد</th><th>کالا/خدمت</th><th>مقدار</th><th>واحد</th><th>فی</th><th>تخفیف</th><th>جمع</th></tr></thead><tbody>';
+        $st->execute([$id,$wid,$cid]);$d=$st->fetch();if(!$d)return;
+        $st=pdo()->prepare("SELECT l.*,i.code item_code,i.name item_name,u.name unit_name FROM acc_purchase_lines l LEFT JOIN acc_items i ON i.id=l.item_id LEFT JOIN acc_units u ON u.id=l.unit_id WHERE l.workspace_id=? AND l.purchase_doc_id=? ORDER BY line_no");
+        $st->execute([$wid,$id]);$lines=$st->fetchAll();
+        $isApDoc=in_array((string)$d['doc_type'],['purchase_invoice_goods','purchase_invoice_service'],true);
+        $apWf=$isApDoc?ApPostingDomain::workflowStatus($wid,$cid,$id):null;
+        $apOut=$isApDoc?ApPostingDomain::invoiceOutstanding($wid,$cid,$id):null;
+        echo '<section class="card"><div class="section-title"><div><h2>'.h(self::docTypeLabel($d['doc_type']).' '.$d['document_no']).'</h2><div class="muted">'.h($d['party_name']).' • '.h(AccountingRepository::faDate($d['document_date'])).' • '.h($d['workflow_status']).($apWf?' • AP='.h($apWf['status']):'').' • Payment='.h(ApPostingDomain::PAYMENT).'</div></div><b>'.number_format((float)$d['net_total']).'</b></div>';
+        if($isApDoc && Tenant::can('accounting.purchase.manage')){
+            $ready=ApPostingDomain::assessReadiness($wid,$cid);
+            $stAp=(string)($apWf['status']??'draft');
+            if($stAp==='draft'||$stAp===''){
+                echo '<form method="post" class="inline-form" onsubmit="return confirm(\'اعتبارسنجی فاکتور برای AP؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_validate_invoice"><input type="hidden" name="purchase_doc_id" value="'.$id.'"><button class="btn primary">اعتبارسنجی AP</button></form>';
+            }elseif($stAp==='validated'){
+                echo '<form method="post" class="inline-form" onsubmit="return confirm(\'تأیید فاکتور برای ثبت AP؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_approve_invoice"><input type="hidden" name="purchase_doc_id" value="'.$id.'"><button class="btn primary">تأیید AP</button></form>';
+            }elseif($stAp==='approved' && Tenant::can('accounting.vouchers.manage') && !empty($ready['ready'])){
+                echo '<form method="post" class="inline-form" onsubmit="return confirm(\'ثبت سند حسابداری AP؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_post_invoice"><input type="hidden" name="purchase_doc_id" value="'.$id.'"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'"><button class="btn primary">ثبت AP در دفتر کل</button></form>';
+            }elseif($stAp==='posted' && Tenant::can('accounting.vouchers.manage')){
+                echo '<form method="post" class="inline-form" onsubmit="return confirm(\'معکوس کنترل‌شده AP؟ سابقه حذف نمی‌شود.\')">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_reverse_invoice"><input type="hidden" name="purchase_doc_id" value="'.$id.'"><button class="btn tiny danger">معکوس AP</button></form>';
+            }
+            if(empty($ready['ready']))echo '<p class="muted">وضعیت هسته AP: '.h(json_encode($ready['blockers']?:[],JSON_UNESCAPED_UNICODE)).'</p>';
+            if($apOut)echo '<p class="muted">مانده فاکتور: '.h((string)($apOut['outstanding']??'—')).' ('.h($apOut['status']).')</p>';
+        }
+        echo '<div class="table-wrap"><table><thead><tr><th>#</th><th>کد</th><th>کالا/خدمت</th><th>مقدار</th><th>واحد</th><th>فی</th><th>تخفیف</th><th>جمع</th></tr></thead><tbody>';
         foreach($lines as $l)echo '<tr><td>'.(int)$l['line_no'].'</td><td>'.h($l['item_code']).'</td><td>'.h($l['item_name']).'</td><td>'.h($l['quantity']).'</td><td>'.h($l['unit_name']).'</td><td>'.number_format((float)$l['unit_price']).'</td><td>'.number_format((float)$l['discount_amount']).'</td><td>'.number_format((float)$l['line_total']).'</td></tr>';echo '</tbody></table></div></section>';
     }
 
@@ -620,6 +645,21 @@ final class AccountingIndustrialModule
         echo '<p class="muted span2">ماژول‌های پیشنهادی: '.h(implode('، ', $profile['definition']['modules']??[])).'</p>';
         echo '<button class="btn primary">ذخیره پروفایل</button></form></section>';
 
+        if(in_array($section,['purchase','accounting'],true)){
+            $apMap=ApPostingDomain::companyMap($wid,$cid)?:[];
+            $apReady=ApPostingDomain::assessReadiness($wid,$cid);
+            $accounts=AccountingRepository::options('acc_accounts');
+            echo '<section class="card"><div class="section-title"><h2>نگاشت حساب‌های AP (v10.22)</h2><span class="muted">مدل: invoice_based — بدون GRNI — Payment='.h(ApPostingDomain::PAYMENT).'</span></div>';
+            echo '<p class="muted">آمادگی: '.h(json_encode($apReady['blockers']?:['ready'],JSON_UNESCAPED_UNICODE)).'</p>';
+            echo '<form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_set_map">';
+            self::selectRows('payable_account_id','حساب پرداختنی *',$accounts,true,'',(int)($apMap['payable_account_id']??0));
+            self::selectRows('purchase_account_id','حساب خرید/موجودی *',$accounts,true,'',(int)($apMap['purchase_account_id']??0));
+            self::selectRows('clearing_account_id','حساب واسط (اختیاری)',$accounts,false,'',(int)($apMap['clearing_account_id']??0));
+            self::selectRows('input_vat_account_id','مالیات ورودی (فقط در صورت وجود مالیات)',$accounts,false,'',(int)($apMap['input_vat_account_id']??0));
+            self::selectRows('ppv_account_id','انحراف قیمت (رزرو — استفاده‌نشده در 10.22)',$accounts,false,'',(int)($apMap['ppv_account_id']??0));
+            echo '<button class="btn primary">ذخیره نگاشت AP</button></form></section>';
+        }
+
         echo '<section class="card">';
         echo '<div class="section-title"><h2>تنظیمات '.h($titles[$section]).'</h2></div>';
 
@@ -837,6 +877,61 @@ final class AccountingIndustrialModule
         self::back('vouchers','view='.(int)$out['voucher_id']);
     }
 
+    private static function apSetMap(): void
+    {
+        Tenant::requirePermission('accounting.settings.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        ApPostingDomain::setCompanyMap($wid,$cid,$uid,[
+            'payable_account_id'=>(int)($_POST['payable_account_id']??0),
+            'purchase_account_id'=>(int)($_POST['purchase_account_id']??0),
+            'clearing_account_id'=>(int)($_POST['clearing_account_id']??0),
+            'input_vat_account_id'=>(int)($_POST['input_vat_account_id']??0),
+            'ppv_account_id'=>(int)($_POST['ppv_account_id']??0),
+        ]);
+        self::audit('ap.map.set','erp_ap_company_maps',$cid,'تنظیم نگاشت AP');
+        self::back('settings','settings_section=purchase');
+    }
+
+    private static function apValidateInvoice(): void
+    {
+        Tenant::requirePermission('accounting.purchase.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $id=(int)($_POST['purchase_doc_id']??0);
+        ApPostingDomain::validateInvoice($wid,$cid,$uid,$id);
+        self::audit('ap.invoice.validate','acc_purchase_docs',$id,'اعتبارسنجی AP');
+        self::back('purchase','view='.$id);
+    }
+
+    private static function apApproveInvoice(): void
+    {
+        Tenant::requirePermission('accounting.purchase.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $id=(int)($_POST['purchase_doc_id']??0);
+        ApPostingDomain::approveInvoice($wid,$cid,$uid,$id);
+        self::audit('ap.invoice.approve','acc_purchase_docs',$id,'تأیید AP');
+        self::back('purchase','view='.$id);
+    }
+
+    private static function apPostInvoice(): void
+    {
+        Tenant::requirePermission('accounting.vouchers.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $id=(int)($_POST['purchase_doc_id']??0);$idem=trim((string)($_POST['idempotency_key']??''));
+        $out=ApPostingDomain::postSupplierInvoice($wid,$cid,$uid,$id,$idem);
+        self::audit('ap.invoice.post','acc_vouchers',(int)$out['voucher_id'],'ثبت AP از فاکتور خرید',['invoice_doc_id'=>$id]);
+        self::back('vouchers','view='.(int)$out['voucher_id']);
+    }
+
+    private static function apReverseInvoice(): void
+    {
+        Tenant::requirePermission('accounting.vouchers.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $id=(int)($_POST['purchase_doc_id']??0);
+        $out=ApPostingDomain::reversePostedInvoice($wid,$cid,$uid,$id,(string)($_POST['reversal_date']??''));
+        self::audit('ap.invoice.reverse','acc_vouchers',(int)$out['reversal_voucher_id'],'معکوس AP',['invoice_doc_id'=>$id]);
+        self::back('purchase','view='.$id);
+    }
+
     private static function arSetCashGl(): void
     {
         Tenant::requirePermission('accounting.settings.manage');
@@ -1006,9 +1101,14 @@ final class AccountingIndustrialModule
         echo '<label>'.h($label).'<select name="'.h($name).'">';foreach($items as $v=>$t)echo '<option value="'.h($v).'">'.h($t).'</option>';echo '</select></label>';
     }
 
-    private static function selectRows(string $name,string $label,array $rows,bool $required=false,string $class=''): void
+    private static function selectRows(string $name,string $label,array $rows,bool $required=false,string $class='',int $selected=0): void
     {
-        echo '<label class="'.h($class).'">'.h($label).'<select name="'.h($name).'" '.($required?'required':'').'><option value=""></option>';foreach($rows as $r)echo '<option value="'.(int)$r['id'].'">'.h(trim(($r['code']??'').' '.($r['name']??$r['title']??''))).'</option>';echo '</select></label>';
+        echo '<label class="'.h($class).'">'.h($label).'<select name="'.h($name).'" '.($required?'required':'').'><option value=""></option>';
+        foreach($rows as $r){
+            $rid=(int)$r['id'];
+            echo '<option value="'.$rid.'" '.($selected>0&&$selected===$rid?'selected':'').'>'.h(trim(($r['code']??'').' '.($r['name']??$r['title']??''))).'</option>';
+        }
+        echo '</select></label>';
     }
 
     private static function scopedId(string $table,$value): ?int
