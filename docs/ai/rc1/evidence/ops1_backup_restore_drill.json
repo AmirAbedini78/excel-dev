@@ -1,0 +1,15 @@
+{
+  "drill": "disposable_backup_restore",
+  "source_db": "erpsmart_rc1_tr1_test",
+  "restore_db": "erpsmart_rc1_ops1_restore_test",
+  "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+  "server_uuid": "a73a8a84-e4bd-11f1-ad33-7e073bee960b",
+  "dump_bytes": 43422,
+  "dump_sha256": "11BCA2A91F692E89E369857FD729D3E3DC82D608E4D2FFB82A5BA9F72F17C028",
+  "artifact": "docs/ai/rc1/evidence/ops1_tr1_backup.sql",
+  "restore_result": "FAIL_ACCESS_DENIED_p2p_to_new_schema",
+  "restore_tables_after": 1,
+  "production_schema_provenance": "UNAVAILABLE_NOT_DEPLOYED",
+  "status": "PARTIAL_BLOCKED",
+  "note": "Dump of disposable TR-1 schema succeeded; restore into new disposable DB failed with Access denied for p2p. Cumulative migration from prior deployed schema remains UNAVAILABLE."
+}

@@ -1,0 +1,15 @@
+{
+  "drill": "OPS-1 disposable backup/restore",
+  "source_db": "erpsmart_rc1_tr1_test",
+  "restore_db": "erpsmart_rc1_ops1_restore_test",
+  "backup_path": "docs/ai/rc1/evidence/ops1_independent_backup_20261120210831.sql",
+  "backup_sha256": "48297E5D93FA4092EF64E31E999041E0D316ED1A26A299E04B6D5581AF3BB451",
+  "backup_bytes": 44626,
+  "restore_rc": 1,
+  "table_count": 1,
+  "row_counts": {},
+  "container": "erpsmart-p2p-mysql-test / 02eb215a87f6",
+  "verified_at": "2026-11-20T17:38:33Z",
+  "status": "FAIL",
+  "note": "Disposable only; not production provenance. Repeat-migrate not required for dump restore identity check."
+}
