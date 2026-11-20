@@ -128,6 +128,7 @@ require_once $ROOT.'/app/Core/AccountingPostingDomain.php';
 require_once $ROOT.'/app/Core/ArSettlementDomain.php';
 require_once $ROOT.'/app/Core/ApPostingDomain.php';
 require_once $ROOT.'/app/Core/ApSettlementDomain.php';
+require_once $ROOT.'/app/Core/TradingCockpitDomain.php';
 
 function ap_e2e_reset_schema(): void
 {
