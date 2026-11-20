@@ -33,7 +33,7 @@ try {
         'sales_doc_id' => $so,
         'warehouse_id' => 1,
         'delivery_date' => '2026-11-20',
-        'idempotency_key' => str_repeat('A', 32),
+        'idempotency_key' => hash('sha256', 'tr2-deliv'),
         'lines' => [['sales_line_id' => $line, 'quantity' => '10.0000']],
     ]);
     $deliveryId = (int)$deliv['id'];
@@ -46,7 +46,7 @@ try {
         $so,
         $deliveryId,
         [(string)$line => ['quantity' => '10.0000']],
-        str_repeat('B', 32)
+        hash('sha256', 'tr2-inv')
     );
     $invId = (int)$inv['id'];
 
@@ -56,7 +56,7 @@ try {
         'tax_account_id' => 3,
     ]);
     ArSettlementDomain::setCashAccountGl(10, 1, 2, 1, 6);
-    AccountingPostingDomain::postCustomerInvoice(10, 1, 2, $invId, str_repeat('C', 32));
+    AccountingPostingDomain::postCustomerInvoice(10, 1, 2, $invId, hash('sha256', 'tr2-ar-post'));
 
     $recv = function (string $amount, string $key): int {
         $draft = ArSettlementDomain::createDraftReceipt(10, 1, 1, [
@@ -65,6 +65,7 @@ try {
             'receipt_date' => '2026-11-20',
             'amount' => $amount,
             'idempotency_key' => $key,
+            'payment_method' => 'bank_transfer',
         ]);
         $rid = (int)$draft['id'];
         ArSettlementDomain::approveReceipt(10, 1, 2, $rid);
@@ -72,14 +73,14 @@ try {
         return $rid;
     };
 
-    $r1 = $recv('400.00', str_repeat('D', 32));
-    $a1 = ArSettlementDomain::allocate(10, 1, 2, $r1, $invId, '400.00', str_repeat('E', 32));
+    $r1 = $recv('400.00', hash('sha256', 'tr2-recv-400'));
+    $a1 = ArSettlementDomain::allocate(10, 1, 2, $r1, $invId, '400.00', hash('sha256', 'tr2-alloc-400'));
     if (($a1['invoice']['open_amount'] ?? '') !== '600.00') {
         throw new RuntimeException('expected_open_600 got=' . json_encode($a1));
     }
 
-    $r2 = $recv('600.00', str_repeat('F', 32));
-    $a2 = ArSettlementDomain::allocate(10, 1, 2, $r2, $invId, '600.00', str_repeat('G', 32));
+    $r2 = $recv('600.00', hash('sha256', 'tr2-recv-600'));
+    $a2 = ArSettlementDomain::allocate(10, 1, 2, $r2, $invId, '600.00', hash('sha256', 'tr2-alloc-600'));
     if (($a2['invoice']['status'] ?? '') !== 'SETTLED' || ($a2['invoice']['open_amount'] ?? '') !== '0.00') {
         throw new RuntimeException('expected_settled got=' . json_encode($a2));
     }

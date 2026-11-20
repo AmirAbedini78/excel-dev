@@ -173,11 +173,15 @@ final class ManufacturingExecutionDomain
 
     private static function scaledQty($raw): int
     {
-        if (class_exists('OrderToCashDomain')) {
-            return OrderToCashDomain::scaledQty($raw);
-        }
+        // Normalize BOM DECIMAL(20,6) and float casts down to scale-4 strings before parse.
         if (is_float($raw) || is_int($raw)) {
             $raw = number_format((float)$raw, 4, '.', '');
+        } else {
+            $s = trim((string)$raw);
+            if (preg_match('/^(0|[1-9]\d*)(?:\.(\d+))?$/', $s, $m)) {
+                $frac = substr(str_pad($m[2] ?? '', 4, '0'), 0, 4);
+                $raw = $m[1] . '.' . $frac;
+            }
         }
         return PurchaseMatchingDomain::scaled((string)$raw, 4, 100000);
     }
