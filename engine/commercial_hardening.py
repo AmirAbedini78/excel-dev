@@ -27,7 +27,7 @@ import response_persona as _response_persona
 PATCH_VERSION = "v9.3.0"
 RELEASE_CONTRACT = "commercial-mvp-v1"
 
-PROPOSAL_TOOLS = frozenset({"create_sales_invoice_draft", "create_purchase_invoice_draft", "reserve_sales_stock", "deliver_sales_stock", "create_warehouse_receipt", "create_trade_case", "create_trade_shipment", "add_trade_cost", "create_crm_activity", "create_crm_opportunity", "create_check", "create_voucher_draft"})
+PROPOSAL_TOOLS = frozenset({"create_sales_invoice_draft", "create_purchase_invoice_draft", "confirm_sales_order", "reserve_sales_stock", "deliver_sales_stock", "create_o2c_invoice_from_delivery", "create_warehouse_receipt", "create_trade_case", "create_trade_shipment", "add_trade_cost", "create_crm_activity", "create_crm_opportunity", "create_check", "create_voucher_draft"})
 READ_ONLY_MODES = frozenset({
     "deterministic_financial_report",
     "deep_financial_analysis",
@@ -215,7 +215,7 @@ def _policy(mode: str, successful_tools: list[str], proposal_created: bool) -> d
     seen = set(successful_tools)
     if "create_voucher_draft" in seen or "create_check" in seen or "create_warehouse_receipt" in seen or "add_trade_cost" in seen or "deliver_sales_stock" in seen or mode.startswith("accounting_action_") or mode.startswith("guarded_check_") or mode.startswith("guarded_inventory_receipt_") or mode.startswith("guarded_trade_cost_") or mode.startswith("guarded_sales_delivery_"):
         risk = "high"
-    elif "create_sales_invoice_draft" in seen or "create_purchase_invoice_draft" in seen or "create_trade_case" in seen or "create_trade_shipment" in seen or "reserve_sales_stock" in seen or "create_crm_activity" in seen or "create_crm_opportunity" in seen or mode.startswith("guarded_sales_invoice_") or mode.startswith("guarded_purchase_invoice_") or mode.startswith("guarded_trade_case_") or mode.startswith("guarded_trade_shipment_") or mode.startswith("guarded_sales_reservation_") or mode.startswith("guarded_crm_"):
+    elif "create_sales_invoice_draft" in seen or "create_purchase_invoice_draft" in seen or "confirm_sales_order" in seen or "create_o2c_invoice_from_delivery" in seen or "create_trade_case" in seen or "create_trade_shipment" in seen or "reserve_sales_stock" in seen or "create_crm_activity" in seen or "create_crm_opportunity" in seen or mode.startswith("guarded_sales_invoice_") or mode.startswith("guarded_purchase_invoice_") or mode.startswith("guarded_trade_case_") or mode.startswith("guarded_trade_shipment_") or mode.startswith("guarded_sales_reservation_") or mode.startswith("guarded_crm_") or mode.startswith("guarded_o2c_"):
         risk = "medium"
     else:
         risk = "low"

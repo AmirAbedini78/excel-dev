@@ -1,4 +1,4 @@
-"""v10.17 P2P hardening source contracts: fail-closed policy, amend, entry-point guards."""
+﻿"""v10.17 P2P hardening source contracts: fail-closed policy, amend, entry-point guards."""
 import pathlib
 import shutil
 import subprocess
@@ -13,8 +13,8 @@ def source(path):
 
 class P2PHardening1017Tests(unittest.TestCase):
     def test_version_gate(self):
-        self.assertIn("SCHEMA_VERSION = '10.17.0'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.17.0'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.18.0'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.18.0'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("10.17.0-hardening", source("app/Core/PurchaseMatchingDomain.php"))
 
     def test_fail_closed_domain_api(self):

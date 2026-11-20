@@ -67,8 +67,13 @@ final class AiToolRegistry
             ['name'=>'crm_followup_queue','mode'=>'read','risk'=>'low','description'=>'صف پیگیری CRM','parameters'=>['type'=>'object','properties'=>['days'=>['type'=>'integer']]]],
             ['name'=>'create_crm_activity','mode'=>'proposal','risk'=>'medium','description'=>'پیشنهاد پیگیری CRM با تایید انسانی','parameters'=>['type'=>'object','properties'=>['party_id'=>['type'=>'integer'],'activity_type'=>['type'=>'string'],'subject'=>['type'=>'string'],'activity_date'=>['type'=>'string'],'due_date'=>['type'=>'string'],'notes'=>['type'=>'string']],'required'=>['party_id','activity_type','subject']]],
             ['name'=>'create_crm_opportunity','mode'=>'proposal','risk'=>'medium','description'=>'پیشنهاد فرصت فروش CRM با تایید انسانی','parameters'=>['type'=>'object','properties'=>['party_id'=>['type'=>'integer'],'title'=>['type'=>'string'],'stage'=>['type'=>'string'],'amount_irr'=>['type'=>'number'],'probability'=>['type'=>'number'],'expected_close_date'=>['type'=>'string'],'notes'=>['type'=>'string']],'required'=>['party_id','title']]],
-            ['name'=>'reserve_sales_stock','mode'=>'proposal','risk'=>'medium','description'=>'رزرو موجودی برای سند فروش؛ بدون تایید انسانی موجودی رزرو نمی‌شود','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
-            ['name'=>'deliver_sales_stock','mode'=>'proposal','risk'=>'high','description'=>'تحویل موجودی رزروشده و ثبت خروج انبار؛ فقط پس از تایید انسانی','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'delivery_date'=>['type'=>'string'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
+            ['name'=>'confirm_sales_order','mode'=>'proposal','risk'=>'medium','description'=>'تأیید Maker/Checker سفارش فروش پیش‌نویس؛ بدون تایید انسانی وضعیت تغییر نمی‌کند','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer']],'required'=>['sales_doc_id']]],
+            ['name'=>'reserve_sales_stock','mode'=>'proposal','risk'=>'medium','description'=>'رزرو موجودی برای سند فروش تأییدشده؛ بدون تایید انسانی موجودی رزرو نمی‌شود','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
+            ['name'=>'deliver_sales_stock','mode'=>'proposal','risk'=>'high','description'=>'تحویل موجودی رزروشده و ثبت خروج انبار؛ فقط پس از تایید انسانی','parameters'=>['type'=>'object','properties'=>['sales_doc_id'=>['type'=>'integer'],'warehouse_id'=>['type'=>'integer'],'delivery_date'=>['type'=>'string'],'idempotency_key'=>['type'=>'string'],'notes'=>['type'=>'string'],'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]],'required'=>['sales_doc_id','warehouse_id','lines']]],
+            ['name'=>'create_o2c_invoice_from_delivery','mode'=>'proposal','risk'=>'medium','description'=>'صدور پیش‌نویس فاکتور مشتری از تحویل قطعی؛ AR/GL ثبت نمی‌شود','parameters'=>['type'=>'object','properties'=>[
+                'sales_doc_id'=>['type'=>'integer'],'delivery_id'=>['type'=>'integer'],
+                'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['sales_line_id'=>['type'=>'integer'],'quantity'=>['type'=>'number']],'required'=>['sales_line_id','quantity']]]
+            ],'required'=>['sales_doc_id','delivery_id','lines']]],
             ['name'=>'create_sales_invoice_draft','mode'=>'proposal','risk'=>'medium','description'=>'آماده‌سازی پیش‌نویس فاکتور فروش؛ بدون تایید انسانی ثبت نهایی نمی‌شود','parameters'=>['type'=>'object','properties'=>[
                 'party_id'=>['type'=>'integer'],'document_date'=>['type'=>'string'],'due_date'=>['type'=>'string'],'notes'=>['type'=>'string'],
                 'lines'=>['type'=>'array','items'=>['type'=>'object','properties'=>['item_id'=>['type'=>'integer'],'quantity'=>['type'=>'number'],'unit_price'=>['type'=>'number'],'discount_amount'=>['type'=>'number'],'tax_percent'=>['type'=>'number'],'description'=>['type'=>'string']],'required'=>['item_id','quantity','unit_price']]]
@@ -149,7 +154,7 @@ final class AiToolRegistry
             'landed_cost_summary'=>TradeDomain::landedCostSummary($wid,$cid,(int)($args['case_id']??0)),
             'trade_risk_summary'=>TradeDomain::riskSummary($wid,$cid,(int)($args['limit']??50)),
             'search_sales_documents'=>SalesDomain::searchDocuments($wid,$cid,(string)($args['query']??'')),
-            'sales_fulfillment'=>SalesDomain::fulfillment($wid,$cid,$args),
+            'sales_fulfillment'=>OrderToCashDomain::fulfillmentSnapshot($wid,$cid,(int)($args['sales_doc_id']??0)),
             'sales_margin_summary'=>SalesDomain::marginSummary($wid,$cid,(int)($args['sales_doc_id']??0)),
             'trade_manager_brief'=>SalesDomain::managerBrief($wid,$cid,(int)($args['limit']??10)),
             'supplier_performance_summary'=>BusinessIntelligenceDomain::supplierPerformanceSummary($wid,$cid,$args),
@@ -348,8 +353,10 @@ final class AiToolRegistry
         return match($proposal['tool_name']){
             'create_sales_invoice_draft'=>self::createSalesDraft($wid,$cid,$userId,$args),
             'create_purchase_invoice_draft'=>self::createPurchaseDraft($wid,$cid,$userId,$args),
+            'confirm_sales_order'=>self::confirmSalesOrderProposal($wid,$cid,$userId,$args),
             'reserve_sales_stock'=>SalesDomain::reserveStock($wid,$cid,$userId,$args),
             'deliver_sales_stock'=>SalesDomain::deliverStock($wid,$cid,$userId,$args),
+            'create_o2c_invoice_from_delivery'=>self::createO2cInvoiceProposal($wid,$cid,$userId,$args),
             'create_warehouse_receipt'=>InventoryDomain::createReceipt($wid,$cid,$userId,$args),
             'create_trade_case'=>TradeDomain::createCase($wid,$cid,$userId,$args),
             'create_trade_shipment'=>TradeDomain::createShipment($wid,$cid,$userId,$args),
@@ -864,10 +871,20 @@ final class AiToolRegistry
                 if((float)($l['unit_price']??0)<0)throw new RuntimeException('قیمت واحد خرید نامعتبر است.');
                 if((float)($l['discount_amount']??0)<0)throw new RuntimeException('تخفیف خرید نامعتبر است.');
             }
+        }elseif($tool==='confirm_sales_order'){
+            $docId=(int)($args['sales_doc_id']??0);if($docId<1)throw new RuntimeException('شناسه سند فروش نامعتبر است.');
+            $doc=SalesDomain::document($wid,$cid,$docId);if(!$doc)throw new RuntimeException('سند فروش پیدا نشد.');
+            if((string)$doc['workflow_status']!=='draft')throw new RuntimeException('فقط پیش‌نویس قابل تأیید است.');
         }elseif($tool==='reserve_sales_stock'){
             SalesDomain::normalizeReservationArgs($wid,$cid,$args);
         }elseif($tool==='deliver_sales_stock'){
             SalesDomain::normalizeDeliveryArgs($wid,$cid,$args);
+        }elseif($tool==='create_o2c_invoice_from_delivery'){
+            $docId=(int)($args['sales_doc_id']??0);$delId=(int)($args['delivery_id']??0);
+            if($docId<1||$delId<1)throw new RuntimeException('شناسه سند/تحویل نامعتبر است.');
+            $doc=SalesDomain::document($wid,$cid,$docId);if(!$doc)throw new RuntimeException('سند فروش پیدا نشد.');
+            OrderToCashDomain::requireFulfillableStatus($doc);
+            $lines=(array)($args['lines']??[]);if(!$lines)throw new RuntimeException('حداقل یک ردیف فاکتور لازم است.');
         }elseif($tool==='create_warehouse_receipt'){
             InventoryDomain::validateReceiptArgs($wid,$cid,$args);
         }elseif($tool==='create_trade_case'){
@@ -899,8 +916,10 @@ final class AiToolRegistry
         return match($tool){
             'create_sales_invoice_draft'=>'ایجاد پیش‌نویس فاکتور فروش با '.count((array)($args['lines']??[])).' ردیف',
             'create_purchase_invoice_draft'=>'ایجاد پیش‌نویس فاکتور خرید با '.count((array)($args['lines']??[])).' ردیف',
+            'confirm_sales_order'=>'تأیید سفارش فروش #'.(int)($args['sales_doc_id']??0),
             'reserve_sales_stock'=>'رزرو موجودی سند فروش #'.(int)($args['sales_doc_id']??0).' از انبار #'.(int)($args['warehouse_id']??0),
             'deliver_sales_stock'=>'تحویل موجودی رزروشده سند فروش #'.(int)($args['sales_doc_id']??0).' از انبار #'.(int)($args['warehouse_id']??0),
+            'create_o2c_invoice_from_delivery'=>'پیش‌نویس فاکتور O2C از تحویل #'.(int)($args['delivery_id']??0).' برای سند #'.(int)($args['sales_doc_id']??0),
             'create_warehouse_receipt'=>'ثبت رسید انبار از سند خرید #'.(int)($args['purchase_doc_id']??0).' با '.count((array)($args['lines']??[])).' ردیف',
             'create_trade_case'=>'ایجاد پرونده بازرگانی برای سند خرید #'.(int)($args['purchase_doc_id']??0),
             'create_trade_shipment'=>'ثبت Shipment برای پرونده #'.(int)($args['trade_case_id']??0),
@@ -911,6 +930,25 @@ final class AiToolRegistry
             'create_voucher_draft'=>'ایجاد پیش‌نویس سند حسابداری با '.count((array)($args['lines']??[])).' آرتیکل',
             default=>'عملیات پیشنهادی ایجنت'
         };
+    }
+
+    private static function confirmSalesOrderProposal(int $wid,int $cid,int $userId,array $args): array
+    {
+        $salesDocId=(int)($args['sales_doc_id']??0);
+        OrderToCashDomain::confirmOrder($wid,$cid,$userId,$salesDocId);
+        return ['entity'=>'acc_sales_docs','id'=>$salesDocId,'status'=>'approved'];
+    }
+
+    private static function createO2cInvoiceProposal(int $wid,int $cid,int $userId,array $args): array
+    {
+        $salesDocId=(int)($args['sales_doc_id']??0);$deliveryId=(int)($args['delivery_id']??0);
+        $rawLines=[];
+        foreach((array)($args['lines']??[]) as $l){
+            if(!is_array($l))continue;
+            $lineId=(int)($l['sales_line_id']??0);if($lineId<1)continue;
+            $rawLines[$lineId]=['quantity'=>(string)($l['quantity']??'0')];
+        }
+        return OrderToCashDomain::createInvoiceFromDelivery($wid,$cid,$userId,$salesDocId,$deliveryId,$rawLines)+['entity'=>'acc_sales_docs'];
     }
 
     private static function createSalesDraft(int $wid,int $cid,int $userId,array $args): array

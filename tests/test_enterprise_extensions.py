@@ -1,4 +1,4 @@
-"""Source-and-PHP behavioral release contracts for v10.15 enterprise extensions."""
+﻿"""Source-and-PHP behavioral release contracts for v10.15 enterprise extensions."""
 from pathlib import Path
 import json, subprocess, unittest, shutil
 
@@ -11,8 +11,8 @@ def read(path):
 
 class EnterpriseExtensions(unittest.TestCase):
     def test_schema_version_bumped(self):
-        self.assertIn("SCHEMA_VERSION = '10.17.0'",read('app/Core/RuntimeCache.php'))
-        self.assertIn("VERSION='10.17.0'",read('app/Core/ModuleRegistry.php'))
+        self.assertIn("SCHEMA_VERSION = '10.18.0'",read('app/Core/RuntimeCache.php'))
+        self.assertIn("VERSION='10.18.0'",read('app/Core/ModuleRegistry.php'))
 
     def test_bootstrap_order_after_canonical(self):
         boot=read('app/bootstrap.php')

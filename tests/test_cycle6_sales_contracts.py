@@ -59,7 +59,9 @@ class Cycle6SalesContracts(unittest.TestCase):
         self.assertIn('"sales_margin_read"',self.hard)
 
     def test_sales_ui_surfaces_fulfillment_and_margin(self):
-        self.assertIn("SalesDomain::fulfillment",self.ui)
+        self.assertTrue(
+            "SalesDomain::fulfillment" in self.ui or "OrderToCashDomain::fulfillmentSnapshot" in self.ui
+        )
         self.assertIn("SalesDomain::marginSummary",self.ui)
 
     def test_docs_preserve_cycle6_live_closeout(self):

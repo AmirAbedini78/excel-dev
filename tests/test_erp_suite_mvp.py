@@ -1,4 +1,4 @@
-"""ERP Suite 10.13 contract guards; not a substitute for MySQL integration tests."""
+﻿"""ERP Suite 10.13 contract guards; not a substitute for MySQL integration tests."""
 import pathlib
 import re
 import shutil
@@ -39,7 +39,7 @@ class SuiteContract(unittest.TestCase):
         self.assertIn('ErpSuiteModule::render($page)',shell)
 
     def test_schema_gate_and_permissions(self):
-        self.assertIn("SCHEMA_VERSION = '10.17.0'",source('app/Core/RuntimeCache.php'))
+        self.assertIn("SCHEMA_VERSION = '10.18.0'",source('app/Core/RuntimeCache.php'))
         self.assertIn('ErpSuiteDomain::migrate(pdo())',source('app/bootstrap.php'))
         tenant=source('app/Core/Tenant.php')
         for permission in ('projects.manage','hr.approve','pos.manage','service.manage','assets.manage','expenses.approve','operations.view'):

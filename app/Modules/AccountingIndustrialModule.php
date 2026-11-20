@@ -21,6 +21,10 @@ final class AccountingIndustrialModule
         if($action==='acc_delete_purchase')self::deletePurchase();
         if($action==='acc_save_sale')self::saveSale();
         if($action==='acc_delete_sale')self::deleteSale();
+        if($action==='acc_o2c_confirm_order')self::o2cConfirmOrder();
+        if($action==='acc_o2c_reserve')self::o2cReserve();
+        if($action==='acc_o2c_deliver')self::o2cDeliver();
+        if($action==='acc_o2c_invoice_delivery')self::o2cInvoiceFromDelivery();
         if($action==='acc_save_voucher')self::saveVoucher();
         if($action==='acc_delete_voucher')self::deleteVoucher();
         if($action==='acc_save_bom')self::saveBom();
@@ -308,25 +312,69 @@ final class AccountingIndustrialModule
     {
         $parties=AccountingRepository::options('acc_parties');$warehouses=AccountingRepository::options('acc_warehouses');$cc=AccountingRepository::options('acc_cost_centers');$projects=AccountingRepository::options('acc_projects');$items=AccountingRepository::options('acc_items');$units=AccountingRepository::options('acc_units');
         echo '<section class="card"><details><summary>+ سند فروش جدید</summary><form method="post" class="acc-sales-form">'.csrf_field().'<input type="hidden" name="action" value="acc_save_sale"><div class="grid-form compact">';
-        self::input('doc_type','نوع سند','','select',['invoice'=>'فاکتور فروش','preinvoice'=>'پیش‌فاکتور فروش','return'=>'برگشت از فروش']);self::input('document_no','شماره',AccountingRepository::nextNumber('acc_sales_docs','document_no','SAL-'));self::input('document_date','تاریخ',Jalali::today(),'date');self::input('due_date','سررسید','','date');self::selectRows('party_id','مشتری *',$parties,true);self::selectRows('warehouse_id','انبار',$warehouses);self::selectRows('cost_center_id','مرکز هزینه',$cc);self::selectRows('project_id','پروژه',$projects);self::input('workflow_status','وضعیت','','select',['draft'=>'موقت','approved'=>'تایید','final'=>'قطعی','void'=>'باطل']);self::input('taxpayer_status','وضعیت مودیان','','select',['not_sent'=>'ارسال نشده','waiting'=>'در انتظار','approved'=>'تایید شده','rejected'=>'رد شده','canceled'=>'ابطال']);echo '<label class="span2">توضیحات<textarea name="notes"></textarea></label></div>';
+        self::input('doc_type','نوع سند','','select',['preinvoice'=>'پیش‌فاکتور/سفارش فروش','invoice'=>'فاکتور فروش','return'=>'برگشت از فروش']);self::input('document_no','شماره',AccountingRepository::nextNumber('acc_sales_docs','document_no','SAL-'));self::input('document_date','تاریخ',Jalali::today(),'date');self::input('due_date','سررسید','','date');self::selectRows('party_id','مشتری *',$parties,true);self::selectRows('warehouse_id','انبار',$warehouses);self::selectRows('cost_center_id','مرکز هزینه',$cc);self::selectRows('project_id','پروژه',$projects);echo '<input type="hidden" name="workflow_status" value="draft"><p class="muted span2">سند جدید همیشه به‌صورت پیش‌نویس ذخیره می‌شود؛ تأیید سفارش O2C فقط با Maker/Checker انجام می‌شود.</p>';self::input('taxpayer_status','وضعیت مودیان','','select',['not_sent'=>'ارسال نشده','waiting'=>'در انتظار','approved'=>'تایید شده','rejected'=>'رد شده','canceled'=>'ابطال']);echo '<label class="span2">توضیحات<textarea name="notes"></textarea></label></div>';
         echo '<div class="acc-lines-head"><h3>اقلام فروش</h3><button type="button" class="btn tiny primary" data-acc-add-sale-line>+ ردیف</button></div><div class="table-wrap"><table class="acc-entry-table"><thead><tr><th>کالا/خدمت</th><th>واحد</th><th>شرح</th><th>مقدار</th><th>قیمت واحد</th><th>تخفیف</th><th>% مالیات</th><th>انبار</th><th>مرکز هزینه</th><th>پروژه</th><th>جمع</th><th></th></tr></thead><tbody data-acc-sale-lines></tbody></table></div>';
         echo '<script type="application/json" id="accSalesMeta">'.json_encode(['items'=>$items,'units'=>$units,'warehouses'=>$warehouses,'cost_centers'=>$cc,'projects'=>$projects],JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP).'</script><div class="acc-form-total"><span>جمع: <b data-sale-gross>0</b></span><span>تخفیف: <b data-sale-discount>0</b></span><span>مالیات: <b data-sale-tax>0</b></span><span>خالص: <b data-sale-net>0</b></span></div><button class="btn primary">ذخیره پیش‌نویس فروش</button></form></details></section>';
     }
 
     private static function salesView(int $id): void
     {
-        $st=pdo()->prepare("SELECT d.*,p.name party_name FROM acc_sales_docs d LEFT JOIN acc_parties p ON p.id=d.party_id WHERE d.id=? AND d.workspace_id=? AND d.company_id=? LIMIT 1");$st->execute([$id,Tenant::id(),AccountingRepository::companyId()]);$d=$st->fetch();if(!$d)return;
-        $st=pdo()->prepare("SELECT l.*,i.code item_code,i.name item_name,u.name unit_name FROM acc_sales_lines l LEFT JOIN acc_items i ON i.id=l.item_id LEFT JOIN acc_units u ON u.id=l.unit_id WHERE l.workspace_id=? AND l.sales_doc_id=? ORDER BY l.line_no");$st->execute([Tenant::id(),$id]);$lines=$st->fetchAll();
-        echo '<section class="card"><div class="section-title"><div><h2>'.h(self::salesTypeLabel($d['doc_type']).' '.$d['document_no']).'</h2><div class="muted">'.h($d['party_name']).' • '.h(AccountingRepository::faDate($d['document_date'])).' • '.h($d['workflow_status']).'</div></div><b>'.number_format((float)$d['net_total']).'</b></div><div class="table-wrap"><table><thead><tr><th>#</th><th>کد</th><th>کالا/خدمت</th><th>مقدار</th><th>واحد</th><th>فی</th><th>تخفیف</th><th>مالیات</th><th>جمع</th></tr></thead><tbody>';
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();
+        $st=pdo()->prepare("SELECT d.*,p.name party_name FROM acc_sales_docs d LEFT JOIN acc_parties p ON p.id=d.party_id WHERE d.id=? AND d.workspace_id=? AND d.company_id=? LIMIT 1");$st->execute([$id,$wid,$cid]);$d=$st->fetch();if(!$d)return;
+        $st=pdo()->prepare("SELECT l.*,i.code item_code,i.name item_name,u.name unit_name FROM acc_sales_lines l LEFT JOIN acc_items i ON i.id=l.item_id LEFT JOIN acc_units u ON u.id=l.unit_id WHERE l.workspace_id=? AND l.sales_doc_id=? ORDER BY l.line_no");$st->execute([$wid,$id]);$lines=$st->fetchAll();
+        $status=(string)$d['workflow_status'];$canManage=Tenant::can('accounting.sales.manage');
+        echo '<section class="card"><div class="section-title"><div><h2>'.h(self::salesTypeLabel($d['doc_type']).' '.$d['document_no']).'</h2><div class="muted">'.h($d['party_name']).' • '.h(AccountingRepository::faDate($d['document_date'])).' • '.h($status).' • O2C AR='.h(OrderToCashDomain::AR_POSTING).'</div></div><b>'.number_format((float)$d['net_total']).'</b></div>';
+        if($canManage && $status==='draft' && in_array((string)$d['doc_type'],['preinvoice','invoice'],true)){
+            echo '<form method="post" class="inline-form" onsubmit="return confirm(\'تأیید سفارش توسط شخص دوم؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_confirm_order"><input type="hidden" name="sales_doc_id" value="'.$id.'"><button class="btn primary">تأیید سفارش (Maker/Checker)</button></form>';
+        }
+        echo '<div class="table-wrap"><table><thead><tr><th>#</th><th>کد</th><th>کالا/خدمت</th><th>مقدار</th><th>واحد</th><th>فی</th><th>تخفیف</th><th>مالیات</th><th>جمع</th></tr></thead><tbody>';
         foreach($lines as $l)echo '<tr><td>'.(int)$l['line_no'].'</td><td>'.h($l['item_code']).'</td><td>'.h($l['item_name']).'</td><td>'.h($l['quantity']).'</td><td>'.h($l['unit_name']).'</td><td>'.number_format((float)$l['unit_price']).'</td><td>'.number_format((float)$l['discount_amount']).'</td><td>'.number_format((float)$l['tax_amount']).'</td><td>'.number_format((float)$l['line_total']).'</td></tr>';echo '</tbody></table></div></section>';
         try{
-            $wid=Tenant::id();$cid=AccountingRepository::companyId();$f=SalesDomain::fulfillment($wid,$cid,['sales_doc_id'=>$id]);$m=SalesDomain::marginSummary($wid,$cid,$id);$deliveries=SalesDomain::deliveries($wid,$cid,$id,20);
-            echo '<section class="card"><div class="section-title"><div><h3>Fulfillment / Margin</h3><span class="muted">Sales → Reservation → Delivery → Landed Cost → Margin</span></div></div>';
-            echo '<div class="acc-metrics"><article><strong>'.number_format((float)$f['ordered_quantity'],4).'</strong><span>سفارش</span></article><article><strong>'.number_format((float)$f['reserved_quantity'],4).'</strong><span>رزرو</span></article><article><strong>'.number_format((float)$f['delivered_quantity'],4).'</strong><span>تحویل</span></article><article><strong>'.number_format((float)$f['outstanding_quantity'],4).'</strong><span>باقیمانده</span></article></div>';
-            echo '<div class="acc-form-total"><span>فروش بدون مالیات: <b>'.number_format((float)$m['revenue_ex_tax_irr']).'</b></span><span>COGS: <b>'.number_format((float)$m['cogs_irr']).'</b></span><span>سود ناخالص: <b>'.number_format((float)$m['gross_margin_irr']).'</b></span><span>حاشیه: <b>'.number_format((float)$m['gross_margin_pct'],1).'%</b></span><span>مبنا: <b>'.h($m['margin_basis']).'</b></span></div>';
-            if($deliveries){echo '<div class="table-wrap"><table><thead><tr><th>تحویل</th><th>تاریخ</th><th>انبار</th><th>مقدار</th><th>COGS</th><th>وضعیت</th></tr></thead><tbody>';foreach($deliveries as $x)echo '<tr><td>'.h($x['delivery_no']).'</td><td>'.h(AccountingRepository::faDate($x['delivery_date'])).'</td><td>'.h($x['warehouse_name']).'</td><td>'.number_format((float)$x['delivered_quantity'],4).'</td><td>'.number_format((float)$x['cogs_irr']).'</td><td>'.h($x['status']).'</td></tr>';echo '</tbody></table></div>';}
+            $f=OrderToCashDomain::fulfillmentSnapshot($wid,$cid,$id);$m=SalesDomain::marginSummary($wid,$cid,$id);$deliveries=SalesDomain::deliveries($wid,$cid,$id,20);
+            $warehouses=AccountingRepository::options('acc_warehouses');
+            echo '<section class="card"><div class="section-title"><div><h3>Order-to-Cash Fulfillment</h3><span class="muted">تأیید → رزرو → تحویل → فاکتور پیش‌نویس (AR/Settlement مسدود)</span></div></div>';
+            echo '<div class="acc-metrics"><article><strong>'.number_format((float)$f['ordered_quantity'],4).'</strong><span>سفارش</span></article><article><strong>'.number_format((float)$f['reserved_quantity'],4).'</strong><span>رزرو</span></article><article><strong>'.number_format((float)$f['delivered_quantity'],4).'</strong><span>تحویل</span></article><article><strong>'.number_format((float)$f['outstanding_quantity'],4).'</strong><span>باقیمانده</span></article><article><strong>'.number_format((float)$f['invoiceable_quantity'],4).'</strong><span>قابل فاکتور</span></article><article><strong>'.number_format((float)$f['invoiced_quantity'],4).'</strong><span>فاکتور شده</span></article></div>';
+            echo '<div class="acc-form-total"><span>فروش بدون مالیات: <b>'.number_format((float)$m['revenue_ex_tax_irr']).'</b></span><span>COGS: <b>'.number_format((float)$m['cogs_irr']).'</b></span><span>سود ناخالص: <b>'.number_format((float)$m['gross_margin_irr']).'</b></span><span>حاشیه: <b>'.number_format((float)$m['gross_margin_pct'],1).'%</b></span><span>مبنا: <b>'.h($m['margin_basis']).'</b></span><span>AR: <b>'.h($f['ar_posting']).'</b></span></div>';
+            echo '<div class="table-wrap"><table><thead><tr><th>ردیف</th><th>کالا</th><th>سفارش</th><th>رزرو</th><th>تحویل</th><th>قابل فاکتور</th><th>فاکتور شده</th><th>باقیمانده</th></tr></thead><tbody>';
+            foreach($f['rows'] as $r)echo '<tr><td>'.(int)$r['sales_line_id'].'</td><td>'.h(($r['item_code']??'').' '.($r['item_name']??'')).'</td><td>'.h($r['ordered_qty']).'</td><td>'.h($r['reserved_qty']).'</td><td>'.h($r['delivered_qty']).'</td><td>'.h($r['invoiceable_qty']).'</td><td>'.h($r['invoiced_qty']).'</td><td>'.h($r['outstanding_qty']).'</td></tr>';
+            echo '</tbody></table></div>';
+            if($canManage && in_array($status,['approved','final'],true) && (float)$f['outstanding_quantity']>0){
+                echo '<details open><summary>رزرو موجودی</summary><form method="post">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_reserve"><input type="hidden" name="sales_doc_id" value="'.$id.'"><div class="grid-form compact">';
+                self::selectRows('warehouse_id','انبار *',$warehouses,true);
+                echo '</div><div class="table-wrap"><table><thead><tr><th>ردیف</th><th>کالا</th><th>باقیمانده</th><th>مقدار رزرو</th></tr></thead><tbody>';
+                foreach($f['rows'] as $r){
+                    $out=(float)$r['outstanding_qty'];if($out<=0)continue;
+                    echo '<tr><td>'.(int)$r['sales_line_id'].'</td><td>'.h($r['item_name']).'</td><td>'.h($r['outstanding_qty']).'</td><td><input name="lines['.(int)$r['sales_line_id'].'][quantity]" value="'.h($r['outstanding_qty']).'"></td></tr>';
+                }
+                echo '</tbody></table></div><button class="btn primary">ثبت رزرو</button></form></details>';
+                echo '<details><summary>تحویل از رزرو</summary><form method="post">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_deliver"><input type="hidden" name="sales_doc_id" value="'.$id.'"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'"><div class="grid-form compact">';
+                self::selectRows('warehouse_id','انبار *',$warehouses,true);self::input('delivery_date','تاریخ تحویل',Jalali::today(),'date');
+                echo '</div><div class="table-wrap"><table><thead><tr><th>ردیف</th><th>کالا</th><th>رزرو/باقیمانده</th><th>مقدار تحویل</th></tr></thead><tbody>';
+                foreach($f['rows'] as $r){
+                    $out=(float)$r['outstanding_qty'];if($out<=0)continue;
+                    $suggest=min((float)$r['reserved_qty'],$out);
+                    echo '<tr><td>'.(int)$r['sales_line_id'].'</td><td>'.h($r['item_name']).'</td><td>'.h($r['reserved_qty']).' / '.h($r['outstanding_qty']).'</td><td><input name="lines['.(int)$r['sales_line_id'].'][quantity]" value="'.h(number_format($suggest,4,'.','')).'"></td></tr>';
+                }
+                echo '</tbody></table></div><button class="btn primary">ثبت تحویل</button></form></details>';
+            }
+            if($deliveries){
+                echo '<div class="table-wrap"><table><thead><tr><th>تحویل</th><th>تاریخ</th><th>انبار</th><th>مقدار</th><th>COGS</th><th>وضعیت</th><th>فاکتور</th></tr></thead><tbody>';
+                foreach($deliveries as $x){
+                    echo '<tr><td>'.h($x['delivery_no']).'</td><td>'.h(AccountingRepository::faDate($x['delivery_date'])).'</td><td>'.h($x['warehouse_name']).'</td><td>'.number_format((float)$x['delivered_quantity'],4).'</td><td>'.number_format((float)$x['cogs_irr']).'</td><td>'.h($x['status']).'</td><td>';
+                    if($canManage && in_array($status,['approved','final'],true) && (float)$f['invoiceable_quantity']>0){
+                        echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_invoice_delivery"><input type="hidden" name="sales_doc_id" value="'.$id.'"><input type="hidden" name="delivery_id" value="'.(int)$x['id'].'">';
+                        foreach($f['rows'] as $r){
+                            $elig=(float)$r['invoiceable_qty'];if($elig<=0)continue;
+                            echo '<input type="hidden" name="lines['.(int)$r['sales_line_id'].'][quantity]" value="'.h($r['invoiceable_qty']).'">';
+                        }
+                        echo '<button class="btn tiny">صدور پیش‌نویس فاکتور</button></form>';
+                    }else echo '—';
+                    echo '</td></tr>';
+                }
+                echo '</tbody></table></div>';
+            }
             echo '</section>';
-        }catch(Throwable $e){echo '<section class="card alert warning">Fulfillment/Margin: '.h($e->getMessage()).'</section>';}
+        }catch(Throwable $e){echo '<section class="card alert warning">O2C Fulfillment: '.h($e->getMessage()).'</section>';}
     }
 
     private static function vouchers(): void
@@ -622,7 +670,7 @@ final class AccountingIndustrialModule
         Tenant::requirePermission('accounting.sales.manage');$wid=Tenant::id();$cid=AccountingRepository::companyId();$type=trim((string)($_POST['doc_type']??'invoice'));$no=trim((string)($_POST['document_no']??''));$date=AccountingRepository::date($_POST['document_date']??'');$party=(int)($_POST['party_id']??0);$lines=$_POST['lines']??[];
         if(!$no||!$date||!$party||!is_array($lines)||!$lines)throw new RuntimeException('شماره، تاریخ، مشتری و حداقل یک ردیف فروش الزامی است.');if(!AccountingRepository::owns('acc_parties',$party))throw new RuntimeException('مشتری متعلق به شرکت فعال نیست.');
         $warehouse=self::scopedId('acc_warehouses',$_POST['warehouse_id']??0);$cc=self::scopedId('acc_cost_centers',$_POST['cost_center_id']??0);$project=self::scopedId('acc_projects',$_POST['project_id']??0);$pdo=pdo();$pdo->beginTransaction();
-        try{$pdo->prepare("INSERT INTO acc_sales_docs (workspace_id,company_id,doc_type,document_no,document_date,due_date,party_id,warehouse_id,cost_center_id,project_id,notes,workflow_status,taxpayer_status,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())")->execute([$wid,$cid,$type,$no,$date,AccountingRepository::date($_POST['due_date']??''),$party,$warehouse,$cc,$project,trim((string)($_POST['notes']??'')),trim((string)($_POST['workflow_status']??'draft')),trim((string)($_POST['taxpayer_status']??'not_sent')),(int)Auth::user()['id']]);$id=(int)$pdo->lastInsertId();$gross=0;$discount=0;$tax=0;$net=0;$n=1;
+        try{$pdo->prepare("INSERT INTO acc_sales_docs (workspace_id,company_id,doc_type,document_no,document_date,due_date,party_id,warehouse_id,cost_center_id,project_id,notes,workflow_status,taxpayer_status,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())")->execute([$wid,$cid,$type,$no,$date,AccountingRepository::date($_POST['due_date']??''),$party,$warehouse,$cc,$project,trim((string)($_POST['notes']??'')),'draft',trim((string)($_POST['taxpayer_status']??'not_sent')),(int)Auth::user()['id']]);$id=(int)$pdo->lastInsertId();$gross=0;$discount=0;$tax=0;$net=0;$n=1;
             $ins=$pdo->prepare("INSERT INTO acc_sales_lines (workspace_id,sales_doc_id,line_no,item_id,unit_id,warehouse_id,cost_center_id,project_id,description,quantity,unit_price,discount_amount,tax_percent,tax_amount,line_total,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())");
             foreach($lines as $l){$item=(int)($l['item_id']??0);$qty=(float)($l['quantity']??0);$price=max(0,(float)($l['unit_price']??0));if(!$item||$qty<=0)continue;if(!AccountingRepository::owns('acc_items',$item))throw new RuntimeException('کالا/خدمت متعلق به شرکت فعال نیست.');$base=$qty*$price;$disc=max(0,min($base,(float)($l['discount_amount']??0)));$taxPct=max(0,min(100,(float)($l['tax_percent']??0)));$taxAmt=max(0,($base-$disc)*$taxPct/100);$total=$base-$disc+$taxAmt;$ins->execute([$wid,$id,$n++,$item,self::scopedId('acc_units',$l['unit_id']??0),self::scopedId('acc_warehouses',$l['warehouse_id']??0)?:$warehouse,self::scopedId('acc_cost_centers',$l['cost_center_id']??0)?:$cc,self::scopedId('acc_projects',$l['project_id']??0)?:$project,trim((string)($l['description']??'')),$qty,$price,$disc,$taxPct,$taxAmt,$total]);$gross+=$base;$discount+=$disc;$tax+=$taxAmt;$net+=$total;}
             if($n===1)throw new RuntimeException('ردیف معتبر فروش وجود ندارد.');$pdo->prepare("UPDATE acc_sales_docs SET total_before_discount=?,discount_total=?,tax_total=?,net_total=?,updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([$gross,$discount,$tax,$net,$id,$wid]);$pdo->commit();self::audit('acc.sale.create','acc_sales_docs',$id,'ایجاد سند فروش',['net_total'=>$net]);self::back('sales');
@@ -632,6 +680,66 @@ final class AccountingIndustrialModule
     private static function deleteSale(): void
     {
         Tenant::requirePermission('accounting.sales.manage');$id=(int)($_POST['id']??0);$wid=Tenant::id();$cid=AccountingRepository::companyId();$st=pdo()->prepare("SELECT workflow_status FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1");$st->execute([$id,$wid,$cid]);$status=$st->fetchColumn();if($status===false)throw new RuntimeException('سند فروش پیدا نشد.');if($status!=='draft')throw new RuntimeException('فقط پیش‌نویس فروش قابل حذف است.');$pdo=pdo();$pdo->beginTransaction();try{$pdo->prepare("DELETE FROM acc_sales_lines WHERE workspace_id=? AND sales_doc_id=?")->execute([$wid,$id]);$pdo->prepare("DELETE FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=?")->execute([$id,$wid,$cid]);$pdo->commit();}catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}self::audit('acc.sale.delete','acc_sales_docs',$id,'حذف پیش‌نویس فروش');self::back('sales');
+    }
+
+    private static function o2cConfirmOrder(): void
+    {
+        Tenant::requirePermission('accounting.sales.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $salesDocId=(int)($_POST['sales_doc_id']??0);
+        OrderToCashDomain::confirmOrder($wid,$cid,$uid,$salesDocId);
+        self::audit('o2c.order.confirm','acc_sales_docs',$salesDocId,'تأیید سفارش فروش O2C');
+        self::back('sales','view='.$salesDocId);
+    }
+
+    private static function o2cReserve(): void
+    {
+        Tenant::requirePermission('accounting.sales.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $salesDocId=(int)($_POST['sales_doc_id']??0);$warehouseId=(int)($_POST['warehouse_id']??0);
+        $raw=(array)($_POST['lines']??[]);$lines=[];
+        foreach($raw as $lineId=>$form){
+            if(!is_array($form))continue;$qty=trim((string)($form['quantity']??''));
+            if($qty===''||$qty==='0')continue;
+            $lines[]=['sales_line_id'=>(int)$lineId,'quantity'=>$qty];
+        }
+        SalesDomain::reserveStock($wid,$cid,$uid,['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'lines'=>$lines,'notes'=>trim((string)($_POST['notes']??''))]);
+        self::audit('o2c.reserve','acc_sales_docs',$salesDocId,'رزرو موجودی O2C');
+        self::back('sales','view='.$salesDocId);
+    }
+
+    private static function o2cDeliver(): void
+    {
+        Tenant::requirePermission('accounting.sales.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $salesDocId=(int)($_POST['sales_doc_id']??0);$warehouseId=(int)($_POST['warehouse_id']??0);
+        $raw=(array)($_POST['lines']??[]);$lines=[];
+        foreach($raw as $lineId=>$form){
+            if(!is_array($form))continue;$qty=trim((string)($form['quantity']??''));
+            if($qty===''||$qty==='0')continue;
+            $lines[]=['sales_line_id'=>(int)$lineId,'quantity'=>$qty];
+        }
+        $key=trim((string)($_POST['idempotency_key']??''));
+        SalesDomain::deliverStock($wid,$cid,$uid,[
+            'sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'lines'=>$lines,
+            'delivery_date'=>$_POST['delivery_date']??'','notes'=>trim((string)($_POST['notes']??'')),
+            'idempotency_key'=>$key,
+        ]);
+        self::audit('o2c.deliver','acc_sales_docs',$salesDocId,'تحویل فروش O2C');
+        self::back('sales','view='.$salesDocId);
+    }
+
+    private static function o2cInvoiceFromDelivery(): void
+    {
+        Tenant::requirePermission('accounting.sales.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $salesDocId=(int)($_POST['sales_doc_id']??0);$deliveryId=(int)($_POST['delivery_id']??0);
+        $raw=(array)($_POST['lines']??[]);
+        $out=OrderToCashDomain::createInvoiceFromDelivery($wid,$cid,$uid,$salesDocId,$deliveryId,$raw);
+        self::audit('o2c.invoice.draft','acc_sales_docs',(int)$out['id'],'پیش‌نویس فاکتور O2C از تحویل',[
+            'source_sales_doc_id'=>$salesDocId,'delivery_id'=>$deliveryId,'ar_posting'=>$out['ar_posting'],
+        ]);
+        self::back('sales','view='.(int)$out['id']);
     }
 
     private static function saveVoucher(): void
