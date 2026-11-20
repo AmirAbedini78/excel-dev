@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.16.0';
+    public const VERSION='10.17.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -32,7 +32,7 @@ final class ModuleRegistry
             ],
             'p2p'=>[
                 'title'=>'تطبیق سه‌طرفه خرید و فاکتور تأمین‌کننده',
-                'description'=>'تأیید دونفره سفارش و تطبیق فاکتور با رسید قطعی و مقدار پذیرفته‌شده؛ خروجی فقط فاکتور خرید پیش‌نویس، بدون پرداخت/سند قطعی.',
+                'description'=>'تطبیق سه‌طرفه با سیاست Fail-Closed شرکت‌محور، اصلاح فاکتور ردشده، و مسدودسازی مسیرهای دستی/AI برای فاکتور کالایی؛ خروجی فقط پیش‌نویس بدون پرداخت/سند قطعی.',
                 'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,
                 'depends'=>['procurement','finance'],'pages'=>['p2p'],
             ],

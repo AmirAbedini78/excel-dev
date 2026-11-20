@@ -13,17 +13,20 @@ def source(path):
 class ThreeWayPurchaseTests(unittest.TestCase):
     def test_version_and_migration_order(self):
         b = source('app/bootstrap.php')
-        self.assertIn("SCHEMA_VERSION = '10.16.0'", source('app/Core/RuntimeCache.php'))
-        self.assertIn("VERSION='10.16.0'", source('app/Core/ModuleRegistry.php'))
+        self.assertIn("SCHEMA_VERSION = '10.17.0'", source('app/Core/RuntimeCache.php'))
+        self.assertIn("VERSION='10.17.0'", source('app/Core/ModuleRegistry.php'))
         self.assertLess(b.index('AccountingSchema::migrate(pdo())'),b.index('PurchaseMatchingDomain::migrate(pdo())'))
         self.assertLess(b.index('EnterpriseDomain::migrate(pdo())'),b.index('PurchaseMatchingDomain::migrate(pdo())'))
 
-    def test_only_two_new_scoped_tables(self):
+    def test_scoped_p2p_tables(self):
         d = source('app/Core/PurchaseMatchingDomain.php')
-        self.assertEqual(2,d.count('CREATE TABLE IF NOT EXISTS erp_p2p_'))
+        self.assertGreaterEqual(d.count('CREATE TABLE IF NOT EXISTS erp_p2p_'),4)
         self.assertIn('UNIQUE KEY uq_p2p_supplier_invoice (workspace_id,company_id,supplier_id,supplier_invoice_no)',d)
         self.assertIn('UNIQUE KEY uq_p2p_canonical (workspace_id,canonical_doc_id)',d)
         self.assertIn('UNIQUE KEY uq_p2p_bill_line (workspace_id,bill_id,purchase_line_id)',d)
+        self.assertIn('erp_p2p_company_policy',d)
+        self.assertIn('erp_p2p_bill_revisions',d)
+        self.assertIn('erp_p2p_policy_exceptions',d)
 
     def test_only_approved_purchase_orders(self):
         d=source('app/Core/PurchaseMatchingDomain.php')

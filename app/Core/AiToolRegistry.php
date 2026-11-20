@@ -930,6 +930,8 @@ final class AiToolRegistry
     {
         $date=AccountingRepository::date((string)($args['document_date']??''))?:date('Y-m-d');$party=(int)$args['party_id'];$lines=(array)$args['lines'];
         $docType=trim((string)($args['doc_type']??'purchase_invoice_goods'));$no='AI-PUR-'.date('Ymd-His').'-'.strtoupper(bin2hex(random_bytes(2)));
+        $exceptionReason=trim((string)($args['p2p_exception_reason']??''));
+        PurchaseMatchingDomain::assertManualGoodsInvoiceAllowed($wid,$cid,$userId,$docType,'ai_tool',$exceptionReason);
         $gross=0;$discount=0;$net=0;$valid=[];
         foreach($lines as $l){
             $qty=(float)$l['quantity'];$price=max(0,(float)$l['unit_price']);$base=$qty*$price;
@@ -941,6 +943,9 @@ final class AiToolRegistry
             $pdo->prepare("INSERT INTO acc_purchase_docs (workspace_id,company_id,doc_type,document_no,document_date,party_id,notes,workflow_status,taxpayer_status,total_before_discount,discount_total,net_total,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,'draft','not_sent',?,?,?,?,NOW(),NOW())")
                 ->execute([$wid,$cid,$docType,$no,$date,$party,trim((string)($args['notes']??'ایجادشده توسط AI و تاییدشده توسط کاربر')),$gross,$discount,$net,$userId]);
             $id=(int)$pdo->lastInsertId();
+            if($docType==='purchase_invoice_goods'&&$exceptionReason!==''&&PurchaseMatchingDomain::isGoodsMatchEnforced($wid,$cid)){
+                PurchaseMatchingDomain::recordException($wid,$cid,$userId,'ai_tool',$exceptionReason,$id);
+            }
             $ins=$pdo->prepare("INSERT INTO acc_purchase_lines (workspace_id,purchase_doc_id,line_no,item_id,description,quantity,unit_price,discount_amount,line_total,created_at) VALUES (?,?,?,?,?,?,?,?,?,NOW())");$n=1;
             foreach($valid as [$l,$total])$ins->execute([$wid,$id,$n++,(int)$l['item_id'],trim((string)($l['description']??'')),(float)$l['quantity'],(float)$l['unit_price'],max(0,(float)($l['discount_amount']??0)),$total]);
             if($ownsTransaction)$pdo->commit();return ['entity'=>'acc_purchase_docs','id'=>$id,'document_no'=>$no,'doc_type'=>$docType,'net_total'=>$net,'status'=>'draft'];
