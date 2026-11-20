@@ -60,7 +60,15 @@ class Jalali
     public static function fromGregorian(?string $date): string
     {
         if (!$date) return '';
-        $ts = strtotime($date); if (!$ts) return '';
+        // Prefer date-only Y-m-d (no timezone shift). Datetime strings fall back to strtotime.
+        $raw = trim(self::enDigits($date));
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $raw, $m)) {
+            $gy = (int)$m[1]; $gm = (int)$m[2]; $gd = (int)$m[3];
+            if (!checkdate($gm, $gd, $gy)) return '';
+            [$jy,$jm,$jd] = self::toJalali($gy, $gm, $gd);
+            return sprintf('%04d/%02d/%02d', $jy,$jm,$jd);
+        }
+        $ts = strtotime($raw); if (!$ts) return '';
         [$jy,$jm,$jd] = self::toJalali((int)date('Y',$ts), (int)date('n',$ts), (int)date('j',$ts));
         return sprintf('%04d/%02d/%02d', $jy,$jm,$jd);
     }
