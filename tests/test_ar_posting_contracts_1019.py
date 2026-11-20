@@ -13,8 +13,8 @@ def source(path: str) -> str:
 
 class ArPostingContracts1019(unittest.TestCase):
     def test_version_and_wiring(self):
-        self.assertIn("SCHEMA_VERSION = '10.23.0'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.23.0'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.24.0-rc1'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.24.0-rc1'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("AccountingPostingDomain.php", source("app/bootstrap.php"))
         self.assertIn("AccountingPostingDomain::migrate(pdo())", source("app/bootstrap.php"))
         self.assertIn("VERSION = '10.23.0-ar'", source("app/Core/AccountingPostingDomain.php"))

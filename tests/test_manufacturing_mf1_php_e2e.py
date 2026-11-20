@@ -67,17 +67,37 @@ def _php(scenario: str, args: dict | None = None, timeout: int = 180) -> dict:
         raise AssertionError(f"bad_json={out[-1]!r} stderr={completed.stderr}") from exc
 
 
+def _mysql_container_ok() -> bool:
+    try:
+        r = subprocess.run(
+            ["docker", "inspect", "-f", "{{.Id}} {{.Name}}", "erpsmart-p2p-mysql-test"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+        return r.returncode == 0 and "erpsmart-p2p-mysql-test" in (r.stdout or "")
+    except Exception:
+        return False
+
+
 class ManufacturingMf1PhpE2e(unittest.TestCase):
-    def test_00_mysql_identity(self):
-        try:
-            r = subprocess.run(
-                ["docker", "inspect", "-f", "{{.Id}} {{.Name}}", "erpsmart-p2p-mysql-test"],
-                capture_output=True,
-                text=True,
-                timeout=20,
+    @classmethod
+    def setUpClass(cls):
+        if not _docker_ok():
+            raise unittest.SkipTest("erpsmart-o2c-php:8.2 unavailable")
+        if not _mysql_container_ok():
+            raise unittest.SkipTest(
+                "disposable MySQL container erpsmart-p2p-mysql-test unavailable "
+                "(CI commercial MVP gate is source-only; use rc1_acceptance_gate for PHP+MySQL)"
             )
-        except Exception as exc:
-            raise unittest.SkipTest(str(exc))
+
+    def test_00_mysql_identity(self):
+        r = subprocess.run(
+            ["docker", "inspect", "-f", "{{.Id}} {{.Name}}", "erpsmart-p2p-mysql-test"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("erpsmart-p2p-mysql-test", r.stdout)
         self.assertTrue(r.stdout.strip().startswith("02eb215a87f6") or "02eb215a87f6" in r.stdout.replace("-", ""))

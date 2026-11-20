@@ -11,10 +11,10 @@ class Cycle4Contracts(unittest.TestCase):
     def test_schema_tables(self):
         for t in ('acc_inventory_receipts','acc_inventory_receipt_lines','acc_stock_movements','acc_inventory_reservations'):self.assertIn('CREATE TABLE IF NOT EXISTS '+t,self.schema)
         import re
-        m=re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)'",self.cache);self.assertIsNotNone(m)
+        m=re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)(?:-[^']+)?'",self.cache);self.assertIsNotNone(m)
         self.assertGreaterEqual(tuple(map(int,m.groups())),(10,1,0))
     def test_module_kernel(self):
-        self.assertIn("'stage'=>'pilot','implemented'=>true,'default_enabled'=>true",self.modules);self.assertIn("'pages'=>['inventory']",self.modules);self.assertIn("'pages'=>['procurement']",self.modules);self.assertIn("updated_by IS NULL",self.modules)
+        self.assertIn("'stage'=>'pilot','implemented'=>true,'default_enabled'=>true",self.modules);self.assertIn("'pages'=>['inventory']",self.modules);self.assertIn("'procurement'",self.modules);self.assertIn("'pages'=>['procurement'",self.modules);self.assertIn("updated_by IS NULL",self.modules)
     def test_routes(self):
         self.assertIn("InventoryProcurementModule.php",self.index);self.assertIn("str_starts_with($action,'inv_')",self.index);self.assertIn("$page === 'inventory'",self.index);self.assertIn("$page === 'procurement'",self.index)
     def test_inventory_truth(self):
