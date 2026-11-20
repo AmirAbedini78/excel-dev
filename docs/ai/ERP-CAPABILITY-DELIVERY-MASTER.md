@@ -5,7 +5,8 @@
 **Merged v10.21.0:** `942d7765120637dd446e9d8611f373edc1edb1b3` (PR #14) · CI [44743805399](https://github.com/AmirAbedini78/excel-dev/actions/runs/44743805399)
 **Docs SHA baseline:** `837a8918547876d8eca77eaab05fb99158d4346c` (PR #15)
 **Merged v10.22.0 AP:** `280df57a8fdded20096565018718281e6e5ddb1f` (PR #16) · CI [44747809655](https://github.com/AmirAbedini78/excel-dev/actions/runs/44747809655)
-**Next:** v10.23 supplier payment + domestic trading merge → v10.24 manufacturing costing pilot
+**Merged v10.23.0 trading/AP pay:** `e25fc5903445ec2c96946793e46e789fc20f585d` (PR #17) · CI [44748809339](https://github.com/AmirAbedini78/excel-dev/actions/runs/44748809339)
+**Next:** v10.24 manufacturing costing pilot per [58-MANUFACTURING-COSTING-SPEC-1024.md](58-MANUFACTURING-COSTING-SPEC-1024.md)
 
 | Capability | Status | Notes |
 |---|---|---|
