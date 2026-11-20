@@ -1,0 +1,32 @@
+/* RC1 T6 cockpits — compact RTL operational UI */
+.ui-cockpit-hero{
+  display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;
+  background:linear-gradient(135deg,#f7faf8 0%,#eef3f8 55%,#f4f0ea 100%);
+  border:1px solid #d7e0ea;
+}
+.ui-kicker{display:inline-block;font-size:.75rem;letter-spacing:.04em;color:#35506b;margin-bottom:.35rem}
+.ui-safety{
+  flex:0 0 auto;max-width:14rem;padding:.75rem .9rem;border-radius:.5rem;
+  background:#fff8e8;border:1px solid #e6d3a4;color:#5c4a1f;font-size:.85rem;line-height:1.45
+}
+.ui-metrics article{min-width:7rem}
+.ui-badge{
+  display:inline-block;padding:.15rem .45rem;border-radius:.35rem;font-size:.78rem;
+  background:#eef2f6;color:#334155
+}
+.ui-badge-ok{background:#e5f6ea;color:#166534}
+.ui-badge-warn{background:#fff4d6;color:#92400e}
+.ui-badge-info{background:#e8f1ff;color:#1e3a8a}
+.ui-badge-danger{background:#fde8e8;color:#991b1b}
+.ui-badge-muted{background:#f1f5f9;color:#475569}
+.ui-empty,.ui-blocked{border-style:dashed}
+.ui-role-list{margin:.25rem 0 0;padding-inline-start:1.1rem;line-height:1.7}
+.ui-ai-guard{background:#f5f9ff;border-color:#c9daf0}
+.btn.disabled,.btn.tiny.disabled{
+  opacity:.55;pointer-events:none;cursor:not-allowed;background:#e5e7eb;color:#64748b
+}
+.ui-cockpit-table td{vertical-align:top}
+@media (max-width:900px){
+  .ui-cockpit-hero{flex-direction:column}
+  .ui-safety{max-width:none}
+}

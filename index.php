@@ -13,6 +13,7 @@ require_once __DIR__.'/app/Modules/PurchaseMatchingModule.php';
 require_once __DIR__.'/app/Modules/TradeModule.php';
 require_once __DIR__.'/app/Modules/CrmModule.php';
 require_once __DIR__.'/app/Modules/AiModule.php';
+require_once __DIR__.'/app/Modules/UiCockpitModule.php';
 require_once __DIR__.'/app/Modules/ModuleCenterModule.php';
 function q(string $sql, array $params=[]): array { $st=pdo()->prepare($sql); $st->execute($params); return $st->fetchAll(); }
 function one(string $sql, array $params=[]): ?array { $st=pdo()->prepare($sql); $st->execute($params); $r=$st->fetch(); return $r ?: null; }
@@ -215,6 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (str_starts_with($action,'enterprise_')) EnterpriseModule::handle($action);
         if (str_starts_with($action,'trade_')) TradeModule::handle($action);
         if (str_starts_with($action,'crm_')) CrmModule::handle($action);
+        if (str_starts_with($action,'ui_cockpit_')) UiCockpitModule::handle($action);
         if ($action === 'inline_update_batch') handle_inline_update_batch();
         if ($action === 'inline_update') handle_inline_update();
         if ($action === 'delete_record') handle_delete_record();
@@ -563,9 +565,11 @@ function render_header(string $title, string $subtitle=''): void
         'choices'=>'مقادیر انتخابی',
         'industrial'=>'حسابداری و مالی',
         'procurement'=>'تأمین و خرید',
+        'trading_cockpit'=>'کابین تجارت',
         'p2p'=>'تطبیق سه‌طرفه خرید',
         'inventory'=>'انبار و موجودی',
         'production'=>'تولید و برنامه‌ریزی',
+        'manufacturing_cockpit'=>'کابین تولید',
         'operations'=>'مرکز عملیات ERP',
         'workflows'=>'طراحی گردش‌کار و تأییدیه',
         'enterprise_sales'=>'فروش پیشرفته و تجاری',
@@ -596,8 +600,10 @@ function render_header(string $title, string $subtitle=''): void
         'dashboard'=>'ماژول مدیریت امور حسابداران',
         'industrial'=>'ماژول حسابداری و مالی',
         'procurement'=>'تأمین و زنجیره موجودی',
+        'trading_cockpit'=>'کابین عملیات تجارت',
         'p2p'=>'تطبیق خرید تا فاکتور',
         'production'=>'برنامه‌ریزی تولید',
+        'manufacturing_cockpit'=>'کابین عملیات تولید',
         'operations'=>'مدیریت عملیات',
         'workflows'=>'فرآیندها و تأییدیه‌ها',
         'enterprise_sales'=>'فروش پیشرفته و تجاری',
@@ -618,7 +624,7 @@ function render_header(string $title, string $subtitle=''): void
         'shares'=>'مدیریت و زیرساخت',
     ];
     $navPerm=['dashboard'=>'dashboard.view','companies'=>'companies.view','systems'=>'systems.view','monthly'=>'monthly.view','daily'=>'daily.view','custom_fields'=>'custom_fields.manage',
-        'choices'=>'choices.manage','industrial'=>'accounting.view','procurement'=>'procurement.view','p2p'=>'accounting.purchase.view','inventory'=>'inventory.view','production'=>'production.view','operations'=>'operations.view','workflows'=>'workflow.view','enterprise_sales'=>'enterprise.commerce.view','enterprise_wms'=>'enterprise.warehouse.view','enterprise_factory'=>'enterprise.factory.view','enterprise_people'=>'enterprise.people.view','enterprise_service_plus'=>'enterprise.service.view','enterprise_growth'=>'enterprise.growth.view','enterprise_knowledge'=>'enterprise.knowledge.view','enterprise_governance'=>'enterprise.governance.view','hr'=>'hr.view','projects'=>'projects.view','pos'=>'pos.view','service'=>'service.view','assets'=>'assets.view','expenses'=>'expenses.view','trade'=>'trade.view','crm'=>'crm.view','ai'=>'ai.use','kanban'=>'kanban.view','notes'=>'notes.view','phonebook'=>'phonebook.view','shares'=>'shares.view','library'=>'files.view','access'=>'members.view','performance'=>'cache.manage','settings'=>'settings.manage'];
+        'choices'=>'choices.manage','industrial'=>'accounting.view','procurement'=>'procurement.view','trading_cockpit'=>'procurement.view','p2p'=>'accounting.purchase.view','inventory'=>'inventory.view','production'=>'production.view','manufacturing_cockpit'=>'production.view','operations'=>'operations.view','workflows'=>'workflow.view','enterprise_sales'=>'enterprise.commerce.view','enterprise_wms'=>'enterprise.warehouse.view','enterprise_factory'=>'enterprise.factory.view','enterprise_people'=>'enterprise.people.view','enterprise_service_plus'=>'enterprise.service.view','enterprise_growth'=>'enterprise.growth.view','enterprise_knowledge'=>'enterprise.knowledge.view','enterprise_governance'=>'enterprise.governance.view','hr'=>'hr.view','projects'=>'projects.view','pos'=>'pos.view','service'=>'service.view','assets'=>'assets.view','expenses'=>'expenses.view','trade'=>'trade.view','crm'=>'crm.view','ai'=>'ai.use','kanban'=>'kanban.view','notes'=>'notes.view','phonebook'=>'phonebook.view','shares'=>'shares.view','library'=>'files.view','access'=>'members.view','performance'=>'cache.manage','settings'=>'settings.manage'];
     foreach($navPerm as $nk=>$np) if(isset($nav[$nk]) && !Tenant::can($np)) unset($nav[$nk]);
     foreach(array_keys($nav) as $nk) if(!ModuleRegistry::pageEnabled($nk)) unset($nav[$nk]);
     if(!Tenant::isPlatformAdmin()){ unset($nav['platform']); unset($nav['settings']); unset($nav['modules']); }
@@ -627,6 +633,7 @@ function render_header(string $title, string $subtitle=''): void
     <title><?=h($title)?> - ERPSMART</title>
     <link rel="stylesheet" href="assets/style.css?v=6.0"><link rel="stylesheet" href="assets/v4.css?v=6.0"><link rel="stylesheet" href="assets/choices.css?v=6.0"><link rel="stylesheet" href="assets/v5.css?v=6.0"><link rel="stylesheet" href="assets/accounting.css?v=7.0"><link rel="stylesheet" href="assets/business-copilot.css?v=10.11.0"><link rel="stylesheet" href="assets/business-copilot-cycle12.css?v=10.11.0">
     <?php if (($_GET['page']??'')==='production'): ?><link rel="stylesheet" href="assets/production.css?v=10.12.0"><?php endif; ?>
+    <?php if (in_array(($_GET['page']??''),['trading_cockpit','manufacturing_cockpit'],true)): ?><link rel="stylesheet" href="assets/ui-cockpit.css?v=rc1-t6"><?php endif; ?>
     <?php if (in_array(($_GET['page']??''),['operations','hr','projects','pos','service','assets','expenses'],true)): ?><link rel="stylesheet" href="assets/erp-suite.css?v=10.13.0"><?php endif; ?>
     <?php if (($_GET['page']??'')==='workflows'): ?><link rel="stylesheet" href="assets/workflows.css?v=10.14.0"><?php endif; ?>
     <?php if (in_array(($_GET['page']??''),array_column(EnterpriseDomain::groups(),'page'),true)): ?><link rel="stylesheet" href="assets/enterprise.css?v=10.15.0"><?php endif; ?>
@@ -646,7 +653,7 @@ Auth::require(); // Tenant and ModuleRegistry are already booted by bootstrap.
 if(!ModuleRegistry::pageEnabled($page)){ flash('این ماژول برای محیط کاری فعال نیست.','danger'); redirect('index.php'); }
 if($_SERVER['REQUEST_METHOD']==='GET' && $page!=='login' && setting('audit_page_views','0')==='1') Audit::log('page.view','page',0,$page);
 $pagePermission=['dashboard'=>'dashboard.view','companies'=>'companies.view','systems'=>'systems.view','monthly'=>'monthly.view','daily'=>'daily.view','kanban'=>'kanban.view','custom_fields'=>'custom_fields.manage',
-        'choices'=>'choices.manage','industrial'=>'accounting.view','procurement'=>'procurement.view','p2p'=>'accounting.purchase.view','inventory'=>'inventory.view','production'=>'production.view','operations'=>'operations.view','workflows'=>'workflow.view','enterprise_sales'=>'enterprise.commerce.view','enterprise_wms'=>'enterprise.warehouse.view','enterprise_factory'=>'enterprise.factory.view','enterprise_people'=>'enterprise.people.view','enterprise_service_plus'=>'enterprise.service.view','enterprise_growth'=>'enterprise.growth.view','enterprise_knowledge'=>'enterprise.knowledge.view','enterprise_governance'=>'enterprise.governance.view','hr'=>'hr.view','projects'=>'projects.view','pos'=>'pos.view','service'=>'service.view','assets'=>'assets.view','expenses'=>'expenses.view','trade'=>'trade.view','crm'=>'crm.view','ai'=>'ai.use','phonebook'=>'phonebook.view','shares'=>'shares.view','performance'=>'cache.manage','settings'=>'settings.manage'];
+        'choices'=>'choices.manage','industrial'=>'accounting.view','procurement'=>'procurement.view','trading_cockpit'=>'procurement.view','p2p'=>'accounting.purchase.view','inventory'=>'inventory.view','production'=>'production.view','manufacturing_cockpit'=>'production.view','operations'=>'operations.view','workflows'=>'workflow.view','enterprise_sales'=>'enterprise.commerce.view','enterprise_wms'=>'enterprise.warehouse.view','enterprise_factory'=>'enterprise.factory.view','enterprise_people'=>'enterprise.people.view','enterprise_service_plus'=>'enterprise.service.view','enterprise_growth'=>'enterprise.growth.view','enterprise_knowledge'=>'enterprise.knowledge.view','enterprise_governance'=>'enterprise.governance.view','hr'=>'hr.view','projects'=>'projects.view','pos'=>'pos.view','service'=>'service.view','assets'=>'assets.view','expenses'=>'expenses.view','trade'=>'trade.view','crm'=>'crm.view','ai'=>'ai.use','phonebook'=>'phonebook.view','shares'=>'shares.view','performance'=>'cache.manage','settings'=>'settings.manage'];
 if(isset($pagePermission[$page])) Tenant::requirePermission($pagePermission[$page]);
 if($page==='settings' && !Tenant::isPlatformAdmin()) { http_response_code(403); throw new RuntimeException('تنظیمات زیرساخت فقط برای مدیر کل پلتفرم در دسترس است.'); }
 
@@ -661,8 +668,10 @@ elseif($page === 'kanban') render_kanban();
 elseif($page === 'notes') V5Module::renderNotes();
 elseif($page === 'industrial') AccountingIndustrialModule::render();
 elseif($page === 'procurement' || $page === 'inventory') InventoryProcurementModule::render();
+elseif($page === 'trading_cockpit') UiCockpitModule::renderTrading();
 elseif($page === 'p2p') PurchaseMatchingModule::render();
 elseif($page === 'production') ProductionModule::render();
+elseif($page === 'manufacturing_cockpit') UiCockpitModule::renderManufacturing();
 elseif($page === 'workflows') WorkflowModule::render();
 elseif(in_array($page,array_column(EnterpriseDomain::groups(),'page'),true)) EnterpriseModule::render($page);
 elseif(in_array($page,['operations','hr','projects','pos','service','assets','expenses'],true)) ErpSuiteModule::render($page);
