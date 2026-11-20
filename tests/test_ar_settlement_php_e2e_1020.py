@@ -94,7 +94,7 @@ def _posted_invoice() -> int:
     )
     inv_id = int(inv["result"]["id"])
     assert _php("ar_set_map").get("ok")
-    assert _php("ar_set_cash_gl", {"cash_gl_account_id": 6}).get("ok")
+    assert _php("ar_set_cash_account_gl", {"cash_account_id": 1, "gl_account_id": 6}).get("ok")
     posted = _php("ar_post", {"invoice_doc_id": inv_id, "user_id": 2, "idempotency_key": "c" * 32})
     assert posted.get("ok"), posted
     return inv_id

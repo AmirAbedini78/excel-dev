@@ -33,6 +33,7 @@ final class AccountingIndustrialModule
         if($action==='acc_ar_allocate')self::arAllocate();
         if($action==='acc_ar_receipt_reverse')self::arReceiptReverse();
         if($action==='acc_ar_set_cash_gl')self::arSetCashGl();
+        if($action==='acc_ar_set_cash_account_gl')self::arSetCashAccountGl();
         if($action==='acc_save_voucher')self::saveVoucher();
         if($action==='acc_delete_voucher')self::deleteVoucher();
         if($action==='acc_save_bom')self::saveBom();
@@ -485,14 +486,19 @@ final class AccountingIndustrialModule
         $wid=Tenant::id();$cid=AccountingRepository::companyId();
         echo '<section class="card"><div class="section-title"><h2>دریافت و تسویه AR</h2><span class="muted">Settlement='.h(ArSettlementDomain::SETTLEMENT).' — ثبت دفتر ≠ تسویه بانکی</span></div>';
         if(Tenant::can('accounting.settings.manage')){
-            echo '<details><summary>حساب نقد/بانک دفتر کل برای تسویه</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_set_cash_gl">';
-            self::selectRows('cash_gl_account_id','حساب GL نقد/بانک (asset)',AccountingRepository::options('acc_accounts'),true);
-            echo '<button class="btn primary">ذخیره نگاشت نقد</button></form></details>';
+            echo '<details open><summary>نگاشت هر حساب خزانه → دفتر کل (الزامی)</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_set_cash_account_gl">';
+            self::selectRows('cash_account_id','حساب خزانه',AccountingRepository::options('acc_cash_accounts'),true);
+            self::selectRows('gl_account_id','حساب GL دارایی',AccountingRepository::options('acc_accounts'),true);
+            echo '<button class="btn primary">ذخیره نگاشت خزانه</button></form></details>';
+            echo '<details><summary>Fallback شرکت (فقط سازگاری)</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_set_cash_gl">';
+            self::selectRows('cash_gl_account_id','حساب GL fallback',AccountingRepository::options('acc_accounts'),true);
+            echo '<button class="btn">ذخیره fallback</button></form></details>';
         }
         if(Tenant::can('accounting.treasury.manage')){
             echo '<details open><summary>+ پیش‌نویس دریافت مشتری</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_receipt_draft"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'">';
             self::selectRows('party_id','مشتری',AccountingRepository::options('acc_parties'),true);
             self::selectRows('cash_account_id','بانک/صندوق خزانه',AccountingRepository::options('acc_cash_accounts'),true);
+            self::input('payment_method','روش','bank_transfer','select',['cash'=>'نقد','bank_transfer'=>'واریز بانکی','pos'=>'کارتخوان']);
             self::input('receipt_date','تاریخ',Jalali::today(),'date');self::input('amount','مبلغ','','text');
             echo '<label class="span2">شرح<textarea name="description"></textarea></label><button class="btn primary">ذخیره پیش‌نویس</button></form></details>';
             echo '<details><summary>تخصیص دریافت به فاکتور</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_allocate"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'">';
@@ -825,8 +831,17 @@ final class AccountingIndustrialModule
         Tenant::requirePermission('accounting.settings.manage');
         $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
         ArSettlementDomain::setCashGlMap($wid,$cid,$uid,(int)($_POST['cash_gl_account_id']??0));
-        self::audit('ar.map.cash_gl','erp_ar_company_maps',$cid,'تنظیم حساب نقد تسویه');
-        self::back('settings');
+        self::audit('ar.map.cash_gl','erp_ar_company_maps',$cid,'تنظیم fallback نقد شرکت');
+        self::back('treasury');
+    }
+
+    private static function arSetCashAccountGl(): void
+    {
+        Tenant::requirePermission('accounting.settings.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        ArSettlementDomain::setCashAccountGl($wid,$cid,$uid,(int)($_POST['cash_account_id']??0),(int)($_POST['gl_account_id']??0));
+        self::audit('ar.cash_gl.map','acc_cash_accounts',(int)($_POST['cash_account_id']??0),'نگاشت خزانه به دفتر کل');
+        self::back('treasury');
     }
 
     private static function arReceiptDraft(): void
@@ -835,6 +850,7 @@ final class AccountingIndustrialModule
         $out=ArSettlementDomain::createDraftReceipt($wid,$cid,$uid,[
             'party_id'=>(int)($_POST['party_id']??0),
             'cash_account_id'=>(int)($_POST['cash_account_id']??0),
+            'payment_method'=>(string)($_POST['payment_method']??'bank_transfer'),
             'receipt_date'=>(string)($_POST['receipt_date']??''),
             'amount'=>(string)($_POST['amount']??''),
             'description'=>(string)($_POST['description']??''),
@@ -880,7 +896,7 @@ final class AccountingIndustrialModule
     {
         $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
         $id=(int)($_POST['receipt_id']??0);
-        $out=ArSettlementDomain::reverseReceipt($wid,$cid,$uid,$id);
+        $out=ArSettlementDomain::reverseReceipt($wid,$cid,$uid,$id,(string)($_POST['reversal_date']??''));
         self::audit('ar.receipt.reverse','erp_ar_receipts',$id,'برگشت دریافت');
         self::back('treasury');
     }

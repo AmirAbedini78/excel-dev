@@ -13,12 +13,12 @@ def source(path: str) -> str:
 
 class ArPostingContracts1019(unittest.TestCase):
     def test_version_and_wiring(self):
-        self.assertIn("SCHEMA_VERSION = '10.20.0'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.20.0'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.20.1'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.20.1'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("AccountingPostingDomain.php", source("app/bootstrap.php"))
         self.assertIn("AccountingPostingDomain::migrate(pdo())", source("app/bootstrap.php"))
-        self.assertIn("VERSION = '10.20.0-ar'", source("app/Core/AccountingPostingDomain.php"))
-        self.assertIn("VERSION = '10.20.0-o2c'", source("app/Core/OrderToCashDomain.php"))
+        self.assertIn("VERSION = '10.20.1-ar'", source("app/Core/AccountingPostingDomain.php"))
+        self.assertIn("VERSION = '10.20.1-o2c'", source("app/Core/OrderToCashDomain.php"))
 
     def test_canonical_ledger_only(self):
         d = source("app/Core/AccountingPostingDomain.php")
