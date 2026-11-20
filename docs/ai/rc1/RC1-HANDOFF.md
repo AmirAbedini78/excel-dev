@@ -2,7 +2,7 @@
 
 **Verdict:** `RC1_ACCEPTED`
 **Release branch:** `release/erpsmart-rc1`
-**Final SHA:** (set after commit)
+**Final SHA:** f0293553f0e6d2b0f1e3ebdda8ff176a5a13ad99
 **Date:** 2026-11-20
 **Deploy:** `NOT_DEPLOYED`
 
