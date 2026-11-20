@@ -198,6 +198,34 @@ try {
             ap_json_out(['ok' => true, 'first' => $a, 'second' => $b]);
             break;
 
+        case 'payment_draft':
+            $out = ApSettlementDomain::createDraftPayment(10, 1, (int)($args['user_id'] ?? 1), [
+                'party_id' => (int)($args['party_id'] ?? 1),
+                'cash_account_id' => (int)($args['cash_account_id'] ?? 1),
+                'payment_method' => (string)($args['payment_method'] ?? 'bank_transfer'),
+                'payment_date' => (string)($args['payment_date'] ?? '2026-11-20'),
+                'amount' => (string)$args['amount'],
+                'idempotency_key' => (string)($args['idempotency_key'] ?? ''),
+                'description' => (string)($args['description'] ?? ''),
+            ]);
+            ap_json_out(['ok' => true, 'result' => $out]);
+            break;
+
+        case 'payment_approve':
+            ap_json_out(['ok' => true, 'result' => ApSettlementDomain::approvePayment(10, 1, (int)($args['user_id'] ?? 2), (int)$args['payment_id'])]);
+            break;
+
+        case 'payment_post':
+            ap_json_out(['ok' => true, 'result' => ApSettlementDomain::postPayment(10, 1, (int)($args['user_id'] ?? 2), (int)$args['payment_id'])]);
+            break;
+
+        case 'ap_allocate':
+            ap_json_out(['ok' => true, 'result' => ApSettlementDomain::allocate(
+                10, 1, (int)($args['user_id'] ?? 1), (int)$args['payment_id'], (int)$args['invoice_doc_id'],
+                (string)$args['amount'], (string)($args['idempotency_key'] ?? '')
+            )]);
+            break;
+
         default:
             throw new RuntimeException('unknown_scenario:'.$scenario);
     }

@@ -13,8 +13,8 @@ def source(path: str) -> str:
 
 class TreasuryIntegrityContracts10201(unittest.TestCase):
     def test_versions(self):
-        self.assertIn("SCHEMA_VERSION = '10.22.0'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.22.0'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.23.0'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.23.0'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("VERSION = '10.21.0-settlement'", source("app/Core/ArSettlementDomain.php"))
 
     def test_integrity_features(self):

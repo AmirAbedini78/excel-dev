@@ -8,8 +8,12 @@
 |---|---|
 | Initial main SHA | `837a8918547876d8eca77eaab05fb99158d4346c` |
 | Branch | `feature/erp-ap-posting-v10.22.0` |
-| Schema / ModuleRegistry | `10.22.0` |
-| Domain | `ApPostingDomain` `10.22.0-ap` |
+| Commit | `d751b2dd6b4d64b5b78090f6e6f24620fc294851` |
+| PR | https://github.com/AmirAbedini78/excel-dev/pull/16 |
+| Merge SHA | `280df57a8fdded20096565018718281e6e5ddb1f` |
+| Post-merge CI | https://github.com/AmirAbedini78/excel-dev/actions/runs/44747809655 (success) |
+| Schema / ModuleRegistry | `10.22.0` (at merge; later advanced by 10.23) |
+| Domain | `ApPostingDomain` (at merge `10.22.0-ap`) |
 | Architecture | [55-AP-POSTING-ARCHITECTURE-1022.md](55-AP-POSTING-ARCHITECTURE-1022.md) |
 
 ## Accounting model decision

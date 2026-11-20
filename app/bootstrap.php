@@ -40,6 +40,7 @@ require_once APP_ROOT . '/app/Core/OrderToCashDomain.php';
 require_once APP_ROOT . '/app/Core/AccountingPostingDomain.php';
 require_once APP_ROOT . '/app/Core/ArSettlementDomain.php';
 require_once APP_ROOT . '/app/Core/ApPostingDomain.php';
+require_once APP_ROOT . '/app/Core/ApSettlementDomain.php';
 require_once APP_ROOT . '/app/Core/BusinessProfileDomain.php';
 require_once APP_ROOT . '/app/Core/BusinessIntelligenceDomain.php';
 require_once APP_ROOT . '/app/Core/CrmDomain.php';
@@ -78,6 +79,7 @@ if (file_exists($configFile)) {
         AccountingPostingDomain::migrate(pdo());
         ArSettlementDomain::migrate(pdo());
         ApPostingDomain::migrate(pdo());
+        ApSettlementDomain::migrate(pdo());
         BusinessProfileDomain::migrate(pdo());
         CrmDomain::migrate(pdo());
         ProductionDomain::migrate(pdo());

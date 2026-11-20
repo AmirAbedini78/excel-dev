@@ -5,8 +5,8 @@
 |---|---|---|
 | Purchase request / RFQ | PARTIAL / CRUD | Enterprise/workflow pilots |
 | PO → receipt → match | DATABASE_TESTED | P2P v10.16/10.17 |
-| Supplier invoice / AP GL | NOT_STARTED / BLOCKED | No AP posting kernel yet |
-| Payable → treasury pay | NOT_STARTED | After AP kernel |
+| Supplier invoice / AP GL | DATABASE_TESTED | v10.22 invoice-based AP (no GRNI) |
+| Payable → treasury pay | DATABASE_TESTED (sandbox) | v10.23 cash/bank_transfer + allocate |
 
 ## Trading — foreign
 | Step | Status | Gap |

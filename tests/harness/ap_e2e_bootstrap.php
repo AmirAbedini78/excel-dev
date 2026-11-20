@@ -125,7 +125,9 @@ final class AccountingRepository
 
 require_once $ROOT.'/app/Core/PurchaseMatchingDomain.php';
 require_once $ROOT.'/app/Core/AccountingPostingDomain.php';
+require_once $ROOT.'/app/Core/ArSettlementDomain.php';
 require_once $ROOT.'/app/Core/ApPostingDomain.php';
+require_once $ROOT.'/app/Core/ApSettlementDomain.php';
 
 function ap_e2e_reset_schema(): void
 {
@@ -139,7 +141,7 @@ function ap_e2e_reset_schema(): void
         'acc_inventory_receipt_lines','acc_inventory_receipts','acc_stock_movements',
         'acc_voucher_lines','acc_vouchers','acc_period_closes','acc_fiscal_years','acc_accounts',
         'acc_purchase_lines','acc_purchase_docs','acc_items','acc_warehouses','acc_parties','companies','workspace_modules',
-        'erp_ar_postings','erp_ar_company_maps','acc_cash_accounts','acc_cash_transactions',
+        'erp_ar_postings','erp_ar_company_maps','erp_ar_receipts','erp_ar_allocations','acc_cash_accounts','acc_cash_transactions',
     ] as $t) {
         $db->exec("DROP TABLE IF EXISTS `{$t}`");
     }
@@ -225,9 +227,28 @@ function ap_e2e_reset_schema(): void
       created_at DATETIME NULL
     )");
 
+    $db->exec("CREATE TABLE acc_cash_accounts (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+      account_kind VARCHAR(30) NOT NULL DEFAULT 'bank', code VARCHAR(80) NULL, name VARCHAR(190) NOT NULL,
+      bank_name VARCHAR(190) NULL, account_no VARCHAR(120) NULL, iban VARCHAR(80) NULL,
+      gl_account_id BIGINT NULL,
+      opening_balance DECIMAL(20,2) NOT NULL DEFAULT 0, active TINYINT NOT NULL DEFAULT 1,
+      created_at DATETIME NULL, updated_at DATETIME NULL
+    )");
+    $db->exec("CREATE TABLE acc_cash_transactions (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+      transaction_no VARCHAR(120) NOT NULL, transaction_date DATE NOT NULL, direction VARCHAR(20) NOT NULL,
+      cash_account_id BIGINT NOT NULL, party_id BIGINT NULL, amount DECIMAL(20,2) NOT NULL DEFAULT 0,
+      method VARCHAR(30) NOT NULL DEFAULT 'bank', status VARCHAR(30) NOT NULL DEFAULT 'draft',
+      description VARCHAR(500) NULL, source_type VARCHAR(60) NULL, source_id BIGINT NULL,
+      created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL
+    )");
+
     PurchaseMatchingDomain::migrate($db);
     AccountingPostingDomain::migrate($db);
+    ArSettlementDomain::migrate($db);
     ApPostingDomain::migrate($db);
+    ApSettlementDomain::migrate($db);
 
     $db->exec("INSERT INTO companies (id,workspace_id,active) VALUES (1,10,1),(2,10,1)");
     $db->exec("INSERT INTO workspace_modules (workspace_id,module_key,enabled) VALUES (10,'p2p',1)");
@@ -241,6 +262,8 @@ function ap_e2e_reset_schema(): void
       (9,10,1,'1401','InventoryPurchase','asset','debit',1,1),(10,10,1,'1105','InputVAT','asset','debit',1,1),
       (11,10,1,'1102','Bank','asset','debit',1,1),(12,10,1,'5101','PurchaseExp','expense','debit',1,1),
       (21,10,2,'2102','AP-C2','liability','credit',1,1),(22,10,2,'1401','Inv-C2','asset','debit',1,1)");
+    $db->exec("INSERT INTO acc_cash_accounts (id,workspace_id,company_id,account_kind,code,name,gl_account_id,active) VALUES
+      (1,10,1,'bank','BNK1','Bank 1',11,1)");
     $db->exec("INSERT INTO acc_fiscal_years (workspace_id,company_id,title,start_date,end_date,status,is_active,created_at,updated_at)
       VALUES (10,1,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW()),
              (10,2,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW())");

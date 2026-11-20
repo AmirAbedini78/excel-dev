@@ -39,6 +39,10 @@ final class AccountingIndustrialModule
         if($action==='acc_ap_approve_invoice')self::apApproveInvoice();
         if($action==='acc_ap_post_invoice')self::apPostInvoice();
         if($action==='acc_ap_reverse_invoice')self::apReverseInvoice();
+        if($action==='acc_ap_payment_draft')self::apPaymentDraft();
+        if($action==='acc_ap_payment_approve')self::apPaymentApprove();
+        if($action==='acc_ap_payment_post')self::apPaymentPost();
+        if($action==='acc_ap_allocate')self::apAllocate();
         if($action==='acc_save_voucher')self::saveVoucher();
         if($action==='acc_delete_voucher')self::deleteVoucher();
         if($action==='acc_save_bom')self::saveBom();
@@ -545,6 +549,32 @@ final class AccountingIndustrialModule
             echo '</tbody></table></div>';
         }catch(Throwable $e){echo '<p class="muted">جداول تسویه هنوز migrate نشده‌اند.</p>';}
         echo '</section>';
+
+        echo '<section class="card"><div class="section-title"><h2>پرداخت و تخصیص AP</h2><span class="muted">Settlement='.h(ApSettlementDomain::SETTLEMENT).' — روش‌ها: نقد/حواله — چک/صیاد جدا — ثبت دفتر ≠ تسویه بانکی</span></div>';
+        if(Tenant::can('accounting.treasury.manage')){
+            echo '<details open><summary>+ پیش‌نویس پرداخت تأمین‌کننده</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_payment_draft"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'">';
+            self::selectRows('party_id','تأمین‌کننده',AccountingRepository::options('acc_parties'),true);
+            self::selectRows('cash_account_id','بانک/صندوق خزانه',AccountingRepository::options('acc_cash_accounts'),true);
+            self::input('payment_method','روش','bank_transfer','select',['cash'=>'نقد','bank_transfer'=>'واریز بانکی']);
+            self::input('payment_date','تاریخ',Jalali::today(),'date');self::input('amount','مبلغ','','text');
+            echo '<label class="span2">شرح<textarea name="description"></textarea></label><button class="btn primary">ذخیره پیش‌نویس</button></form></details>';
+            echo '<details><summary>تخصیص پرداخت به فاکتور خرید</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_allocate"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'">';
+            self::input('payment_id','شناسه پرداخت','','number');self::input('invoice_doc_id','شناسه فاکتور خرید','','number');self::input('amount','مبلغ تخصیص','','text');
+            echo '<button class="btn primary">تخصیص</button></form></details>';
+        }
+        try{
+            $ps=pdo()->prepare("SELECT p.*,x.name party_name FROM erp_ap_payments p LEFT JOIN acc_parties x ON x.id=p.party_id WHERE p.workspace_id=? AND p.company_id=? ORDER BY p.id DESC LIMIT 50");
+            $ps->execute([$wid,$cid]);
+            echo '<div class="table-wrap"><table><thead><tr><th>شماره</th><th>تأمین‌کننده</th><th>مبلغ</th><th>وضعیت</th><th></th></tr></thead><tbody>';
+            foreach($ps->fetchAll() as $r){
+                echo '<tr><td>'.h($r['payment_no']).'</td><td>'.h($r['party_name']).'</td><td>'.number_format((float)$r['amount']).'</td><td>'.h($r['status']).'</td><td class="row-actions">';
+                if(Tenant::can('accounting.treasury.manage') && $r['status']==='draft')echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_payment_approve"><input type="hidden" name="payment_id" value="'.(int)$r['id'].'"><button class="btn tiny">تأیید</button></form>';
+                if(Tenant::can('accounting.vouchers.manage') && $r['status']==='approved')echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="acc_ap_payment_post"><input type="hidden" name="payment_id" value="'.(int)$r['id'].'"><button class="btn tiny primary">ثبت دفتر</button></form>';
+                echo '</td></tr>';
+            }
+            echo '</tbody></table></div>';
+        }catch(Throwable $e){echo '<p class="muted">جداول پرداخت AP هنوز migrate نشده‌اند.</p>';}
+        echo '</section>';
     }
 
     private static function reports(): void
@@ -930,6 +960,51 @@ final class AccountingIndustrialModule
         $out=ApPostingDomain::reversePostedInvoice($wid,$cid,$uid,$id,(string)($_POST['reversal_date']??''));
         self::audit('ap.invoice.reverse','acc_vouchers',(int)$out['reversal_voucher_id'],'معکوس AP',['invoice_doc_id'=>$id]);
         self::back('purchase','view='.$id);
+    }
+
+    private static function apPaymentDraft(): void
+    {
+        Tenant::requirePermission('accounting.treasury.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $out=ApSettlementDomain::createDraftPayment($wid,$cid,$uid,[
+            'party_id'=>(int)($_POST['party_id']??0),
+            'cash_account_id'=>(int)($_POST['cash_account_id']??0),
+            'payment_method'=>(string)($_POST['payment_method']??'bank_transfer'),
+            'payment_date'=>(string)($_POST['payment_date']??''),
+            'amount'=>(string)($_POST['amount']??''),
+            'description'=>(string)($_POST['description']??''),
+            'idempotency_key'=>(string)($_POST['idempotency_key']??''),
+        ]);
+        self::audit('ap.payment.draft','erp_ap_payments',(int)$out['id'],'پیش‌نویس پرداخت AP');
+        self::back('treasury');
+    }
+
+    private static function apPaymentApprove(): void
+    {
+        Tenant::requirePermission('accounting.treasury.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        ApSettlementDomain::approvePayment($wid,$cid,$uid,(int)($_POST['payment_id']??0));
+        self::back('treasury');
+    }
+
+    private static function apPaymentPost(): void
+    {
+        Tenant::requirePermission('accounting.vouchers.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $out=ApSettlementDomain::postPayment($wid,$cid,$uid,(int)($_POST['payment_id']??0));
+        self::audit('ap.payment.post','acc_vouchers',(int)$out['voucher_id'],'ثبت پرداخت AP');
+        self::back('vouchers','view='.(int)$out['voucher_id']);
+    }
+
+    private static function apAllocate(): void
+    {
+        Tenant::requirePermission('accounting.treasury.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        ApSettlementDomain::allocate(
+            $wid,$cid,$uid,(int)($_POST['payment_id']??0),(int)($_POST['invoice_doc_id']??0),
+            (string)($_POST['amount']??''),(string)($_POST['idempotency_key']??'')
+        );
+        self::back('treasury');
     }
 
     private static function arSetCashGl(): void

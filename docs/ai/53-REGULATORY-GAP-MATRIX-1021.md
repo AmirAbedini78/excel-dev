@@ -9,11 +9,11 @@
 | Cheque / Sayad workflow | DATA_MODEL_ONLY | No external API | Distinct from bank clearance |
 | Payroll / insurance / tax | CRUD_PILOT / PARTIAL | No | Extended schema exists; not PRODUCTION |
 | Statutory reports | NOT_STARTED | No | — |
-| Bank reconciliation | NOT_STARTED | — | Explicitly separate from AR receipt posting |
+| Bank reconciliation | NOT_STARTED | — | Explicitly separate from AR receipt / AP payment posting |
 
 ## Staging plan (not executed)
 1. Backup disposable staging DB.
-2. Migrate cumulative schema through 10.21.0.
-3. Smoke: fiscal open, AR map, cash GL map, profile set, one O2C→AR→receipt→allocate.
+2. Migrate cumulative schema through **10.23.0**.
+3. Smoke: fiscal open, AR map, AP map, cash GL map, profile set, O2C→AR→receipt→allocate, and PO→GR→3WM→AP→pay→allocate.
 4. Rollback rehearsal on snapshot.
-**Production deploy: NOT AUTHORIZED.**
+**Production deploy: NOT AUTHORIZED. STAGING_VERIFIED: none. PRODUCTION_VERIFIED: none.**

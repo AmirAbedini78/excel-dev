@@ -25,7 +25,7 @@ Profiles store on `erp_company_business_profiles`. They do not fork GL or party 
 | Topic | Status | Notes |
 |---|---|---|
 | Jalali UI | PARTIAL | Existing Jalali helpers; continue round-trip tests |
-| IRR ledger | DATABASE_TESTED | Posting/settlement IRR |
+| IRR ledger | DATABASE_TESTED | AR + AP posting/settlement IRR (10.22/10.23) |
 | Toman display | FOUNDATION | Explicit conversion helpers only |
 | Taxpayer/e-invoice | NOT_STARTED | Requires verified legal source before enable |
 | Sayad cheque | DATA_MODEL_ONLY | `acc_checks`; not cleared bank funds |
