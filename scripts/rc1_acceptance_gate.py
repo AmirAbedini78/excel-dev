@@ -153,9 +153,20 @@ def main() -> int:
         print("RC1 GATE FAIL — mandatory PHP+MySQL dependency missing (SKIP is not PASS).")
         return 1
 
+    # Isolate disposable schemas per contract to avoid DROP/CREATE races on one shared DB.
+    db_by_contract = {
+        "TR-1": "erpsmart_rc1_tr1_test",
+        "TR-2": "erpsmart_rc1_tr2_test",
+        "MF-1": "erpsmart_mf1_test",
+        "SYS-1": "erpsmart_rc1_sys1_test",
+        "OPS-1": os.environ.get("O2C_DB_NAME", "erpsmart_rc1_test"),
+    }
     results: dict[str, dict] = {}
     for contract, mod in CONTRACTS:
         print(f"\n=== {contract} ({mod}) ===", flush=True)
+        os.environ["O2C_DB_NAME"] = db_by_contract.get(contract, "erpsmart_rc1_test")
+        if contract == "MF-1":
+            os.environ["O2C_MF_DB_NAME"] = "erpsmart_mf1_test"
         results[contract] = run_module(mod)
         print(f"[{contract}] {results[contract]['status']}", flush=True)
 

@@ -15,6 +15,7 @@ function rc1_tr1_out(array $payload): void
 try {
     ap_e2e_reset_schema();
     ApPostingDomain::migrate(pdo());
+    ApSettlementDomain::migrate(pdo());
 
     $po = ap_seed_po(1, '10.0000', '1000.00');
     PurchaseMatchingDomain::approveOrder(10, 1, 2, $po);
@@ -42,7 +43,7 @@ try {
         'ppv_account_id' => 0,
     ]);
 
-    foreach ([[$inv4, str_repeat('r', 32)], [$inv2, str_repeat('s', 32)]] as [$inv, $key]) {
+    foreach ([[$inv4, str_repeat('a', 32)], [$inv2, str_repeat('b', 32)]] as [$inv, $key]) {
         ApPostingDomain::validateInvoice(10, 1, 3, $inv);
         ApPostingDomain::approveInvoice(10, 1, 1, $inv);
         ApPostingDomain::postSupplierInvoice(10, 1, 3, $inv, $key);
@@ -68,16 +69,16 @@ try {
         return $rid;
     };
 
-    $pay1 = $pay('2500.00', str_repeat('t', 32));
-    ApSettlementDomain::allocate(10, 1, 1, $pay1, $inv4, '2500.00', str_repeat('u', 32));
+    $pay1 = $pay('2500.00', str_repeat('c', 32));
+    ApSettlementDomain::allocate(10, 1, 1, $pay1, $inv4, '2500.00', str_repeat('d', 32));
     $mid = ApPostingDomain::invoiceOutstanding(10, 1, $inv4);
     if (($mid['outstanding'] ?? '') !== '1500.00') {
         throw new RuntimeException('expected_inv4_1500 got=' . json_encode($mid));
     }
 
-    $pay2 = $pay('3500.00', str_repeat('v', 32));
-    ApSettlementDomain::allocate(10, 1, 1, $pay2, $inv4, '1500.00', str_repeat('w', 32));
-    ApSettlementDomain::allocate(10, 1, 1, $pay2, $inv2, '2000.00', str_repeat('x', 32));
+    $pay2 = $pay('3500.00', str_repeat('e', 32));
+    ApSettlementDomain::allocate(10, 1, 1, $pay2, $inv4, '1500.00', str_repeat('f', 32));
+    ApSettlementDomain::allocate(10, 1, 1, $pay2, $inv2, '2000.00', str_repeat('1', 32));
 
     $final = ApPostingDomain::supplierOutstanding(10, 1, 1);
     if (($final['outstanding'] ?? '') !== '0.00') {

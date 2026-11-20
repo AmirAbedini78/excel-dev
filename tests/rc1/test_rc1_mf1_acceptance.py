@@ -76,7 +76,8 @@ def _php_mf(scenario: str, args: dict | None = None) -> dict:
     port = os.environ.get("O2C_DB_PORT", "3307")
     user = os.environ.get("O2C_DB_USER", "p2p")
     password = os.environ.get("O2C_DB_PASS", "p2p_test")
-    database = os.environ.get("O2C_DB_NAME", "erpsmart_rc1_test")
+    # Prefer isolated MF schema so TR-1/TR-2 resets cannot race MF-1 tables.
+    database = os.environ.get("O2C_MF_DB_NAME") or os.environ.get("O2C_DB_NAME", "erpsmart_mf1_test")
     mount = str(ROOT).replace("\\", "/")
     cmd = [
         "docker",
