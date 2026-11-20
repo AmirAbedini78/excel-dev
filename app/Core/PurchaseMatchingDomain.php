@@ -364,7 +364,7 @@ final class PurchaseMatchingDomain
             $q=$db->prepare('SELECT id,payload_hash,status FROM erp_p2p_vendor_bills WHERE workspace_id=? AND company_id=? AND supplier_id=? AND supplier_invoice_no=? LIMIT 1 FOR UPDATE');
             $q->execute([$wid,$cid,$supplier,$invoiceNo]);$existing=$q->fetch();
             if($existing){
-                if(!hash_equals((string)$existing['payload_hash'],$hash))throw new RuntimeException('شماره فاکتور تکراری با محتوای متفاوت است.');
+                if(!hash_equals((string)$existing['payload_hash'],$hash))throw new RuntimeException('P2P_SUPPLIER_INVOICE_DUPLICATE: شماره فاکتور تکراری با محتوای متفاوت است.');
                 $db->commit();return ['id'=>(int)$existing['id'],'existing'=>true,'status'=>$existing['status']];
             }
             $norm=self::matchLines($po,self::orderLines($db,$wid,$cid,$poId),$lines);

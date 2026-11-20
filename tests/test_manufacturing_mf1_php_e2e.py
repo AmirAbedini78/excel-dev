@@ -57,7 +57,9 @@ def _php(scenario: str, args: dict | None = None, timeout: int = 180) -> dict:
         scenario,
         json.dumps(args or {}, ensure_ascii=False),
     ]
-    completed = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    completed = subprocess.run(
+        cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout
+    )
     out = (completed.stdout or "").strip().splitlines()
     if not out:
         raise AssertionError(f"no_stdout rc={completed.returncode} stderr={completed.stderr}")
@@ -68,6 +70,8 @@ def _php(scenario: str, args: dict | None = None, timeout: int = 180) -> dict:
 
 
 def _mysql_container_ok() -> bool:
+    if os.environ.get("RC1_ALLOW_ANY_MYSQL", "").strip() in {"1", "true", "TRUE", "yes"}:
+        return True
     try:
         r = subprocess.run(
             ["docker", "inspect", "-f", "{{.Id}} {{.Name}}", "erpsmart-p2p-mysql-test"],
@@ -174,6 +178,7 @@ class ManufacturingMf1PhpE2e(unittest.TestCase):
     def test_06_concurrent_issue_two_orders(self):
         prep = _php("concurrent_issue_prepare")
         self.assertTrue(prep.get("ok"), prep)
+        self.assertGreaterEqual(int(prep.get("active_reservations") or 0), 1, prep)
         o1, o2 = int(prep["order1"]), int(prep["order2"])
         lines1, lines2 = prep["lines1"], prep["lines2"]
         results: list[dict] = []
@@ -198,7 +203,28 @@ class ManufacturingMf1PhpE2e(unittest.TestCase):
         fails = [r for r in results if not r.get("ok")]
         self.assertEqual(len(oks), 1, results)
         self.assertEqual(len(fails), 1, results)
-        self.assertIn("insufficient", (fails[0].get("error") or "").lower())
+        fail = fails[0]
+        err = str(fail.get("error") or "")
+        code = str(fail.get("error_code") or "")
+        err_l = err.lower()
+        # Reservation-scoped WMS reject OR insufficient physical/available stock.
+        self.assertTrue(
+            code
+            in {
+                "WMS_ISSUE_REQUIRES_OWN_RESERVATION",
+                "WMS_INSUFFICIENT_PHYSICAL_STOCK",
+                "WMS_INSUFFICIENT_AVAILABLE_STOCK",
+            }
+            or "insufficient" in err_l
+            or "رزرو" in err
+            or "موجودی" in err,
+            fail,
+        )
+        # Winner issued 6 of A from stock 10 → remaining 4; never negative; single winner movements.
+        on_hands = [str(r.get("on_hand_a") or "") for r in results if r.get("on_hand_a") is not None]
+        self.assertTrue(any(h in {"4.0000", "4.0", "4"} or h.startswith("4.") for h in on_hands), results)
+        moves = max(int(r.get("issue_moves") or 0) for r in oks)
+        self.assertGreaterEqual(moves, 1, results)
 
     def test_07_mrp_and_adapter_contract(self):
         reset = _php("reset")

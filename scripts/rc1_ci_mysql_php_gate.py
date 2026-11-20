@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Mandatory RC1 PHP+MySQL CI gate — fails hard on SkipTest / missing deps.
+
+Unlike commercial source-only release_gate, this gate REQUIRES a live MySQL
+and Docker PHP image (or host PHP with mysqli). Exit 1 on skip or failure.
+"""
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _require_env() -> None:
+    missing = []
+    for key in ("O2C_DB_HOST", "O2C_DB_PORT", "O2C_DB_USER", "O2C_DB_PASS", "O2C_DB_NAME"):
+        if not os.environ.get(key):
+            missing.append(key)
+    if missing:
+        raise SystemExit(f"RC1_CI_MYSQL_PHP_GATE_FAIL: missing env {missing}")
+
+
+def main() -> int:
+    os.environ.setdefault("RC1_REQUIRED", "1")
+    _require_env()
+
+    # Fail if Docker PHP image missing when tests need it.
+    img = subprocess.run(
+        ["docker", "image", "inspect", "erpsmart-o2c-php:8.2"],
+        capture_output=True,
+        text=True,
+    )
+    if img.returncode != 0:
+        # CI builds or pulls image in workflow; missing here is a hard fail.
+        print("RC1_CI_MYSQL_PHP_GATE_FAIL: erpsmart-o2c-php:8.2 unavailable", flush=True)
+        return 1
+
+    class FailOnSkipResult(unittest.TextTestResult):
+        def addSkip(self, test, reason):  # noqa: N802
+            super().addSkip(test, reason)
+            self.failures.append(
+                (test, f"RC1_CI_MYSQL_PHP_GATE_FAIL: unexpected skip: {reason}")
+            )
+
+    # Isolate disposable schemas — never share MF vs trading on one O2C_DB_NAME.
+    cases = [
+        (
+            "erpsmart_mf1_test",
+            "tests.test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_06_concurrent_issue_two_orders",
+        ),
+        (
+            "erpsmart_t3_trading_test",
+            "tests.test_trading_cockpit_php_e2e_rc1.TradingCockpitPhpE2eRc1.test_tr1_exact_figures_and_cockpit_timeline",
+        ),
+    ]
+    loader = unittest.TestLoader()
+    runner = unittest.TextTestRunner(verbosity=2, resultclass=FailOnSkipResult)
+    any_fail = False
+    for db_name, test_name in cases:
+        os.environ["O2C_DB_NAME"] = db_name
+        suite = loader.loadTestsFromName(test_name)
+        result = runner.run(suite)
+        if (
+            not result.wasSuccessful()
+            or result.failures
+            or result.errors
+            or result.skipped
+        ):
+            any_fail = True
+            if result.skipped:
+                print(
+                    f"RC1_CI_MYSQL_PHP_GATE_FAIL: {len(result.skipped)} skip(s) on {db_name}",
+                    flush=True,
+                )
+    if not any_fail:
+        print("RC1_CI_MYSQL_PHP_GATE: PASS", flush=True)
+        return 0
+    print("RC1_CI_MYSQL_PHP_GATE_FAIL: tests failed", flush=True)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.path.insert(0, str(ROOT))
+    raise SystemExit(main())

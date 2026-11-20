@@ -1,25 +1,25 @@
 # RC1 Blockers and Remediation
 
 **Independent open P0:** **0**  
-**Independent open P1 (blocking RC1 acceptance):** **3**  
-**Independent open P2:** **2**  
+**Independent open P1 (blocking RC1 acceptance):** **2** (browser + provenance)  
+**Independent open P2:** **1** (PR #29 supersede pending close)  
 **Verdict impact:** `RC1_BLOCKED`
 
-## P1 — Blocking
+## P1 — Blocking (independent acceptance)
 
 ### RC1-P1-001 — OPS-1 production/staging schema provenance unavailable
 
 | Field | Value |
 |-------|-------|
-| Severity | **P1** (reopened for acceptance) |
+| Severity | **P1** |
 | Contract | OPS-1 |
 | Class | **BLOCKED_EXTERNAL** |
-| Owner | User/staging ops → then T7 rehearsal |
-| Status | **OPEN** for RC1 DONE (prior “RESOLVED by UNAVAILABLE PASS” rejected) |
+| Owner | User/staging ops |
+| Status | **OPEN** (engineering restore closed) |
 
-**Repro:** Omit real dump id; set `RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED`; OPS-1 script PASSes by policy, but binding matrix forbids completing OPS-1 without provenance or honest BLOCKED.
+**Repro:** No anonymized staging/prod dump id provided; campaign `NOT_DEPLOYED`.
 
-**Next action:** Provide anonymized staging/prod-like dump + provenance id; run cumulative migrate twice on disposable restore; document checksums. No cPanel/prod by agents.
+**Closure progress:** Disposable dump/restore with privileged admin **PASS** (`ops1_backup_restore_closure.json`); migrate×2 + rollback restore **PASS**. Provenance still unresolved — **do not invent** dump id; `FRESH_INSTALL` only after owner written confirmation that no prior deploy exists. Script may PASS under `RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED`; independent acceptance remains blocked until owner confirms.
 
 ### RC1-P1-004 — SYS-1 / OPS-1 browser login+RTL walkthrough missing
 
@@ -27,45 +27,42 @@
 |-------|-------|
 | Severity | **P1** |
 | Contract | SYS-1 + OPS-1 |
-| Class | **NOT_RUN** |
+| Class | **BLOCKED_EXTERNAL** |
 | Owner | T6/T7 + user staging URL |
+| Status | **OPEN** |
 
-**Repro:** `docs/ai/rc1/T6-BROWSER-NOTES.md` states automation not run; no screenshots; SYS-1 runner is PHP profile smoke only.
+**Evidence:** `T6-BROWSER-NOTES.md` — host PHP missing; no authenticated staging URL; screenshots **NOT_RUN**. Code/PHP harness E2E is **not** a substitute.
 
-**Next action:** Staging-like authenticated Persian RTL session: trading + manufacturing cockpits, Jalali/IRR-Toman, two-company isolation, permission negative path. Capture screenshots under `docs/ai/rc1/screenshots/`.
+## P1 — Engineering closed on stabilization branch
 
-### RC1-P1-005 — Disposable backup restore incomplete + local release_gate E2E fails
+### RC1-P1-005 — Disposable backup restore + local release_gate E2E
 
 | Field | Value |
 |-------|-------|
 | Severity | **P1** |
-| Contract | OPS-1 |
-| Class | **FAIL_REPRODUCED** (partial) |
-| Owner | T7 / T1 / T3 |
+| Contract | OPS-1 / regression |
+| Class | **CLOSED** (engineering) |
+| Owner | T7 / T1 / T3 → T0 |
+| Status | **CLOSED** on `fix/rc1-stabilization-p1-closure` |
 
-**Evidence:**
+**Closed items:**
+1. Privileged dump/restore + migrate×2 + rollback restore — PASS (`ops1_backup_restore_closure.json`). Restricted `p2p` restore without grant — expected Access denied.
+2. `test_06_concurrent_issue_two_orders` — deterministic fixture (o1 reserved / o2 force-released); WMS error codes; locking read absorb from PR #29; on_hand A=4.
+3. `test_tr1_exact_figures_and_cockpit_timeline` — `P2P_SUPPLIER_INVOICE_DUPLICATE` code + UTF-8 subprocess decode for Persian UI (duplicate reject kept).
+4. Mandatory CI workflow `docs/ai/rc1/ci/rc1-mysql-php-gate.yml (copy into .github/workflows/)` + `scripts/rc1_ci_mysql_php_gate.py` (fails on skip; isolated MF/trading DBs).
+5. `release_gate.py` clears leftover `RC1_REQUIRED` so commercial discover does not race shared RC1 schemas.
 
-1. Dump of `erpsmart_rc1_tr1_test` OK (43422 B); restore into new DB as `p2p` → `Access denied` (`ops1_backup_restore_drill.json`).
-2. Local `python scripts/release_gate.py --require-php --require-node` → FAIL:
-   - `test_06_concurrent_issue_two_orders` — both threads fail reservation-scoped issue (expected 1 ok / 1 insufficient).
-   - `test_tr1_exact_figures_and_cockpit_timeline` — Persian `تکراری` assert encoding mismatch.
-
-**Next action:** Grant disposable restore privileges or root-only restore path in sandbox docs; fix concurrent issue reservation race; normalize Unicode assert (NFC / substring without yeh ambiguity). Re-run local release_gate + RC1 gate.
-
-## P2 — Non-blocking for product scope (track)
+## P2 — Non-blocking
 
 | ID | Issue | Owner |
 |----|-------|-------|
-| P2-001 | Handoff Final SHA stale (`c9f6eaf` vs `6da6a03`) | Docs |
-| P2-002 | Open PR #29 late T1 commits vs release; not on main tip | T1/T0 triage |
-
-## Nonblocking post-RC backlog (explicit)
-
-- Taxpayer / Sayad / bank direct integrations  
-- Statutory payroll; full foreign FX/customs GL  
-- Automatic WIP/FG GL valuation (currently BLOCKED/UNVALUED)  
-- Advanced WMS FEFO/lot/bin  
+| P2-002 | Open PR #29 late T1 vs release; CONFLICTING; superseded by stabilization | T0 close after merge |
 
 ## P0
 
-**None open** with reproduced data-loss / wrong-company money posting in TR-1/TR-2/MF-1 happy-path gate.
+**None open.**
+
+## Valid residual product states (do not weaken)
+
+- MF valuation: `UNVALUED`
+- MF GL posting: `BLOCKED` / `GL_BLOCKED`

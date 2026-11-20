@@ -1,6 +1,7 @@
 # RC1 Evidence Index
 
-**SHA under test:** `6da6a03796e1f89b5279424899adad5b5a23915c`  
+**Baseline SHA:** `2a30f5abac6291af2e6d3ccf1f87446335c84bad`  
+**Closure branch:** `fix/rc1-stabilization-p1-closure`  
 **Environment:** Windows system-2; Docker MySQL + `erpsmart-o2c-php:8.2`  
 **Secrets:** redacted — default disposable `p2p` / test DB only; never production.
 
@@ -19,16 +20,16 @@
 
 | Purpose | Command | Result |
 |---------|---------|--------|
-| RC1 required gate | `RC1_REQUIRED=1 … python scripts/rc1_acceptance_gate.py --strict-pass` | exit 0; PASS=5 script-level |
-| Commercial source gate (CI) | `python scripts/release_gate.py --require-php --require-node` on Actions | SUCCESS run 44770814148 |
-| Commercial source gate (local+Docker E2E) | same | exit 1; 2 FAIL |
-| Disposable dump | `mysqldump … erpsmart_rc1_tr1_test` inside container | 43422 bytes; sha256 `11BCA2A9…` |
+| RC1 MySQL CI gate (fail-on-skip) | `python scripts/rc1_ci_mysql_php_gate.py` | **PASS** |
+| RC1 required gate | `RC1_REQUIRED=1 RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED python scripts/rc1_acceptance_gate.py --strict-pass` | exit 0; PASS=5 script-level |
+| Commercial source+E2E local | `python scripts/release_gate.py --require-php --require-node` | tip run (see `release_gate_closure_final.log`) |
+| Disposable restore closure | privileged dump/restore + migrate×2 | **PASS** `ops1_backup_restore_closure.json` |
 
 ## CI URLs
 
 - PR #30 checks: https://github.com/AmirAbedini78/excel-dev/actions/runs/44770790058  
 - Push main: https://github.com/AmirAbedini78/excel-dev/actions/runs/44770814148  
-- PR #30: https://github.com/AmirAbedini78/excel-dev/pull/30  
+- Mandatory RC1 MySQL workflow: `docs/ai/rc1/ci/rc1-mysql-php-gate.yml`  
 
 ## Artifacts (`docs/ai/rc1/evidence/`)
 
@@ -38,15 +39,17 @@
 | `tr1_acceptance.json` / `tr1_sandbox.json` | TR-1 |
 | `tr2_acceptance.json` | TR-2 |
 | `mf1_acceptance.json` / `mf1_e2e.json` / `mf1_probe.json` | MF-1 |
-| `sys1_acceptance.json` | SYS-1 profile smoke |
+| `sys1_acceptance.json` | SYS-1 profile smoke (not browser) |
 | `ops1_acceptance.json` | OPS-1 (provenance UNAVAILABLE) |
-| `ops1_tr1_backup.sql` | Disposable dump artifact |
-| `ops1_backup_restore_drill.json` | Restore drill result (PARTIAL) |
+| `ops1_backup_restore_closure.json` | Privileged restore + migrate×2 PASS |
+| `ops1_closure_backup.sql` | Disposable dump artifact (sha256 in JSON) |
+| `release_gate_closure_final.log` | Local release_gate tip evidence |
+| `rc1_acceptance_gate_closure.log` | Acceptance gate tip evidence |
 | `sandbox_verified.json` | Sandbox verify helper output |
 
 ## Browser / screenshots
 
-**NOT_RUN** — T6 notes: no authenticated local server walkthrough; no files under `docs/ai/rc1/screenshots/`.
+**NOT_RUN** — `T6-BROWSER-NOTES.md`: `BLOCKED_EXTERNAL`; no files under `docs/ai/rc1/screenshots/`.
 
 ## Classification legend used
 

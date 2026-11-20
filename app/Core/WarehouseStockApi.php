@@ -145,9 +145,17 @@ final class WarehouseStockApi
 
     private static function onHandUnits(PDO $db, int $wid, int $cid, int $warehouseId, int $itemId): int
     {
-        $st = $db->prepare("SELECT COALESCE(SUM(CASE WHEN direction='in' THEN quantity ELSE -quantity END),0) FROM acc_stock_movements WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='posted'");
+        // Locking read so waiters after lockStockTargets see committed movements (PR #29 absorb).
+        $st = $db->prepare("SELECT id,direction,quantity FROM acc_stock_movements
+            WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='posted'
+            ORDER BY id FOR UPDATE");
         $st->execute([$wid, $cid, $warehouseId, $itemId]);
-        return OrderToCashDomain::scaledQty((string)$st->fetchColumn());
+        $units = 0;
+        foreach ($st->fetchAll() as $row) {
+            $q = OrderToCashDomain::scaledQty((string)$row['quantity']);
+            $units += ((string)$row['direction'] === 'in') ? $q : -$q;
+        }
+        return $units;
     }
 
     private static function reservedOthersUnits(PDO $db, int $wid, int $cid, int $warehouseId, int $itemId, string $ownSourceType, int $ownSourceId): int
@@ -431,18 +439,18 @@ final class WarehouseStockApi
                 $need = (int)$need;
                 $own = self::ownReservedUnits($pdo, $wid, $cid, $warehouseId, $itemId, self::SOURCE_PRODUCTION_ORDER, $poId);
                 if ($need > $own) {
-                    throw new RuntimeException('صدور فقط از موجودی رزروشده همین سفارش تولید مجاز است.');
+                    throw new RuntimeException('WMS_ISSUE_REQUIRES_OWN_RESERVATION: صدور فقط از موجودی رزروشده همین سفارش تولید مجاز است.');
                 }
                 $onHand = self::onHandUnits($pdo, $wid, $cid, $warehouseId, $itemId);
                 if ($need > $onHand) {
-                    throw new RuntimeException('موجودی فیزیکی برای صدور کافی نیست.');
+                    throw new RuntimeException('WMS_INSUFFICIENT_PHYSICAL_STOCK: موجودی فیزیکی برای صدور کافی نیست.');
                 }
                 // Reject insufficient *available* after accounting for foreign reservations.
                 $others = self::reservedOthersUnits($pdo, $wid, $cid, $warehouseId, $itemId, self::SOURCE_PRODUCTION_ORDER, $poId);
                 // Own reservation covers this issue; available to others would be on_hand - others - own.
                 // Issuing from own reservation must leave on_hand - need >= others (nonnegative free stock for others' holds).
                 if ($onHand - $need < $others) {
-                    throw new RuntimeException('موجودی قابل استفاده برای صدور کافی نیست.');
+                    throw new RuntimeException('WMS_INSUFFICIENT_AVAILABLE_STOCK: موجودی قابل استفاده برای صدور کافی نیست.');
                 }
             }
 

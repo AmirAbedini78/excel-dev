@@ -1,0 +1,906 @@
+ERPSMART — Source regression and release gate
+[1/6] Python syntax: PASS (100 files)
+[2/6] JSON syntax: PASS (23 files)
+[3/6] Secret scan: PASS (393 text files)
++ C:\Users\h\AppData\Local\Programs\Python\Python313\python.exe -m unittest discover -s tests -p test_*.py -v
+test_mf1_capability_and_php_e2e (rc1.test_rc1_mf1_acceptance.Rc1Mf1Acceptance.test_mf1_capability_and_php_e2e) ... skipped 'RC1 acceptance opt-in; run scripts/rc1_acceptance_gate.py'
+test_ops1_sandbox_and_provenance_gate (rc1.test_rc1_ops1_acceptance.Rc1Ops1Acceptance.test_ops1_sandbox_and_provenance_gate) ... skipped 'RC1 acceptance opt-in; run scripts/rc1_acceptance_gate.py'
+test_sys1_service_retail_profile_smoke (rc1.test_rc1_sys1_acceptance.Rc1Sys1Acceptance.test_sys1_service_retail_profile_smoke) ... skipped 'RC1 acceptance opt-in; run scripts/rc1_acceptance_gate.py'
+test_tr1_po10_gr6_ap6000_pay_settle (rc1.test_rc1_tr1_acceptance.Rc1Tr1Acceptance.test_tr1_po10_gr6_ap6000_pay_settle) ... skipped 'RC1 acceptance opt-in; run scripts/rc1_acceptance_gate.py'
+test_tr2_sales_ar_400_600_settle (rc1.test_rc1_tr2_acceptance.Rc1Tr2Acceptance.test_tr2_sales_ar_400_600_settle) ... skipped 'RC1 acceptance opt-in; run scripts/rc1_acceptance_gate.py'
+test_01_happy_path_balanced_no_double_stock_gl (test_ap_php_e2e_1022.ApPhpE2e1022.test_01_happy_path_balanced_no_double_stock_gl) ... ok
+test_02_reject_over_qty (test_ap_php_e2e_1022.ApPhpE2e1022.test_02_reject_over_qty) ... ok
+test_03_maker_checker_and_wrong_account (test_ap_php_e2e_1022.ApPhpE2e1022.test_03_maker_checker_and_wrong_account) ... ok
+test_04_closed_period_and_wrong_company (test_ap_php_e2e_1022.ApPhpE2e1022.test_04_closed_period_and_wrong_company) ... ok
+test_05_idempotency_immutability_reverse (test_ap_php_e2e_1022.ApPhpE2e1022.test_05_idempotency_immutability_reverse) ... ok
+test_06_draft_not_debt_and_migration_additive (test_ap_php_e2e_1022.ApPhpE2e1022.test_06_draft_not_debt_and_migration_additive) ... ok
+test_architecture_doc (test_ap_posting_contracts_1022.ApPostingContracts1022.test_architecture_doc) ... ok
+test_canonical_ledger_only (test_ap_posting_contracts_1022.ApPostingContracts1022.test_canonical_ledger_only) ... ok
+test_integrity_invariants (test_ap_posting_contracts_1022.ApPostingContracts1022.test_integrity_invariants) ... ok
+test_ui_actions (test_ap_posting_contracts_1022.ApPostingContracts1022.test_ui_actions) ... ok
+test_version_and_wiring (test_ap_posting_contracts_1022.ApPostingContracts1022.test_version_and_wiring) ... ok
+test_payment_invariants (test_ap_settlement_contracts_1023.ApSettlementContracts1023.test_payment_invariants) ... ok
+test_ui_actions (test_ap_settlement_contracts_1023.ApSettlementContracts1023.test_ui_actions) ... ok
+test_version_and_wiring (test_ap_settlement_contracts_1023.ApSettlementContracts1023.test_version_and_wiring) ... ok
+test_domestic_trading_settle_6000 (test_ap_trading_php_e2e_1023.ApTradingPhpE2e1023.test_domestic_trading_settle_6000)
+PO 10×1000; GR 6; inv 4+2; AP 6000; pay 2500\u21923500; pay 3500\u21920. No VAT invented. ... ok
+test_keepalive_transport_is_installed (test_api_transport.ApiTransportContractTests.test_keepalive_transport_is_installed) ... ok
+test_transport_is_thread_local (test_api_transport.ApiTransportContractTests.test_transport_is_thread_local) ... ok
+test_a2_cancel_billing_restores_invoiceable (test_ar_integrity_php_e2e_1019_1.ArIntegrityPhpE2e10191.test_a2_cancel_billing_restores_invoiceable) ... ok
+test_a3_a4_a5_fingerprint_fiscal_map (test_ar_integrity_php_e2e_1019_1.ArIntegrityPhpE2e10191.test_a3_a4_a5_fingerprint_fiscal_map) ... ok
+test_a6_outstanding_status_and_credit (test_ar_integrity_php_e2e_1019_1.ArIntegrityPhpE2e10191.test_a6_outstanding_status_and_credit) ... ok
+test_a7_concurrent_post_hash_safe (test_ar_integrity_php_e2e_1019_1.ArIntegrityPhpE2e10191.test_a7_concurrent_post_hash_safe) ... ok
+test_concurrent_post_no_double (test_ar_php_e2e_1019.ArPhpE2e1019.test_concurrent_post_no_double) ... ok
+test_post_balanced_idempotent_outstanding (test_ar_php_e2e_1019.ArPhpE2e1019.test_post_balanced_idempotent_outstanding) ... ok
+test_cancel_billing_protection (test_ar_posting_contracts_1019.ArPostingContracts1019.test_cancel_billing_protection) ... ok
+test_canonical_ledger_only (test_ar_posting_contracts_1019.ArPostingContracts1019.test_canonical_ledger_only) ... ok
+test_integrity_invariants (test_ar_posting_contracts_1019.ArPostingContracts1019.test_integrity_invariants) ... ok
+test_o2c_ar_flag_updated (test_ar_posting_contracts_1019.ArPostingContracts1019.test_o2c_ar_flag_updated) ... ok
+test_ui_action (test_ar_posting_contracts_1019.ArPostingContracts1019.test_ui_action) ... ok
+test_version_and_wiring (test_ar_posting_contracts_1019.ArPostingContracts1019.test_version_and_wiring) ... ok
+test_lifecycle_methods (test_ar_settlement_contracts_1020.ArSettlementContracts1020.test_lifecycle_methods) ... ok
+test_ui_actions (test_ar_settlement_contracts_1020.ArSettlementContracts1020.test_ui_actions) ... ok
+test_version_wiring (test_ar_settlement_contracts_1020.ArSettlementContracts1020.test_version_wiring) ... ok
+test_maker_checker_and_cross_customer_blocked (test_ar_settlement_php_e2e_1020.ArSettlementPhpE2e1020.test_maker_checker_and_cross_customer_blocked) ... ok
+test_partial_then_full_settlement (test_ar_settlement_php_e2e_1020.ArSettlementPhpE2e1020.test_partial_then_full_settlement) ... ok
+test_actual_worker_preserves_timeout_details_through_gateway (test_chunked_inference_recovery.ChunkedTransportTests.test_actual_worker_preserves_timeout_details_through_gateway) ... [job 0][llm_request] Bounded local model request
+[job 0][provider_fallback] Local capacity/transport unavailable
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59011)
+ok
+test_chunked_deadline_is_classified_without_cross_thread_close (test_chunked_inference_recovery.ChunkedTransportTests.test_chunked_deadline_is_classified_without_cross_thread_close) ... Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59013)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59014)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+ok
+test_chunked_inventory_deadline_has_single_thread_cleanup (test_chunked_inference_recovery.ChunkedTransportTests.test_chunked_inventory_deadline_has_single_thread_cleanup) ... ----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59015)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59017)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+----------------------------------------
+ok
+test_disconnected_chunked_stream_never_returns_partial_answer (test_chunked_inference_recovery.ChunkedTransportTests.test_disconnected_chunked_stream_never_returns_partial_answer) ... ok
+test_early_header_reset_remains_network_not_deadline (test_chunked_inference_recovery.ChunkedTransportTests.test_early_header_reset_remains_network_not_deadline) ... ok
+test_header_wait_is_bounded_and_distinguished_from_generation (test_chunked_inference_recovery.ChunkedTransportTests.test_header_wait_is_bounded_and_distinguished_from_generation) ... ok
+test_slow_endpoint_still_allows_explicit_peer_with_same_total_budget (test_chunked_inference_recovery.ChunkedTransportTests.test_slow_endpoint_still_allows_explicit_peer_with_same_total_budget) ... [job 0][llm_request] Bounded local model request
+[job 0][provider_fallback] Local capacity/transport unavailable
+[job 0][llm_request] Bounded local model request
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59025)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+[job 0][llm_done] Model response received
+ok
+test_split_multibyte_ndjson_and_separate_final_metrics (test_chunked_inference_recovery.ChunkedTransportTests.test_split_multibyte_ndjson_and_separate_final_metrics) ... ----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59029)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+ok
+test_timeout_cools_same_daemon_across_models_and_worker_instances (test_chunked_inference_recovery.ChunkedTransportTests.test_timeout_cools_same_daemon_across_models_and_worker_instances) ... [job 0][llm_request] Bounded local model request
+[job 0][provider_fallback] Local capacity/transport unavailable
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59033)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+[job 0][provider_fallback] Local capacity/transport unavailable
+[job 0][llm_request] Bounded local model request
+[job 0][provider_fallback] Local capacity/transport unavailable
+ok
+test_cli_can_qualify_next_model_after_bounded_capacity_wait (test_chunked_inference_recovery.QualificationEvidenceTests.test_cli_can_qualify_next_model_after_bounded_capacity_wait) ... ----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59036)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59043)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+ok
+test_cli_never_promotes_a_timeout_or_skipped_model_and_require_model_exits (test_chunked_inference_recovery.QualificationEvidenceTests.test_cli_never_promotes_a_timeout_or_skipped_model_and_require_model_exits) ... ----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59061)
+Traceback (most recent call last):
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 453, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\h\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+ok
+test_first_request_and_subsequent_budgets_are_bounded_and_semantic (test_chunked_inference_recovery.QualificationEvidenceTests.test_first_request_and_subsequent_budgets_are_bounded_and_semantic) ... AGENT_KERNEL_PREFLIGHT request model=tiny case=1 limit=60.0s
+AGENT_KERNEL_PREFLIGHT request model=tiny case=2 limit=30.0s
+AGENT_KERNEL_PREFLIGHT request model=tiny case=3 limit=30.0s
+ok
+test_partial_passes_and_safe_failure_details_survive_second_case_failure (test_chunked_inference_recovery.QualificationEvidenceTests.test_partial_passes_and_safe_failure_details_survive_second_case_failure) ... AGENT_KERNEL_PREFLIGHT request model=tiny case=1 limit=60.0s
+AGENT_KERNEL_PREFLIGHT request model=tiny case=2 limit=30.0s
+ok
+test_runtime_report_includes_only_allowed_daemon_and_residency_facts (test_chunked_inference_recovery.QualificationEvidenceTests.test_runtime_report_includes_only_allowed_daemon_and_residency_facts) ... ok
+test_blocked_action_reports_actual_model_and_tools (test_commercial_hardening.MetadataTests.test_blocked_action_reports_actual_model_and_tools) ... ok
+test_latency_budget_is_emitted (test_commercial_hardening.MetadataTests.test_latency_budget_is_emitted) ... ok
+test_latency_budget_within_boundary_is_not_exceeded (test_commercial_hardening.MetadataTests.test_latency_budget_within_boundary_is_not_exceeded) ... ok
+test_read_only_route_cannot_call_proposal_tool (test_commercial_hardening.MetadataTests.test_read_only_route_cannot_call_proposal_tool) ... ok
+test_recursive_redaction (test_commercial_hardening.MetadataTests.test_recursive_redaction) ... ok
+test_valid_proposal_contract_is_preserved (test_commercial_hardening.MetadataTests.test_valid_proposal_contract_is_preserved) ... ok
+test_loopback_http_is_allowed_for_local_test (test_commercial_hardening.RuntimeConfigTests.test_loopback_http_is_allowed_for_local_test) ... ok
+test_placeholder_token_is_rejected (test_commercial_hardening.RuntimeConfigTests.test_placeholder_token_is_rejected) ... ok
+test_remote_http_fails_closed (test_commercial_hardening.RuntimeConfigTests.test_remote_http_fails_closed) ... ok
+test_remote_https_is_accepted (test_commercial_hardening.RuntimeConfigTests.test_remote_https_is_accepted) ... ok
+test_360 (test_crm_lite.T.test_360) ... ok
+test_activity (test_crm_lite.T.test_activity) ... ok
+test_context_360_skips_name_search (test_crm_lite.T.test_context_360_skips_name_search) ... ok
+test_context_activity_grounds_party_without_name (test_crm_lite.T.test_context_activity_grounds_party_without_name) ... ok
+test_context_mismatch_fails_closed (test_crm_lite.T.test_context_mismatch_fails_closed) ... ok
+test_context_opportunity_grounds_party_without_name (test_crm_lite.T.test_context_opportunity_grounds_party_without_name) ... ok
+test_context_v2_attached_customer_grounds_without_name (test_crm_lite.T.test_context_v2_attached_customer_grounds_without_name) ... ok
+test_context_v2_explicit_customer_outranks_current_page_customer (test_crm_lite.T.test_context_v2_explicit_customer_outranks_current_page_customer) ... ok
+test_context_v2_multiple_customers_is_ambiguous (test_crm_lite.T.test_context_v2_multiple_customers_is_ambiguous) ... ok
+test_follow (test_crm_lite.T.test_follow) ... ok
+test_opp (test_crm_lite.T.test_opp) ... ok
+test_pipeline (test_crm_lite.T.test_pipeline) ... ok
+test_browser_labels_are_not_identity (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_browser_labels_are_not_identity) ... ok
+test_context_envelope_v2_separates_page_and_attached (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_context_envelope_v2_separates_page_and_attached) ... ok
+test_conversation_is_user_scoped (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_conversation_is_user_scoped) ... ok
+test_copilot_api_keeps_php80_compatible_return_syntax (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_copilot_api_keeps_php80_compatible_return_syntax) ... ok
+test_copilot_api_returns_json_csrf_error (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_copilot_api_returns_json_csrf_error) ... ok
+test_copilot_uses_main_entrypoint_bridge_and_safe_json (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_copilot_uses_main_entrypoint_bridge_and_safe_json) ... ok
+test_customer_360_button_opens_copilot (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_customer_360_button_opens_copilot) ... ok
+test_global_shell_is_wired_once (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_global_shell_is_wired_once) ... ok
+test_inventory_procurement_has_company_selector (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_inventory_procurement_has_company_selector) ... ok
+test_magic_customer_review_routes_from_attached_context (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_magic_customer_review_routes_from_attached_context) ... ok
+test_mention_search_hotfix_is_visible_and_provider_isolated (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_mention_search_hotfix_is_visible_and_provider_isolated) ... ok
+test_registry_has_initial_p0_providers (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_registry_has_initial_p0_providers) ... ok
+test_sidecar_search_preview_do_not_require_llm (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_sidecar_search_preview_do_not_require_llm) ... ok
+test_sidecar_state_is_company_scoped_and_reserves_desktop_space (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_sidecar_state_is_company_scoped_and_reserves_desktop_space) ... ok
+test_worker_understands_v2_and_legacy_context (test_cycle10_universal_copilot_foundation.Cycle10UniversalCopilotFoundation.test_worker_understands_v2_and_legacy_context) ... ok
+test_api_search_is_workspace_global_and_conversations_remain_company_scoped (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_api_search_is_workspace_global_and_conversations_remain_company_scoped) ... ok
+test_assets_are_cache_busted_for_cycle11 (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_assets_are_cache_busted_for_cycle11) ... ok
+test_browser_migrates_legacy_state_and_keeps_conversations_per_company (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_browser_migrates_legacy_state_and_keeps_conversations_per_company) ... ok
+test_company_itself_is_mentionable_and_previewable (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_company_itself_is_mentionable_and_previewable) ... ok
+test_foreign_company_entity_switches_copilot_scope_not_page_or_mixed_context (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_foreign_company_entity_switches_copilot_scope_not_page_or_mixed_context) ... ok
+test_grounded_quick_prompts_are_visible_but_not_auto_executed (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_grounded_quick_prompts_are_visible_but_not_auto_executed) ... ok
+test_mention_browser_is_collapsible_category_then_type (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_mention_browser_is_collapsible_category_then_type) ... ok
+test_registry_v2_has_company_and_business_categories (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_registry_v2_has_company_and_business_categories) ... ok
+test_sidecar_exposes_company_scope_conversation_switcher_and_new_chat (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_sidecar_exposes_company_scope_conversation_switcher_and_new_chat) ... ok
+test_workspace_search_spans_active_companies_and_keeps_permission_checks (test_cycle11_workspace_copilot_mvp.Cycle11WorkspaceCopilotMvp.test_workspace_search_spans_active_companies_and_keeps_permission_checks) ... ok
+test_capability_catalog_exposes_shipment_impact (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_capability_catalog_exposes_shipment_impact) ... ok
+test_docker_image_contains_supervisor (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_docker_image_contains_supervisor) ... ok
+test_explain_previous_labels_new_evidence_tools (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_explain_previous_labels_new_evidence_tools) ... ok
+test_invalid_numeric_claim_falls_to_second_model (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_invalid_numeric_claim_falls_to_second_model) ... ok
+test_php_registers_two_typed_intelligence_tools (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_php_registers_two_typed_intelligence_tools) ... ok
+test_runtime_preflight_persists_verified_model_route (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_runtime_preflight_persists_verified_model_route) ... ok
+test_runtime_preflight_requires_structured_analysis_output (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_runtime_preflight_requires_structured_analysis_output) ... ok
+test_selected_shipment_id_is_preserved_in_cross_module_evidence (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_selected_shipment_id_is_preserved_in_cross_module_evidence) ... ok
+test_semantic_benchmark_routes_38_prompts (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_semantic_benchmark_routes_38_prompts) ... ok
+test_shipment_impact_intent_benchmark (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_shipment_impact_intent_benchmark) ... ok
+test_shipment_impact_uses_cross_module_evidence_tool (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_shipment_impact_uses_cross_module_evidence_tool) ... ok
+test_shipment_impact_without_entity_fails_closed (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_shipment_impact_without_entity_fails_closed) ... ok
+test_sidecar_flex_shell_pins_composer_and_thread_owns_scroll (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_sidecar_flex_shell_pins_composer_and_thread_owns_scroll) ... ok
+test_stale_runtime_route_never_displaces_current_fallback (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_stale_runtime_route_never_displaces_current_fallback) ... ok
+test_supplier_flow_uses_one_server_evidence_tool_and_reasoning (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_supplier_flow_uses_one_server_evidence_tool_and_reasoning) ... ok
+test_supplier_intent_benchmark (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_supplier_intent_benchmark) ... ok
+test_supplier_source_uses_canonical_confirmed_docs_not_hardcoded_doc_types (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_supplier_source_uses_canonical_confirmed_docs_not_hardcoded_doc_types) ... ok
+test_supplier_two_mentions_are_server_ids_not_model_ids (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_supplier_two_mentions_are_server_ids_not_model_ids) ... ok
+test_tool_is_read_only_and_proposal_paths_untouched (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_tool_is_read_only_and_proposal_paths_untouched) ... ok
+test_trade_overview_resolves_only_single_active_case_as_page_context (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_trade_overview_resolves_only_single_active_case_as_page_context) ... ok
+test_trade_risk_intent_benchmark (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_trade_risk_intent_benchmark) ... ok
+test_trade_risk_uses_structured_supervisor_and_reasoning (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_trade_risk_uses_structured_supervisor_and_reasoning) ... ok
+test_ui_menus_use_sidecar_overlay_not_scrollable_composer (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_ui_menus_use_sidecar_overlay_not_scrollable_composer) ... ok
+test_worker_capability_registry_exposes_shipment_impact (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_worker_capability_registry_exposes_shipment_impact) ... ok
+test_write_request_bypasses_supervisor (test_cycle12_2_agent_core_rescue.Cycle122AgentCoreRescue.test_write_request_bypasses_supervisor) ... ok
+test_compact_selection_uses_only_grounded_findings (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_compact_selection_uses_only_grounded_findings) ... ok
+test_degraded_route_circuit_breaks_same_configured_analysts (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_degraded_route_circuit_breaks_same_configured_analysts) ... ok
+test_degraded_route_reopens_when_model_configuration_changes (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_degraded_route_reopens_when_model_configuration_changes) ... ok
+test_dynamic_second_tool_is_selected_by_action_id_only (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_dynamic_second_tool_is_selected_by_action_id_only) ... ok
+test_explicit_supplier_plus_company_fails_closed_not_portfolio (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_explicit_supplier_plus_company_fails_closed_not_portfolio) ... ok
+test_invalid_reasoning_model_falls_back_to_useful_decision_not_dump (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_invalid_reasoning_model_falls_back_to_useful_decision_not_dump) ... ok
+test_kernel_semantic_benchmark (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_kernel_semantic_benchmark) ... ok
+test_kernel_wrapper_intercepts_supported_read (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_kernel_wrapper_intercepts_supported_read) ... ok
+test_model_cannot_supply_free_text_numbers_or_unissued_ids (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_model_cannot_supply_free_text_numbers_or_unissued_ids) ... ok
+test_planner_invalid_action_cannot_create_tool_or_arguments (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_planner_invalid_action_cannot_create_tool_or_arguments) ... ok
+test_proposal_descriptors_never_enter_available_action_set (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_proposal_descriptors_never_enter_available_action_set) ... ok
+test_safe_json_object_accepts_fenced_or_wrapped_complete_object (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_safe_json_object_accepts_fenced_or_wrapped_complete_object) ... ok
+test_safe_json_object_rejects_truncated_json (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_safe_json_object_rejects_truncated_json) ... ok
+test_shipment_page_context_is_accepted (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_shipment_page_context_is_accepted) ... ok
+test_shipment_requires_real_context (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_shipment_requires_real_context) ... ok
+test_stale_decision_route_never_displaces_current_models (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_stale_decision_route_never_displaces_current_models) ... ok
+test_supplier_no_mentions_still_discovers_portfolio (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_supplier_no_mentions_still_discovers_portfolio) ... ok
+test_supplier_two_explicit_refs_preserve_exact_ids (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_supplier_two_explicit_refs_preserve_exact_ids) ... ok
+test_tool_budget_is_bounded (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_tool_budget_is_bounded) ... ok
+test_trace_exposes_kernel_loop_without_chain_of_thought (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_trace_exposes_kernel_loop_without_chain_of_thought) ... ok
+test_trade_risk_can_replan_to_case_snapshot (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_trade_risk_can_replan_to_case_snapshot) ... ok
+test_verified_decision_route_is_preferred_only_when_currently_configured (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_verified_decision_route_is_preferred_only_when_currently_configured) ... ok
+test_write_request_bypasses_installed_kernel (test_cycle12_3_agent_intelligence_kernel.KernelTests.test_write_request_bypasses_installed_kernel) ... ok
+test_canonical_docs_point_to_agent_kernel (test_cycle12_3_agent_intelligence_kernel.SourceContractTests.test_canonical_docs_point_to_agent_kernel) ... ok
+test_docker_image_contains_kernel_and_real_smoke (test_cycle12_3_agent_intelligence_kernel.SourceContractTests.test_docker_image_contains_kernel_and_real_smoke) ... ok
+test_smoke_rejects_shape_valid_but_semantically_wrong_model (test_cycle12_3_agent_intelligence_kernel.SourceContractTests.test_smoke_rejects_shape_valid_but_semantically_wrong_model) ... AGENT_KERNEL_PREFLIGHT request model=agent-test case=1 limit=30.0s
+ok
+test_worker_installs_kernel_after_legacy_supervisor_before_provider (test_cycle12_3_agent_intelligence_kernel.SourceContractTests.test_worker_installs_kernel_after_legacy_supervisor_before_provider) ... ok
+test_catalog_has_roadmap_skills (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_catalog_has_roadmap_skills) ... ok
+test_conversation_explain_uses_bounded_history_metadata (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_conversation_explain_uses_bounded_history_metadata) ... ok
+test_customer_compare_is_grounded (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_customer_compare_is_grounded) ... ok
+test_direct_skill_adds_grounded_analysis_after_erp_reads (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_direct_skill_adds_grounded_analysis_after_erp_reads) ... ok
+test_exact_multiword_margin_phrase_routes_without_model (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_exact_multiword_margin_phrase_routes_without_model) ... ok
+test_explain_previous_uses_real_newlines_not_literal_escape (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_explain_previous_uses_real_newlines_not_literal_escape) ... ok
+test_grounded_synthesis_numeric_guard_falls_back_to_evidence (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_grounded_synthesis_numeric_guard_falls_back_to_evidence) ... ok
+test_model_retriever_is_id_only (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_model_retriever_is_id_only) ... ok
+test_natural_customer_compare_variants (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_natural_customer_compare_variants) ... ok
+test_natural_supplier_compare_variants (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_natural_supplier_compare_variants) ... ok
+test_natural_supplier_question_runs_portfolio_and_analysis_without_mentions (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_natural_supplier_question_runs_portfolio_and_analysis_without_mentions) ... ok
+test_natural_trade_risk_variants (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_natural_trade_risk_variants) ... ok
+test_read_path_name_guard_is_fail_closed_when_mode_missing (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_read_path_name_guard_is_fail_closed_when_mode_missing) ... ok
+test_read_path_strips_proposal_descriptors_even_without_capability (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_read_path_strips_proposal_descriptors_even_without_capability) ... ok
+test_selected_capability_never_broadens_when_tools_are_unavailable (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_selected_capability_never_broadens_when_tools_are_unavailable) ... ok
+test_slash_explicit_skill (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_slash_explicit_skill) ... ok
+test_specific_trade_case_review_uses_three_grounded_reads (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_specific_trade_case_review_uses_three_grounded_reads) ... ok
+test_supplier_compare_is_read_only (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_supplier_compare_is_read_only) ... ok
+test_supplier_portfolio_needs_no_mentions_and_discovers_from_purchases (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_supplier_portfolio_needs_no_mentions_and_discovers_from_purchases) ... ok
+test_supplier_review_combines_procurement_finance_trade (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_supplier_review_combines_procurement_finance_trade) ... ok
+test_supplier_review_with_two_mentions_becomes_compare (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_supplier_review_with_two_mentions_becomes_compare) ... ok
+test_worker_install_narrows_descriptors_for_read_intent (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_worker_install_narrows_descriptors_for_read_intent) ... ok
+test_write_path_still_receives_full_proposal_descriptor_set (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_write_path_still_receives_full_proposal_descriptor_set) ... ok
+test_write_prompt_bypasses_capability_filter (test_cycle12_skills_capability_nlp.Cycle12SkillsCapabilityNlp.test_write_prompt_bypasses_capability_filter) ... ok
+test_conversation_history_is_same_user_company_and_bounded (test_cycle12_skills_capability_nlp.Cycle12SourceContracts.test_conversation_history_is_same_user_company_and_bounded) ... ok
+test_copilot_config_exposes_skill_catalog (test_cycle12_skills_capability_nlp.Cycle12SourceContracts.test_copilot_config_exposes_skill_catalog) ... ok
+test_cycle12_ui_has_slash_picker_and_viewport_clamp (test_cycle12_skills_capability_nlp.Cycle12SourceContracts.test_cycle12_ui_has_slash_picker_and_viewport_clamp) ... ok
+test_live_stage_labels_cover_cycle12_capability_traces (test_cycle12_skills_capability_nlp.Cycle12SourceContracts.test_live_stage_labels_cover_cycle12_capability_traces) ... ok
+test_server_capability_registry_matches_primary_skill_ids (test_cycle12_skills_capability_nlp.Cycle12SourceContracts.test_server_capability_registry_matches_primary_skill_ids) ... ok
+test_worker_image_copies_business_skills_module (test_cycle12_skills_capability_nlp.Cycle12SourceContracts.test_worker_image_copies_business_skills_module) ... ok
+test_worker_installs_capability_layer_before_commercial_guard (test_cycle12_skills_capability_nlp.Cycle12SourceContracts.test_worker_installs_capability_layer_before_commercial_guard) ... ok
+test_ai_contract (test_cycle4_inventory_contracts.Cycle4Contracts.test_ai_contract) ... ok
+test_inventory_truth (test_cycle4_inventory_contracts.Cycle4Contracts.test_inventory_truth) ... ok
+test_module_kernel (test_cycle4_inventory_contracts.Cycle4Contracts.test_module_kernel) ... ok
+test_routes (test_cycle4_inventory_contracts.Cycle4Contracts.test_routes) ... ok
+test_schema_tables (test_cycle4_inventory_contracts.Cycle4Contracts.test_schema_tables) ... ok
+test_worker_wiring (test_cycle4_inventory_contracts.Cycle4Contracts.test_worker_wiring) ... ok
+test_domain_boot (test_cycle5_trade_contracts.Cycle5Contracts.test_domain_boot) ... ok
+test_guard (test_cycle5_trade_contracts.Cycle5Contracts.test_guard) ... ok
+test_module_and_page (test_cycle5_trade_contracts.Cycle5Contracts.test_module_and_page) ... ok
+test_schema (test_cycle5_trade_contracts.Cycle5Contracts.test_schema) ... ok
+test_task_state_json (test_cycle5_trade_contracts.Cycle5Contracts.test_task_state_json) ... ok
+test_tools (test_cycle5_trade_contracts.Cycle5Contracts.test_tools) ... ok
+test_worker (test_cycle5_trade_contracts.Cycle5Contracts.test_worker) ... ok
+test_ai_contract_has_sales_fulfillment_tools (test_cycle6_sales_contracts.Cycle6SalesContracts.test_ai_contract_has_sales_fulfillment_tools) ... ok
+test_delivery_is_separate_and_posts_outbound_ledger (test_cycle6_sales_contracts.Cycle6SalesContracts.test_delivery_is_separate_and_posts_outbound_ledger) ... ok
+test_docs_preserve_cycle6_live_closeout (test_cycle6_sales_contracts.Cycle6SalesContracts.test_docs_preserve_cycle6_live_closeout) ... ok
+test_hardening_classifies_delivery_high (test_cycle6_sales_contracts.Cycle6SalesContracts.test_hardening_classifies_delivery_high) ... ok
+test_margin_uses_landed_cost_bridge_and_excludes_tax (test_cycle6_sales_contracts.Cycle6SalesContracts.test_margin_uses_landed_cost_bridge_and_excludes_tax) ... ok
+test_reuses_canonical_sales_and_reservation_tables (test_cycle6_sales_contracts.Cycle6SalesContracts.test_reuses_canonical_sales_and_reservation_tables) ... ok
+test_sales_ui_surfaces_fulfillment_and_margin (test_cycle6_sales_contracts.Cycle6SalesContracts.test_sales_ui_surfaces_fulfillment_and_margin) ... ok
+test_schema_gate_is_at_least_10_3 (test_cycle6_sales_contracts.Cycle6SalesContracts.test_schema_gate_is_at_least_10_3) ... ok
+test_worker_installs_sales_slice_before_hardening (test_cycle6_sales_contracts.Cycle6SalesContracts.test_worker_installs_sales_slice_before_hardening) ... ok
+test_ai (test_cycle7_crm_contracts.T.test_ai) ... ok
+test_crm_ui_has_accounting_company_selector (test_cycle7_crm_contracts.T.test_crm_ui_has_accounting_company_selector) ... ok
+test_identity (test_cycle7_crm_contracts.T.test_identity) ... ok
+test_module (test_cycle7_crm_contracts.T.test_module) ... ok
+test_state (test_cycle7_crm_contracts.T.test_state) ... ok
+test_tables (test_cycle7_crm_contracts.T.test_tables) ... ok
+test_truth (test_cycle7_crm_contracts.T.test_truth) ... ok
+test_worker (test_cycle7_crm_contracts.T.test_worker) ... ok
+test_browser_only_submits_typed_refs_not_labels (test_cycle8_page_context_contracts.Cycle8PageContextContracts.test_browser_only_submits_typed_refs_not_labels) ... ok
+test_context_is_server_validated_and_company_scoped (test_cycle8_page_context_contracts.Cycle8PageContextContracts.test_context_is_server_validated_and_company_scoped) ... ok
+test_cycle8_kernel_is_retained_while_page_jump_ux_is_retired (test_cycle8_page_context_contracts.Cycle8PageContextContracts.test_cycle8_kernel_is_retained_while_page_jump_ux_is_retired) ... ok
+test_job_context_persists_resolved_page_context (test_cycle8_page_context_contracts.Cycle8PageContextContracts.test_job_context_persists_resolved_page_context) ... ok
+test_server_context_resolver_is_loaded (test_cycle8_page_context_contracts.Cycle8PageContextContracts.test_server_context_resolver_is_loaded) ... ok
+test_worker_consumes_validated_context_and_fails_mismatch (test_cycle8_page_context_contracts.Cycle8PageContextContracts.test_worker_consumes_validated_context_and_fails_mismatch) ... ok
+test_48h_plan_is_demoable_and_incremental (test_cycle9_universal_copilot_spec.Cycle9UniversalCopilotSpecContracts.test_48h_plan_is_demoable_and_incremental) ... ok
+test_architecture_preserves_trust_boundaries_and_single_supervisor_first (test_cycle9_universal_copilot_spec.Cycle9UniversalCopilotSpecContracts.test_architecture_preserves_trust_boundaries_and_single_supervisor_first) ... ok
+test_cycle9_architecture_remains_locked_while_execution_advances (test_cycle9_universal_copilot_spec.Cycle9UniversalCopilotSpecContracts.test_cycle9_architecture_remains_locked_while_execution_advances) ... ok
+test_master_spec_has_composable_skill_planner_and_learning_contracts (test_cycle9_universal_copilot_spec.Cycle9UniversalCopilotSpecContracts.test_master_spec_has_composable_skill_planner_and_learning_contracts) ... ok
+test_master_spec_has_universal_context_and_entity_contracts (test_cycle9_universal_copilot_spec.Cycle9UniversalCopilotSpecContracts.test_master_spec_has_universal_context_and_entity_contracts) ... ok
+test_north_star_is_intelligence_platform_with_copilot (test_cycle9_universal_copilot_spec.Cycle9UniversalCopilotSpecContracts.test_north_star_is_intelligence_platform_with_copilot) ... ok
+test_roadmap_has_two_day_cadence_and_deferred_heavy_infrastructure (test_cycle9_universal_copilot_spec.Cycle9UniversalCopilotSpecContracts.test_roadmap_has_two_day_cadence_and_deferred_heavy_infrastructure) ... ok
+test_all_namespaced_routes_have_permission_checks (test_enterprise_extensions.EnterpriseExtensions.test_all_namespaced_routes_have_permission_checks) ... ok
+test_bootstrap_order_after_canonical (test_enterprise_extensions.EnterpriseExtensions.test_bootstrap_order_after_canonical) ... ok
+test_bridge_never_posts_money_or_stock (test_enterprise_extensions.EnterpriseExtensions.test_bridge_never_posts_money_or_stock) ... ok
+test_documentation_truth (test_enterprise_extensions.EnterpriseExtensions.test_documentation_truth) ... ok
+test_group_registry_opt_in_not_fake_planned (test_enterprise_extensions.EnterpriseExtensions.test_group_registry_opt_in_not_fake_planned) ... ok
+test_php_business_contracts (test_enterprise_extensions.EnterpriseExtensions.test_php_business_contracts) ... skipped 'PHP CLI absent; GitHub Actions must run'
+test_php_syntax_for_bounded_new_sources (test_enterprise_extensions.EnterpriseExtensions.test_php_syntax_for_bounded_new_sources) ... skipped 'PHP CLI absent; GitHub Actions must run'
+test_schema_version_bumped (test_enterprise_extensions.EnterpriseExtensions.test_schema_version_bumped) ... ok
+test_scope_and_concurrency_and_history_guards (test_enterprise_extensions.EnterpriseExtensions.test_scope_and_concurrency_and_history_guards) ... ok
+test_tenant_permissions_only_owner_granted (test_enterprise_extensions.EnterpriseExtensions.test_tenant_permissions_only_owner_granted) ... ok
+test_workflow_subject_ref_is_scoped (test_enterprise_extensions.EnterpriseExtensions.test_workflow_subject_ref_is_scoped) ... ok
+test_boundaries_canonical_and_scoped (test_erp_suite_mvp.SuiteContract.test_boundaries_canonical_and_scoped) ... ok
+test_php_domain_validators (test_erp_suite_mvp.SuiteContract.test_php_domain_validators) ... skipped 'PHP CLI absent; CI must test'
+test_schema_gate_and_permissions (test_erp_suite_mvp.SuiteContract.test_schema_gate_and_permissions) ... ok
+test_seed_fails_closed (test_erp_suite_mvp.SuiteContract.test_seed_fails_closed) ... ok
+test_suites_registered_and_disabled_by_default (test_erp_suite_mvp.SuiteContract.test_suites_registered_and_disabled_by_default) ... ok
+test_workflow_permissions_and_csrf (test_erp_suite_mvp.SuiteContract.test_workflow_permissions_and_csrf) ... ok
+test_check_creates_proposal_only_with_grounded_ids (test_finance_actions.FinanceActionExecutionTests.test_check_creates_proposal_only_with_grounded_ids) ... ok
+test_check_read_calls_read_tool_only (test_finance_actions.FinanceActionExecutionTests.test_check_read_calls_read_tool_only) ... ok
+test_purchase_creates_proposal_only (test_finance_actions.FinanceActionExecutionTests.test_purchase_creates_proposal_only) ... ok
+test_check_prompt_routes_and_parses (test_finance_actions.FinanceActionRoutingTests.test_check_prompt_routes_and_parses) ... ok
+test_check_read_is_deterministic (test_finance_actions.FinanceActionRoutingTests.test_check_read_is_deterministic) ... ok
+test_purchase_prompt_routes (test_finance_actions.FinanceActionRoutingTests.test_purchase_prompt_routes) ... ok
+test_action_idempotency_key_is_stable_and_input_sensitive (test_financial_regression.ActionAndProactiveRegressionTests.test_action_idempotency_key_is_stable_and_input_sensitive) ... ok
+test_ambiguous_account_resolution_fails_closed (test_financial_regression.ActionAndProactiveRegressionTests.test_ambiguous_account_resolution_fails_closed) ... ok
+test_proactive_severity_and_impact_gate (test_financial_regression.ActionAndProactiveRegressionTests.test_proactive_severity_and_impact_gate) ... ok
+test_receivables_and_payables_ratios_use_grounded_balances (test_financial_regression.ActionAndProactiveRegressionTests.test_receivables_and_payables_ratios_use_grounded_balances) ... ok
+test_incomplete_current_month_is_excluded (test_financial_regression.ForecastRegressionTests.test_incomplete_current_month_is_excluded) ... ok
+test_linear_forecast_is_deterministic_and_bounded (test_financial_regression.ForecastRegressionTests.test_linear_forecast_is_deterministic_and_bounded) ... ok
+test_robust_anomaly_requires_four_complete_months (test_financial_regression.ForecastRegressionTests.test_robust_anomaly_requires_four_complete_months) ... ok
+test_severity_gate_beats_model_order (test_financial_regression.ForecastRegressionTests.test_severity_gate_beats_model_order) ... ok
+test_fixed_predictive_and_proactive_plans_are_read_only (test_financial_regression.RoutingRegressionTests.test_fixed_predictive_and_proactive_plans_are_read_only) ... ok
+test_intelligence_write_prompt_is_not_read_route (test_financial_regression.RoutingRegressionTests.test_intelligence_write_prompt_is_not_read_route) ... ok
+test_proactive_is_recommendation_only (test_financial_regression.RoutingRegressionTests.test_proactive_is_recommendation_only) ... ok
+test_db_queue_routes_by_capability (test_gemini_integration_contracts.Contract.test_db_queue_routes_by_capability) ... ok
+test_no_default_gemini_privilege (test_gemini_integration_contracts.Contract.test_no_default_gemini_privilege) ... ok
+test_no_shared_runtime_volume (test_gemini_integration_contracts.Contract.test_no_shared_runtime_volume) ... ok
+test_server_scoped_selection (test_gemini_integration_contracts.Contract.test_server_scoped_selection) ... ok
+test_env_key_resolution (test_gemini_provider.GeminiGatewayTests.test_env_key_resolution) ... ok
+test_missing_env_fails_closed (test_gemini_provider.GeminiGatewayTests.test_missing_env_fails_closed) ... ok
+test_model_allowlist_never_broadens (test_gemini_provider.GeminiGatewayTests.test_model_allowlist_never_broadens) ... ok
+test_strict_job_selection_and_no_ollama (test_gemini_provider.GeminiGatewayTests.test_strict_job_selection_and_no_ollama) ... ok
+test_inventory_read_is_grounded (test_inventory_procurement.Tests.test_inventory_read_is_grounded) ... ok
+test_pipeline_accepts_decimal_strings (test_inventory_procurement.Tests.test_pipeline_accepts_decimal_strings) ... ok
+test_receipt_is_proposal_only (test_inventory_procurement.Tests.test_receipt_is_proposal_only) ... ok
+test_replenishment_no_llm (test_inventory_procurement.Tests.test_replenishment_no_llm) ... ok
+test_warehouse_list (test_inventory_procurement.Tests.test_warehouse_list) ... ok
+test_profile_domain (test_iran_first_contracts_1021.IranFirstContracts1021.test_profile_domain) ... ok
+test_toman_conversion_rules_in_source (test_iran_first_contracts_1021.IranFirstContracts1021.test_toman_conversion_rules_in_source) ... ok
+test_ui_and_docs (test_iran_first_contracts_1021.IranFirstContracts1021.test_ui_and_docs) ... ok
+test_versions (test_iran_first_contracts_1021.IranFirstContracts1021.test_versions) ... ok
+test_business_profile_sys1 (test_iran_localization_rc1.IranLocalizationRc1Contracts.test_business_profile_sys1) ... ok
+test_date_rules (test_iran_localization_rc1.IranLocalizationRc1Contracts.test_date_rules) ... ok
+test_document_rtl_ltr (test_iran_localization_rc1.IranLocalizationRc1Contracts.test_document_rtl_ltr) ... ok
+test_jalali_from_gregorian_date_only (test_iran_localization_rc1.IranLocalizationRc1Contracts.test_jalali_from_gregorian_date_only) ... ok
+test_money_rules (test_iran_localization_rc1.IranLocalizationRc1Contracts.test_money_rules) ... ok
+test_owned_files_exist (test_iran_localization_rc1.IranLocalizationRc1Contracts.test_owned_files_exist) ... ok
+test_php_localization_suite (test_iran_localization_rc1.IranLocalizationRc1Contracts.test_php_localization_suite) ... ok
+test_regulatory_matrix_honest (test_iran_localization_rc1.IranLocalizationRc1Contracts.test_regulatory_matrix_honest) ... ok
+test_current_trade_case_requires_disambiguation (test_low_memory_runtime.BusinessRegression.test_current_trade_case_requires_disambiguation) ... ok
+test_degraded_route_expires_and_runtime_fingerprint_invalidates_it (test_low_memory_runtime.BusinessRegression.test_degraded_route_expires_and_runtime_fingerprint_invalidates_it) ... ok
+test_empty_rows_do_not_create_metrics_or_best_supplier (test_low_memory_runtime.BusinessRegression.test_empty_rows_do_not_create_metrics_or_best_supplier) ... ok
+test_explicit_trade_context_does_not_analyze_another_case (test_low_memory_runtime.BusinessRegression.test_explicit_trade_context_does_not_analyze_another_case) ... ok
+test_model_cannot_hide_critical_supplier_or_invent_quality_claim (test_low_memory_runtime.BusinessRegression.test_model_cannot_hide_critical_supplier_or_invent_quality_claim) ... ok
+test_optional_read_failure_preserves_primary_comparison (test_low_memory_runtime.BusinessRegression.test_optional_read_failure_preserves_primary_comparison) ... ok
+test_reported_portfolio_tie_keeps_each_supplier_and_known_risk (test_low_memory_runtime.BusinessRegression.test_reported_portfolio_tie_keeps_each_supplier_and_known_risk) ... ok
+test_supported_persian_period_is_not_replaced_with_six_months (test_low_memory_runtime.BusinessRegression.test_supported_persian_period_is_not_replaced_with_six_months) ... ok
+test_unsupported_period_does_not_read_another_period (test_low_memory_runtime.BusinessRegression.test_unsupported_period_does_not_read_another_period) ... ok
+test_actual_worker_and_production_preflight_share_semantic_contract (test_low_memory_runtime.GatewayRegression.test_actual_worker_and_production_preflight_share_semantic_contract) ... AGENT_KERNEL_PREFLIGHT request model=tiny case=1 limit=5.0s
+[job 0][llm_request] Bounded local model request
+[job 0][llm_done] Model response received
+AGENT_KERNEL_PREFLIGHT request model=tiny case=2 limit=5.0s
+[job 0][llm_request] Bounded local model request
+[job 0][llm_done] Model response received
+AGENT_KERNEL_PREFLIGHT request model=tiny case=3 limit=5.0s
+[job 0][llm_request] Bounded local model request
+[job 0][llm_done] Model response received
+ok
+test_actual_worker_honors_explicit_model_after_stale_role_hint (test_low_memory_runtime.GatewayRegression.test_actual_worker_honors_explicit_model_after_stale_role_hint) ... [job 0][llm_request] Bounded local model request
+[job 0][llm_done] Model response received
+ok
+test_local_only_cannot_be_changed_by_cloud_model_name (test_low_memory_runtime.GatewayRegression.test_local_only_cannot_be_changed_by_cloud_model_name) ... ok
+test_company_isolation_incremental_index_and_no_embedding_load (test_low_memory_runtime.RetrievalTests.test_company_isolation_incremental_index_and_no_embedding_load) ... ok
+test_failed_reindex_keeps_last_good_document (test_low_memory_runtime.RetrievalTests.test_failed_reindex_keeps_last_good_document) ... ok
+test_persian_arabic_letter_variants_match_with_fts_and_fallback (test_low_memory_runtime.RetrievalTests.test_persian_arabic_letter_variants_match_with_fts_and_fallback) ... ok
+test_actual_http_options_and_model_are_preserved (test_low_memory_runtime.TransportTests.test_actual_http_options_and_model_are_preserved) ... ok
+test_declared_memory_budget_blocks_load_before_inference (test_low_memory_runtime.TransportTests.test_declared_memory_budget_blocks_load_before_inference) ... ok
+test_existing_config_context_and_output_preferences_are_bounded (test_low_memory_runtime.TransportTests.test_existing_config_context_and_output_preferences_are_bounded) ... ok
+test_explicit_peer_receives_same_model_after_primary_oom (test_low_memory_runtime.TransportTests.test_explicit_peer_receives_same_model_after_primary_oom) ... ok
+test_inventory_has_wall_timeout_for_continuous_partial_bytes (test_low_memory_runtime.TransportTests.test_inventory_has_wall_timeout_for_continuous_partial_bytes) ... ok
+test_oversized_persian_prompt_never_reaches_provider (test_low_memory_runtime.TransportTests.test_oversized_persian_prompt_never_reaches_provider) ... ok
+test_remote_admission_never_uses_worker_host_memory (test_low_memory_runtime.TransportTests.test_remote_admission_never_uses_worker_host_memory) ... ok
+test_response_budget_is_checked_before_json_parse (test_low_memory_runtime.TransportTests.test_response_budget_is_checked_before_json_parse) ... ok
+test_truncation_stream_errors_and_eof_never_count_as_success (test_low_memory_runtime.TransportTests.test_truncation_stream_errors_and_eof_never_count_as_success) ... ok
+test_two_process_handles_cannot_enter_same_endpoint_lock (test_low_memory_runtime.TransportTests.test_two_process_handles_cannot_enter_same_endpoint_lock) ... ok
+test_wall_deadline_stops_continuous_partial_bytes (test_low_memory_runtime.TransportTests.test_wall_deadline_stops_continuous_partial_bytes) ... ok
+test_00_mysql_identity (test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_00_mysql_identity) ... ok
+test_01_lifecycle_happy_path (test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_01_lifecycle_happy_path) ... ok
+test_02_insufficient_stock_rejected (test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_02_insufficient_stock_rejected) ... ok
+test_03_injected_rollback (test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_03_injected_rollback) ... ok
+test_04_maker_checker_and_isolation (test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_04_maker_checker_and_isolation) ... ok
+test_05_duplicate_component_and_closed_period (test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_05_duplicate_component_and_closed_period) ... ok
+test_06_concurrent_issue_two_orders (test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_06_concurrent_issue_two_orders) ... ok
+test_07_mrp_and_adapter_contract (test_manufacturing_mf1_php_e2e.ManufacturingMf1PhpE2e.test_07_mrp_and_adapter_contract) ... ok
+test_demo_seeder_requires_explicit_demo_scope (test_manufacturing_pilot.ManufacturingPilotContracts.test_demo_seeder_requires_explicit_demo_scope) ... ok
+test_explicit_opt_in_and_scoped_ui (test_manufacturing_pilot.ManufacturingPilotContracts.test_explicit_opt_in_and_scoped_ui) ... ok
+test_migration_is_additive_and_tenant_scoped (test_manufacturing_pilot.ManufacturingPilotContracts.test_migration_is_additive_and_tenant_scoped) ... ok
+test_quantity_rounding_and_invalid_scrap (test_manufacturing_pilot.ManufacturingPilotContracts.test_quantity_rounding_and_invalid_scrap) ... skipped 'PHP is available in CI'
+test_explicit_cloud_selection_cannot_bypass_local_only (test_manufacturing_pilot.ProviderSafety.test_explicit_cloud_selection_cannot_bypass_local_only) ... ok
+test_local_only_never_escapes_to_xai_or_cursor (test_manufacturing_pilot.ProviderSafety.test_local_only_never_escapes_to_xai_or_cursor) ... ok
+test_bootstrap_loads_registry (test_module_kernel.ModuleKernelContractTests.test_bootstrap_loads_registry) ... ok
+test_index_uses_module_gate (test_module_kernel.ModuleKernelContractTests.test_index_uses_module_gate) ... ok
+test_registry_contract (test_module_kernel.ModuleKernelContractTests.test_registry_contract) ... ok
+test_v10_contract_doc_exists (test_module_kernel.ModuleKernelContractTests.test_v10_contract_doc_exists) ... ok
+test_ai_proposal_tools (test_o2c_contracts_1018.O2CContracts1018.test_ai_proposal_tools) ... ok
+test_ar_kernel_and_settlement_not_implemented (test_o2c_contracts_1018.O2CContracts1018.test_ar_kernel_and_settlement_not_implemented) ... ok
+test_bootstrap_wires_o2c (test_o2c_contracts_1018.O2CContracts1018.test_bootstrap_wires_o2c) ... ok
+test_confirm_maker_checker_and_fulfillable_gate (test_o2c_contracts_1018.O2CContracts1018.test_confirm_maker_checker_and_fulfillable_gate) ... ok
+test_delivery_invoice_is_draft_only (test_o2c_contracts_1018.O2CContracts1018.test_delivery_invoice_is_draft_only) ... ok
+test_entry_point_matrix_documented (test_o2c_contracts_1018.O2CContracts1018.test_entry_point_matrix_documented) ... ok
+test_exact_quantity_scaling (test_o2c_contracts_1018.O2CContracts1018.test_exact_quantity_scaling) ... ok
+test_invoice_links_and_idempotency_tables (test_o2c_contracts_1018.O2CContracts1018.test_invoice_links_and_idempotency_tables) ... ok
+test_php_syntax_when_available (test_o2c_contracts_1018.O2CContracts1018.test_php_syntax_when_available) ... skipped 'php CLI not on PATH (CI verifies)'
+test_schema_gate_monotonic (test_o2c_contracts_1018.O2CContracts1018.test_schema_gate_monotonic) ... ok
+test_ui_workflow_actions (test_o2c_contracts_1018.O2CContracts1018.test_ui_workflow_actions) ... ok
+test_version_gate (test_o2c_contracts_1018.O2CContracts1018.test_version_gate) ... ok
+test_01_quotation_to_approved_order (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_01_quotation_to_approved_order) ... ok
+test_02_two_company_isolation (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_02_two_company_isolation) ... ok
+test_03_two_workspace_isolation (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_03_two_workspace_isolation) ... ok
+test_04_duplicate_item_lines_and_partial_reservation (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_04_duplicate_item_lines_and_partial_reservation) ... ok
+test_05_concurrent_reservations_competing_orders (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_05_concurrent_reservations_competing_orders) ... ok
+test_06_partial_and_idempotent_delivery (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_06_partial_and_idempotent_delivery) ... ok
+test_07_invoice_partial_duplicate_and_over_invoice (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_07_invoice_partial_duplicate_and_over_invoice) ... ok
+test_08_failure_between_delivery_and_stock_rollback (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_08_failure_between_delivery_and_stock_rollback) ... ok
+test_09_php_domain_e2e_when_docker_php_available (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_09_php_domain_e2e_when_docker_php_available)
+Optional real PHP method execution. SKIP is not a pass. ... ok
+test_10_layer_report (test_o2c_mysql_integration_1018.O2CMysqlIntegration1018.test_10_layer_report) ... O2C_MYSQL_LAYERS_TESTED= mysql_sandbox_connect,migrate_ddl_from_php_source,repeat_migration,quotation_to_approved,two_company_isolation,two_workspace_isolation,duplicate_item_lines_partial_reservation,concurrent_reservations,partial_delivery_idempotency,partial_invoice_duplicate_over_invoice_no_ar,rollback_between_delivery_and_stock,php_syntax_via_docker
+O2C_MYSQL_LAYERS_SKIPPED= php_domain_method_e2e: full bootstrap+DB PDO harness not wired in this sandbox (requires app config, Auth/Tenant stubs); CI PHP syntax + SQL invariants cover gates
+ok
+test_01_partial_invoicing_two_invoices_same_delivery_line (test_o2c_php_e2e_1018_1.O2CPhpE2E10181.test_01_partial_invoicing_two_invoices_same_delivery_line)
+A1: deliver 10, invoice 4 then 6 — both succeed; total \u2264 delivered. ... ok
+test_02_billing_invoice_not_fulfillable (test_o2c_php_e2e_1018_1.O2CPhpE2E10181.test_02_billing_invoice_not_fulfillable)
+A2: O2C billing invoice cannot be confirmed or reserved. ... ok
+test_03_concurrent_reservations_real_php (test_o2c_php_e2e_1018_1.O2CPhpE2E10181.test_03_concurrent_reservations_real_php)
+A3: two PHP child processes compete for 70 of 100 available — exactly one wins. ... ok
+test_04_delivery_idempotent_retry_after_full_delivery (test_o2c_php_e2e_1018_1.O2CPhpE2E10181.test_04_delivery_idempotent_retry_after_full_delivery)
+A4: retry same key+payload after full delivery returns existing; no second movement. ... ok
+test_accounting_and_ai_entry_points_guarded (test_p2p_hardening_1017.P2PHardening1017Tests.test_accounting_and_ai_entry_points_guarded) ... ok
+test_exception_permission_seeded (test_p2p_hardening_1017.P2PHardening1017Tests.test_exception_permission_seeded) ... ok
+test_fail_closed_domain_api (test_p2p_hardening_1017.P2PHardening1017Tests.test_fail_closed_domain_api) ... ok
+test_module_amend_and_policy_actions (test_p2p_hardening_1017.P2PHardening1017Tests.test_module_amend_and_policy_actions) ... ok
+test_no_gl_payment_stock_in_domain (test_p2p_hardening_1017.P2PHardening1017Tests.test_no_gl_payment_stock_in_domain) ... ok
+test_php_contract_still_runs_when_cli_present (test_p2p_hardening_1017.P2PHardening1017Tests.test_php_contract_still_runs_when_cli_present) ... skipped 'PHP CLI unavailable; CI must run'
+test_version_gate (test_p2p_hardening_1017.P2PHardening1017Tests.test_version_gate) ... ok
+test_concurrent_approve_only_one_wins (test_p2p_mysql_integration_1017.P2PMysqlIntegration1017.test_concurrent_approve_only_one_wins) ... ok
+test_cross_company_isolation (test_p2p_mysql_integration_1017.P2PMysqlIntegration1017.test_cross_company_isolation) ... ok
+test_no_gl_or_stock_side_effects_in_fixture (test_p2p_mysql_integration_1017.P2PMysqlIntegration1017.test_no_gl_or_stock_side_effects_in_fixture) ... ok
+test_unique_supplier_invoice_and_partial_bills (test_p2p_mysql_integration_1017.P2PMysqlIntegration1017.test_unique_supplier_invoice_and_partial_bills) ... ok
+test_delete_prevents_broken_references (test_p2p_three_way.ThreeWayPurchaseTests.test_delete_prevents_broken_references) ... ok
+test_draft_only_bridge_and_no_payments (test_p2p_three_way.ThreeWayPurchaseTests.test_draft_only_bridge_and_no_payments) ... ok
+test_matched_invoice_never_reenters_inventory_pipeline (test_p2p_three_way.ThreeWayPurchaseTests.test_matched_invoice_never_reenters_inventory_pipeline) ... ok
+test_mutation_guard_and_route (test_p2p_three_way.ThreeWayPurchaseTests.test_mutation_guard_and_route) ... ok
+test_only_approved_purchase_orders (test_p2p_three_way.ThreeWayPurchaseTests.test_only_approved_purchase_orders) ... ok
+test_php_pure_rules (test_p2p_three_way.ThreeWayPurchaseTests.test_php_pure_rules) ... skipped 'PHP CLI unavailable; CI must run'
+test_receipt_and_line_validation (test_p2p_three_way.ThreeWayPurchaseTests.test_receipt_and_line_validation) ... ok
+test_scoped_p2p_tables (test_p2p_three_way.ThreeWayPurchaseTests.test_scoped_p2p_tables) ... ok
+test_version_and_migration_order (test_p2p_three_way.ThreeWayPurchaseTests.test_version_and_migration_order) ... ok
+test_common_unquoted_variants_extract_party (test_party_balance_routing.NamedPartyBalanceRoutingTests.test_common_unquoted_variants_extract_party) ... ok
+test_exact_live_prompt_routes_deterministically (test_party_balance_routing.NamedPartyBalanceRoutingTests.test_exact_live_prompt_routes_deterministically) ... ok
+test_summary_only_executes_real_party_tools_without_history_noise (test_party_balance_routing.NamedPartyBalanceRoutingTests.test_summary_only_executes_real_party_tools_without_history_noise) ... ok
+test_cloud_models_are_advertised_without_secret (test_provider_gateway.ProviderGatewayTests.test_cloud_models_are_advertised_without_secret) ... ok
+test_cloud_only_requires_cloud_provider (test_provider_gateway.ProviderGatewayTests.test_cloud_only_requires_cloud_provider) ... ok
+test_config_rejects_insecure_remote_cloud (test_provider_gateway.ProviderGatewayTests.test_config_rejects_insecure_remote_cloud) ... ok
+test_gateway_preserves_local_first_and_falls_back_to_cloud (test_provider_gateway.ProviderGatewayTests.test_gateway_preserves_local_first_and_falls_back_to_cloud) ... ok
+test_openai_message_adapter_links_tool_result_to_call_id (test_provider_gateway.ProviderGatewayTests.test_openai_message_adapter_links_tool_result_to_call_id) ... ok
+test_response_format_degrades_safely (test_provider_gateway.ProviderGatewayTests.test_response_format_degrades_safely) ... ok
+test_php_guardrails_pure (test_rc1_t6_platform_ux.T6PhpGuardrails.test_php_guardrails_pure) ... ok
+test_ai_guardrails_policy (test_rc1_t6_platform_ux.T6WiringContracts.test_ai_guardrails_policy) ... ok
+test_cockpit_refuses_unauthorized_mutate_posts (test_rc1_t6_platform_ux.T6WiringContracts.test_cockpit_refuses_unauthorized_mutate_posts) ... ok
+test_handoff_and_integration_request_exist (test_rc1_t6_platform_ux.T6WiringContracts.test_handoff_and_integration_request_exist) ... ok
+test_manufacturing_cockpit_empty_blocked_states (test_rc1_t6_platform_ux.T6WiringContracts.test_manufacturing_cockpit_empty_blocked_states) ... ok
+test_role_matrix_covers_rc1_roles (test_rc1_t6_platform_ux.T6WiringContracts.test_role_matrix_covers_rc1_roles) ... ok
+test_routes_and_module_pages (test_rc1_t6_platform_ux.T6WiringContracts.test_routes_and_module_pages) ... ok
+test_trading_cockpit_data_backed_and_safe_claims (test_rc1_t6_platform_ux.T6WiringContracts.test_trading_cockpit_data_backed_and_safe_claims) ... ok
+test_accounting_voucher_delete_is_draft_only (test_release_contracts.ReleaseArtifactTests.test_accounting_voucher_delete_is_draft_only) ... ok
+test_config_examples_have_all_latency_budget_classes (test_release_contracts.ReleaseArtifactTests.test_config_examples_have_all_latency_budget_classes) ... ok
+test_docker_candidate_compiles_runtime (test_release_contracts.ReleaseArtifactTests.test_docker_candidate_compiles_runtime) ... ok
+test_no_committed_secret_pattern (test_release_contracts.ReleaseArtifactTests.test_no_committed_secret_pattern) ... ok
+test_worker_installs_commercial_guard_last (test_release_contracts.ReleaseArtifactTests.test_worker_installs_commercial_guard_last) ... ok
+test_api_has_request_correlation_and_error_redaction (test_release_contracts.ServerBoundaryTests.test_api_has_request_correlation_and_error_redaction) ... ok
+test_approval_is_permission_checked_and_transactional (test_release_contracts.ServerBoundaryTests.test_approval_is_permission_checked_and_transactional) ... ok
+test_live_payload_exposes_only_bounded_attempt_observability (test_release_contracts.ServerBoundaryTests.test_live_payload_exposes_only_bounded_attempt_observability) ... ok
+test_live_payload_exposes_redacted_commercial_metadata (test_release_contracts.ServerBoundaryTests.test_live_payload_exposes_redacted_commercial_metadata) ... ok
+test_live_renderer_has_v9302_metadata_contract (test_release_contracts.ServerBoundaryTests.test_live_renderer_has_v9302_metadata_contract) ... ok
+test_live_stage_labels_cover_every_worker_trace_stage (test_release_contracts.ServerBoundaryTests.test_live_stage_labels_cover_every_worker_trace_stage) ... ok
+test_proposal_idempotency_is_atomic (test_release_contracts.ServerBoundaryTests.test_proposal_idempotency_is_atomic) ... ok
+test_proposal_tools_are_explicitly_risk_classified (test_release_contracts.ServerBoundaryTests.test_proposal_tools_are_explicitly_risk_classified) ... ok
+test_release_gate_requires_javascript_in_ci (test_release_contracts.ServerBoundaryTests.test_release_gate_requires_javascript_in_ci) ... ok
+test_release_gate_runs_php_observability_behavior (test_release_contracts.ServerBoundaryTests.test_release_gate_runs_php_observability_behavior) ... ok
+test_terminal_retry_is_idempotent_and_bounded (test_release_contracts.ServerBoundaryTests.test_terminal_retry_is_idempotent_and_bounded) ... ok
+test_worker_has_no_operational_database_driver (test_release_contracts.ServerBoundaryTests.test_worker_has_no_operational_database_driver) ... ok
+test_deterministic_only_skips_model_synthesis (test_response_persona.ResponsePersonaTests.test_deterministic_only_skips_model_synthesis) ... ok
+test_premium_render_uses_paragraph_lead (test_response_persona.ResponsePersonaTests.test_premium_render_uses_paragraph_lead) ... ok
+test_premium_tier_from_engine_selection (test_response_persona.ResponsePersonaTests.test_premium_tier_from_engine_selection) ... ok
+test_weak_ollama_is_deterministic_only (test_response_persona.ResponsePersonaTests.test_weak_ollama_is_deterministic_only) ... ok
+test_delivery_uses_reserved_quantity_only (test_sales_fulfillment.SalesFulfillmentAgentTests.test_delivery_uses_reserved_quantity_only) ... ok
+test_fulfillment_read_is_deterministic (test_sales_fulfillment.SalesFulfillmentAgentTests.test_fulfillment_read_is_deterministic) ... ok
+test_manager_brief_has_no_model (test_sales_fulfillment.SalesFulfillmentAgentTests.test_manager_brief_has_no_model) ... ok
+test_margin_read_is_grounded (test_sales_fulfillment.SalesFulfillmentAgentTests.test_margin_read_is_grounded) ... ok
+test_reservation_proposal_is_explicit_and_guarded (test_sales_fulfillment.SalesFulfillmentAgentTests.test_reservation_proposal_is_explicit_and_guarded) ... ok
+test_selective_reservation_rejects_qty_above_outstanding (test_sales_fulfillment.SalesFulfillmentAgentTests.test_selective_reservation_rejects_qty_above_outstanding) ... ok
+test_selective_reservation_uses_requested_item_only (test_sales_fulfillment.SalesFulfillmentAgentTests.test_selective_reservation_uses_requested_item_only) ... ok
+test_01_receipt_no_gl_invoice_ap_once (test_t5_costing_valuation_e2e.T5CostingValuationE2e.test_01_receipt_no_gl_invoice_ap_once) ... ok
+test_02_cost_unvalued_when_missing_evidence (test_t5_costing_valuation_e2e.T5CostingValuationE2e.test_02_cost_unvalued_when_missing_evidence) ... ok
+test_03_posted_actual_rollup_fg_blocked (test_t5_costing_valuation_e2e.T5CostingValuationE2e.test_03_posted_actual_rollup_fg_blocked) ... ok
+test_04_reconcile_and_no_duplicate_keys (test_t5_costing_valuation_e2e.T5CostingValuationE2e.test_04_reconcile_and_no_duplicate_keys) ... ok
+test_case_proposal (test_trade_logistics.Tests.test_case_proposal) ... ok
+test_cost_proposal (test_trade_logistics.Tests.test_cost_proposal) ... ok
+test_landed_decimal_strings (test_trade_logistics.Tests.test_landed_decimal_strings) ... ok
+test_risk_read (test_trade_logistics.Tests.test_risk_read) ... ok
+test_shipment_proposal (test_trade_logistics.Tests.test_shipment_proposal) ... ok
+test_tr1_exact_figures_and_cockpit_timeline (test_trading_cockpit_php_e2e_rc1.TradingCockpitPhpE2eRc1.test_tr1_exact_figures_and_cockpit_timeline)
+PO10@1000 \u2192 GR6 \u2192 inv4+2 \u2192 AP6000 \u2192 pay2500+3500 \u2192 out0; cockpit IDs. ... ok
+test_integrity_features (test_treasury_integrity_contracts_1020_1.TreasuryIntegrityContracts10201.test_integrity_features) ... ok
+test_ui_wiring (test_treasury_integrity_contracts_1020_1.TreasuryIntegrityContracts10201.test_ui_wiring) ... ok
+test_versions (test_treasury_integrity_contracts_1020_1.TreasuryIntegrityContracts10201.test_versions) ... ok
+test_a2_distinct_bank_gl_accounts (test_treasury_integrity_php_e2e_1020_1.TreasuryIntegrityPhpE2e10201.test_a2_distinct_bank_gl_accounts) ... ok
+test_a3_a4_reverse_after_map_change_uses_historical (test_treasury_integrity_php_e2e_1020_1.TreasuryIntegrityPhpE2e10201.test_a3_a4_reverse_after_map_change_uses_historical) ... ok
+test_a5_cheque_method_rejected (test_treasury_integrity_php_e2e_1020_1.TreasuryIntegrityPhpE2e10201.test_a5_cheque_method_rejected) ... ok
+test_a7_customer_vs_invoice_breakdown (test_treasury_integrity_php_e2e_1020_1.TreasuryIntegrityPhpE2e10201.test_a7_customer_vs_invoice_breakdown) ... ok
+test_rejected_gr_never_stocks (test_wms_stock_php_e2e_rc1.WmsStockPhpE2eRc1.test_rejected_gr_never_stocks) ... ok
+test_reserve_issue_partial_fg_idempotent (test_wms_stock_php_e2e_rc1.WmsStockPhpE2eRc1.test_reserve_issue_partial_fg_idempotent) ... ok
+test_all_guard_layers_are_installed (test_worker_stack.ActualWorkerStackTests.test_all_guard_layers_are_installed) ... ok
+test_commercial_wrapper_is_the_public_process_agent (test_worker_stack.ActualWorkerStackTests.test_commercial_wrapper_is_the_public_process_agent) ... ok
+test_control_plane_keepalive_transport_is_installed (test_worker_stack.ActualWorkerStackTests.test_control_plane_keepalive_transport_is_installed) ... ok
+test_generic_agent_never_receives_proposal_descriptors (test_worker_stack.ActualWorkerStackTests.test_generic_agent_never_receives_proposal_descriptors) ... ok
+test_invoice_prompt_includes_document_detail_tools (test_worker_stack.ActualWorkerStackTests.test_invoice_prompt_includes_document_detail_tools) ... ok
+test_report_prompt_includes_periodic_report (test_worker_stack.ActualWorkerStackTests.test_report_prompt_includes_periodic_report) ... ok
+test_cross_link_is_to_validated_case_with_no_direct_post (test_workflow_studio.WorkflowStudio.test_cross_link_is_to_validated_case_with_no_direct_post) ... ok
+test_four_additive_scoped_tables (test_workflow_studio.WorkflowStudio.test_four_additive_scoped_tables) ... ok
+test_navigation_and_route (test_workflow_studio.WorkflowStudio.test_navigation_and_route) ... ok
+test_no_gl_inventory_or_payroll_posting_in_workflow (test_workflow_studio.WorkflowStudio.test_no_gl_inventory_or_payroll_posting_in_workflow) ... ok
+test_permissions_and_pilot_opt_in (test_workflow_studio.WorkflowStudio.test_permissions_and_pilot_opt_in) ... ok
+test_pure_php_business_rules (test_workflow_studio.WorkflowStudio.test_pure_php_business_rules) ... skipped 'PHP CLI absent; CI must run'
+test_transition_guard_and_idempotency (test_workflow_studio.WorkflowStudio.test_transition_guard_and_idempotency) ... ok
+test_version_schema_gate (test_workflow_studio.WorkflowStudio.test_version_schema_gate) ... ok
+
+----------------------------------------------------------------------
+Ran 453 tests in 1097.457s
+
+OK (skipped=13)
+[4/6] Regression + contract suite: PASS
++ docker run --rm -v C:/Projects/excel-dev:/app -w /app erpsmart-o2c-php:8.2 bash scripts/rc1_docker_php_lint.sh
+No syntax errors detected in accounting_api.php
+No syntax errors detected in ai_api.php
+No syntax errors detected in ai_live.php
+No syntax errors detected in api.php
+No syntax errors detected in api_docs.php
+No syntax errors detected in api_tokens.php
+No syntax errors detected in api_token_admin.php
+No syntax errors detected in api_v1.php
+No syntax errors detected in api_v2.php
+No syntax errors detected in copilot_api.php
+No syntax errors detected in cron.php
+No syntax errors detected in file_download.php
+No syntax errors detected in index.php
+No syntax errors detected in install.php
+No syntax errors detected in io.php
+No syntax errors detected in migrate_v2.php
+No syntax errors detected in v3_2_api.php
+No syntax errors detected in v4_files.php
+No syntax errors detected in v5_api.php
+No syntax errors detected in app/bootstrap.php
+No syntax errors detected in app/config.sample.php
+No syntax errors detected in scripts/enterprise_preflight.php
+No syntax errors detected in scripts/erp_suite_preflight.php
+No syntax errors detected in scripts/p2p_preflight.php
+No syntax errors detected in scripts/rc1_ops1_restore_migrate_drill.php
+No syntax errors detected in scripts/seed_erp_suite_demo.php
+No syntax errors detected in scripts/seed_manufacturing_demo.php
+No syntax errors detected in scripts/workflow_preflight.php
+No syntax errors detected in tests/php_enterprise_suite_contract_test.php
+No syntax errors detected in tests/php_erp_suite_contract_test.php
+No syntax errors detected in tests/php_iran_localization_rc1_test.php
+No syntax errors detected in tests/php_live_observability_test.php
+No syntax errors detected in tests/php_p2p_contract_test.php
+No syntax errors detected in tests/php_rc1_t6_guardrails_test.php
+No syntax errors detected in tests/php_workflow_contract_test.php
+No syntax errors detected in _backup_before_migration_hotfix_20260813_175927/app/Core/Schema.php
+No syntax errors detected in tests/harness/ap_e2e_bootstrap.php
+No syntax errors detected in tests/harness/ap_e2e_runner.php
+No syntax errors detected in tests/harness/mf_drop_all.php
+No syntax errors detected in tests/harness/mf_e2e_bootstrap.php
+No syntax errors detected in tests/harness/mf_e2e_runner.php
+No syntax errors detected in tests/harness/o2c_e2e_bootstrap.php
+No syntax errors detected in tests/harness/o2c_e2e_runner.php
+No syntax errors detected in tests/harness/rc1_capability_probe.php
+No syntax errors detected in tests/harness/rc1_debug_reset.php
+No syntax errors detected in tests/harness/rc1_sys1_runner.php
+No syntax errors detected in tests/harness/rc1_tr1_runner.php
+No syntax errors detected in tests/harness/rc1_tr2_runner.php
+No syntax errors detected in tests/harness/t5_costing_e2e_runner.php
+No syntax errors detected in tests/harness/wms_e2e_bootstrap.php
+No syntax errors detected in tests/harness/wms_e2e_runner.php
+No syntax errors detected in app/Core/AccountingExtendedSchema.php
+No syntax errors detected in app/Core/AccountingPostingDomain.php
+No syntax errors detected in app/Core/AccountingRepository.php
+No syntax errors detected in app/Core/AccountingSchema.php
+No syntax errors detected in app/Core/AiCapabilityRegistry.php
+No syntax errors detected in app/Core/AiContextEnvelope.php
+No syntax errors detected in app/Core/AiContextResolver.php
+No syntax errors detected in app/Core/AiEnginePreferences.php
+No syntax errors detected in app/Core/AiEntityRegistry.php
+No syntax errors detected in app/Core/AiPageContext.php
+No syntax errors detected in app/Core/AiProposalGuardrails.php
+No syntax errors detected in app/Core/AiRepository.php
+No syntax errors detected in app/Core/AiSchema.php
+No syntax errors detected in app/Core/AiSuggestionEngine.php
+No syntax errors detected in app/Core/AiToolRegistry.php
+No syntax errors detected in app/Core/ApiV1.php
+No syntax errors detected in app/Core/ApPostingDomain.php
+No syntax errors detected in app/Core/ApSettlementDomain.php
+No syntax errors detected in app/Core/ArSettlementDomain.php
+No syntax errors detected in app/Core/Audit.php
+No syntax errors detected in app/Core/Auth.php
+No syntax errors detected in app/Core/BusinessCopilot.php
+No syntax errors detected in app/Core/BusinessCopilotApi.php
+No syntax errors detected in app/Core/BusinessIntelligenceDomain.php
+No syntax errors detected in app/Core/BusinessProfileDomain.php
+No syntax errors detected in app/Core/ChoiceRegistry.php
+No syntax errors detected in app/Core/CostingAccountingDomain.php
+No syntax errors detected in app/Core/CrmDomain.php
+No syntax errors detected in app/Core/DashboardManufacturingCockpit.php
+No syntax errors detected in app/Core/DashboardTradingCockpit.php
+No syntax errors detected in app/Core/DataIO.php
+No syntax errors detected in app/Core/DB.php
+No syntax errors detected in app/Core/EnterpriseCatalog.php
+No syntax errors detected in app/Core/EnterpriseDomain.php
+No syntax errors detected in app/Core/ErpSuiteDomain.php
+No syntax errors detected in app/Core/FileLibrary.php
+No syntax errors detected in app/Core/Helpers.php
+No syntax errors detected in app/Core/InventoryDomain.php
+No syntax errors detected in app/Core/IranLocalizationDate.php
+No syntax errors detected in app/Core/IranLocalizationDocument.php
+No syntax errors detected in app/Core/IranLocalizationMoney.php
+No syntax errors detected in app/Core/Jalali.php
+No syntax errors detected in app/Core/ManufacturingCostEvidence.php
+No syntax errors detected in app/Core/ManufacturingExecutionDomain.php
+No syntax errors detected in app/Core/ManufacturingInventoryAdapter.php
+No syntax errors detected in app/Core/ModuleRegistry.php
+No syntax errors detected in app/Core/Notify.php
+No syntax errors detected in app/Core/OrderToCashDomain.php
+No syntax errors detected in app/Core/ProductionDomain.php
+No syntax errors detected in app/Core/PurchaseMatchingDomain.php
+No syntax errors detected in app/Core/RuntimeCache.php
+No syntax errors detected in app/Core/SalesDomain.php
+No syntax errors detected in app/Core/Schema.php
+No syntax errors detected in app/Core/Sharing.php
+No syntax errors detected in app/Core/Tenant.php
+No syntax errors detected in app/Core/TradeDomain.php
+No syntax errors detected in app/Core/TradingCockpitDomain.php
+No syntax errors detected in app/Core/UiRoleActionMatrix.php
+No syntax errors detected in app/Core/UiRtlSupport.php
+No syntax errors detected in app/Core/V5Schema.php
+No syntax errors detected in app/Core/WarehouseStockApi.php
+No syntax errors detected in app/Core/WorkflowDomain.php
+No syntax errors detected in app/Core/Xlsx.php
+No syntax errors detected in app/Modules/AccountingIndustrialModule.php
+No syntax errors detected in app/Modules/AiModule.php
+No syntax errors detected in app/Modules/ChoiceModule.php
+No syntax errors detected in app/Modules/CrmModule.php
+No syntax errors detected in app/Modules/EnterpriseModule.php
+No syntax errors detected in app/Modules/ErpSuiteModule.php
+No syntax errors detected in app/Modules/InventoryProcurementModule.php
+No syntax errors detected in app/Modules/ModuleCenterModule.php
+No syntax errors detected in app/Modules/ProductionModule.php
+No syntax errors detected in app/Modules/PurchaseMatchingModule.php
+No syntax errors detected in app/Modules/TradeModule.php
+No syntax errors detected in app/Modules/UiCockpitModule.php
+No syntax errors detected in app/Modules/V4Module.php
+No syntax errors detected in app/Modules/V5Module.php
+No syntax errors detected in app/Modules/WorkflowModule.php
+No syntax errors detected in app/Core/IranLocalizationTemplates/invoice_print.php
+No syntax errors detected in app/Core/IranLocalizationTemplates/stock_print.php
+No syntax errors detected in accounting_v3_2_patch/payload/io.php
+No syntax errors detected in accounting_v3_2_patch/payload/v3_2_api.php
+No syntax errors detected in accounting_v3_2_patch/payload/app/Core/DataIO.php
+PHP_LIVE_ATTEMPT_OBSERVABILITY: PASS
+[5/6] PHP lint: PASS (docker erpsmart-o2c-php:8.2) (134 files)
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\assets\accounting.js
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\assets\ai-engine-selector.js
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\assets\ai-live.js
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\assets\app.js
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\assets\business-copilot-cycle12.js
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\assets\business-copilot.js
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\assets\v4.js
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\assets\v5.js
++ C:\Program Files\nodejs\node.EXE --check C:\Projects\excel-dev\accounting_v3_2_patch\payload\assets\v3_2_features.js
+[6/6] JavaScript syntax: PASS (9 files)
+AVAILABLE LOCAL GATES PASSED. FULL SOURCE VALIDATION INCOMPLETE: see skipped runtimes above.
+RC1 NOTE: Commercial MVP Gate is source-only. For RC1 REQUIRED PHP+MySQL acceptance run: python scripts/rc1_acceptance_gate.py (see .github/workflows/rc1-acceptance.yml). SKIP of mandatory E2E = FAIL RC gate.
+
+# NOTE: exit_code=0; unittest OK (453, skipped=13); PHP lint PASS (docker); JS PASS (9). Banner string fixed post-run to treat 'PASS (docker …)' as PASS.
+

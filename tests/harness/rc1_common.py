@@ -76,18 +76,19 @@ def verify_sandbox(*, required: bool | None = None) -> dict[str, Any]:
     """Confirm disposable MySQL container identity before any destructive work."""
     _ = rc1_required() if required is None else required
     relax = sandbox_relax()
+    database = _db_name()
     info: dict[str, Any] = {
         "expected_name": EXPECTED_CONTAINER_NAME,
         "expected_id_prefix": EXPECTED_CONTAINER_ID_PREFIX,
-        "database": DATABASE,
+        "database": database,
         "port": PORT,
         "php_image": PHP_IMAGE,
         "relax": relax,
         "verified_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
 
-    if "test" not in DATABASE.lower() and "e2e" not in DATABASE.lower():
-        raise Rc1DependencyMissing(f"refusing_non_test_database:{DATABASE}")
+    if "test" not in database.lower() and "e2e" not in database.lower():
+        raise Rc1DependencyMissing(f"refusing_non_test_database:{database}")
 
     if not relax:
         try:
@@ -141,12 +142,30 @@ def verify_sandbox(*, required: bool | None = None) -> dict[str, Any]:
         raise Rc1DependencyMissing("pymysql_missing") from exc
 
     try:
+        # Ensure disposable schema exists before connect (CREATE IF NOT EXISTS).
+        bootstrap = pymysql.connect(
+            host="127.0.0.1",
+            port=int(PORT),
+            user=USER,
+            password=PASSWORD,
+            charset="utf8mb4",
+            connect_timeout=5,
+        )
+        try:
+            with bootstrap.cursor() as cur:
+                cur.execute(
+                    f"CREATE DATABASE IF NOT EXISTS `{database}` "
+                    "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                )
+            bootstrap.commit()
+        finally:
+            bootstrap.close()
         pymysql.connect(
             host="127.0.0.1",
             port=int(PORT),
             user=USER,
             password=PASSWORD,
-            database=DATABASE,
+            database=database,
             charset="utf8mb4",
             connect_timeout=5,
         ).close()
@@ -189,7 +208,9 @@ def php_runner(runner_rel: str, scenario: str = "run", args: dict | None = None,
         scenario,
         payload,
     ]
-    completed = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    completed = subprocess.run(
+        cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout
+    )
     out = (completed.stdout or "").strip().splitlines()
     if not out:
         raise AssertionError(

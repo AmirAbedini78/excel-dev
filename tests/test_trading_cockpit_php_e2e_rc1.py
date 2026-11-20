@@ -36,6 +36,9 @@ def _docker_ok() -> bool:
 
 
 def _mysql_identity_ok() -> bool:
+    # CI / alternate disposable MySQL: require connectivity only (see workflow rc1-mysql-php-gate).
+    if os.environ.get("RC1_ALLOW_ANY_MYSQL", "").strip() in {"1", "true", "TRUE", "yes"}:
+        return True
     try:
         r = subprocess.run(
             ["docker", "inspect", MYSQL_CONTAINER, "--format", "{{.Id}} {{.Config.Image}}"],
@@ -79,7 +82,10 @@ def _php(scenario: str, args: dict | None = None, timeout: int = 240) -> dict:
         scenario,
         json.dumps(args or {}, ensure_ascii=False),
     ]
-    completed = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    # Force UTF-8: Windows default console encoding (e.g. cp1256) mojibake-s Persian JSON.
+    completed = subprocess.run(
+        cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout
+    )
     out = (completed.stdout or "").strip().splitlines()
     if not out:
         raise AssertionError(f"no_stdout rc={completed.returncode} stderr={completed.stderr}")
@@ -109,10 +115,21 @@ class TradingCockpitPhpE2eRc1(unittest.TestCase):
 
     def test_tr1_exact_figures_and_cockpit_timeline(self):
         """PO10@1000 → GR6 → inv4+2 → AP6000 → pay2500+3500 → out0; cockpit IDs."""
+        import unicodedata
+
         payload = _php("trading_tr1_full", {}, timeout=300)
         assert payload.get("ok"), payload
 
-        self.assertIn("تکراری", str(payload.get("duplicate_error", "")))
+        # Prefer machine-readable duplicate code; Persian UI text remains for humans (NFC-safe).
+        self.assertEqual(payload.get("duplicate_error_code"), "P2P_SUPPLIER_INVOICE_DUPLICATE", payload)
+        dup_msg = unicodedata.normalize("NFC", str(payload.get("duplicate_error", "")))
+        self.assertIn("P2P_SUPPLIER_INVOICE_DUPLICATE", dup_msg)
+        # Soft Persian check: strip yeh variants (U+06CC / U+064A) before substring match.
+        soft = dup_msg.replace("\u064a", "\u06cc")
+        self.assertTrue(
+            "تکراری" in soft or "تکراري" in soft or "تکرار" in soft,
+            f"duplicate Persian missing: {dup_msg!r}",
+        )
         self.assertEqual(payload["outstanding_after_ap"]["outstanding"], "6000.00")
         self.assertEqual(payload["inv4_after_pay1"]["outstanding"], "1500.00")
         self.assertEqual(payload["outstanding_after_pay1"]["outstanding"], "3500.00")

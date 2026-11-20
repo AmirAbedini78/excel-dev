@@ -1,0 +1,49 @@
+{
+  "drill": "disposable_backup_restore_closure",
+  "verified_at_utc": "2026-11-20T18:30:00Z",
+  "source_db": "erpsmart_rc1_tr1_test",
+  "restore_db": "erpsmart_rc1_ops1_restore_test",
+  "rollback_db": "erpsmart_rc1_ops1_rollback_drill",
+  "nogrant_probe_db": "erpsmart_rc1_ops1_nogrant_test",
+  "container_name": "erpsmart-p2p-mysql-test",
+  "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+  "server_uuid": "a73a8a84-e4bd-11f1-ad33-7e073bee960b",
+  "host_port": 3307,
+  "privileged_admin": "root / rc1_admin",
+  "restricted_app_user": "p2p",
+  "dump_bytes": 51271,
+  "dump_sha256": "48806EBC7FE00E55010DA9B5B79C38F912BA332C429032E8C5C71C10B37C6CA2",
+  "artifact": "docs/ai/rc1/evidence/ops1_closure_backup.sql",
+  "restore_as_root": {
+    "status": "PASS",
+    "tables_after": 32
+  },
+  "restore_as_p2p_without_grant": {
+    "status": "FAIL_ACCESS_DENIED_EXPECTED",
+    "error": "Access denied for user 'p2p'@'%' to database 'erpsmart_rc1_ops1_nogrant_test'",
+    "tables_after": 0
+  },
+  "migrate_twice_on_restored": {
+    "status": "PASS",
+    "user": "rc1_admin",
+    "passes": [
+      {"pass": 1, "ms": 201, "ok": true},
+      {"pass": 2, "ms": 179, "ok": true}
+    ],
+    "tables_after_migrate": 48
+  },
+  "restricted_select_smoke": {
+    "status": "PASS",
+    "user": "p2p",
+    "db": "erpsmart_rc1_ops1_restore_test"
+  },
+  "rollback_drill_second_restore": {
+    "status": "PASS",
+    "db": "erpsmart_rc1_ops1_rollback_drill",
+    "tables_after": 32
+  },
+  "production_schema_provenance": "UNAVAILABLE_NOT_DEPLOYED",
+  "fresh_install_claim": "CANDIDATE_ONLY — campaign confirms NOT_DEPLOYED; no anonymized staging/prod dump provided by owner; do not invent dump id",
+  "status": "RESTORE_PASS_PROVENANCE_EXTERNAL",
+  "note": "Privileged dump/restore + migrate×2 + rollback restore PASS on disposable sandbox. Prior deployed schema provenance remains unavailable (NOT_DEPLOYED)."
+}

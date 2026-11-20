@@ -108,7 +108,10 @@ final class ManufacturingInventoryAdapter
 
     private static function lockTargets(PDO $db, int $wid, int $cid, int $warehouseId, array $itemIds): void
     {
-        self::ensureLockTable($db);
+        // Prefer migrate-time table (ManufacturingExecutionDomain::migrate). Avoid DDL inside TX.
+        if (!$db->inTransaction()) {
+            self::ensureLockTable($db);
+        }
         if (class_exists('OrderToCashDomain') && method_exists('OrderToCashDomain', 'lockStockTargets')) {
             OrderToCashDomain::lockStockTargets($db, $wid, $cid, $warehouseId, $itemIds);
             return;

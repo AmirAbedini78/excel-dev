@@ -1,6 +1,6 @@
 # RC1 Release Manifest
 
-**Decision:** `RC1_BLOCKED` — engineering package merged to main; **acceptance incomplete**  
+**Decision:** `RC1_BLOCKED` — engineering P1-005 closed on stabilization; **acceptance incomplete** (browser + provenance)  
 **Production deployment:** **NOT_DEPLOYED** (forbidden this campaign)
 
 ## Identity
@@ -8,59 +8,44 @@
 | Field | Value |
 |-------|--------|
 | Repository | `AmirAbedini78/excel-dev` |
-| Verified `origin/main` SHA | `6da6a03796e1f89b5279424899adad5b5a23915c` |
-| Release integration branch | `release/erpsmart-rc1` @ `829770317c98bc220440551af38ecb856c8a4104` |
-| Merge PR | #30 |
+| Baseline `origin/main` SHA | `2a30f5abac6291af2e6d3ccf1f87446335c84bad` |
+| Closure branch | `fix/rc1-stabilization-p1-closure` |
+| Prior product merge | PR #30 |
+| Prior audit docs merge | PR #31 |
+| Superseded late T1 PR | #29 (close after closure merge) |
 | Schema version (repo) | `10.24.0-rc1` (`RuntimeCache::SCHEMA_VERSION`) |
 | Functional currency | IRR (Toman display opt-in) |
 
 ## Runtime requirements
 
-- PHP 8.2+ (CI uses host PHP lint; local E2E uses Docker `erpsmart-o2c-php:8.2`)
+- PHP 8.2+ (local E2E uses Docker `erpsmart-o2c-php:8.2`; host PHP optional via Docker lint)
 - MySQL 8.0 disposable for acceptance
 - Python 3.12+ for gates
 - Node 22 for JS syntax in commercial gate
 
 ## Source gate hashes / CI
 
-| Check | SHA | Status | URL |
-|-------|-----|--------|-----|
-| Commercial MVP `release-gate` (push) | `6da6a03…` | SUCCESS | https://github.com/AmirAbedini78/excel-dev/actions/runs/44770814148 |
-| Commercial MVP (PR #30) | merge tip | SUCCESS | https://github.com/AmirAbedini78/excel-dev/actions/runs/44770790058 |
+| Check | Notes |
+|-------|-------|
+| Commercial MVP `release-gate` | SUCCESS historically on `6da6a03…` but **source-only** |
+| Mandatory RC1 MySQL+PHP | `docs/ai/rc1/ci/rc1-mysql-php-gate.yml ? `.github/workflows/`` — fails on skip |
 
-**Note:** CI does **not** run RC1 PHP+MySQL domain E2E.
-
-## RC1 domain E2E (local independent)
-
-| Gate | SHA | Exit | Artifact |
-|------|-----|------|----------|
-| `scripts/rc1_acceptance_gate.py --strict-pass` | `6da6a03…` | 0 | `evidence/rc1_gate_report.json` |
-
-Independent **acceptance** still **BLOCKED** on OPS-1/SYS-1 residuals (see blockers).
-
-## Key RC1 file / migration surface (non-exhaustive)
-
-- `app/bootstrap.php` — Inventory / MF / Costing migrate wiring  
-- `app/Core/WarehouseStockApi.php`, `InventoryDomain.php`  
-- `app/Core/ManufacturingExecutionDomain.php`, `ManufacturingInventoryAdapter.php`  
-- `app/Core/CostingAccountingDomain.php` (GL valuation BLOCKED paths)  
-- `app/Core/TradingCockpitDomain.php`, Iran localization cores  
-- `scripts/rc1_acceptance_gate.py`, `tests/rc1/*`, `tests/harness/rc1_*`  
+**Note:** Commercial CI alone does **not** prove RC1 PHP+MySQL domain E2E.
 
 ## Staging upgrade / backup-restore
 
 | Drill | Result |
 |-------|--------|
-| Disposable dump `erpsmart_rc1_tr1_test` | PASS — `ops1_tr1_backup.sql` sha256 `11BCA2A91F692E89E369857FD729D3E3DC82D608E4D2FFB82A5BA9F72F17C028` |
-| Restore to new disposable DB as `p2p` | **FAIL** Access denied |
+| Privileged dump/restore + migrate×2 + rollback | **PASS** — `ops1_backup_restore_closure.json` |
+| Restore as restricted `p2p` without grant | **FAIL_ACCESS_DENIED_EXPECTED** |
 | Prior deployed schema cumulative migrate | **BLOCKED_EXTERNAL** — provenance UNAVAILABLE |
 
 ## Rollback caveats
 
 - Additive RC1 schema only; no automated down-migration shipped.  
 - Rollback = restore prior DB dump + prior code SHA; untested against production (none deployed).  
-- WIP/FG valuation remains non-posting; do not expect GL FG entries from MF-1.
+- WIP/FG valuation remains non-posting; do not expect GL FG entries from MF-1 (`UNVALUED` / `GL_BLOCKED`).
 
 ## Zero production deploy statement
 
-No cPanel, production DB, live bank/tax/Sayad, or production credentials were used. Staging UAT and commercial go-live require **explicit user action** after blockers clear.
+No cPanel, production DB, live bank/tax/Sayad, or production credentials were used. Staging UAT and commercial go-live require **explicit user action** after external blockers clear.
