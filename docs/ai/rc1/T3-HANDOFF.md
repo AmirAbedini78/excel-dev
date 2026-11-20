@@ -31,8 +31,9 @@
 | GR GL | none | `receipt_gl_vouchers=0` |
 | Duplicate invoice | blocked | different payload same no → error |
 
-**DB identity:** container `erpsmart-p2p-mysql-test` id prefix `02eb215a87f6` · PHP `erpsmart-o2c-php:8.2`  
-**DATABASE_TESTED:** yes (sandbox only; production forbidden)
+**DB identity:** container `erpsmart-p2p-mysql-test` id prefix `02eb215a87f6` · image `mysql:8.0` · PHP `erpsmart-o2c-php:8.2`  
+**Test schema:** `erpsmart_t3_trading_test` on the verified container (avoids cross-lane DROP races on shared `erpsmart_p2p_test`)  
+**DATABASE_TESTED:** **YES** — `python -m unittest tests.test_trading_cockpit_php_e2e_rc1 -v` → OK (sandbox only; production forbidden)
 
 ## Ownership respected
 

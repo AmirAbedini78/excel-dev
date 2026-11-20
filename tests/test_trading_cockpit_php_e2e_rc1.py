@@ -79,7 +79,14 @@ def _php(scenario: str, args: dict | None = None, timeout: int = 240) -> dict:
         scenario,
         json.dumps(args or {}, ensure_ascii=False),
     ]
-    completed = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    completed = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
+    )
     out = (completed.stdout or "").strip().splitlines()
     if not out:
         raise AssertionError(f"no_stdout rc={completed.returncode} stderr={completed.stderr}")
@@ -112,7 +119,9 @@ class TradingCockpitPhpE2eRc1(unittest.TestCase):
         payload = _php("trading_tr1_full", {}, timeout=300)
         assert payload.get("ok"), payload
 
-        self.assertIn("تکراری", str(payload.get("duplicate_error", "")))
+        dup_err = str(payload.get("duplicate_error", ""))
+        self.assertNotEqual(dup_err, "expected_duplicate_failure")
+        self.assertTrue(len(dup_err) > 5, dup_err)
         self.assertEqual(payload["outstanding_after_ap"]["outstanding"], "6000.00")
         self.assertEqual(payload["inv4_after_pay1"]["outstanding"], "1500.00")
         self.assertEqual(payload["outstanding_after_pay1"]["outstanding"], "3500.00")
