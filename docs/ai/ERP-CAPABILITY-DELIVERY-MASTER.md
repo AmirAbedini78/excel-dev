@@ -2,8 +2,8 @@
 
 **Maintained:** 2026-11-20 (system-2)
 **Repo:** `C:\Projects\excel-dev`
-**Merged baseline (v10.19.0):** `3d9385ec2f8c2405ec6187c1e6bf49403e97e61f` (PR #9)
-**Prior O2C hotfix:** `2f7d5b15e37ca6093d76d9d7233ba03332c9fe31` (PR #8) · **NOT_DEPLOYED**
+**In-flight baseline:** `f928a44988e5f1accea0228a2b629e4804210e85`
+**In-flight:** v10.19.1 AR integrity on `feature/erp-ar-integrity-v10.19.1` (**NOT_DEPLOYED**)
 
 Status vocabulary (exactly one per capability):
 
@@ -28,22 +28,19 @@ Status vocabulary (exactly one per capability):
 |---|---|---|---|---|---|---|---|---|
 | P2P Three-Way Matching | `DATABASE_TESTED` (PR #5) | PurchaseMatching* | `erp_p2p_*` | `page=p2p` | purchase | finance | p2p tests | Draft only; staging/prod NOT verified |
 | P2P Fail-Closed | `DATABASE_TESTED` (PR #6, **NOT_DEPLOYED**) | policy/amend | policy tables | `page=p2p` | + exception | enforce flag | 1017 mysql | GL still off |
-| **O2C Confirm→Reserve→Deliver→Draft Invoice** | `DATABASE_TESTED` + **PHP domain E2E** | `OrderToCashDomain`, `SalesDomain` | `acc_sales_*`, `erp_o2c_*`, stock locks | industrial sales | sales.* | inventory | `test_o2c_*1018*`, `test_o2c_php_e2e_1018_1.py` | staging/prod NOT verified |
-| O2C partial invoicing | Fixed in 10.18.1 | invoice links unique per invoice line | `erp_o2c_invoice_links` | sales | sales | delivery | PHP E2E A1 | — |
-| O2C billing-doc isolation | Fixed in 10.18.1 | `isBillingDocument` | marker + links | sales | sales | — | PHP E2E A2 | — |
-| O2C concurrent reservation | Fixed in 10.18.1 | stock locks + GET_LOCK + revalidate | `erp_o2c_stock_locks` | — | — | — | PHP E2E A3 | — |
-| O2C delivery idempotency | Fixed in 10.18.1 | early idempotency + request_hash | `erp_o2c_delivery_idempotency` | — | — | — | PHP E2E A4 | — |
-| **O2C AR posting kernel** | `DATABASE_TESTED` (sandbox) · `KERNEL_AVAILABLE` | `AccountingPostingDomain` | `erp_ar_*`, `acc_vouchers`, `acc_voucher_lines` | industrial sales + vouchers | vouchers.manage + map | open fiscal + AR map | `test_ar_*1019*` | Staging/prod NOT; reversal deferred |
-| O2C Settlement | `NOT_STARTED` (`NOT_IMPLEMENTED`) | — | cash | — | — | posted AR proven | — | after AR staging |
+| **O2C Confirm→Reserve→Deliver→Draft Invoice** | `DATABASE_TESTED` + PHP E2E | `OrderToCashDomain`, `SalesDomain` | `acc_sales_*`, `erp_o2c_*` | industrial sales | sales.* | inventory | `test_o2c_*` | staging/prod NOT |
+| **O2C AR posting kernel + integrity** | `DATABASE_TESTED` (sandbox) | `AccountingPostingDomain` | `erp_ar_*`, vouchers, period_closes | sales + vouchers | vouchers.manage + map | open FY + period + typed map | `test_ar_*1019*` | staging/prod NOT; reversal deferred |
+| O2C billing cancel (no orphan links) | Fixed in 10.19.1 | `cancelDraftBillingInvoice` | link `status` | sales | sales.manage | draft billing | integrity E2E A2 | — |
+| O2C Settlement | `NOT_STARTED` (`NOT_IMPLEMENTED`) | — | cash | — | — | integrity AR | — | v10.20 candidate |
 
 ---
 
 ## B. Phases
 
-### v10.17 — MERGED (PR #6), NOT_DEPLOYED
-### v10.18.0 — MERGED (PR #7), NOT_DEPLOYED
-### v10.18.1 — MERGED (PR #8), NOT_DEPLOYED — O2C integrity hotfix + PHP E2E
-### v10.19.0 — MERGED (PR #9), NOT_DEPLOYED — AR posting kernel (settlement blocked)
+### v10.18.1 — MERGED (PR #8), NOT_DEPLOYED
+### v10.19.0 — MERGED (PR #9), NOT_DEPLOYED
+### v10.19.1 — IN FLIGHT — AR integrity hardening
+### v10.20 — Settlement (only after 10.19.1 merges)
 
 ---
 
@@ -51,5 +48,4 @@ Status vocabulary (exactly one per capability):
 
 - No `PRODUCTION_VERIFIED` capability.
 - No cPanel deploy from this workstream.
-- Invoice UI totals ≠ paid; outstanding derives from posted voucher lines only when AR posted.
-- Settlement is explicitly NOT_IMPLEMENTED.
+- Settlement is explicitly NOT_IMPLEMENTED until v10.20 gates pass.

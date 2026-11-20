@@ -198,7 +198,7 @@ function o2c_e2e_reset_schema(): void
         'erp_ar_postings','erp_ar_company_maps',
         'erp_o2c_invoice_idempotency','erp_o2c_invoice_links','erp_o2c_delivery_idempotency','erp_o2c_stock_locks',
         'acc_sales_delivery_lines','acc_sales_deliveries','acc_inventory_reservations','acc_stock_movements',
-        'acc_voucher_lines','acc_vouchers','acc_fiscal_years','acc_accounts',
+        'acc_voucher_lines','acc_vouchers','acc_period_closes','acc_fiscal_years','acc_accounts',
         'acc_sales_lines','acc_sales_docs','acc_items','acc_warehouses','acc_parties','companies','acc_trade_cases','acc_purchase_lines',
     ] as $t) {
         $db->exec("DROP TABLE IF EXISTS `{$t}`");
@@ -240,7 +240,15 @@ function o2c_e2e_reset_schema(): void
     $db->exec("CREATE TABLE acc_purchase_lines (id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, purchase_doc_id BIGINT NOT NULL, item_id BIGINT NOT NULL)");
     $db->exec("CREATE TABLE acc_accounts (
       id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
-      code VARCHAR(64) NOT NULL, name VARCHAR(120) NOT NULL, account_type VARCHAR(40) NOT NULL DEFAULT 'asset', active TINYINT NOT NULL DEFAULT 1
+      code VARCHAR(64) NOT NULL, name VARCHAR(120) NOT NULL, account_type VARCHAR(40) NOT NULL DEFAULT 'asset',
+      nature VARCHAR(20) NOT NULL DEFAULT 'debit', allow_posting TINYINT NOT NULL DEFAULT 1, active TINYINT NOT NULL DEFAULT 1
+    )");
+    $db->exec("CREATE TABLE acc_period_closes (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+      fiscal_year_id BIGINT NOT NULL, period_key VARCHAR(20) NOT NULL, close_type VARCHAR(30) NOT NULL DEFAULT 'monthly',
+      status VARCHAR(30) NOT NULL DEFAULT 'open', closed_by INT NULL, closed_at DATETIME NULL,
+      created_at DATETIME NULL, updated_at DATETIME NULL,
+      UNIQUE KEY uniq_acc_period_close (workspace_id,company_id,fiscal_year_id,period_key)
     )");
     $db->exec("CREATE TABLE acc_fiscal_years (
       id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
@@ -271,8 +279,9 @@ function o2c_e2e_reset_schema(): void
     $db->exec("INSERT INTO acc_warehouses (id,workspace_id,company_id,code,name) VALUES (1,10,1,'WH1','Warehouse 1')");
     $db->exec("INSERT INTO acc_items (id,workspace_id,company_id,code,name,purchase_price_1) VALUES (1,10,1,'SKU1','Item1',10.00)");
     $db->exec("INSERT INTO acc_parties (id,workspace_id,company_id,code,name) VALUES (1,10,1,'C1','Customer')");
-    $db->exec("INSERT INTO acc_accounts (id,workspace_id,company_id,code,name,account_type) VALUES
-      (1,10,1,'1101','AR','asset'),(2,10,1,'4101','Revenue','income'),(3,10,1,'2101','Tax','liability')");
+    $db->exec("INSERT INTO acc_accounts (id,workspace_id,company_id,code,name,account_type,nature,allow_posting,active) VALUES
+      (1,10,1,'1101','AR','asset','debit',1,1),(2,10,1,'4101','Revenue','income','credit',1,1),(3,10,1,'2101','Tax','liability','credit',1,1),
+      (4,10,1,'9999','WrongRevAsAsset','asset','debit',1,1),(5,10,1,'8888','NoPost','asset','debit',0,1)");
     $db->exec("INSERT INTO acc_fiscal_years (workspace_id,company_id,title,start_date,end_date,status,is_active,created_at,updated_at)
       VALUES (10,1,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW())");
     $db->exec("INSERT INTO acc_stock_movements (workspace_id,company_id,movement_date,movement_type,direction,warehouse_id,item_id,quantity,unit_cost,source_type,source_id,status,created_by,created_at)
