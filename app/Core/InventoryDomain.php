@@ -8,10 +8,22 @@
  * - expected inbound comes from goods purchase lines minus accepted receipts;
  * - rejected receipt quantity never increases stock;
  * - AI and manual UI both call this service, preventing duplicate stock logic.
+ *
+ * RC1 T2 manufacturing stock API delegates to WarehouseStockApi (same ledger).
  */
+if (!class_exists('WarehouseStockApi', false)) {
+    require_once __DIR__ . '/WarehouseStockApi.php';
+}
+
 final class InventoryDomain
 {
-    public const VERSION='10.1.0';
+    public const VERSION='10.1.0-rc1-t2';
+
+    /** Additive WMS idempotency + event tables; also ensures O2C stock lock targets. */
+    public static function migrate(PDO $db): void
+    {
+        WarehouseStockApi::migrate($db);
+    }
 
     private static function assertCompany(int $wid,int $cid): void
     {
@@ -126,5 +138,28 @@ final class InventoryDomain
     public static function receipts(int $wid,int $cid,int $limit=50): array
     {
         self::assertCompany($wid,$cid);$limit=max(1,min(200,$limit));$st=pdo()->prepare("SELECT r.*,w.name warehouse_name,d.document_no purchase_document_no,p.name supplier_name,COALESCE((SELECT SUM(rl.accepted_qty) FROM acc_inventory_receipt_lines rl WHERE rl.workspace_id=r.workspace_id AND rl.receipt_id=r.id),0) accepted_quantity,COALESCE((SELECT SUM(rl.rejected_qty) FROM acc_inventory_receipt_lines rl WHERE rl.workspace_id=r.workspace_id AND rl.receipt_id=r.id),0) rejected_quantity FROM acc_inventory_receipts r JOIN acc_warehouses w ON w.id=r.warehouse_id AND w.workspace_id=r.workspace_id LEFT JOIN acc_purchase_docs d ON d.id=r.purchase_doc_id AND d.workspace_id=r.workspace_id LEFT JOIN acc_parties p ON p.id=r.supplier_id AND p.workspace_id=r.workspace_id WHERE r.workspace_id=? AND r.company_id=? ORDER BY r.receipt_date DESC,r.id DESC LIMIT $limit");$st->execute([$wid,$cid]);return$st->fetchAll();
+    }
+    /** RC1 frozen stock API — reserve for production_order (no oversell). */
+    public static function reserveForProduction(int $wid,int $cid,int $uid,array $args): array
+    {
+        return WarehouseStockApi::reserveForProduction($wid,$cid,$uid,$args);
+    }
+
+    /** RC1 frozen stock API — production_issue OUT; consumes reservation; idempotent; partial OK. */
+    public static function issueMaterial(int $wid,int $cid,int $uid,array $args): array
+    {
+        return WarehouseStockApi::issueMaterial($wid,$cid,$uid,$args);
+    }
+
+    /** RC1 frozen stock API — production_fg_receipt IN; idempotent; partial OK. */
+    public static function receiveFinishedGoods(int $wid,int $cid,int $uid,array $args): array
+    {
+        return WarehouseStockApi::receiveFinishedGoods($wid,$cid,$uid,$args);
+    }
+
+    /** RC1 frozen stock API — reverse WMS event/movement with nonnegative guard + audit. */
+    public static function reverseMovement(int $wid,int $cid,int $uid,array $args): array
+    {
+        return WarehouseStockApi::reverseMovement($wid,$cid,$uid,$args);
     }
 }
