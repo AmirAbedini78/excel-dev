@@ -1,8 +1,8 @@
-ï»¿# ERPSMART RC1 â€” Consolidated Handoff
+# ERPSMART RC1 — Consolidated Handoff
 
 **Verdict:** `RC1_ACCEPTED`  
 **Release branch:** `release/erpsmart-rc1`  
-**Final SHA:** *(set at tip after this commit; see `git rev-parse HEAD` on branch)*  
+**Final SHA:** `995ac8f083f6ffb5446d7c2def7d4c6c5410dc92`  
 **Date:** 2026-11-20  
 **Deploy:** `NOT_DEPLOYED` (cPanel/production forbidden this campaign)
 
@@ -12,7 +12,7 @@
 |---------|--------|
 | Acceptance contracts | **5/5 PASS** |
 | P0 open | **0** (RC1-P0-001/002/003 RESOLVED) |
-| P1 open | **0** (RC1-P1-001 closed â€” provenance `UNAVAILABLE_NOT_DEPLOYED`) |
+| P1 open | **0** (RC1-P1-001 closed — provenance `UNAVAILABLE_NOT_DEPLOYED`) |
 | DATABASE_TESTED | **true** (real PHP `erpsmart-o2c-php:8.2` + MySQL sandbox) |
 | Product deploy | **NOT_DEPLOYED** |
 
@@ -35,7 +35,7 @@ python scripts/rc1_acceptance_gate.py --strict-pass
 | OPS-1 | PASS | `docs/ai/rc1/evidence/ops1_acceptance.json` |
 | Gate rollup | PASS=5 | `docs/ai/rc1/evidence/rc1_gate_report.json` |
 
-Sandbox: container `erpsmart-p2p-mysql-test` id `02eb215a87f6â€¦`, port `3307`. Isolated DBs per contract (`erpsmart_rc1_tr1_test`, `erpsmart_rc1_tr2_test`, `erpsmart_mf1_test`, `erpsmart_rc1_sys1_test`, `erpsmart_rc1_test`).
+Sandbox: container `erpsmart-p2p-mysql-test` id `02eb215a87f6…`, port `3307`. Isolated DBs per contract (`erpsmart_rc1_tr1_test`, `erpsmart_rc1_tr2_test`, `erpsmart_mf1_test`, `erpsmart_rc1_sys1_test`, `erpsmart_rc1_test`).
 
 ## Lane integration (merged into release)
 
@@ -56,13 +56,13 @@ Duplicate late PRs `#26`/`#27`/`#28` superseded.
 - No taxpayer / Sayad / bank direct integrations.
 - No statutory payroll; no full foreign FX/customs GL.
 - No WIP/FG automatic GL valuation (BLOCKED by design).
-- Commercial MVP source gate â‰  RC1 E2E proof.
+- Commercial MVP source gate ? RC1 E2E proof.
 - No production/cPanel deploy performed or authorized.
-- Final merge of `release/erpsmart-rc1` â†’ `main` may require protected-branch review; user alone authorizes deploy.
+- Final merge of `release/erpsmart-rc1` ? `main` may require protected-branch review; user alone authorizes deploy.
 
 ## Worktrees
 
-`C:\Projects\erp-worktrees\rc1-t{0..7}` â€” freeze new feature scope; QA/stabilize only.
+`C:\Projects\erp-worktrees\rc1-t{0..7}` — freeze new feature scope; QA/stabilize only.
 
 ## Sign-off
 
