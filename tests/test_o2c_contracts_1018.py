@@ -27,10 +27,10 @@ class O2CContracts1018(unittest.TestCase):
         cls.hard = source("engine/commercial_hardening.py")
 
     def test_version_gate(self):
-        self.assertIn("SCHEMA_VERSION = '10.18.1'", self.runtime)
-        self.assertIn("VERSION='10.18.1'", self.registry)
-        self.assertIn("VERSION = '10.18.1-o2c'", self.o2c)
-        self.assertIn("VERSION='10.18.1'", self.sales)
+        self.assertIn("SCHEMA_VERSION = '10.19.0'", self.runtime)
+        self.assertIn("VERSION='10.19.0'", self.registry)
+        self.assertIn("VERSION = '10.19.0-o2c'", self.o2c)
+        self.assertIn("VERSION='10.19.0'", self.sales)
         self.assertIn("uq_o2c_invoice_line", self.o2c)
         self.assertIn("erp_o2c_stock_locks", self.o2c)
         self.assertIn("BILLING_NOTE_MARKER", self.o2c)
@@ -44,8 +44,8 @@ class O2CContracts1018(unittest.TestCase):
             self.boot.index("OrderToCashDomain::migrate(pdo())"),
         )
 
-    def test_ar_and_settlement_explicitly_blocked(self):
-        self.assertIn("AR_POSTING = 'BLOCKED'", self.o2c)
+    def test_ar_kernel_and_settlement_not_implemented(self):
+        self.assertIn("AR_POSTING = 'KERNEL_AVAILABLE'", self.o2c)
         self.assertIn("SETTLEMENT = 'NOT_IMPLEMENTED'", self.o2c)
         self.assertNotIn("INSERT INTO acc_vouchers", self.o2c)
         self.assertNotIn("acc_cash_transactions", self.o2c)

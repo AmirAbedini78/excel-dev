@@ -10,8 +10,9 @@
  */
 final class OrderToCashDomain
 {
-    public const VERSION = '10.18.1-o2c';
-    public const AR_POSTING = 'BLOCKED';
+    public const VERSION = '10.19.0-o2c';
+    /** AR posting kernel lives in AccountingPostingDomain (v10.19); requires company map + open fiscal year. */
+    public const AR_POSTING = 'KERNEL_AVAILABLE';
     public const SETTLEMENT = 'NOT_IMPLEMENTED';
     public const BILLING_NOTE_MARKER = '[O2C_BILLING_DOC]';
 
