@@ -7,7 +7,7 @@
  */
 final class AccountingPostingDomain
 {
-    public const VERSION = '10.20.1-ar';
+    public const VERSION = '10.21.0-ar';
     public const SETTLEMENT = 'AVAILABLE';
     public const CURRENCY = 'IRR';
 

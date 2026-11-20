@@ -41,6 +41,7 @@ final class AccountingIndustrialModule
         if($action==='acc_save_cash')self::saveCash();
         if($action==='acc_save_check')self::saveCheck();
         if($action==='acc_save_settings')self::saveSettings();
+        if($action==='acc_set_business_profile')self::setBusinessProfile();
         if($action==='acc_close_fiscal')self::closeFiscal();
     }
 
@@ -609,6 +610,16 @@ final class AccountingIndustrialModule
         }
         echo '</div>';
 
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();
+        $profile=BusinessProfileDomain::getCompanyProfile($wid,$cid);
+        echo '<section class="card"><div class="section-title"><h2>پروفایل کسب‌وکار (ایران‌محور)</h2><span class="muted">ارز عملیاتی دفتر = IRR — تومان فقط نمایش</span></div>';
+        echo '<form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_set_business_profile">';
+        $opts=[];foreach(BusinessProfileDomain::listProfiles() as $code=>$def)$opts[$code]=$def['label_fa'];
+        self::input('profile_code','پروفایل',$profile['profile_code'],'select',$opts);
+        self::input('display_currency','نمایش مبلغ',$profile['display_currency'],'select',['IRR'=>'ریال (IRR)','TOMAN'=>'تومان (نمایشی)']);
+        echo '<p class="muted span2">ماژول‌های پیشنهادی: '.h(implode('، ', $profile['definition']['modules']??[])).'</p>';
+        echo '<button class="btn primary">ذخیره پروفایل</button></form></section>';
+
         echo '<section class="card">';
         echo '<div class="section-title"><h2>تنظیمات '.h($titles[$section]).'</h2></div>';
 
@@ -946,6 +957,15 @@ final class AccountingIndustrialModule
     {
         Tenant::requirePermission('accounting.treasury.manage');$no=trim((string)($_POST['check_no']??''));if(!$no)throw new RuntimeException('شماره چک الزامی است.');$party=self::scopedId('acc_parties',$_POST['party_id']??0);$cash=self::scopedId('acc_cash_accounts',$_POST['cash_account_id']??0);
         pdo()->prepare("INSERT INTO acc_checks (workspace_id,company_id,direction,check_no,amount,due_date,party_id,cash_account_id,status,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),NOW())")->execute([Tenant::id(),AccountingRepository::companyId(),trim((string)($_POST['direction']??'receivable')),$no,(float)($_POST['amount']??0),AccountingRepository::date($_POST['due_date']??''),$party,$cash,trim((string)($_POST['status']??'open')),trim((string)($_POST['notes']??''))]);self::audit('acc.check.create','acc_checks',(int)pdo()->lastInsertId(),'ثبت چک');self::back('treasury');
+    }
+
+    private static function setBusinessProfile(): void
+    {
+        Tenant::requirePermission('accounting.settings.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        BusinessProfileDomain::setCompanyProfile($wid,$cid,$uid,(string)($_POST['profile_code']??'hybrid'),(string)($_POST['display_currency']??'IRR'));
+        self::audit('biz.profile.set','erp_company_business_profiles',$cid,'تنظیم پروفایل کسب‌وکار');
+        self::back('settings');
     }
 
     private static function saveSettings(): void
