@@ -21,6 +21,7 @@ final class AccountingIndustrialModule
         if($action==='acc_delete_purchase')self::deletePurchase();
         if($action==='acc_save_sale')self::saveSale();
         if($action==='acc_delete_sale')self::deleteSale();
+        if($action==='acc_o2c_cancel_billing_invoice')self::o2cCancelBillingInvoice();
         if($action==='acc_o2c_confirm_order')self::o2cConfirmOrder();
         if($action==='acc_o2c_reserve')self::o2cReserve();
         if($action==='acc_o2c_deliver')self::o2cDeliver();
@@ -304,7 +305,11 @@ final class AccountingIndustrialModule
         $st->execute([Tenant::id(),AccountingRepository::companyId()]);$rows=$st->fetchAll();
         echo '<section class="card table-card"><div class="section-title"><h2>فروش و صورتحساب</h2><span class="muted">پیش‌فاکتور، فاکتور، برگشت از فروش و پیش‌نویس‌های ساخته‌شده توسط ایجنت</span></div><div class="table-wrap"><table><thead><tr><th>نوع</th><th>شماره</th><th>تاریخ</th><th>مشتری</th><th>وضعیت</th><th>مودیان</th><th>خالص</th><th></th></tr></thead><tbody>';
         foreach($rows as $r){echo '<tr><td>'.h(self::salesTypeLabel($r['doc_type'])).'</td><td>'.h($r['document_no']).'</td><td>'.h(AccountingRepository::faDate($r['document_date'])).'</td><td>'.h($r['party_name']??'—').'</td><td>'.h($r['workflow_status']).'</td><td>'.h($r['taxpayer_status']).'</td><td>'.number_format((float)$r['net_total']).'</td><td class="row-actions"><a class="btn tiny" href="index.php?page=industrial&section=sales&view='.(int)$r['id'].'">مشاهده</a>';
-            if(Tenant::can('accounting.sales.manage') && ($r['workflow_status']??'draft')==='draft')echo '<form method="post" class="inline-form" onsubmit="return confirm(\'پیش‌نویس حذف شود؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_delete_sale"><input type="hidden" name="id" value="'.(int)$r['id'].'"><button class="btn tiny danger">حذف</button></form>';echo '</td></tr>';}
+            if(Tenant::can('accounting.sales.manage') && ($r['workflow_status']??'draft')==='draft'){
+                $billing=OrderToCashDomain::isBillingDocument(Tenant::id(),AccountingRepository::companyId(),(int)$r['id']);
+                if($billing)echo '<form method="post" class="inline-form" onsubmit="return confirm(\'ابطال کنترل‌شده فاکتور O2C؟ پیوندها حفظ و مقدار قابل فاکتور آزاد می‌شود.\')">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_cancel_billing_invoice"><input type="hidden" name="sales_doc_id" value="'.(int)$r['id'].'"><button class="btn tiny danger">ابطال O2C</button></form>';
+                else echo '<form method="post" class="inline-form" onsubmit="return confirm(\'پیش‌نویس حذف شود؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_delete_sale"><input type="hidden" name="id" value="'.(int)$r['id'].'"><button class="btn tiny danger">حذف</button></form>';
+            }echo '</td></tr>';}
         if(!$rows)echo '<tr><td colspan="8" class="muted">هنوز سند فروشی ثبت نشده است.</td></tr>';
         echo '</tbody></table></div></section>';if(($view=(int)($_GET['view']??0))>0)self::salesView($view);
     }
@@ -690,7 +695,21 @@ final class AccountingIndustrialModule
 
     private static function deleteSale(): void
     {
-        Tenant::requirePermission('accounting.sales.manage');$id=(int)($_POST['id']??0);$wid=Tenant::id();$cid=AccountingRepository::companyId();$st=pdo()->prepare("SELECT workflow_status FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1");$st->execute([$id,$wid,$cid]);$status=$st->fetchColumn();if($status===false)throw new RuntimeException('سند فروش پیدا نشد.');if($status!=='draft')throw new RuntimeException('فقط پیش‌نویس فروش قابل حذف است.');$pdo=pdo();$pdo->beginTransaction();try{$pdo->prepare("DELETE FROM acc_sales_lines WHERE workspace_id=? AND sales_doc_id=?")->execute([$wid,$id]);$pdo->prepare("DELETE FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=?")->execute([$id,$wid,$cid]);$pdo->commit();}catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}self::audit('acc.sale.delete','acc_sales_docs',$id,'حذف پیش‌نویس فروش');self::back('sales');
+        Tenant::requirePermission('accounting.sales.manage');
+        $id=(int)($_POST['id']??0);$wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $out=OrderToCashDomain::deleteOrCancelSalesDraft($wid,$cid,$uid,$id);
+        self::audit($out['mode']==='cancel'?'o2c.invoice.cancel':'acc.sale.delete','acc_sales_docs',$id,$out['mode']==='cancel'?'ابطال پیش‌نویس O2C':'حذف پیش‌نویس فروش',$out);
+        self::back('sales');
+    }
+
+    private static function o2cCancelBillingInvoice(): void
+    {
+        Tenant::requirePermission('accounting.sales.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $id=(int)($_POST['sales_doc_id']??0);
+        $out=OrderToCashDomain::cancelDraftBillingInvoice($wid,$cid,$uid,$id);
+        self::audit('o2c.invoice.cancel','acc_sales_docs',$id,'ابطال کنترل‌شده فاکتور O2C',$out);
+        self::back('sales','view='.$id);
     }
 
     private static function o2cConfirmOrder(): void

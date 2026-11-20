@@ -10,8 +10,8 @@
  */
 final class OrderToCashDomain
 {
-    public const VERSION = '10.19.0-o2c';
-    /** AR posting kernel lives in AccountingPostingDomain (v10.19); requires company map + open fiscal year. */
+    public const VERSION = '10.19.1-o2c';
+    /** AR posting kernel lives in AccountingPostingDomain (v10.19.1); requires company map + open fiscal year. */
     public const AR_POSTING = 'KERNEL_AVAILABLE';
     public const SETTLEMENT = 'NOT_IMPLEMENTED';
     public const BILLING_NOTE_MARKER = '[O2C_BILLING_DOC]';
@@ -29,6 +29,9 @@ final class OrderToCashDomain
             item_id BIGINT NOT NULL,
             quantity DECIMAL(20,4) NOT NULL,
             line_total DECIMAL(20,2) NOT NULL DEFAULT 0,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            cancelled_at DATETIME NULL,
+            cancelled_by INT NULL,
             created_by INT NOT NULL,
             created_at DATETIME NOT NULL,
             UNIQUE KEY uq_o2c_invoice_line (workspace_id,invoice_doc_id,sales_line_id),
@@ -37,6 +40,14 @@ final class OrderToCashDomain
             INDEX idx_o2c_invoice (workspace_id,company_id,invoice_doc_id),
             INDEX idx_o2c_line (workspace_id,sales_line_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        try {
+            $cols = $db->query("SHOW COLUMNS FROM erp_o2c_invoice_links LIKE 'status'")->fetchAll();
+            if (!$cols) {
+                $db->exec("ALTER TABLE erp_o2c_invoice_links ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active' AFTER line_total");
+                $db->exec("ALTER TABLE erp_o2c_invoice_links ADD COLUMN cancelled_at DATETIME NULL AFTER status");
+                $db->exec("ALTER TABLE erp_o2c_invoice_links ADD COLUMN cancelled_by INT NULL AFTER cancelled_at");
+            }
+        } catch (Throwable $e) { /* additive */ }
 
         // Backward-compatible: drop v10.18.0 unique that blocked partial invoicing.
         try{
@@ -208,10 +219,84 @@ final class OrderToCashDomain
     public static function invoicedByLine(int $wid,int $cid,int $sourceSalesDocId): array
     {
         $st=pdo()->prepare("SELECT sales_line_id,SUM(quantity) quantity FROM erp_o2c_invoice_links
-            WHERE workspace_id=? AND company_id=? AND source_sales_doc_id=? GROUP BY sales_line_id");
+            WHERE workspace_id=? AND company_id=? AND source_sales_doc_id=? AND COALESCE(status,'active')='active'
+            GROUP BY sales_line_id");
         $st->execute([$wid,$cid,$sourceSalesDocId]);$out=[];
         foreach($st->fetchAll() as $r)$out[(int)$r['sales_line_id']]=self::scaledQty((string)$r['quantity']);
         return $out;
+    }
+
+    /**
+     * Controlled cancellation of an O2C draft billing invoice.
+     * Voids the document, marks links cancelled (keeps audit rows), restores invoiceable qty.
+     * Never hard-deletes posted AR evidence.
+     */
+    public static function cancelDraftBillingInvoice(int $wid,int $cid,int $uid,int $invoiceDocId): array
+    {
+        Tenant::requirePermission('accounting.sales.manage');
+        self::assertCompany($wid,$cid);
+        if($uid<1||$invoiceDocId<1)throw new RuntimeException('شناسه نامعتبر است.');
+        $db=pdo();$db->beginTransaction();
+        try{
+            $q=$db->prepare('SELECT * FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1 FOR UPDATE');
+            $q->execute([$invoiceDocId,$wid,$cid]);$inv=$q->fetch();
+            if(!$inv)throw new RuntimeException('فاکتور پیدا نشد.');
+            if(!self::isBillingDocument($wid,$cid,$invoiceDocId))
+                throw new RuntimeException('فقط فاکتور صورتحساب O2C قابل ابطال کنترل‌شده است.');
+            $posted=$db->prepare('SELECT 1 FROM erp_ar_postings WHERE workspace_id=? AND company_id=? AND invoice_doc_id=? LIMIT 1');
+            $posted->execute([$wid,$cid,$invoiceDocId]);
+            if($posted->fetchColumn())
+                throw new RuntimeException('فاکتور ثبت‌شده در AR قابل حذف/ابطال مستقیم نیست؛ نیاز به سند معکوس است.');
+            if((string)$inv['workflow_status']==='void'){
+                $db->commit();
+                return ['id'=>$invoiceDocId,'status'=>'void','existing'=>true];
+            }
+            if((string)$inv['workflow_status']!=='draft')
+                throw new RuntimeException('فقط پیش‌نویس فاکتور O2C قابل ابطال است.');
+            $db->prepare("UPDATE erp_o2c_invoice_links SET status='cancelled',cancelled_at=NOW(),cancelled_by=?
+                WHERE workspace_id=? AND company_id=? AND invoice_doc_id=? AND COALESCE(status,'active')='active'")
+                ->execute([$uid,$wid,$cid,$invoiceDocId]);
+            $db->prepare("UPDATE acc_sales_docs SET workflow_status='void',notes=CONCAT(COALESCE(notes,''),' [O2C_CANCELLED]'),updated_at=NOW()
+                WHERE id=? AND workspace_id=? AND company_id=? AND workflow_status='draft'")
+                ->execute([$invoiceDocId,$wid,$cid]);
+            $db->commit();
+            Audit::log('o2c.invoice.cancel','acc_sales_docs',$invoiceDocId,'ابطال کنترل‌شده پیش‌نویس فاکتور O2C');
+            return ['id'=>$invoiceDocId,'status'=>'void','existing'=>false];
+        }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+    }
+
+    /**
+     * Safe draft removal entry: billing/O2C drafts → cancel; plain drafts without links → hard delete.
+     */
+    public static function deleteOrCancelSalesDraft(int $wid,int $cid,int $uid,int $salesDocId): array
+    {
+        Tenant::requirePermission('accounting.sales.manage');
+        self::assertCompany($wid,$cid);
+        $db=pdo();
+        $q=$db->prepare('SELECT * FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1');
+        $q->execute([$salesDocId,$wid,$cid]);$doc=$q->fetch();
+        if(!$doc)throw new RuntimeException('سند فروش پیدا نشد.');
+        if((string)$doc['workflow_status']!=='draft')
+            throw new RuntimeException('فقط پیش‌نویس فروش قابل حذف/ابطال است.');
+        $posted=$db->prepare('SELECT 1 FROM erp_ar_postings WHERE workspace_id=? AND company_id=? AND invoice_doc_id=? LIMIT 1');
+        $posted->execute([$wid,$cid,$salesDocId]);
+        if($posted->fetchColumn())
+            throw new RuntimeException('سند دارای ثبت AR است و قابل حذف نیست.');
+        if(self::isBillingDocument($wid,$cid,$salesDocId))
+            return self::cancelDraftBillingInvoice($wid,$cid,$uid,$salesDocId)+['mode'=>'cancel'];
+        $link=$db->prepare('SELECT 1 FROM erp_o2c_invoice_links WHERE workspace_id=? AND company_id=? AND (invoice_doc_id=? OR source_sales_doc_id=?) LIMIT 1');
+        $link->execute([$wid,$cid,$salesDocId,$salesDocId]);
+        if($link->fetchColumn())
+            throw new RuntimeException('سند دارای پیوند O2C است؛ حذف فیزیکی مجاز نیست.');
+        $db->beginTransaction();
+        try{
+            $db->prepare('DELETE FROM acc_sales_lines WHERE workspace_id=? AND sales_doc_id=?')->execute([$wid,$salesDocId]);
+            $db->prepare('DELETE FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? AND workflow_status=?')
+                ->execute([$salesDocId,$wid,$cid,'draft']);
+            $db->commit();
+            Audit::log('acc.sale.delete','acc_sales_docs',$salesDocId,'حذف پیش‌نویس فروش بدون پیوند O2C');
+            return ['id'=>$salesDocId,'status'=>'deleted','mode'=>'delete'];
+        }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
     }
 
     public static function fulfillmentSnapshot(int $wid,int $cid,int $salesDocId): array
@@ -291,7 +376,7 @@ final class OrderToCashDomain
             }
 
             $q=$db->prepare("SELECT dl.sales_line_id,dl.item_id,dl.quantity,
-                COALESCE((SELECT SUM(l.quantity) FROM erp_o2c_invoice_links l WHERE l.workspace_id=dl.workspace_id AND l.company_id=? AND l.delivery_id=dl.delivery_id AND l.sales_line_id=dl.sales_line_id),0) invoiced_qty
+                COALESCE((SELECT SUM(l.quantity) FROM erp_o2c_invoice_links l WHERE l.workspace_id=dl.workspace_id AND l.company_id=? AND l.delivery_id=dl.delivery_id AND l.sales_line_id=dl.sales_line_id AND COALESCE(l.status,'active')='active'),0) invoiced_qty
                 FROM acc_sales_delivery_lines dl WHERE dl.workspace_id=? AND dl.delivery_id=? FOR UPDATE");
             $q->execute([$cid,$wid,$deliveryId]);$dlines=[];
             foreach($q->fetchAll() as $r)$dlines[(int)$r['sales_line_id']]=$r;

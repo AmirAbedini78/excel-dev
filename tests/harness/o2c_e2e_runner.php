@@ -160,6 +160,61 @@ try {
             o2c_json_out(['ok' => true, 'result' => AccountingPostingDomain::customerOutstanding(10, 1, (int)($args['party_id'] ?? 1))]);
             break;
 
+        case 'ar_set_map_custom':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => 2, 'is_platform_admin' => 1]);
+            AccountingPostingDomain::setCompanyMap(10, 1, 2, [
+                'receivable_account_id' => (int)($args['receivable_account_id'] ?? 1),
+                'revenue_account_id' => (int)($args['revenue_account_id'] ?? 2),
+                'tax_account_id' => (int)($args['tax_account_id'] ?? 3),
+            ]);
+            o2c_json_out(['ok' => true, 'readiness' => AccountingPostingDomain::assessReadiness(10, 1)]);
+            break;
+
+        case 'ar_close_period':
+            o2c_e2e_connect_reuse();
+            $period = (string)($args['period_key'] ?? date('Y-m'));
+            $fy = pdo()->query("SELECT id FROM acc_fiscal_years WHERE workspace_id=10 AND company_id=1 ORDER BY id DESC LIMIT 1")->fetchColumn();
+            pdo()->prepare("INSERT INTO acc_period_closes (workspace_id,company_id,fiscal_year_id,period_key,status,closed_by,closed_at,created_at,updated_at)
+                VALUES (10,1,?,?, 'closed',2,NOW(),NOW(),NOW())
+                ON DUPLICATE KEY UPDATE status='closed',closed_at=NOW(),updated_at=NOW()")
+                ->execute([(int)$fy, $period]);
+            o2c_json_out(['ok' => true, 'period_key' => $period, 'fiscal_year_id' => (int)$fy]);
+            break;
+
+        case 'ar_reopen_period':
+            o2c_e2e_connect_reuse();
+            $period = (string)($args['period_key'] ?? date('Y-m'));
+            pdo()->prepare("UPDATE acc_period_closes SET status='open',updated_at=NOW() WHERE workspace_id=10 AND company_id=1 AND period_key=?")
+                ->execute([$period]);
+            o2c_json_out(['ok' => true, 'period_key' => $period]);
+            break;
+
+        case 'cancel_billing':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
+            $out = OrderToCashDomain::cancelDraftBillingInvoice(10, 1, (int)($args['user_id'] ?? 2), (int)$args['invoice_doc_id']);
+            o2c_json_out(['ok' => true, 'result' => $out]);
+            break;
+
+        case 'delete_sale_draft':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
+            $out = OrderToCashDomain::deleteOrCancelSalesDraft(10, 1, (int)($args['user_id'] ?? 2), (int)$args['sales_doc_id']);
+            o2c_json_out(['ok' => true, 'result' => $out]);
+            break;
+
+        case 'tamper_invoice_line':
+            o2c_e2e_connect_reuse();
+            $st = pdo()->prepare('SELECT id FROM acc_sales_lines WHERE sales_doc_id=? AND workspace_id=10 ORDER BY line_no LIMIT 1');
+            $st->execute([(int)$args['invoice_doc_id']]);
+            $lid = (int)$st->fetchColumn();
+            pdo()->prepare('UPDATE acc_sales_lines SET unit_price=?, line_total=? WHERE id=? AND workspace_id=10')
+                ->execute([(string)$args['unit_price'], (string)$args['line_total'], $lid]);
+            // Keep header net unchanged to prove fingerprint catches line change.
+            o2c_json_out(['ok' => true, 'line_id' => $lid]);
+            break;
+
         case 'concurrent_reserve':
             // True overlap: two PDO connections + pcntl not required; use mysqli-style sequential
             // start of transactions with GET_LOCK held across workers via persistent children.

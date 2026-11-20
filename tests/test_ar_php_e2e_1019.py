@@ -177,7 +177,8 @@ class ArPhpE2e1019(unittest.TestCase):
         out = _php("ar_outstanding", {"party_id": 1})
         self.assertTrue(out.get("ok"), out)
         self.assertEqual(out["result"]["outstanding"], "1000.00")
-        self.assertEqual(out["result"]["basis"], "posted_ar_account_voucher_lines")
+        self.assertEqual(out["result"]["status"], "OPEN")
+        self.assertIn("posted_ar_account", out["result"]["basis"])
 
         bal2 = _php("ar_voucher_balance", {"voucher_id": voucher_id})
         self.assertEqual(bal2["postings"], 1)
