@@ -8,7 +8,7 @@
 | Gate | Status | Notes |
 |------|--------|-------|
 | G0 inventory + freeze | PASS | Ownership + shared contracts frozen; worktrees created; MySQL/PHP sandbox verified |
-| G1 parallel lanes | IN_PROGRESS | T1–T7 launched |
+| G1 parallel lanes | IN_PROGRESS | T1–T7 agents running in dedicated worktrees |
 | G2 integration | PENDING | Merge T2/T5 → T1 → T3/T4/T6 |
 | G3 freeze | PENDING | Max 2 stabilization rounds |
 | G4 acceptance | PENDING | TR-1..OPS-1 evidence required |
