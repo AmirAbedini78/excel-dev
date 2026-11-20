@@ -23,7 +23,8 @@ try {
             // Re-run migrate to prove idempotent.
             OrderToCashDomain::migrate(pdo());
             SalesDomain::migrate(pdo());
-            o2c_json_out(['ok' => true, 'scenario' => 'reset', 'version' => OrderToCashDomain::VERSION]);
+            AccountingPostingDomain::migrate(pdo());
+            o2c_json_out(['ok' => true, 'scenario' => 'reset', 'version' => OrderToCashDomain::VERSION, 'ar' => AccountingPostingDomain::VERSION]);
             break;
 
         case 'confirm_order':
@@ -113,6 +114,50 @@ try {
             $st = pdo()->prepare('SELECT id FROM acc_sales_lines WHERE sales_doc_id=? ORDER BY line_no LIMIT 1');
             $st->execute([(int)$args['sales_doc_id']]);
             o2c_json_out(['ok' => true, 'sales_line_id' => (int)$st->fetchColumn()]);
+            break;
+
+        case 'ar_set_map':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => 2, 'is_platform_admin' => 1]);
+            AccountingPostingDomain::setCompanyMap(10, 1, 2, [
+                'receivable_account_id' => 1,
+                'revenue_account_id' => 2,
+                'tax_account_id' => 3,
+            ]);
+            o2c_json_out(['ok' => true, 'readiness' => AccountingPostingDomain::assessReadiness(10, 1)]);
+            break;
+
+        case 'ar_voucher_balance':
+            o2c_e2e_connect_reuse();
+            $vid = (int)$args['voucher_id'];
+            $st = pdo()->prepare('SELECT total_debit,total_credit,status,source_type FROM acc_vouchers WHERE id=? AND workspace_id=10');
+            $st->execute([$vid]);
+            $v = $st->fetch();
+            $ls = pdo()->prepare('SELECT COALESCE(SUM(debit),0) d, COALESCE(SUM(credit),0) c, COUNT(*) n FROM acc_voucher_lines WHERE voucher_id=? AND workspace_id=10');
+            $ls->execute([$vid]);
+            $l = $ls->fetch();
+            $pc = pdo()->prepare('SELECT COUNT(*) FROM erp_ar_postings WHERE workspace_id=10 AND company_id=1 AND voucher_id=?');
+            $pc->execute([$vid]);
+            o2c_json_out(['ok' => true, 'voucher' => $v, 'lines' => $l, 'postings' => (int)$pc->fetchColumn()]);
+            break;
+
+        case 'ar_post':
+            o2c_e2e_connect_reuse();
+            $uid = (int)($args['user_id'] ?? 2);
+            Auth::setUser(['id' => $uid, 'is_platform_admin' => 1]);
+            $out = AccountingPostingDomain::postCustomerInvoice(
+                10,
+                1,
+                $uid,
+                (int)$args['invoice_doc_id'],
+                (string)($args['idempotency_key'] ?? '')
+            );
+            o2c_json_out(['ok' => true, 'result' => $out]);
+            break;
+
+        case 'ar_outstanding':
+            o2c_e2e_connect_reuse();
+            o2c_json_out(['ok' => true, 'result' => AccountingPostingDomain::customerOutstanding(10, 1, (int)($args['party_id'] ?? 1))]);
             break;
 
         case 'concurrent_reserve':

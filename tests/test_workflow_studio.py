@@ -13,7 +13,7 @@ def src(path):
 
 class WorkflowStudio(unittest.TestCase):
     def test_version_schema_gate(self):
-        self.assertIn("SCHEMA_VERSION = '10.18.1'", src('app/Core/RuntimeCache.php'))
+        self.assertIn("SCHEMA_VERSION = '10.19.0'", src('app/Core/RuntimeCache.php'))
         self.assertIn('WorkflowDomain::migrate(pdo())', src('app/bootstrap.php'))
 
     def test_four_additive_scoped_tables(self):

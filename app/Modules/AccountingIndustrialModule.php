@@ -25,6 +25,7 @@ final class AccountingIndustrialModule
         if($action==='acc_o2c_reserve')self::o2cReserve();
         if($action==='acc_o2c_deliver')self::o2cDeliver();
         if($action==='acc_o2c_invoice_delivery')self::o2cInvoiceFromDelivery();
+        if($action==='acc_ar_post_invoice')self::arPostInvoice();
         if($action==='acc_save_voucher')self::saveVoucher();
         if($action==='acc_delete_voucher')self::deleteVoucher();
         if($action==='acc_save_bom')self::saveBom();
@@ -328,13 +329,21 @@ final class AccountingIndustrialModule
         if($canManage && !$isBilling && $status==='draft' && in_array((string)$d['doc_type'],['preinvoice','invoice'],true)){
             echo '<form method="post" class="inline-form" onsubmit="return confirm(\'تأیید سفارش توسط شخص دوم؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_o2c_confirm_order"><input type="hidden" name="sales_doc_id" value="'.$id.'"><button class="btn primary">تأیید سفارش (Maker/Checker)</button></form>';
         }
-        if($isBilling)echo '<p class="muted">این سند فاکتور صورتحساب O2C است و برای رزرو/تحویل قابل استفاده نیست.</p>';
+        if($isBilling){
+            echo '<p class="muted">این سند فاکتور صورتحساب O2C است و برای رزرو/تحویل قابل استفاده نیست.</p>';
+            $ready=AccountingPostingDomain::assessReadiness($wid,$cid);
+            if($canManage && Tenant::can('accounting.vouchers.manage') && !empty($ready['ready']) && (string)$status!=='final'){
+                echo '<form method="post" class="inline-form" onsubmit="return confirm(\'ثبت سند حسابداری AR؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_post_invoice"><input type="hidden" name="sales_doc_id" value="'.$id.'"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'"><button class="btn primary">ثبت AR در دفتر کل</button></form>';
+            }elseif($isBilling){
+                echo '<p class="muted">وضعیت هسته AR: '.h(json_encode($ready['blockers']?:['ready'],JSON_UNESCAPED_UNICODE)).' — Settlement='.h(AccountingPostingDomain::SETTLEMENT).'</p>';
+            }
+        }
         echo '<div class="table-wrap"><table><thead><tr><th>#</th><th>کد</th><th>کالا/خدمت</th><th>مقدار</th><th>واحد</th><th>فی</th><th>تخفیف</th><th>مالیات</th><th>جمع</th></tr></thead><tbody>';
         foreach($lines as $l)echo '<tr><td>'.(int)$l['line_no'].'</td><td>'.h($l['item_code']).'</td><td>'.h($l['item_name']).'</td><td>'.h($l['quantity']).'</td><td>'.h($l['unit_name']).'</td><td>'.number_format((float)$l['unit_price']).'</td><td>'.number_format((float)$l['discount_amount']).'</td><td>'.number_format((float)$l['tax_amount']).'</td><td>'.number_format((float)$l['line_total']).'</td></tr>';echo '</tbody></table></div></section>';
         try{
             $f=OrderToCashDomain::fulfillmentSnapshot($wid,$cid,$id);$m=SalesDomain::marginSummary($wid,$cid,$id);$deliveries=SalesDomain::deliveries($wid,$cid,$id,20);
             $warehouses=AccountingRepository::options('acc_warehouses');
-            echo '<section class="card"><div class="section-title"><div><h3>Order-to-Cash Fulfillment</h3><span class="muted">تأیید → رزرو → تحویل → فاکتور پیش‌نویس (AR/Settlement مسدود)</span></div></div>';
+            echo '<section class="card"><div class="section-title"><div><h3>Order-to-Cash Fulfillment</h3><span class="muted">تأیید → رزرو → تحویل → فاکتور پیش‌نویس → AR kernel (Settlement مسدود)</span></div></div>';
             echo '<div class="acc-metrics"><article><strong>'.number_format((float)$f['ordered_quantity'],4).'</strong><span>سفارش</span></article><article><strong>'.number_format((float)$f['reserved_quantity'],4).'</strong><span>رزرو</span></article><article><strong>'.number_format((float)$f['delivered_quantity'],4).'</strong><span>تحویل</span></article><article><strong>'.number_format((float)$f['outstanding_quantity'],4).'</strong><span>باقیمانده</span></article><article><strong>'.number_format((float)$f['invoiceable_quantity'],4).'</strong><span>قابل فاکتور</span></article><article><strong>'.number_format((float)$f['invoiced_quantity'],4).'</strong><span>فاکتور شده</span></article></div>';
             echo '<div class="acc-form-total"><span>فروش بدون مالیات: <b>'.number_format((float)$m['revenue_ex_tax_irr']).'</b></span><span>COGS: <b>'.number_format((float)$m['cogs_irr']).'</b></span><span>سود ناخالص: <b>'.number_format((float)$m['gross_margin_irr']).'</b></span><span>حاشیه: <b>'.number_format((float)$m['gross_margin_pct'],1).'%</b></span><span>مبنا: <b>'.h($m['margin_basis']).'</b></span><span>AR: <b>'.h($f['ar_posting']).'</b></span></div>';
             echo '<div class="table-wrap"><table><thead><tr><th>ردیف</th><th>کالا</th><th>سفارش</th><th>رزرو</th><th>تحویل</th><th>قابل فاکتور</th><th>فاکتور شده</th><th>باقیمانده</th></tr></thead><tbody>';
@@ -742,6 +751,16 @@ final class AccountingIndustrialModule
             'source_sales_doc_id'=>$salesDocId,'delivery_id'=>$deliveryId,'ar_posting'=>$out['ar_posting'],
         ]);
         self::back('sales','view='.(int)$out['id']);
+    }
+
+    private static function arPostInvoice(): void
+    {
+        Tenant::requirePermission('accounting.vouchers.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $invoiceId=(int)($_POST['sales_doc_id']??0);$idem=trim((string)($_POST['idempotency_key']??''));
+        $out=AccountingPostingDomain::postCustomerInvoice($wid,$cid,$uid,$invoiceId,$idem);
+        self::audit('ar.invoice.post','acc_vouchers',(int)$out['voucher_id'],'ثبت AR از فاکتور O2C',['invoice_doc_id'=>$invoiceId]);
+        self::back('vouchers','view='.(int)$out['voucher_id']);
     }
 
     private static function saveVoucher(): void
