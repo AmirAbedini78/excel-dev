@@ -13,11 +13,11 @@ def source(path: str) -> str:
 
 class ArSettlementContracts1020(unittest.TestCase):
     def test_version_wiring(self):
-        self.assertIn("SCHEMA_VERSION = '10.20.1'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.20.1'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.21.0'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.21.0'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("ArSettlementDomain.php", source("app/bootstrap.php"))
         self.assertIn("ArSettlementDomain::migrate(pdo())", source("app/bootstrap.php"))
-        self.assertIn("VERSION = '10.20.1-settlement'", source("app/Core/ArSettlementDomain.php"))
+        self.assertIn("VERSION = '10.21.0-settlement'", source("app/Core/ArSettlementDomain.php"))
         self.assertIn("SETTLEMENT = 'AVAILABLE'", source("app/Core/ArSettlementDomain.php"))
         self.assertIn("SETTLEMENT = 'AVAILABLE'", source("app/Core/OrderToCashDomain.php"))
 

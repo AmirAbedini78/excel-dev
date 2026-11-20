@@ -1,7 +1,7 @@
 <?php
 final class RuntimeCache
 {
-    public const SCHEMA_VERSION = '10.20.1';
+    public const SCHEMA_VERSION = '10.21.0';
 
     private static string $root='';
     private static string $dbHash='default';

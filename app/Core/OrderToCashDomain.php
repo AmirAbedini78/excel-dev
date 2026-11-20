@@ -10,7 +10,7 @@
  */
 final class OrderToCashDomain
 {
-    public const VERSION = '10.20.1-o2c';
+    public const VERSION = '10.21.0-o2c';
     /** AR posting kernel + settlement domain (v10.20); settlement requires cash GL map. */
     public const AR_POSTING = 'KERNEL_AVAILABLE';
     public const SETTLEMENT = 'AVAILABLE';

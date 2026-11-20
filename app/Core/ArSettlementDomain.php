@@ -8,7 +8,7 @@
  */
 final class ArSettlementDomain
 {
-    public const VERSION = '10.20.1-settlement';
+    public const VERSION = '10.21.0-settlement';
     public const SETTLEMENT = 'AVAILABLE';
     /** Validated payment methods for this release (cheque/Sayad = separate lifecycle). */
     public const METHODS = ['cash', 'bank_transfer', 'pos'];
