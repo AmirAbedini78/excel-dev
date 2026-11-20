@@ -38,9 +38,11 @@
 4. Jalali round-trip hardening with evidence.
 5. Regulatory items only after authoritative source + rule version recorded.
 
-## Git (filled at merge)
+## Git
 | Item | Value |
 |---|---|
-| PR | _(pending)_ |
-| Merge SHA | _(pending)_ |
-| Post-merge CI | _(pending)_ |
+| PR | [#14](https://github.com/AmirAbedini78/excel-dev/pull/14) |
+| Feature commit | `be29eb2` |
+| Merge SHA | `942d7765120637dd446e9d8611f373edc1edb1b3` |
+| Branch CI | [44743717498](https://github.com/AmirAbedini78/excel-dev/actions/runs/44743717498) SUCCESS |
+| Post-merge CI | [44743805399](https://github.com/AmirAbedini78/excel-dev/actions/runs/44743805399) SUCCESS |
