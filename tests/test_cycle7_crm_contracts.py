@@ -12,7 +12,7 @@ class T(unittest.TestCase):
     def test_truth(self):
         for x in ("acc_voucher_lines","acc_sales_docs","acc_sales_delivery_lines"):self.assertIn(x,self.d)
     def test_module(self):
-        self.assertIn("public const VERSION='10.16.0'",self.m);self.assertIn("'implemented'=>true,'default_enabled'=>true",self.m);self.assertIn("'pages'=>['crm']",self.m);self.assertIn("CrmModule::render()",self.i)
+        self.assertIn("public const VERSION='10.17.0'",self.m);self.assertIn("'implemented'=>true,'default_enabled'=>true",self.m);self.assertIn("'pages'=>['crm']",self.m);self.assertIn("CrmModule::render()",self.i)
     def test_ai(self):
         for x in ("crm_customer_360","crm_pipeline_summary","crm_followup_queue","create_crm_activity","create_crm_opportunity"):self.assertIn("'name'=>'"+x+"'",self.r)
     def test_worker(self):self.assertIn("_install_crm_lite(Worker)",self.w);self.assertIn('"create_crm_activity"',self.h);self.assertIn('"crm_customer_360_read"',self.h)

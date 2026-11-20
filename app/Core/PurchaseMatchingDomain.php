@@ -1,13 +1,13 @@
 <?php
 /**
- * ERPSMART 10.16.0 — controlled procurement three-way match.
+ * ERPSMART 10.17.0 — P2P three-way matching + fail-closed policy hardening.
  * Canonical truth: acc_purchase_docs/lines + posted acc_inventory_receipt_lines.
  * Output: acc_purchase_docs (purchase_invoice_goods, draft) ONLY.
  * No payable journal, tax submission, payment, or additional stock posting.
  */
 final class PurchaseMatchingDomain
 {
-    public const VERSION = '10.16.0-pilot';
+    public const VERSION = '10.17.0-hardening';
 
     public static function migrate(PDO $db): void
     {
@@ -18,6 +18,7 @@ final class PurchaseMatchingDomain
             supplier_invoice_no VARCHAR(120) NOT NULL, invoice_date DATE NOT NULL,
             payload_hash CHAR(64) NOT NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            revision INT NOT NULL DEFAULT 1,
             canonical_doc_id BIGINT NULL, total_amount DECIMAL(20,2) NOT NULL DEFAULT 0,
             submitted_by INT NOT NULL, reviewed_by INT NULL, reviewed_at DATETIME NULL,
             review_note VARCHAR(1000) NULL,
@@ -37,6 +38,117 @@ final class PurchaseMatchingDomain
             UNIQUE KEY uq_p2p_bill_line (workspace_id,bill_id,purchase_line_id),
             INDEX idx_p2p_po_line (workspace_id,purchase_line_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $db->exec("CREATE TABLE IF NOT EXISTS erp_p2p_company_policy (
+            workspace_id INT NOT NULL, company_id INT NOT NULL,
+            enforce_goods_match TINYINT(1) NOT NULL DEFAULT 1,
+            allow_service_manual TINYINT(1) NOT NULL DEFAULT 1,
+            updated_by INT NULL, updated_at DATETIME NOT NULL,
+            PRIMARY KEY (workspace_id,company_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $db->exec("CREATE TABLE IF NOT EXISTS erp_p2p_bill_revisions (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+            workspace_id INT NOT NULL, company_id INT NOT NULL, bill_id BIGINT NOT NULL,
+            revision INT NOT NULL, status VARCHAR(20) NOT NULL,
+            payload_hash CHAR(64) NOT NULL, total_amount DECIMAL(20,2) NOT NULL,
+            lines_json MEDIUMTEXT NOT NULL, review_note VARCHAR(1000) NULL,
+            reviewed_by INT NULL, amended_by INT NOT NULL,
+            created_at DATETIME NOT NULL,
+            UNIQUE KEY uq_p2p_bill_rev (workspace_id,bill_id,revision),
+            INDEX idx_p2p_bill_rev_bill (workspace_id,company_id,bill_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $db->exec("CREATE TABLE IF NOT EXISTS erp_p2p_policy_exceptions (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+            workspace_id INT NOT NULL, company_id INT NOT NULL,
+            source_path VARCHAR(80) NOT NULL, reason VARCHAR(1000) NOT NULL,
+            actor_user_id INT NOT NULL, created_doc_id BIGINT NULL,
+            created_at DATETIME NOT NULL,
+            INDEX idx_p2p_exc (workspace_id,company_id,created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        self::ensureColumn($db,'erp_p2p_vendor_bills','revision',"INT NOT NULL DEFAULT 1 AFTER status");
+    }
+
+    private static function ensureColumn(PDO $db,string $table,string $column,string $ddl): void
+    {
+        $q=$db->prepare('SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=? LIMIT 1');
+        $q->execute([$table,$column]);
+        if(!$q->fetchColumn())$db->exec("ALTER TABLE `$table` ADD COLUMN `$column` $ddl");
+    }
+
+    /** Fail-closed when module p2p is enabled and company policy enforces goods matching. */
+    public static function isGoodsMatchEnforced(int $wid,int $cid): bool
+    {
+        if($wid<1||$cid<1)return false;
+        if(!class_exists('ModuleRegistry')||!ModuleRegistry::enabled('p2p',$wid))return false;
+        self::ensurePolicyRow($wid,$cid);
+        $q=pdo()->prepare('SELECT enforce_goods_match FROM erp_p2p_company_policy WHERE workspace_id=? AND company_id=? LIMIT 1');
+        $q->execute([$wid,$cid]);
+        return (int)$q->fetchColumn()===1;
+    }
+
+    public static function ensurePolicyRow(int $wid,int $cid): void
+    {
+        $q=pdo()->prepare('INSERT IGNORE INTO erp_p2p_company_policy (workspace_id,company_id,enforce_goods_match,allow_service_manual,updated_at) VALUES (?,?,1,1,NOW())');
+        $q->execute([$wid,$cid]);
+    }
+
+    public static function setCompanyPolicy(int $wid,int $cid,int $uid,bool $enforceGoods,bool $allowServiceManual): void
+    {
+        Tenant::requirePermission('accounting.purchase.manage');
+        self::assertCompany($wid,$cid);
+        if($uid<1)throw new RuntimeException('کاربر نامعتبر است.');
+        if(!ModuleRegistry::enabled('p2p',$wid))throw new RuntimeException('ماژول تطبیق خرید فعال نیست.');
+        self::ensurePolicyRow($wid,$cid);
+        $q=pdo()->prepare('UPDATE erp_p2p_company_policy SET enforce_goods_match=?,allow_service_manual=?,updated_by=?,updated_at=NOW() WHERE workspace_id=? AND company_id=?');
+        $q->execute([$enforceGoods?1:0,$allowServiceManual?1:0,$uid,$wid,$cid]);
+        Audit::log('p2p.policy.update','erp_p2p_company_policy',$cid,'به‌روزرسانی سیاست تطبیق خرید',null,['enforce'=>$enforceGoods,'service_manual'=>$allowServiceManual]);
+    }
+
+    public static function companyPolicy(int $wid,int $cid): array
+    {
+        self::assertCompany($wid,$cid);self::ensurePolicyRow($wid,$cid);
+        $q=pdo()->prepare('SELECT * FROM erp_p2p_company_policy WHERE workspace_id=? AND company_id=? LIMIT 1');
+        $q->execute([$wid,$cid]);return $q->fetch()?:['enforce_goods_match'=>1,'allow_service_manual'=>1];
+    }
+
+    /**
+     * Domain boundary for all non-P2P goods-invoice writers.
+     * $source: accounting_ui | ai_tool | import | api | other
+     */
+    public static function assertManualGoodsInvoiceAllowed(int $wid,int $cid,int $uid,string $docType,string $source,string $exceptionReason=''): void
+    {
+        self::assertCompany($wid,$cid);
+        if($docType!=='purchase_invoice_goods'){
+            if($docType==='purchase_invoice_service'&&self::isGoodsMatchEnforced($wid,$cid)){
+                $pol=self::companyPolicy($wid,$cid);
+                if(!(int)$pol['allow_service_manual'])throw new RuntimeException('فاکتور خدمات نیز برای این شرکت نیازمند مسیر مجاز است.');
+            }
+            return;
+        }
+        if(!self::isGoodsMatchEnforced($wid,$cid))return;
+        $reason=trim($exceptionReason);
+        if($reason==='')throw new RuntimeException('برای این شرکت ایجاد فاکتور کالایی فقط از مسیر تطبیق سه‌طرفه مجاز است (سیاست Fail-Closed).');
+        if(mb_strlen($reason,'UTF-8')<12||mb_strlen($reason,'UTF-8')>1000)
+            throw new RuntimeException('دلیل استثنای سیاست باید بین ۱۲ تا ۱۰۰۰ کاراکتر باشد.');
+        if(!Tenant::can('accounting.purchase.exception')&&!Tenant::can('accounting.purchase.manage'))
+            throw new RuntimeException('مجوز ثبت استثنای تطبیق خرید را ندارید.');
+        if($uid<1)throw new RuntimeException('کاربر استثنا نامعتبر است.');
+        // Exception is audited by caller after document id is known via recordException().
+    }
+
+    public static function recordException(int $wid,int $cid,int $uid,string $source,string $reason,?int $docId): void
+    {
+        $q=pdo()->prepare('INSERT INTO erp_p2p_policy_exceptions (workspace_id,company_id,source_path,reason,actor_user_id,created_doc_id,created_at) VALUES (?,?,?,?,?,?,NOW())');
+        $q->execute([$wid,$cid,substr($source,0,80),$reason,$uid,$docId]);
+        Audit::log('p2p.policy.exception','erp_p2p_policy_exceptions',(int)pdo()->lastInsertId(),'استثنای سیاست تطبیق خرید',null,['source'=>$source,'doc'=>$docId]);
+    }
+
+    /** Block PO quantity/price mutation while pending/matched P2P bills exist. */
+    public static function assertOrderLinesMutable(int $wid,int $cid,int $poId): void
+    {
+        if($poId<1)return;
+        $q=pdo()->prepare("SELECT 1 FROM erp_p2p_vendor_bills WHERE workspace_id=? AND company_id=? AND purchase_order_id=? AND status IN ('pending','matched') LIMIT 1");
+        $q->execute([$wid,$cid,$poId]);
+        if($q->fetchColumn())throw new RuntimeException('سفارش دارای درخواست/تطبیق فعال P2P است و ردیف‌های آن قابل تغییر نیست.');
     }
 
     public static function scaled($raw,int $scale,int $maxWhole): int
@@ -339,6 +451,55 @@ final class PurchaseMatchingDomain
             $q->execute([$uid,$reason,$billId,$wid,$cid]);
             if($q->rowCount()!==1)throw new RuntimeException('درخواست هم‌زمان تغییر کرده است.');
             $db->commit();Audit::log('p2p.bill.reject','erp_p2p_vendor_bills',$billId,'رد فاکتور تأمین‌کننده');
+        }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+    }
+
+    /**
+     * Controlled amendment of a rejected supplier bill under the same invoice number.
+     * Preserves prior revision snapshot; requires a new independent reviewer.
+     */
+    public static function amend(int $wid,int $cid,int $uid,int $billId,string $invoiceDate,array $lines,string $amendNote): array
+    {
+        Tenant::requirePermission('accounting.purchase.manage');
+        self::assertCompany($wid,$cid);
+        if($uid<1||$billId<1)throw new RuntimeException('شناسه درخواست/کاربر نامعتبر است.');
+        $amendNote=trim($amendNote);
+        if(mb_strlen($amendNote,'UTF-8')<5||mb_strlen($amendNote,'UTF-8')>1000)
+            throw new RuntimeException('شرح اصلاح باید بین ۵ تا ۱۰۰۰ کاراکتر باشد.');
+        $date=AccountingRepository::date($invoiceDate);
+        $dt=$date?DateTimeImmutable::createFromFormat('!Y-m-d',$date):false;
+        if(!$dt||$dt->format('Y-m-d')!==$date)throw new RuntimeException('تاریخ فاکتور معتبر نیست.');
+        $db=pdo();$db->beginTransaction();
+        try{
+            $q=$db->prepare('SELECT * FROM erp_p2p_vendor_bills WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1 FOR UPDATE');
+            $q->execute([$billId,$wid,$cid]);$bill=$q->fetch();
+            if(!$bill)throw new RuntimeException('درخواست فاکتور یافت نشد.');
+            if($bill['status']!=='rejected')throw new RuntimeException('فقط درخواست ردشده قابل اصلاح است.');
+            if($bill['status']==='matched'||$bill['canonical_doc_id'])throw new RuntimeException('فاکتور تطبیق‌شده قابل اصلاح نیست.');
+            $poId=(int)$bill['purchase_order_id'];
+            $po=self::order($db,$wid,$cid,$poId,true);
+            if((int)$bill['supplier_id']!==(int)$po['party_id'])throw new RuntimeException('تأمین‌کننده سفارش تغییر کرده است.');
+            $invoiceNo=(string)$bill['supplier_invoice_no'];
+            $hash=self::fingerprint($poId,(int)$bill['supplier_id'],$invoiceNo,$date,$lines);
+            if(hash_equals((string)$bill['payload_hash'],$hash)&&$date===(string)$bill['invoice_date'])
+                throw new RuntimeException('محتوای اصلاح با نسخه ردشده یکسان است؛ تغییری ثبت نشده.');
+            $q=$db->prepare('SELECT purchase_line_id,quantity,unit_price,item_id,line_total FROM erp_p2p_vendor_bill_lines WHERE workspace_id=? AND bill_id=? ORDER BY purchase_line_id');
+            $q->execute([$wid,$billId]);$oldLines=$q->fetchAll();
+            $rev=(int)($bill['revision']??1);
+            $insRev=$db->prepare('INSERT INTO erp_p2p_bill_revisions (workspace_id,company_id,bill_id,revision,status,payload_hash,total_amount,lines_json,review_note,reviewed_by,amended_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,NOW())');
+            $insRev->execute([$wid,$cid,$billId,$rev,'rejected',$bill['payload_hash'],$bill['total_amount'],
+                json_encode($oldLines,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR),
+                $bill['review_note'],$bill['reviewed_by'],$uid]);
+            $norm=self::matchLines($po,self::orderLines($db,$wid,$cid,$poId),$lines);
+            $db->prepare('DELETE FROM erp_p2p_vendor_bill_lines WHERE workspace_id=? AND bill_id=?')->execute([$wid,$billId]);
+            $ins=$db->prepare('INSERT INTO erp_p2p_vendor_bill_lines (workspace_id,bill_id,purchase_line_id,item_id,quantity,unit_price,line_total,created_at) VALUES (?,?,?,?,?,?,?,NOW())');
+            foreach($norm['lines'] as $line)$ins->execute([$wid,$billId,$line['purchase_line_id'],$line['item_id'],$line['quantity'],$line['unit_price'],$line['line_total']]);
+            $up=$db->prepare("UPDATE erp_p2p_vendor_bills SET status='pending',revision=?,invoice_date=?,payload_hash=?,total_amount=?,submitted_by=?,reviewed_by=NULL,reviewed_at=NULL,review_note=?,updated_at=NOW() WHERE id=? AND workspace_id=? AND company_id=? AND status='rejected'");
+            $up->execute([$rev+1,$date,$hash,$norm['total'],$uid,'اصلاح پس از رد: '.$amendNote,$billId,$wid,$cid]);
+            if($up->rowCount()!==1)throw new RuntimeException('درخواست هم‌زمان تغییر کرده است.');
+            $db->commit();
+            Audit::log('p2p.bill.amend','erp_p2p_vendor_bills',$billId,'اصلاح درخواست ردشده و ارسال مجدد برای تأیید');
+            return ['id'=>$billId,'revision'=>$rev+1,'status'=>'pending','existing'=>false];
         }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
     }
 }
