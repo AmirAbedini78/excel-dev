@@ -13,11 +13,11 @@ def source(path: str) -> str:
 
 class ApPostingContracts1022(unittest.TestCase):
     def test_version_and_wiring(self):
-        self.assertIn("SCHEMA_VERSION = '10.22.0'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.22.0'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.23.0'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.23.0'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("ApPostingDomain.php", source("app/bootstrap.php"))
         self.assertIn("ApPostingDomain::migrate(pdo())", source("app/bootstrap.php"))
-        self.assertIn("VERSION = '10.22.0-ap'", source("app/Core/ApPostingDomain.php"))
+        self.assertIn("VERSION = '10.23.0-ap'", source("app/Core/ApPostingDomain.php"))
 
     def test_canonical_ledger_only(self):
         d = source("app/Core/ApPostingDomain.php")
@@ -25,7 +25,7 @@ class ApPostingContracts1022(unittest.TestCase):
         self.assertIn("acc_voucher_lines", d)
         self.assertIn("p2p_ap", d)
         self.assertIn("VALUATION_MODEL = 'invoice_based'", d)
-        self.assertIn("PAYMENT = 'NOT_IMPLEMENTED'", d)
+        self.assertIn("PAYMENT = 'AVAILABLE'", d)
         self.assertNotIn("CREATE TABLE IF NOT EXISTS ap_ledger", d)
         self.assertIn("erp_ap_company_maps", d)
         self.assertIn("erp_ap_postings", d)

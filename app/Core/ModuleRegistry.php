@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.22.0';
+    public const VERSION='10.23.0';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -32,7 +32,7 @@ final class ModuleRegistry
             ],
             'p2p'=>[
                 'title'=>'تطبیق سه‌طرفه خرید و فاکتور تأمین‌کننده',
-                'description'=>'تطبیق سه‌طرفه Fail-Closed + هسته ثبت AP (invoice-based، بدون GRNI). پیش‌نویس → اعتبارسنجی → تأیید → سند پرداختنی؛ پرداخت تأمین‌کننده در 10.23.',
+                'description'=>'تطبیق سه‌طرفه Fail-Closed + هسته AP + پرداخت/تخصیص تأمین‌کننده (نقد/حواله؛ بدون ادعای صیاد).',
                 'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,
                 'depends'=>['procurement','finance'],'pages'=>['p2p'],
             ],

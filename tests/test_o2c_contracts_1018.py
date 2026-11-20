@@ -27,10 +27,10 @@ class O2CContracts1018(unittest.TestCase):
         cls.hard = source("engine/commercial_hardening.py")
 
     def test_version_gate(self):
-        self.assertIn("SCHEMA_VERSION = '10.22.0'", self.runtime)
-        self.assertIn("VERSION='10.22.0'", self.registry)
+        self.assertIn("SCHEMA_VERSION = '10.23.0'", self.runtime)
+        self.assertIn("VERSION='10.23.0'", self.registry)
         self.assertIn("VERSION = '10.21.0-o2c'", self.o2c)
-        self.assertIn("VERSION='10.22.0'", self.sales)
+        self.assertIn("VERSION='10.23.0'", self.sales)
         self.assertIn("uq_o2c_invoice_line", self.o2c)
         self.assertIn("erp_o2c_stock_locks", self.o2c)
         self.assertIn("BILLING_NOTE_MARKER", self.o2c)

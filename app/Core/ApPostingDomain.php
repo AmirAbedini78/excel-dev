@@ -10,8 +10,8 @@
  */
 final class ApPostingDomain
 {
-    public const VERSION = '10.22.0-ap';
-    public const PAYMENT = 'NOT_IMPLEMENTED';
+    public const VERSION = '10.23.0-ap';
+    public const PAYMENT = 'AVAILABLE';
     public const CURRENCY = 'IRR';
     public const VALUATION_MODEL = 'invoice_based';
 

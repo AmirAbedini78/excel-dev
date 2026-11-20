@@ -242,7 +242,7 @@ class ApPhpE2e1022(unittest.TestCase):
         ready = _php("ap_readiness")["result"]
         self.assertTrue(ready["ready"])
         self.assertEqual(ready["valuation_model"], "invoice_based")
-        self.assertEqual(ready["payment"], "NOT_IMPLEMENTED")
+        self.assertEqual(ready["payment"], "AVAILABLE")
         # additive migrate twice
         assert _php("ap_set_map").get("ok")
         rows = _php(
