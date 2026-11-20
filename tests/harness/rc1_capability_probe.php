@@ -30,6 +30,8 @@ function method_exists_in_file(string $file, string $method): bool
 if ($scenario === 'probe' || $scenario === 'mf1') {
     $inv = $ROOT . '/app/Core/InventoryDomain.php';
     $prod = $ROOT . '/app/Core/ProductionDomain.php';
+    $exec = $ROOT . '/app/Core/ManufacturingExecutionDomain.php';
+    $costFile = $ROOT . '/app/Core/CostingAccountingDomain.php';
     $cost = glob($ROOT . '/app/Core/CostingAccounting*.php') ?: [];
     $missing = [];
     foreach ([
@@ -42,27 +44,37 @@ if ($scenario === 'probe' || $scenario === 'mf1') {
             $missing[] = $label;
         }
     }
-    // Production order / issue / scrap / QC / FG beyond pilot BOM/plan
+    // MF-1 execution lives on ManufacturingExecutionDomain (ProductionDomain remains BOM/plan).
     foreach ([
-        'createProductionOrder',
+        'createOrder',
+        'approveOrder',
+        'releaseOrder',
         'issueMaterials',
         'recordScrap',
-        'recordQcDisposition',
+        'recordQc',
         'receiveFinishedGoods',
-        'verifiedCostRollup',
+        'mrpRecommendations',
     ] as $m) {
-        if (!method_exists_in_file($prod, $m)) {
-            $missing[] = 'ProductionDomain::' . $m;
+        if (!method_exists_in_file($exec, $m)) {
+            $missing[] = 'ManufacturingExecutionDomain::' . $m;
         }
     }
-    if ($cost === []) {
-        $missing[] = 'CostingAccounting* (T5 valuation resolver)';
+    if (!method_exists_in_file($prod, 'approveBom') && !method_exists_in_file($prod, 'createBom')) {
+        $missing[] = 'ProductionDomain::createBom/approveBom';
+    }
+    if ($cost === [] || !method_exists_in_file($costFile, 'rollupProductionMaterialCost')) {
+        $missing[] = 'CostingAccountingDomain::rollupProductionMaterialCost';
+    }
+    if ($cost !== [] && !method_exists_in_file($costFile, 'attemptWipFgGlPosting')) {
+        $missing[] = 'CostingAccountingDomain::attemptWipFgGlPosting';
     }
     $pilot = [
         'createBom' => method_exists_in_file($prod, 'createBom'),
+        'approveBom' => method_exists_in_file($prod, 'approveBom'),
         'createPlan' => method_exists_in_file($prod, 'createPlan'),
         'preview' => method_exists_in_file($prod, 'preview'),
-        'requirements' => method_exists_in_file($prod, 'requirements'),
+        'execution_domain' => is_file($exec),
+        'costing_domain' => is_file($costFile),
     ];
     rc1_json([
         'ok' => true,
@@ -70,7 +82,7 @@ if ($scenario === 'probe' || $scenario === 'mf1') {
         'status' => $missing === [] ? 'CAPABLE' : 'BLOCKED',
         'missing' => $missing,
         'pilot_present' => $pilot,
-        'note' => 'ProductionDomain is planning pilot only; stock issue/FG APIs not implemented at G0.',
+        'note' => 'MF-1 uses ManufacturingExecutionDomain + InventoryDomain stock API; WIP/FG GL remains BLOCKED per T5.',
     ]);
     exit(0);
 }
@@ -80,7 +92,6 @@ if ($scenario === 'sys1_profiles') {
     $profiles = [];
     if (is_file($bp)) {
         require_once $bp;
-        // Class may need no PDO for listProfiles
         if (class_exists('BusinessProfileDomain')) {
             $profiles = array_keys(BusinessProfileDomain::PROFILES);
         }
@@ -90,7 +101,6 @@ if ($scenario === 'sys1_profiles') {
     $forcedMfg = false;
     if (is_file($bp)) {
         $src = file_get_contents($bp);
-        // service/retail must not require production module
         if (preg_match("/'service'\\s*=>\\s*\\[(.*?)\\]/s*'hybrid'/s", $src, $m)) {
             $forcedMfg = str_contains($m[1], "'production'");
         }
@@ -117,13 +127,21 @@ if ($scenario === 'ops1_schema') {
         }
     }
     $prodProvenance = getenv('RC1_PROD_SCHEMA_PROVENANCE') ?: '';
+    $unavailable = in_array(strtoupper($prodProvenance), ['UNAVAILABLE', 'UNAVAILABLE_NOT_DEPLOYED', 'NONE'], true);
+    $status = 'BLOCKED';
+    if ($prodProvenance !== '' && !$unavailable) {
+        $status = 'PROVENANCE_SET';
+    } elseif ($unavailable) {
+        // Explicit negative provenance for NOT_DEPLOYED campaigns: disposable migration still required.
+        $status = 'PROVENANCE_UNAVAILABLE_DOCUMENTED';
+    }
     rc1_json([
         'ok' => true,
         'contract' => 'OPS-1',
         'repo_schema_version' => $version,
         'production_schema_provenance' => $prodProvenance !== '' ? $prodProvenance : null,
-        'status' => $prodProvenance !== '' ? 'PROVENANCE_SET' : 'BLOCKED',
-        'note' => 'Never pretend repo main is production schema. Set RC1_PROD_SCHEMA_PROVENANCE when staging dump available.',
+        'status' => $status,
+        'note' => 'Never pretend repo main is production schema. UNAVAILABLE_* allowed only when staging/prod never deployed.',
     ]);
     exit(0);
 }

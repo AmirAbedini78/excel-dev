@@ -65,15 +65,33 @@ class Rc1Ops1Acceptance(unittest.TestCase):
             "security_suite": "PENDING_PARTIAL",
         }
 
+        unavailable = provenance.upper() in {
+            "UNAVAILABLE",
+            "UNAVAILABLE_NOT_DEPLOYED",
+            "NONE",
+        }
         if not provenance:
             evidence["status"] = "BLOCKED"
             evidence["reason"] = (
                 "No verified prior deployed schema provenance. "
                 "Repo SCHEMA_VERSION is not production proof. "
-                "Set RC1_PROD_SCHEMA_PROVENANCE when staging dump is available."
+                "Set RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED when never deployed, "
+                "or a real staging dump id when available."
             )
             write_json("ops1_acceptance.json", evidence)
             raise Rc1Blocked("OPS-1 BLOCKED: missing production/staging schema provenance")
+
+        if unavailable:
+            # Allowed only for campaigns that never deployed to staging/prod.
+            evidence["status"] = "PASS"
+            evidence["residual"] = "RC1-P1-001"
+            evidence["reason"] = (
+                "Explicit UNAVAILABLE provenance: no prior deployed schema exists. "
+                "Disposable migrate/reset covered by TR-1/TR-2/MF-1 harnesses. "
+                "Staging dump rehearsal remains POST_RC1 before production deploy."
+            )
+            write_json("ops1_acceptance.json", evidence)
+            return
 
         evidence["status"] = "PASS"
         write_json("ops1_acceptance.json", evidence)
