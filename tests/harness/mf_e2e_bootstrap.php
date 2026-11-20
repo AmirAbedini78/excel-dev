@@ -116,9 +116,13 @@ final class AccountingRepository
 
 require_once $ROOT.'/app/Core/PurchaseMatchingDomain.php';
 require_once $ROOT.'/app/Core/OrderToCashDomain.php';
+require_once $ROOT.'/app/Core/WarehouseStockApi.php';
 require_once $ROOT.'/app/Core/InventoryDomain.php';
 require_once $ROOT.'/app/Core/ProductionDomain.php';
-// Manufacturing* loaded via ProductionDomain require_once.
+require_once $ROOT.'/app/Core/ManufacturingInventoryAdapter.php';
+require_once $ROOT.'/app/Core/ManufacturingCostEvidence.php';
+require_once $ROOT.'/app/Core/ManufacturingExecutionDomain.php';
+require_once $ROOT.'/app/Core/CostingAccountingDomain.php';
 
 function mf_json_out($data): void
 {
@@ -238,7 +242,10 @@ function mf_e2e_reset_schema(): void
     )");
 
     OrderToCashDomain::migrate($db);
+    InventoryDomain::migrate($db);
     ProductionDomain::migrate($db);
+    ManufacturingExecutionDomain::migrate($db);
+    CostingAccountingDomain::migrate($db);
 
     $db->exec("INSERT INTO companies (id,workspace_id,active) VALUES (1,10,1),(2,10,1)");
     $db->exec("INSERT INTO workspace_modules (workspace_id,module_key,enabled) VALUES (10,'production',1)");
