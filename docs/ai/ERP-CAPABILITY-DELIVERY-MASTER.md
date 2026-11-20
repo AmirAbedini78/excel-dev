@@ -2,8 +2,8 @@
 
 **Maintained:** 2026-11-20 (system-2)
 **Repo:** `C:\Projects\excel-dev`
-**Merged baseline (v10.18.1):** `2f7d5b15e37ca6093d76d9d7233ba03332c9fe31` (PR #8)
-**In-flight:** v10.19.0 AR posting kernel on `feature/erp-ar-posting-v10.19.0` (**NOT_DEPLOYED**)
+**Merged baseline (v10.19.0):** `3d9385ec2f8c2405ec6187c1e6bf49403e97e61f` (PR #9)
+**Prior O2C hotfix:** `2f7d5b15e37ca6093d76d9d7233ba03332c9fe31` (PR #8) · **NOT_DEPLOYED**
 
 Status vocabulary (exactly one per capability):
 
@@ -43,7 +43,7 @@ Status vocabulary (exactly one per capability):
 ### v10.17 — MERGED (PR #6), NOT_DEPLOYED
 ### v10.18.0 — MERGED (PR #7), NOT_DEPLOYED
 ### v10.18.1 — MERGED (PR #8), NOT_DEPLOYED — O2C integrity hotfix + PHP E2E
-### v10.19.0 — IN FLIGHT — AR posting kernel (settlement blocked)
+### v10.19.0 — MERGED (PR #9), NOT_DEPLOYED — AR posting kernel (settlement blocked)
 
 ---
 
