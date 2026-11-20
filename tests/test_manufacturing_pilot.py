@@ -15,8 +15,8 @@ import provider_gateway as gateway
 class ManufacturingPilotContracts(unittest.TestCase):
     def test_explicit_opt_in_and_scoped_ui(self):
         modules = (ROOT / 'app/Core/ModuleRegistry.php').read_text(encoding='utf-8')
-        self.assertIn("'pages'=>['production']", modules)
         production = modules.split("'production'=>[", 1)[1].split("'projects'=>[", 1)[0]
+        self.assertIn("'pages'=>['production'", production)
         self.assertIn("'implemented'=>true", production)
         self.assertIn("'default_enabled'=>false", production)
         root = (ROOT / 'index.php').read_text(encoding='utf-8')

@@ -56,6 +56,11 @@ require_once APP_ROOT . '/app/Core/AiRepository.php';
 require_once APP_ROOT . '/app/Core/BusinessCopilotApi.php';
 require_once APP_ROOT . '/app/Core/BusinessCopilot.php';
 require_once APP_ROOT . '/app/Core/AiSuggestionEngine.php';
+require_once APP_ROOT . '/app/Core/UiRtlSupport.php';
+require_once APP_ROOT . '/app/Core/UiRoleActionMatrix.php';
+require_once APP_ROOT . '/app/Core/AiProposalGuardrails.php';
+require_once APP_ROOT . '/app/Core/DashboardTradingCockpit.php';
+require_once APP_ROOT . '/app/Core/DashboardManufacturingCockpit.php';
 require_once APP_ROOT . '/app/Core/Xlsx.php';
 
 if (file_exists($configFile)) {
