@@ -4,7 +4,8 @@
 - **Baseline SHA:** `921b6dac631763ce8fc772fe54cbc7d1e92a87a0` (G0)
 - **Branch / worktree:** `feature/rc1-t7-qa-release` @ `C:\Projects\erp-worktrees\rc1-t7`
 - **Author:** AmirHosein `<abedinnezhad1999@gmail.com>`
-- **PR target:** `release/erpsmart-rc1`
+- **PR:** https://github.com/AmirAbedini78/excel-dev/pull/27 → `release/erpsmart-rc1`
+- **HEAD:** `44fe48e65e18fba6d1b9efb1541dae8c94ec306b`
 - **Migrations owned:** none (harness/docs/CI only)
 
 ## Implemented
