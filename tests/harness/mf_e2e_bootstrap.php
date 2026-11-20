@@ -161,25 +161,14 @@ function mf_e2e_connect(): void
 
 function mf_e2e_reset_schema(): void
 {
-    global $host, $port, $user, $pass, $dbName;
-    // Disposable schema: drop/recreate DB so leftover tables cannot poison CREATE.
-    $admin = new PDO(
-        sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port),
-        $user,
-        $pass,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-    $admin->exec('DROP DATABASE IF EXISTS `'.$dbName.'`');
-    $admin->exec('CREATE DATABASE `'.$dbName.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-    try {
-        $admin->exec("GRANT ALL ON `{$dbName}`.* TO 'p2p'@'%'");
-    } catch (Throwable $e) {
-        // ignore — sandbox user may already hold grants
-    }
-    $admin = null;
-    DB::connect(['host' => $host, 'port' => $port, 'name' => $dbName, 'user' => $user, 'pass' => $pass]);
+    mf_e2e_connect();
     $db = pdo();
     $db->exec('SET FOREIGN_KEY_CHECKS=0');
+    // Materialize names first — dropping while iterating SHOW TABLES skips rows on MySQL.
+    $existing = $db->query("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")->fetchAll(PDO::FETCH_NUM);
+    foreach ($existing as $row) {
+        $db->exec('DROP TABLE IF EXISTS `' . str_replace('`', '``', (string)$row[0]) . '`');
+    }
     $db->exec("CREATE TABLE companies (id INT PRIMARY KEY, workspace_id INT NOT NULL, active TINYINT NOT NULL DEFAULT 1)");
     $db->exec("CREATE TABLE workspace_modules (
       workspace_id INT NOT NULL, module_key VARCHAR(80) NOT NULL, enabled TINYINT NOT NULL DEFAULT 0,

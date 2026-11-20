@@ -22,9 +22,13 @@ HOST = os.environ.get("O2C_DB_HOST", "host.docker.internal")
 PORT = os.environ.get("O2C_DB_PORT", "3307")
 USER = os.environ.get("O2C_DB_USER", "p2p")
 PASSWORD = os.environ.get("O2C_DB_PASS", "p2p_test")
-# Prefer isolated RC1 schema to avoid cross-lane races on shared erpsmart_p2p_test.
-# Same disposable container; schema must still contain "test"/"e2e".
-DATABASE = os.environ.get("O2C_DB_NAME", "erpsmart_rc1_test")
+def _db_name() -> str:
+    # Read at call time so rc1_acceptance_gate can isolate schemas per contract.
+    return os.environ.get("O2C_DB_NAME", "erpsmart_rc1_test")
+
+
+# Backward-compatible alias (may be stale if env changes after import — prefer _db_name()).
+DATABASE = _db_name()
 
 
 class Rc1Blocked(Exception):
@@ -174,7 +178,7 @@ def php_runner(runner_rel: str, scenario: str = "run", args: dict | None = None,
         "-e",
         f"O2C_DB_PASS={PASSWORD}",
         "-e",
-        f"O2C_DB_NAME={DATABASE}",
+        f"O2C_DB_NAME={_db_name()}",
         "-v",
         f"{mount}:/app",
         "-w",

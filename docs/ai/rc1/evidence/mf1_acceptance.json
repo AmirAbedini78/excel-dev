@@ -1,0 +1,54 @@
+{
+  "contract": "MF-1",
+  "status": "PASS",
+  "sandbox": {
+    "expected_name": "erpsmart-p2p-mysql-test",
+    "expected_id_prefix": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "database": "erpsmart_rc1_test",
+    "port": "3307",
+    "php_image": "erpsmart-o2c-php:8.2",
+    "relax": false,
+    "verified_at": "2026-11-20T15:52:15Z",
+    "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "status": "running",
+    "image": "mysql:8.0",
+    "ok": true,
+    "DATABASE_TESTED": true
+  },
+  "probe": {
+    "ok": true,
+    "contract": "MF-1",
+    "status": "CAPABLE",
+    "missing": [],
+    "pilot_present": {
+      "createBom": true,
+      "approveBom": true,
+      "createPlan": true,
+      "preview": true,
+      "execution_domain": true,
+      "costing_domain": true
+    },
+    "note": "MF-1 uses ManufacturingExecutionDomain + InventoryDomain stock API; WIP/FG GL remains BLOCKED per T5."
+  },
+  "e2e": {
+    "ok": true,
+    "order_id": 1,
+    "issue_replay": true,
+    "fg_replay": true,
+    "fg_reject_blocked": true,
+    "received_fg": "2.0000",
+    "accepted_qc": "2.0000",
+    "rejected_qc": "1.0000",
+    "scrap_qty": "0.2500",
+    "status_closed": true,
+    "issue_movements": 2,
+    "fg_movements": 2,
+    "cost_class": "UNVALUED",
+    "gl_posting": "BLOCKED",
+    "adapter_mode": "inventory_domain",
+    "raw_a_on_hand": "8.0000",
+    "fg_on_hand": "2.0000",
+    "DATABASE_TESTED": true
+  },
+  "gl_valuation": "BLOCKED"
+}

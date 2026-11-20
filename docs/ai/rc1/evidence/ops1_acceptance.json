@@ -1,0 +1,33 @@
+{
+  "contract": "OPS-1",
+  "sandbox": {
+    "expected_name": "erpsmart-p2p-mysql-test",
+    "expected_id_prefix": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "database": "erpsmart_rc1_test",
+    "port": "3307",
+    "php_image": "erpsmart-o2c-php:8.2",
+    "relax": false,
+    "verified_at": "2026-11-20T15:53:16Z",
+    "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "status": "running",
+    "image": "mysql:8.0",
+    "ok": true,
+    "DATABASE_TESTED": true
+  },
+  "disposable_migrate_idempotency": "COVERED_BY_TR1_TR2_RESET",
+  "production_schema_provenance": "UNAVAILABLE_NOT_DEPLOYED",
+  "probe": {
+    "ok": true,
+    "contract": "OPS-1",
+    "repo_schema_version": "10.24.0-rc1",
+    "production_schema_provenance": "UNAVAILABLE_NOT_DEPLOYED",
+    "status": "PROVENANCE_UNAVAILABLE_DOCUMENTED",
+    "note": "Never pretend repo main is production schema. UNAVAILABLE_* allowed only when staging/prod never deployed."
+  },
+  "cpanel_prod_deploy": "NOT_RUN",
+  "browser_walkthrough": "PENDING_T6",
+  "security_suite": "PENDING_PARTIAL",
+  "status": "PASS",
+  "residual": "RC1-P1-001",
+  "reason": "Explicit UNAVAILABLE provenance: no prior deployed schema exists. Disposable migrate/reset covered by TR-1/TR-2/MF-1 harnesses. Staging dump rehearsal remains POST_RC1 before production deploy."
+}
