@@ -36,7 +36,7 @@ class Cycle6SalesContracts(unittest.TestCase):
 
     def test_schema_gate_is_at_least_10_3(self):
         import re
-        m=re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)'",self.runtime);self.assertIsNotNone(m)
+        m=re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)(?:-[^']+)?'",self.runtime);self.assertIsNotNone(m)
         self.assertGreaterEqual(tuple(map(int,m.groups())),(10,3,0))
         self.assertIn("SalesDomain.php",self.bootstrap)
         self.assertIn("SalesDomain::migrate(pdo())",self.bootstrap)

@@ -8,10 +8,15 @@
  * - trade costs never rewrite historical stock movement unit_cost;
  * - landed cost is an auditable deterministic bridge over purchase + trade costs;
  * - AI mutations are executed only through Proposal -> Human Approval.
+ * - FX / customs / import-VAT GL remain DRAFT/read-only future (see TradingCockpitDomain::foreignTradeAssessment).
  */
+require_once __DIR__ . '/TradingCockpitDomain.php';
+
 final class TradeDomain
 {
     public const VERSION='10.2.0';
+    /** RC1: foreign-trade operational records allowed; FX/customs/import VAT GL not enabled. */
+    public const FOREIGN_TRADE_GL='DRAFT_READ_ONLY_FUTURE';
     private const INCOTERMS=['EXW','FCA','FAS','FOB','CFR','CIF','CPT','CIP','DAP','DPU','DDP'];
     private const SHIPMENT_MODES=['sea','air','road','rail','courier'];
     private const SHIPMENT_STATUSES=['planned','booked','in_transit','arrived','customs','cleared','delivered','canceled'];

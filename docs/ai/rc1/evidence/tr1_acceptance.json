@@ -1,0 +1,34 @@
+{
+  "contract": "TR-1",
+  "status": "PASS",
+  "result": {
+    "ok": true,
+    "contract": "TR-1",
+    "status": "PASS",
+    "po_id": 1,
+    "invoices": [
+      2,
+      3
+    ],
+    "outstanding_after_ap": "6000.00",
+    "outstanding_final": "0.00",
+    "stock_movements": 1,
+    "receipt_gl_vouchers": 0,
+    "tax_note": "No VAT invented; omitted tax documented as fixture out-of-scope.",
+    "currency": "IRR"
+  },
+  "sandbox": {
+    "expected_name": "erpsmart-p2p-mysql-test",
+    "expected_id_prefix": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "database": "erpsmart_rc1_test",
+    "port": "3307",
+    "php_image": "erpsmart-o2c-php:8.2",
+    "relax": false,
+    "verified_at": "2026-11-20T15:55:12Z",
+    "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "status": "running",
+    "image": "mysql:8.0",
+    "ok": true,
+    "DATABASE_TESTED": true
+  }
+}

@@ -27,8 +27,8 @@ class O2CContracts1018(unittest.TestCase):
         cls.hard = source("engine/commercial_hardening.py")
 
     def test_version_gate(self):
-        self.assertIn("SCHEMA_VERSION = '10.23.0'", self.runtime)
-        self.assertIn("VERSION='10.23.0'", self.registry)
+        self.assertIn("SCHEMA_VERSION = '10.24.0-rc1'", self.runtime)
+        self.assertIn("VERSION='10.24.0-rc1'", self.registry)
         self.assertIn("VERSION = '10.21.0-o2c'", self.o2c)
         self.assertIn("VERSION='10.23.0'", self.sales)
         self.assertIn("uq_o2c_invoice_line", self.o2c)
@@ -131,7 +131,7 @@ class O2CContracts1018(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
 
     def test_schema_gate_monotonic(self):
-        m = re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)'", self.runtime)
+        m = re.search(r"SCHEMA_VERSION\s*=\s*'(\d+)\.(\d+)\.(\d+)(?:-[^']+)?'", self.runtime)
         self.assertIsNotNone(m)
         self.assertGreaterEqual(tuple(map(int, m.groups())), (10, 18, 1))
 

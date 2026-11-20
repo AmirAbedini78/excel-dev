@@ -15,8 +15,8 @@ import provider_gateway as gateway
 class ManufacturingPilotContracts(unittest.TestCase):
     def test_explicit_opt_in_and_scoped_ui(self):
         modules = (ROOT / 'app/Core/ModuleRegistry.php').read_text(encoding='utf-8')
-        self.assertIn("'pages'=>['production']", modules)
         production = modules.split("'production'=>[", 1)[1].split("'projects'=>[", 1)[0]
+        self.assertIn("'pages'=>['production'", production)
         self.assertIn("'implemented'=>true", production)
         self.assertIn("'default_enabled'=>false", production)
         root = (ROOT / 'index.php').read_text(encoding='utf-8')
@@ -34,7 +34,7 @@ class ManufacturingPilotContracts(unittest.TestCase):
         self.assertIn('InventoryDomain::inventoryPosition', domain)
         self.assertNotIn('acc_stock_movements SET', domain)
         self.assertIn('ProductionDomain::migrate(pdo());', (ROOT / 'app/bootstrap.php').read_text(encoding='utf-8'))
-        self.assertIn('10.23.0', (ROOT / 'app/Core/RuntimeCache.php').read_text(encoding='utf-8'))  # Additive suite migration advances schema gate
+        self.assertIn('10.24.0-rc1', (ROOT / 'app/Core/RuntimeCache.php').read_text(encoding='utf-8'))  # Additive suite migration advances schema gate
 
     def test_demo_seeder_requires_explicit_demo_scope(self):
         seed = (ROOT / 'scripts/seed_manufacturing_demo.php').read_text(encoding='utf-8')

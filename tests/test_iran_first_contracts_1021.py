@@ -13,8 +13,8 @@ def source(path: str) -> str:
 
 class IranFirstContracts1021(unittest.TestCase):
     def test_versions(self):
-        self.assertIn("SCHEMA_VERSION = '10.23.0'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.23.0'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.24.0-rc1'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.24.0-rc1'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("BusinessProfileDomain.php", source("app/bootstrap.php"))
         self.assertIn("BusinessProfileDomain::migrate(pdo())", source("app/bootstrap.php"))
 
@@ -39,9 +39,14 @@ class IranFirstContracts1021(unittest.TestCase):
         self.assertTrue((ROOT / "docs/ai/53-REGULATORY-GAP-MATRIX-1021.md").is_file())
 
     def test_toman_conversion_rules_in_source(self):
+        # RC1 T4: conversion lives in IranLocalizationMoney; BusinessProfileDomain delegates.
         d = source("app/Core/BusinessProfileDomain.php")
-        self.assertIn("return $units * 10", d)
-        self.assertIn("intdiv($irrScaled, 10)", d)
+        self.assertIn("IranLocalizationMoney::displayToIrrScaled", d)
+        self.assertIn("IranLocalizationMoney::irrScaledToDisplay", d)
+        m = source("app/Core/IranLocalizationMoney.php")
+        self.assertIn("TOMAN_FACTOR = 10", m)
+        self.assertIn("return $units * self::TOMAN_FACTOR", m)
+        self.assertIn("intdiv($irrScaled, self::TOMAN_FACTOR)", m)
 
 
 if __name__ == "__main__":

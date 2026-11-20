@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "order_id": 1,
+  "issue_replay": true,
+  "fg_replay": true,
+  "fg_reject_blocked": true,
+  "received_fg": "2.0000",
+  "accepted_qc": "2.0000",
+  "rejected_qc": "1.0000",
+  "scrap_qty": "0.2500",
+  "status_closed": true,
+  "issue_movements": 2,
+  "fg_movements": 2,
+  "cost_class": "UNVALUED",
+  "gl_posting": "BLOCKED",
+  "adapter_mode": "inventory_domain",
+  "raw_a_on_hand": "8.0000",
+  "fg_on_hand": "2.0000",
+  "DATABASE_TESTED": true
+}

@@ -1,7 +1,7 @@
 <?php
 final class ModuleRegistry
 {
-    public const VERSION='10.23.0';
+    public const VERSION='10.24.0-rc1';
     private static array $cache=[];
 
     public static function definitions(): array
@@ -28,7 +28,7 @@ final class ModuleRegistry
             ],
             'procurement'=>[
                 'title'=>'تأمین و خرید','description'=>'جریان اسناد خرید، Expected Inbound، دریافت و Replenishment Intelligence.',
-                'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>['inventory'], 'pages'=>['procurement'],
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>true,'locked'=>false,'depends'=>['inventory'], 'pages'=>['procurement','trading_cockpit'],
             ],
             'p2p'=>[
                 'title'=>'تطبیق سه‌طرفه خرید و فاکتور تأمین‌کننده',
@@ -46,7 +46,7 @@ final class ModuleRegistry
             ],
             'production'=>[
                 'title'=>'تولید','description'=>'BOM، دستور تولید، مصرف، رسید تولید، بهای تمام‌شده و MRP-lite.',
-                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['inventory'], 'pages'=>['production'],
+                'stage'=>'pilot','implemented'=>true,'default_enabled'=>false,'locked'=>false,'depends'=>['inventory'], 'pages'=>['production','manufacturing_cockpit'],
             ],
             'projects'=>[
                 'title'=>'مدیریت پروژه','description'=>'پروژه‌های مشترک با حسابداری، وظیفه و ثبت زمان؛ بدون محاسبه سود حسابداری.',

@@ -1,41 +1,68 @@
 <?php
 /**
- * ERPSMART 10.21.0 — Iran-first business profiles over shared canonical entities.
+ * ERPSMART 10.21.0 / RC1 T4 — Iran-first business profiles over shared canonical entities.
  *
  * Profiles guide module defaults and menus. They do NOT create parallel ledgers,
  * counterparties, or industry-specific GL charts.
+ *
+ * Localization helpers (IranLocalization*) load with this domain so T0 bootstrap
+ * wiring is not required for unit tests / early consumers.
  */
+require_once __DIR__ . '/IranLocalizationDate.php';
+require_once __DIR__ . '/IranLocalizationMoney.php';
+require_once __DIR__ . '/IranLocalizationDocument.php';
+
 final class BusinessProfileDomain
 {
     public const VERSION = '10.21.0-profiles';
+    public const RC1_LOCALIZATION = 'rc1-t4';
     public const FUNCTIONAL_CURRENCY = 'IRR';
     public const DISPLAY_CURRENCY_OPTIONS = ['IRR', 'TOMAN'];
+
+    /** Document families that manufacturing profile may expect; service/retail must not require these. */
+    public const MANUFACTURING_DOC_TYPES = [
+        'bom',
+        'production_order',
+        'material_issue',
+        'finished_goods_receipt',
+        'mrp_recommendation',
+    ];
 
     public const PROFILES = [
         'trading' => [
             'label_fa' => 'بازرگانی / عمده / واردات-صادرات',
             'modules' => ['accounting', 'treasury', 'inventory', 'purchase', 'sales', 'trade', 'p2p', 'crm'],
             'priority_cycles' => ['domestic_p2p', 'o2c', 'foreign_trade_landed_cost', 'treasury'],
+            'requires_manufacturing_docs' => false,
+            'required_doc_families' => ['purchase', 'sales', 'inventory'],
         ],
         'manufacturing' => [
             'label_fa' => 'تولید / صنعتی',
             'modules' => ['accounting', 'treasury', 'inventory', 'purchase', 'sales', 'production', 'p2p'],
             'priority_cycles' => ['bom_mrp', 'production_order', 'material_issue', 'finished_goods_costing'],
+            'requires_manufacturing_docs' => true,
+            'required_doc_families' => ['bom', 'production_order', 'inventory', 'purchase'],
         ],
         'retail' => [
             'label_fa' => 'خرده / توزیع',
             'modules' => ['accounting', 'treasury', 'inventory', 'sales', 'crm'],
             'priority_cycles' => ['o2c', 'pos_settlement', 'inventory'],
+            'requires_manufacturing_docs' => false,
+            'required_doc_families' => ['sales', 'inventory'],
         ],
         'service' => [
             'label_fa' => 'خدماتی / پیمانکاری',
             'modules' => ['accounting', 'treasury', 'crm', 'projects', 'contracts'],
             'priority_cycles' => ['contract_billing', 'expense_allocation', 'treasury'],
+            'requires_manufacturing_docs' => false,
+            'required_doc_families' => ['contracts', 'billing'],
         ],
         'hybrid' => [
             'label_fa' => 'ترکیبی',
             'modules' => ['accounting', 'treasury', 'inventory', 'purchase', 'sales', 'trade', 'production', 'crm'],
             'priority_cycles' => ['o2c', 'p2p', 'selective_trade_or_mfg'],
+            'requires_manufacturing_docs' => false,
+            'required_doc_families' => ['sales', 'purchase'],
         ],
     ];
 
@@ -111,33 +138,80 @@ final class BusinessProfileDomain
     /**
      * Convert display amount string to IRR scaled cents for storage/posting.
      * Explicit only — callers must pass display_currency; never infer silently.
+     * Delegates to IranLocalizationMoney (overflow-guarded).
      */
     public static function displayToIrrScaled(string $amount, string $displayCurrency): int
     {
-        $display = strtoupper(trim($displayCurrency));
-        $units = PurchaseMatchingDomain::scaled(trim($amount), 2, 10000000000);
-        if ($display === 'IRR') {
-            return $units;
-        }
-        if ($display === 'TOMAN') {
-            // 1 Toman display = 10 IRR
-            return $units * 10;
-        }
-        throw new RuntimeException('واحد نمایش نامعتبر است.');
+        return IranLocalizationMoney::displayToIrrScaled($amount, $displayCurrency);
     }
 
     public static function irrScaledToDisplay(int $irrScaled, string $displayCurrency): string
     {
-        $display = strtoupper(trim($displayCurrency));
-        if ($display === 'IRR') {
-            return PurchaseMatchingDomain::fixed($irrScaled, 2);
+        return IranLocalizationMoney::irrScaledToDisplay($irrScaled, $displayCurrency);
+    }
+
+    /** SYS-1: whether this profile code requires manufacturing document families. */
+    public static function requiresManufacturingDocs(string $profileCode): bool
+    {
+        if (!isset(self::PROFILES[$profileCode])) {
+            throw new RuntimeException('پروفایل کسب‌وکار نامعتبر است.');
         }
-        if ($display === 'TOMAN') {
-            if ($irrScaled % 10 !== 0) {
-                throw new RuntimeException('مبلغ IRR قابل تبدیل دقیق به تومان نمایشی نیست.');
+        return !empty(self::PROFILES[$profileCode]['requires_manufacturing_docs']);
+    }
+
+    /**
+     * SYS-1: document readiness for a profile — service/retail never require BOM/PO/MFG docs.
+     *
+     * @param list<string> $availableDocTypes document type codes present for the company
+     */
+    public static function assessDocumentRequirements(string $profileCode, array $availableDocTypes = []): array
+    {
+        if (!isset(self::PROFILES[$profileCode])) {
+            throw new RuntimeException('پروفایل کسب‌وکار نامعتبر است.');
+        }
+        $def = self::PROFILES[$profileCode];
+        $requiresMfg = !empty($def['requires_manufacturing_docs']);
+        $required = $def['required_doc_families'] ?? [];
+        $available = array_values(array_unique(array_map('strval', $availableDocTypes)));
+        $missing = [];
+        foreach ($required as $fam) {
+            if (!in_array($fam, $available, true)) {
+                $missing[] = $fam;
             }
-            return PurchaseMatchingDomain::fixed(intdiv($irrScaled, 10), 2);
         }
-        throw new RuntimeException('واحد نمایش نامعتبر است.');
+        // Manufacturing docs must never be injected as hard requirements for service/retail.
+        $spuriousMfg = [];
+        if (!$requiresMfg) {
+            foreach (self::MANUFACTURING_DOC_TYPES as $mfgDoc) {
+                if (in_array($mfgDoc, $required, true)) {
+                    $spuriousMfg[] = $mfgDoc;
+                }
+            }
+        }
+        return [
+            'profile_code' => $profileCode,
+            'requires_manufacturing_docs' => $requiresMfg,
+            'required_doc_families' => $required,
+            'available_doc_types' => $available,
+            'missing_required' => $missing,
+            'spurious_manufacturing_requirements' => $spuriousMfg,
+            // SYS-1 focus: non-mfg profiles must not gate on manufacturing docs.
+            'sys1_ok' => ($requiresMfg ? ($missing === []) : ($spuriousMfg === [])),
+            'service_retail_free_of_mfg_gate' => in_array($profileCode, ['service', 'retail'], true)
+                && !$requiresMfg
+                && $spuriousMfg === [],
+        ];
+    }
+
+    public static function localizationApis(): array
+    {
+        return [
+            'IranLocalizationDate' => IranLocalizationDate::VERSION,
+            'IranLocalizationMoney' => IranLocalizationMoney::VERSION,
+            'IranLocalizationDocument' => IranLocalizationDocument::VERSION,
+            'functional_currency' => self::FUNCTIONAL_CURRENCY,
+            'toman_factor' => IranLocalizationMoney::TOMAN_FACTOR,
+            'legal_integrations' => 'OFF',
+        ];
     }
 }
