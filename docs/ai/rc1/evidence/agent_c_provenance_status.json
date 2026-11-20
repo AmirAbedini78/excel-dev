@@ -1,0 +1,26 @@
+{
+  "agent": "AGENT_C",
+  "scope": "OPS-1 provenance and migration",
+  "verified_at_utc": "2026-11-20T20:50:00Z",
+  "expected_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
+  "workspace_note": "Local main may lag expected pin; do not invent merge evidence",
+  "production": "NOT_DEPLOYED",
+  "cpanel_prod": "NOT_RUN",
+  "provenance_class": "UNAVAILABLE",
+  "fresh_install": "NOT_ASSUMED",
+  "ops1_independent_class": "BLOCKED_EXTERNAL",
+  "engineering_restore_class": "CLOSED",
+  "migration_drill_class": "CLOSED_DISPOSABLE",
+  "backup_restore_evidence": {
+    "closure": "docs/ai/rc1/evidence/ops1_backup_restore_closure.json",
+    "reverify": "docs/ai/rc1/evidence/ops1_backup_restore_reverify.json",
+    "artifact": "docs/ai/rc1/evidence/ops1_closure_backup.sql",
+    "dump_sha256": "48806EBC7FE00E55010DA9B5B79C38F912BA332C429032E8C5C71C10B37C6CA2",
+    "partial_historical": [
+      "docs/ai/rc1/evidence/ops1_backup_restore_drill.json",
+      "docs/ai/rc1/evidence/ops1_backup_restore_independent.json"
+    ]
+  },
+  "owner_actions": "docs/ai/rc1/OPS1-OWNER-ACTIONS.md",
+  "recommendation": "Keep OPS-1 BLOCKED_EXTERNAL until Path1 owner confirmation OR Path2 anonymized dump+rehearsal. Do not close provenance."
+}

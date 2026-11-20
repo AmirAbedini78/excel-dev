@@ -1,24 +1,42 @@
 # RC1 P1 Closure Status Board
 
-**Branch:** `fix/rc1-stabilization-p1-closure`  
-**Base SHA:** `2a30f5abac6291af2e6d3ccf1f87446335c84bad`  
-**Production:** `NOT_DEPLOYED`
+**Branch:** `fix/rc1-stabilization-p1-closure` → merged **PR #32**  
+**Pre-closure base SHA:** `2a30f5abac6291af2e6d3ccf1f87446335c84bad`  
+**Final main SHA:** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
+**Production:** `NOT_DEPLOYED`  
+**Independent verdict:** `RC1_BLOCKED` (do **not** redefine PASS)
 
-| Blocker ID | Owner | Repro | Fix branch | Test | Integration | Remaining dependency |
-|------------|-------|-------|------------|------|-------------|----------------------|
-| RC1-P1-005 MF concurrency | T1/T2 → T0 | `test_06` reservation race | same | **PASS** concurrent issue (1 ok + 1 WMS code reject; on_hand A=4) | absorbed | none (engineering) |
-| RC1-P1-005 Trading Persian | T3 → T0 | `تکراری` / Unicode decode | same | **PASS** `P2P_SUPPLIER_INVOICE_DUPLICATE` + NFC Persian | absorbed | none (engineering) |
-| RC1-P1-004 Browser SYS-1 | T6 | authenticated RTL walkthrough | same | **BLOCKED_EXTERNAL** | n/a | staging-like HTTP + login + screenshots |
-| RC1-P1-001 OPS provenance | T7/User | no deploy dump | same | restore **PASS**; provenance **OPEN** | n/a | owner dump **or** written FRESH_INSTALL confirmation |
-| RC1-P1-005 OPS restore | T7 | privileged restore | same | **PASS** (`ops1_backup_restore_closure.json`) | absorbed | none (engineering) |
-| P2-002 PR #29 | T0 | late T1 vs release; CONFLICTING | close/supersede | lock ideas absorbed | document | close after stabilization merge |
+## Contract matrix (independent)
 
-**PR #29:** OPEN vs `release/erpsmart-rc1`, CONFLICTING; tip `967df78`. Safe lock/DDL-outside-TX ideas absorbed into this branch; **close as superseded** after closure PR merges.
+| Contract | Independent class | Notes |
+|----------|-------------------|-------|
+| TR-1 | **PASS_REPRODUCED** | `tr1_acceptance.json` |
+| TR-2 | **PASS_REPRODUCED** | `tr2_acceptance.json` |
+| MF-1 | **PASS_REPRODUCED** | Lifecycle tested; WIP/FG valuation not fully supported; `UNVALUED` / GL `BLOCKED`; no unsupported auto GL |
+| SYS-1 | **BLOCKED_EXTERNAL** | Profile smoke only; browser NOT_RUN |
+| OPS-1 | **BLOCKED_EXTERNAL** | Provenance UNAVAILABLE; restore eng **CLOSED**; browser NOT_RUN |
 
-**Mandatory gates (local, this closure):**
-- `python scripts/rc1_ci_mysql_php_gate.py` → PASS
-- `python scripts/rc1_acceptance_gate.py --strict-pass` (+ `RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED`) → script PASS=5 (independent acceptance still **RC1_BLOCKED** on browser + provenance honesty)
-- `python scripts/release_gate.py --require-php --require-node` → run on tip
-- Proposed CI workflow `docs/ai/rc1/ci/rc1-mysql-php-gate.yml` (install to `.github/workflows/` with workflow-scoped token); `scripts/rc1_ci_mysql_php_gate.py` fails on skip
+## Blocker board
 
-**Independent verdict:** `RC1_BLOCKED` — engineering P1-005 closed; SYS-1 browser + OPS-1 provenance remain external. `NOT_DEPLOYED`.
+| Blocker ID | Owner | Status | Notes |
+|------------|-------|--------|-------|
+| RC1-P1-005 MF concurrency | T0 | **CLOSED** | test_06 PASS; WMS codes; on_hand A=4 |
+| RC1-P1-005 Trading Persian | T0 | **CLOSED** | `P2P_SUPPLIER_INVOICE_DUPLICATE` + Persian |
+| RC1-P1-005 OPS restore | T0 | **CLOSED** | privileged restore+migrate×2 PASS |
+| RC1-P1-004 Browser SYS-1 | User/T6 | **OPEN / BLOCKED_EXTERNAL** | `T6-BROWSER-NOTES.md`; no screenshots |
+| RC1-P1-001 OPS provenance | User | **OPEN / BLOCKED_EXTERNAL** | eng restore CLOSED; provenance UNAVAILABLE; see `OPS1-OWNER-ACTIONS.md` |
+| RC1-P1-006 GHA MySQL workflow | Owner | **OPEN / BLOCKED_EXTERNAL** | needs `gh auth refresh -h github.com -s workflow`; GHA E2E **not** enabled |
+| P2-002 PR #29 | T0 | **CLOSED** | superseded by PR #32; PR #29 closed |
+
+## Peer agent lanes (final)
+
+| Agent | Scope | Status |
+|-------|-------|--------|
+| **Agent A** | GHA / mandatory RC1 MySQL workflow | **DONE** — NOT installed; NOT_RUN; auth command documented |
+| **Agent B** | Authenticated browser RTL/login | **DONE** — BLOCKED_EXTERNAL; exact blockers listed |
+| **Agent C** | Provenance / migration | **DONE** — provenance **UNAVAILABLE**/`BLOCKED_EXTERNAL` (not FRESH_INSTALL); restore eng **CLOSED**; `OPS1-OWNER-ACTIONS.md` |
+| **Agent D** | Docs/acceptance reconciliation | **DONE** — SHA/classes/MF wording aligned |
+
+**Gates:** local `rc1_ci_mysql_php_gate` PASS; `rc1_acceptance_gate --strict-pass` script PASS=5; Commercial MVP on #32 SUCCESS (source-only). Proposed Actions workflow remains under `docs/ai/rc1/ci/` until owner grants `workflow` scope.
+
+**Independent verdict:** `RC1_BLOCKED`

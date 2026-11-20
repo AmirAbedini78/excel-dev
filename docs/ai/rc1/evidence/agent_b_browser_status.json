@@ -1,0 +1,20 @@
+{
+  "lane": "Agent B — Authenticated browser UAT",
+  "verified_at_utc": "2026-11-20T20:48:00Z",
+  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
+  "classification": "BLOCKED_EXTERNAL",
+  "LOCAL_BROWSER_VERIFIED": false,
+  "STAGING_VERIFIED": false,
+  "screenshots": [],
+  "screenshot_dir": "docs/ai/rc1/screenshots",
+  "screenshot_dir_exists": false,
+  "blockers": [
+    "host PHP CLI missing",
+    "app/config.php absent (gitignored; required for HTTP bootstrap)",
+    "no docker-compose/HTTP serve path for index.php",
+    "Cursor browser tabs empty",
+    "no staging URL / seeded non-prod credentials"
+  ],
+  "sys1_recommendation": "BLOCKED_EXTERNAL",
+  "evidence_notes": "docs/ai/rc1/T6-BROWSER-NOTES.md"
+}

@@ -1,0 +1,30 @@
+{
+  "lane": "Agent A — GHA MySQL+PHP E2E",
+  "verified_at_utc": "2026-11-20T20:48:00Z",
+  "final_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
+  "workflow_under_dot_github": false,
+  "proposed_source": "docs/ai/rc1/ci/rc1-mysql-php-gate.yml",
+  "installed_workflows": [".github/workflows/commercial-mvp-gate.yml"],
+  "token_scopes": ["gist", "read:org", "repo"],
+  "workflow_scope_present": false,
+  "one_time_owner_auth": "gh auth refresh -h github.com -s workflow",
+  "yaml_validation": {
+    "fail_on_skip": true,
+    "script": "scripts/rc1_ci_mysql_php_gate.py",
+    "disposable_dbs": ["erpsmart_mf1_test", "erpsmart_t3_trading_test"],
+    "linux_host_note": "O2C_DB_HOST set to 127.0.0.1 for ubuntu-latest + docker --network host; host.docker.internal avoided",
+    "silent_mandatory_skips": false
+  },
+  "real_gha_run": {
+    "status": "NOT_RUN",
+    "url": null,
+    "conclusion": null,
+    "note": "Cannot install/push .github/workflows/* without workflow scope; local green ≠ GHA green"
+  },
+  "gha_e2e_enabled_claim": false,
+  "commercial_mvp_on_final_main": {
+    "url": "https://github.com/AmirAbedini78/excel-dev/actions/runs/44810790482",
+    "conclusion": "SUCCESS",
+    "note": "source-only — insufficient for RC1 MySQL+PHP E2E claim"
+  }
+}

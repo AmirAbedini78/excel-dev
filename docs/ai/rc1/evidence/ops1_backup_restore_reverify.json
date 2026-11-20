@@ -1,0 +1,48 @@
+{
+  "drill": "disposable_backup_restore_reverify_agent_c",
+  "verified_at_utc": "2026-11-20T20:48:09Z",
+  "agent": "AGENT_C",
+  "scope": "disposable_sandbox_only",
+  "production_cpanel": "NOT_RUN",
+  "source_artifact": "docs/ai/rc1/evidence/ops1_closure_backup.sql",
+  "dump_bytes": 51271,
+  "dump_sha256": "48806EBC7FE00E55010DA9B5B79C38F912BA332C429032E8C5C71C10B37C6CA2",
+  "dump_sha256_match_prior_closure": true,
+  "container_name": "erpsmart-p2p-mysql-test",
+  "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+  "server_uuid": "a73a8a84-e4bd-11f1-ad33-7e073bee960b",
+  "host_port": 3307,
+  "restore_db": "erpsmart_rc1_ops1_restore_test",
+  "rollback_db": "erpsmart_rc1_ops1_rollback_drill",
+  "restore_as_root": {
+    "status": "PASS",
+    "tables_after": 32
+  },
+  "rollback_drill_second_restore": {
+    "status": "PASS",
+    "tables_after": 32
+  },
+  "migrate_twice_on_restored": {
+    "status": "PASS",
+    "user": "rc1_admin",
+    "script": "scripts/rc1_ops1_restore_migrate_drill.php",
+    "passes": [
+      {"pass": 1, "ms": 6152, "ok": true},
+      {"pass": 2, "ms": 903, "ok": true}
+    ],
+    "tables_after_migrate": 48
+  },
+  "restricted_select_smoke": {
+    "status": "PASS",
+    "user": "p2p",
+    "db": "erpsmart_rc1_ops1_restore_test",
+    "tables_visible": 48
+  },
+  "restore_as_p2p_without_grant_note": "Prior closure recorded FAIL_ACCESS_DENIED_EXPECTED (ops1_backup_restore_closure.json). Current sandbox p2p holds GRANT ALL ON erpsmart_%.* so Access denied is not the default surface; temporary REVOKE reproduced ERROR 1044 / tables_after=0 then grants were restored. Do not treat deny as always-on.",
+  "production_schema_provenance": "UNAVAILABLE",
+  "fresh_install_claim": "NOT_ASSUMED — owner has not confirmed Path1 in this chat; do not invent FRESH_INSTALL",
+  "engineering_restore_class": "CLOSED",
+  "provenance_class": "BLOCKED_EXTERNAL",
+  "status": "RESTORE_REVERIFY_PASS_PROVENANCE_BLOCKED",
+  "note": "Engineering disposable restore/migrate×2/rollback re-verified. OPS-1 acceptance remains BLOCKED on deployed-schema provenance (RC1-P1-001)."
+}
