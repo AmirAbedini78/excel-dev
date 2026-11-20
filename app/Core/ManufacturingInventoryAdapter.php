@@ -46,6 +46,15 @@ final class ManufacturingInventoryAdapter
     public static function receiveFinishedGoods(int $wid, int $cid, int $uid, array $args): array
     {
         if (method_exists('InventoryDomain', 'receiveFinishedGoods')) {
+            // T2 WarehouseStockApi contract requires lines[]; MF domain may pass scalar item/qty.
+            if (empty($args['lines']) && (int)($args['item_id'] ?? 0) > 0) {
+                $args['lines'] = [[
+                    'item_id' => (int)$args['item_id'],
+                    'quantity' => (string)($args['quantity'] ?? '0'),
+                    'unit_cost' => (string)($args['unit_cost'] ?? '0'),
+                    'source_line_id' => (int)($args['source_line_id'] ?? 0),
+                ]];
+            }
             return InventoryDomain::receiveFinishedGoods($wid, $cid, $uid, $args);
         }
         return self::tempReceiveFg($wid, $cid, $uid, $args);
