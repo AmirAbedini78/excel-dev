@@ -6,7 +6,7 @@
 | Severity | P0 |
 | Contract | OPS-1 / RC gate |
 | Owner | **T7** |
-| Status | MITIGATED (scaffolding) — not closed until RC1_REQUIRED green on release HEAD |
+| Status | RESOLVED — `scripts/rc1_acceptance_gate.py --strict-pass` PASS=5 on release HEAD |
 | Baseline | G0 `921b6dac631763ce8fc772fe54cbc7d1e92a87a0` |
 | Reporter | T7 |
 | Date | 2026-11-20 |

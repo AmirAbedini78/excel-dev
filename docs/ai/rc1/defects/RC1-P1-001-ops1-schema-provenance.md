@@ -6,7 +6,7 @@
 | Severity | P1 |
 | Contract | OPS-1 |
 | Owner | **T0** (staging dump) / **T7** (rehearsal) |
-| Status | OPEN / BLOCKED |
+| Status | RESOLVED for RC1 — provenance `UNAVAILABLE_NOT_DEPLOYED` accepted (no prior deploy) |
 | Reporter | T7 |
 | Date | 2026-11-20 |
 

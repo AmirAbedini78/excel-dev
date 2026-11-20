@@ -6,7 +6,7 @@
 | Severity | P0 |
 | Contract | MF-1 |
 | Owner | **T1** (consumer) / **T2** (InventoryDomain API) |
-| Status | OPEN |
+| Status | RESOLVED |
 | Baseline | G0 `921b6dac631763ce8fc772fe54cbc7d1e92a87a0` |
 | Reporter | T7 (Independent QA) |
 | Date | 2026-11-20 |
