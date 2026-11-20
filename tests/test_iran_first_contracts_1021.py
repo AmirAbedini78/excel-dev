@@ -39,9 +39,14 @@ class IranFirstContracts1021(unittest.TestCase):
         self.assertTrue((ROOT / "docs/ai/53-REGULATORY-GAP-MATRIX-1021.md").is_file())
 
     def test_toman_conversion_rules_in_source(self):
+        # RC1 T4: conversion lives in IranLocalizationMoney; BusinessProfileDomain delegates.
         d = source("app/Core/BusinessProfileDomain.php")
-        self.assertIn("return $units * 10", d)
-        self.assertIn("intdiv($irrScaled, 10)", d)
+        self.assertIn("IranLocalizationMoney::displayToIrrScaled", d)
+        self.assertIn("IranLocalizationMoney::irrScaledToDisplay", d)
+        m = source("app/Core/IranLocalizationMoney.php")
+        self.assertIn("TOMAN_FACTOR = 10", m)
+        self.assertIn("return $units * self::TOMAN_FACTOR", m)
+        self.assertIn("intdiv($irrScaled, self::TOMAN_FACTOR)", m)
 
 
 if __name__ == "__main__":
