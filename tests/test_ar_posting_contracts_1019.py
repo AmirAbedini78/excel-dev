@@ -1,4 +1,4 @@
-"""v10.19.1 AR posting integrity source contracts."""
+"""v10.20.0 AR posting integrity source contracts."""
 from __future__ import annotations
 
 import pathlib
@@ -13,12 +13,12 @@ def source(path: str) -> str:
 
 class ArPostingContracts1019(unittest.TestCase):
     def test_version_and_wiring(self):
-        self.assertIn("SCHEMA_VERSION = '10.19.1'", source("app/Core/RuntimeCache.php"))
-        self.assertIn("VERSION='10.19.1'", source("app/Core/ModuleRegistry.php"))
+        self.assertIn("SCHEMA_VERSION = '10.20.0'", source("app/Core/RuntimeCache.php"))
+        self.assertIn("VERSION='10.20.0'", source("app/Core/ModuleRegistry.php"))
         self.assertIn("AccountingPostingDomain.php", source("app/bootstrap.php"))
         self.assertIn("AccountingPostingDomain::migrate(pdo())", source("app/bootstrap.php"))
-        self.assertIn("VERSION = '10.19.1-ar'", source("app/Core/AccountingPostingDomain.php"))
-        self.assertIn("VERSION = '10.19.1-o2c'", source("app/Core/OrderToCashDomain.php"))
+        self.assertIn("VERSION = '10.20.0-ar'", source("app/Core/AccountingPostingDomain.php"))
+        self.assertIn("VERSION = '10.20.0-o2c'", source("app/Core/OrderToCashDomain.php"))
 
     def test_canonical_ledger_only(self):
         d = source("app/Core/AccountingPostingDomain.php")
@@ -27,7 +27,7 @@ class ArPostingContracts1019(unittest.TestCase):
         self.assertIn("acc_fiscal_years", d)
         self.assertIn("acc_period_closes", d)
         self.assertNotIn("CREATE TABLE IF NOT EXISTS ar_ledger", d)
-        self.assertIn("SETTLEMENT = 'NOT_IMPLEMENTED'", d)
+        self.assertIn("SETTLEMENT = 'AVAILABLE'", d)
 
     def test_integrity_invariants(self):
         d = source("app/Core/AccountingPostingDomain.php")
@@ -68,7 +68,7 @@ class ArPostingContracts1019(unittest.TestCase):
 
     def test_o2c_ar_flag_updated(self):
         self.assertIn("AR_POSTING = 'KERNEL_AVAILABLE'", source("app/Core/OrderToCashDomain.php"))
-        self.assertIn("SETTLEMENT = 'NOT_IMPLEMENTED'", source("app/Core/OrderToCashDomain.php"))
+        self.assertIn("SETTLEMENT = 'AVAILABLE'", source("app/Core/OrderToCashDomain.php"))
 
 
 if __name__ == "__main__":

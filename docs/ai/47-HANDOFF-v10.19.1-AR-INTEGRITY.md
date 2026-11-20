@@ -2,9 +2,12 @@
 
 **NOT_DEPLOYED**
 
-## Baseline
-- `f928a44988e5f1accea0228a2b629e4804210e85`
+## Baseline / merge
+- Baseline: `f928a44988e5f1accea0228a2b629e4804210e85`
 - Branch: `feature/erp-ar-integrity-v10.19.1`
+- PR: https://github.com/AmirAbedini78/excel-dev/pull/11
+- Merge SHA: `7df6776eb0dcce749dee5d62969db4001b727a9e`
+- CI: https://github.com/AmirAbedini78/excel-dev/actions/runs/44733556265
 
 ## Bugs reproduced & fixed
 | ID | Issue | Fix |

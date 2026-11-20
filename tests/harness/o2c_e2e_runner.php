@@ -24,6 +24,7 @@ try {
             OrderToCashDomain::migrate(pdo());
             SalesDomain::migrate(pdo());
             AccountingPostingDomain::migrate(pdo());
+            ArSettlementDomain::migrate(pdo());
             o2c_json_out(['ok' => true, 'scenario' => 'reset', 'version' => OrderToCashDomain::VERSION, 'ar' => AccountingPostingDomain::VERSION]);
             break;
 
@@ -202,6 +203,53 @@ try {
             Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
             $out = OrderToCashDomain::deleteOrCancelSalesDraft(10, 1, (int)($args['user_id'] ?? 2), (int)$args['sales_doc_id']);
             o2c_json_out(['ok' => true, 'result' => $out]);
+            break;
+
+        case 'ar_set_cash_gl':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => 2, 'is_platform_admin' => 1]);
+            ArSettlementDomain::setCashGlMap(10, 1, 2, (int)($args['cash_gl_account_id'] ?? 6));
+            o2c_json_out(['ok' => true]);
+            break;
+
+        case 'receipt_draft':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => (int)($args['user_id'] ?? 1), 'is_platform_admin' => 1]);
+            $out = ArSettlementDomain::createDraftReceipt(10, 1, (int)($args['user_id'] ?? 1), $args);
+            o2c_json_out(['ok' => true, 'result' => $out]);
+            break;
+
+        case 'receipt_approve':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
+            o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::approveReceipt(10, 1, (int)($args['user_id'] ?? 2), (int)$args['receipt_id'])]);
+            break;
+
+        case 'receipt_post':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
+            o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::postReceipt(10, 1, (int)($args['user_id'] ?? 2), (int)$args['receipt_id'])]);
+            break;
+
+        case 'allocate':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
+            o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::allocate(
+                10, 1, (int)($args['user_id'] ?? 2),
+                (int)$args['receipt_id'], (int)$args['invoice_doc_id'],
+                (string)$args['amount'], (string)($args['idempotency_key'] ?? '')
+            )]);
+            break;
+
+        case 'invoice_settlement':
+            o2c_e2e_connect_reuse();
+            o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::invoiceSettlementStatus(10, 1, (int)$args['invoice_doc_id'])]);
+            break;
+
+        case 'receipt_reverse':
+            o2c_e2e_connect_reuse();
+            Auth::setUser(['id' => (int)($args['user_id'] ?? 2), 'is_platform_admin' => 1]);
+            o2c_json_out(['ok' => true, 'result' => ArSettlementDomain::reverseReceipt(10, 1, (int)($args['user_id'] ?? 2), (int)$args['receipt_id'])]);
             break;
 
         case 'tamper_invoice_line':

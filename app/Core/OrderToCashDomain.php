@@ -10,10 +10,10 @@
  */
 final class OrderToCashDomain
 {
-    public const VERSION = '10.19.1-o2c';
-    /** AR posting kernel lives in AccountingPostingDomain (v10.19.1); requires company map + open fiscal year. */
+    public const VERSION = '10.20.0-o2c';
+    /** AR posting kernel + settlement domain (v10.20); settlement requires cash GL map. */
     public const AR_POSTING = 'KERNEL_AVAILABLE';
-    public const SETTLEMENT = 'NOT_IMPLEMENTED';
+    public const SETTLEMENT = 'AVAILABLE';
     public const BILLING_NOTE_MARKER = '[O2C_BILLING_DOC]';
 
     public static function migrate(PDO $db): void

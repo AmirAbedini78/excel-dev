@@ -1,4 +1,4 @@
-"""Real PHP+MySQL E2E for v10.19.1 AR integrity hardening (A2–A7)."""
+"""Real PHP+MySQL E2E for v10.20.0 AR integrity hardening (A2–A7)."""
 from __future__ import annotations
 
 import json
