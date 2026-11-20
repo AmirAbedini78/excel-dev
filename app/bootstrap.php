@@ -33,6 +33,7 @@ require_once APP_ROOT . '/app/Core/ErpSuiteDomain.php';
 require_once APP_ROOT . '/app/Core/WorkflowDomain.php';
 require_once APP_ROOT . '/app/Core/EnterpriseCatalog.php';
 require_once APP_ROOT . '/app/Core/EnterpriseDomain.php';
+require_once APP_ROOT . '/app/Core/PurchaseMatchingDomain.php';
 require_once APP_ROOT . '/app/Core/TradeDomain.php';
 require_once APP_ROOT . '/app/Core/SalesDomain.php';
 require_once APP_ROOT . '/app/Core/BusinessIntelligenceDomain.php';
@@ -73,6 +74,7 @@ if (file_exists($configFile)) {
         ErpSuiteDomain::migrate(pdo());
         WorkflowDomain::migrate(pdo());
         EnterpriseDomain::migrate(pdo());
+        PurchaseMatchingDomain::migrate(pdo());
         AiSchema::migrate(pdo());
         ModuleRegistry::ensureSchema();
         RuntimeCache::markSchema(RuntimeCache::SCHEMA_VERSION);

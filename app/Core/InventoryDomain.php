@@ -42,7 +42,7 @@ final class InventoryDomain
     public static function searchPurchaseDocuments(int $wid,int $cid,string $query=''): array
     {
         self::assertCompany($wid,$cid);$query=trim($query);
-        $where="d.workspace_id=? AND d.company_id=? AND d.doc_type IN ('purchase_order_goods','purchase_invoice_goods') AND d.workflow_status<>'void'";$args=[$wid,$cid];
+        $where="d.workspace_id=? AND d.company_id=? AND d.doc_type IN ('purchase_order_goods','purchase_invoice_goods') AND d.workflow_status<>'void' AND NOT EXISTS (SELECT 1 FROM erp_p2p_vendor_bills p2p WHERE p2p.workspace_id=d.workspace_id AND p2p.company_id=d.company_id AND p2p.canonical_doc_id=d.id AND p2p.status='matched')";$args=[$wid,$cid];
         if($query!==''){$where.=" AND (d.document_no LIKE ? OR p.name LIKE ?)";$like='%'.$query.'%';$args[]=$like;$args[]=$like;}
         $st=pdo()->prepare("SELECT d.id,d.document_no,d.doc_type,d.document_date,d.workflow_status,d.net_total,d.party_id,p.name supplier_name,d.warehouse_id,w.name warehouse_name FROM acc_purchase_docs d LEFT JOIN acc_parties p ON p.id=d.party_id AND p.workspace_id=d.workspace_id LEFT JOIN acc_warehouses w ON w.id=d.warehouse_id AND w.workspace_id=d.workspace_id WHERE $where ORDER BY d.document_date DESC,d.id DESC LIMIT 50");
         $st->execute($args);return $st->fetchAll();
@@ -51,7 +51,7 @@ final class InventoryDomain
     public static function purchaseDocument(int $wid,int $cid,int $purchaseDocId): ?array
     {
         self::assertCompany($wid,$cid);
-        $st=pdo()->prepare("SELECT d.*,p.name supplier_name FROM acc_purchase_docs d LEFT JOIN acc_parties p ON p.id=d.party_id AND p.workspace_id=d.workspace_id WHERE d.id=? AND d.workspace_id=? AND d.company_id=? AND d.doc_type IN ('purchase_order_goods','purchase_invoice_goods') AND d.workflow_status<>'void' LIMIT 1");
+        $st=pdo()->prepare("SELECT d.*,p.name supplier_name FROM acc_purchase_docs d LEFT JOIN acc_parties p ON p.id=d.party_id AND p.workspace_id=d.workspace_id WHERE d.id=? AND d.workspace_id=? AND d.company_id=? AND d.doc_type IN ('purchase_order_goods','purchase_invoice_goods') AND d.workflow_status<>'void' AND NOT EXISTS (SELECT 1 FROM erp_p2p_vendor_bills p2p WHERE p2p.workspace_id=d.workspace_id AND p2p.company_id=d.company_id AND p2p.canonical_doc_id=d.id AND p2p.status='matched') LIMIT 1");
         $st->execute([$purchaseDocId,$wid,$cid]);$doc=$st->fetch();if(!$doc)return null;
         $ls=pdo()->prepare("SELECT l.*,i.code item_code,i.name item_name,u.name unit_name FROM acc_purchase_lines l JOIN acc_items i ON i.id=l.item_id AND i.workspace_id=l.workspace_id LEFT JOIN acc_units u ON u.id=l.unit_id AND u.workspace_id=l.workspace_id WHERE l.workspace_id=? AND l.purchase_doc_id=? ORDER BY l.line_no");
         $ls->execute([$wid,$purchaseDocId]);$doc['lines']=$ls->fetchAll();return$doc;
@@ -61,7 +61,7 @@ final class InventoryDomain
     {
         self::assertCompany($wid,$cid);$docId=max(0,(int)($args['purchase_doc_id']??0));$warehouseId=max(0,(int)($args['warehouse_id']??0));$openOnly=!array_key_exists('open_only',$args)||filter_var($args['open_only'],FILTER_VALIDATE_BOOLEAN);$limit=max(1,min(300,(int)($args['limit']??100)));
         if($docId)self::assertOwned($wid,$cid,'acc_purchase_docs',$docId);if($warehouseId)self::assertOwned($wid,$cid,'acc_warehouses',$warehouseId);
-        $where=["d.workspace_id=?","d.company_id=?","d.doc_type IN ('purchase_order_goods','purchase_invoice_goods')","d.workflow_status<>'void'"];$params=[$wid,$cid];
+        $where=["d.workspace_id=?","d.company_id=?","d.doc_type IN ('purchase_order_goods','purchase_invoice_goods')","d.workflow_status<>'void'","NOT EXISTS (SELECT 1 FROM erp_p2p_vendor_bills p2p WHERE p2p.workspace_id=d.workspace_id AND p2p.company_id=d.company_id AND p2p.canonical_doc_id=d.id AND p2p.status='matched')"];$params=[$wid,$cid];
         if($docId){$where[]='d.id=?';$params[]=$docId;}
         if($warehouseId){$where[]='COALESCE(l.warehouse_id,d.warehouse_id)=?';$params[]=$warehouseId;}
         $sql="SELECT d.id purchase_doc_id,d.document_no,d.doc_type,d.document_date,d.workflow_status,d.party_id,p.name supplier_name,d.warehouse_id document_warehouse_id,l.id purchase_line_id,l.line_no,l.item_id,i.code item_code,i.name item_name,l.quantity ordered_qty,l.unit_price,l.line_total,COALESCE(l.warehouse_id,d.warehouse_id) planned_warehouse_id,w.name planned_warehouse_name,

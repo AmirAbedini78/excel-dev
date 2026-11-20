@@ -590,10 +590,21 @@ final class AccountingIndustrialModule
     private static function deletePurchase(): void
     {
         Tenant::requirePermission('accounting.purchase.manage');$id=(int)($_POST['id']??0);$wid=Tenant::id();$cid=AccountingRepository::companyId();
-        $chk=pdo()->prepare("SELECT id FROM acc_purchase_docs WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1");$chk->execute([$id,$wid,$cid]);if(!$chk->fetchColumn())throw new RuntimeException('سند خرید متعلق به شرکت فعال نیست یا وجود ندارد.');
         $pdo=pdo();$pdo->beginTransaction();
-        try{$pdo->prepare("DELETE FROM acc_purchase_lines WHERE workspace_id=? AND purchase_doc_id=?")->execute([$wid,$id]);$pdo->prepare("DELETE FROM acc_purchase_docs WHERE id=? AND workspace_id=? AND company_id=?")->execute([$id,$wid,$cid]);$pdo->commit();}catch(Throwable$e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
-        self::audit('acc.purchase.delete','acc_purchase_docs',$id,'حذف سند خرید');self::back('purchase');
+        try{
+            $chk=$pdo->prepare('SELECT id,workflow_status FROM acc_purchase_docs WHERE id=? AND workspace_id=? AND company_id=? FOR UPDATE');
+            $chk->execute([$id,$wid,$cid]);$doc=$chk->fetch();
+            if(!$doc)throw new RuntimeException('سند خرید متعلق به شرکت فعال نیست یا وجود ندارد.');
+            if($doc['workflow_status']!=='draft')throw new RuntimeException('برای حفظ سابقه خرید فقط سند موقت قابل حذف است.');
+            $q=$pdo->prepare("SELECT 1 FROM acc_inventory_receipts WHERE workspace_id=? AND company_id=? AND purchase_doc_id=? AND status='posted' LIMIT 1");
+            $q->execute([$wid,$cid,$id]);if($q->fetchColumn())throw new RuntimeException('سند دارای رسید قطعی انبار است و قابل حذف نیست.');
+            $q=$pdo->prepare('SELECT 1 FROM erp_p2p_vendor_bills WHERE workspace_id=? AND company_id=? AND (purchase_order_id=? OR canonical_doc_id=?) LIMIT 1');
+            $q->execute([$wid,$cid,$id,$id]);if($q->fetchColumn())throw new RuntimeException('سند دارای پیوند تطبیق خرید است و قابل حذف نیست.');
+            $pdo->prepare("DELETE FROM acc_purchase_lines WHERE workspace_id=? AND purchase_doc_id=?")->execute([$wid,$id]);
+            $pdo->prepare("DELETE FROM acc_purchase_docs WHERE id=? AND workspace_id=? AND company_id=? AND workflow_status='draft'")->execute([$id,$wid,$cid]);
+            $pdo->commit();
+        }catch(Throwable$e){if($pdo->inTransaction())$pdo->rollBack();throw$e;}
+        self::audit('acc.purchase.delete','acc_purchase_docs',$id,'حذف سند خرید موقت');self::back('purchase');
     }
 
     private static function saveSale(): void

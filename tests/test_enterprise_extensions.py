@@ -11,8 +11,8 @@ def read(path):
 
 class EnterpriseExtensions(unittest.TestCase):
     def test_schema_version_bumped(self):
-        self.assertIn("SCHEMA_VERSION = '10.15.0'",read('app/Core/RuntimeCache.php'))
-        self.assertIn("VERSION='10.15.0'",read('app/Core/ModuleRegistry.php'))
+        self.assertIn("SCHEMA_VERSION = '10.16.0'",read('app/Core/RuntimeCache.php'))
+        self.assertIn("VERSION='10.16.0'",read('app/Core/ModuleRegistry.php'))
 
     def test_bootstrap_order_after_canonical(self):
         boot=read('app/bootstrap.php')
