@@ -139,6 +139,12 @@ def main() -> int:
         print("ALL SOURCE VALIDATION GATES PASSED. Model/product live acceptance is separate.")
     else:
         print("AVAILABLE LOCAL GATES PASSED. FULL SOURCE VALIDATION INCOMPLETE: see skipped runtimes above.")
+    # RC1 note (non-fatal): this gate does not run PHP+MySQL domain E2E.
+    print(
+        "RC1 NOTE: Commercial MVP Gate is source-only. "
+        "For RC1 REQUIRED PHP+MySQL acceptance run: python scripts/rc1_acceptance_gate.py "
+        "(see .github/workflows/rc1-acceptance.yml). SKIP of mandatory E2E = FAIL RC gate."
+    )
     return 0
 
 

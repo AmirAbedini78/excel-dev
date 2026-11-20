@@ -1,0 +1,24 @@
+{
+  "contract": "TR-1",
+  "result": {
+    "ok": false,
+    "contract": "TR-1",
+    "status": "FAIL",
+    "error": "SQLSTATE[42S02]: Base table or view not found: 1146 Table 'erpsmart_p2p_test.acc_inventory_receipt_lines' doesn't exist",
+    "type": "PDOException"
+  },
+  "sandbox": {
+    "expected_name": "erpsmart-p2p-mysql-test",
+    "expected_id_prefix": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "database": "erpsmart_p2p_test",
+    "port": "3307",
+    "php_image": "erpsmart-o2c-php:8.2",
+    "relax": false,
+    "verified_at": "2026-11-20T14:52:14Z",
+    "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "status": "running",
+    "image": "mysql:8.0",
+    "ok": true,
+    "DATABASE_TESTED": true
+  }
+}

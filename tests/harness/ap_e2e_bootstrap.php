@@ -135,15 +135,10 @@ function ap_e2e_reset_schema(): void
     DB::connect(['host' => $host, 'port' => $port, 'name' => $dbName, 'user' => $user, 'pass' => $pass]);
     $db = pdo();
     $db->exec('SET FOREIGN_KEY_CHECKS=0');
-    foreach ([
-        'erp_ap_allocations','erp_ap_payments','erp_ap_postings','erp_ap_workflow','erp_ap_company_maps',
-        'erp_p2p_policy_exceptions','erp_p2p_bill_revisions','erp_p2p_vendor_bill_lines','erp_p2p_vendor_bills','erp_p2p_company_policy',
-        'acc_inventory_receipt_lines','acc_inventory_receipts','acc_stock_movements',
-        'acc_voucher_lines','acc_vouchers','acc_period_closes','acc_fiscal_years','acc_accounts',
-        'acc_purchase_lines','acc_purchase_docs','acc_items','acc_warehouses','acc_parties','companies','workspace_modules',
-        'erp_ar_postings','erp_ar_company_maps','erp_ar_receipts','erp_ar_allocations','acc_cash_accounts','acc_cash_transactions',
-    ] as $t) {
-        $db->exec("DROP TABLE IF EXISTS `{$t}`");
+    // Drop ALL tables in disposable schema (avoids leftover O2C/P2P races leaving half-created state).
+    $existing = $db->query('SHOW FULL TABLES WHERE Table_type = \'BASE TABLE\'')->fetchAll(PDO::FETCH_NUM);
+    foreach ($existing as $row) {
+        $db->exec('DROP TABLE IF EXISTS `' . str_replace('`', '``', (string)$row[0]) . '`');
     }
     $db->exec("CREATE TABLE companies (id INT PRIMARY KEY, workspace_id INT NOT NULL, active TINYINT NOT NULL DEFAULT 1)");
     $db->exec("CREATE TABLE workspace_modules (
