@@ -79,6 +79,7 @@ final class Tenant
     private static array $permissions = [
         'accounting.sales.manage', 'accounting.sales.view', 'accounting.view',
         'accounting.settings.manage', 'accounting.vouchers.manage', 'accounting.vouchers.view',
+        'accounting.treasury.manage', 'accounting.treasury.view',
     ];
     public static function id(): int
     {
@@ -187,6 +188,7 @@ require_once $ROOT.'/app/Core/PurchaseMatchingDomain.php';
 require_once $ROOT.'/app/Core/SalesDomain.php';
 require_once $ROOT.'/app/Core/OrderToCashDomain.php';
 require_once $ROOT.'/app/Core/AccountingPostingDomain.php';
+require_once $ROOT.'/app/Core/ArSettlementDomain.php';
 
 function o2c_e2e_reset_schema(): void
 {
@@ -195,7 +197,7 @@ function o2c_e2e_reset_schema(): void
     $db = pdo();
     $db->exec('SET FOREIGN_KEY_CHECKS=0');
     foreach ([
-        'erp_ar_postings','erp_ar_company_maps',
+        'erp_ar_allocations','erp_ar_receipts','erp_ar_postings','erp_ar_company_maps','acc_cash_transactions','acc_cash_accounts',
         'erp_o2c_invoice_idempotency','erp_o2c_invoice_links','erp_o2c_delivery_idempotency','erp_o2c_stock_locks',
         'acc_sales_delivery_lines','acc_sales_deliveries','acc_inventory_reservations','acc_stock_movements',
         'acc_voucher_lines','acc_vouchers','acc_period_closes','acc_fiscal_years','acc_accounts',
@@ -274,14 +276,31 @@ function o2c_e2e_reset_schema(): void
     SalesDomain::migrate($db);
     OrderToCashDomain::migrate($db);
     AccountingPostingDomain::migrate($db);
+    ArSettlementDomain::migrate($db);
     // Seed
     $db->exec("INSERT INTO companies (id,workspace_id,active) VALUES (1,10,1),(2,10,1)");
     $db->exec("INSERT INTO acc_warehouses (id,workspace_id,company_id,code,name) VALUES (1,10,1,'WH1','Warehouse 1')");
     $db->exec("INSERT INTO acc_items (id,workspace_id,company_id,code,name,purchase_price_1) VALUES (1,10,1,'SKU1','Item1',10.00)");
     $db->exec("INSERT INTO acc_parties (id,workspace_id,company_id,code,name) VALUES (1,10,1,'C1','Customer')");
+    $db->exec("CREATE TABLE acc_cash_accounts (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+      account_kind VARCHAR(30) NOT NULL DEFAULT 'bank', code VARCHAR(80) NULL, name VARCHAR(190) NOT NULL,
+      bank_name VARCHAR(190) NULL, account_no VARCHAR(120) NULL, iban VARCHAR(80) NULL,
+      opening_balance DECIMAL(20,2) NOT NULL DEFAULT 0, active TINYINT NOT NULL DEFAULT 1
+    )");
+    $db->exec("CREATE TABLE acc_cash_transactions (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+      transaction_no VARCHAR(120) NOT NULL, transaction_date DATE NOT NULL, direction VARCHAR(20) NOT NULL,
+      cash_account_id BIGINT NOT NULL, party_id BIGINT NULL, amount DECIMAL(20,2) NOT NULL DEFAULT 0,
+      method VARCHAR(30) NOT NULL DEFAULT 'bank', status VARCHAR(30) NOT NULL DEFAULT 'draft',
+      description VARCHAR(500) NULL, source_type VARCHAR(60) NULL, source_id BIGINT NULL,
+      created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL
+    )");
     $db->exec("INSERT INTO acc_accounts (id,workspace_id,company_id,code,name,account_type,nature,allow_posting,active) VALUES
       (1,10,1,'1101','AR','asset','debit',1,1),(2,10,1,'4101','Revenue','income','credit',1,1),(3,10,1,'2101','Tax','liability','credit',1,1),
-      (4,10,1,'9999','WrongRevAsAsset','asset','debit',1,1),(5,10,1,'8888','NoPost','asset','debit',0,1)");
+      (4,10,1,'9999','WrongRevAsAsset','asset','debit',1,1),(5,10,1,'8888','NoPost','asset','debit',0,1),
+      (6,10,1,'1102','BankGL','asset','debit',1,1)");
+    $db->exec("INSERT INTO acc_cash_accounts (id,workspace_id,company_id,account_kind,code,name,active) VALUES (1,10,1,'bank','BNK1','Bank 1',1)");
     $db->exec("INSERT INTO acc_fiscal_years (workspace_id,company_id,title,start_date,end_date,status,is_active,created_at,updated_at)
       VALUES (10,1,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW())");
     $db->exec("INSERT INTO acc_stock_movements (workspace_id,company_id,movement_date,movement_type,direction,warehouse_id,item_id,quantity,unit_cost,source_type,source_id,status,created_by,created_at)

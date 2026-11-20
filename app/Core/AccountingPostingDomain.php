@@ -7,8 +7,8 @@
  */
 final class AccountingPostingDomain
 {
-    public const VERSION = '10.19.1-ar';
-    public const SETTLEMENT = 'NOT_IMPLEMENTED';
+    public const VERSION = '10.20.0-ar';
+    public const SETTLEMENT = 'AVAILABLE';
     public const CURRENCY = 'IRR';
 
     public static function migrate(PDO $db): void
@@ -523,15 +523,18 @@ final class AccountingPostingDomain
             ];
         }
 
-        // Prefer historical receivable accounts from postings; fall back to current map.
+        // All posted lines on AR control account(s): invoices (Dr) + receipts/reversals (Cr/Dr).
+        $fallbackAr = $map ? (int)$map['receivable_account_id'] : 0;
         $q = pdo()->prepare("SELECT COALESCE(SUM(l.debit-l.credit),0) bal FROM acc_voucher_lines l
             JOIN acc_vouchers v ON v.id=l.voucher_id AND v.workspace_id=l.workspace_id
-            JOIN erp_ar_postings p ON p.voucher_id=v.id AND p.workspace_id=v.workspace_id AND p.company_id=v.company_id
             WHERE l.workspace_id=? AND v.company_id=? AND v.status IN ('approved','final')
-              AND v.source_type='o2c_ar' AND l.party_id=?
-              AND l.account_id=COALESCE(p.receivable_account_id, ?)");
-        $fallbackAr = $map ? (int)$map['receivable_account_id'] : 0;
-        $q->execute([$wid, $cid, $partyId, $fallbackAr > 0 ? $fallbackAr : -1]);
+              AND l.party_id=? AND l.account_id IN (
+                SELECT DISTINCT x.aid FROM (
+                  SELECT receivable_account_id AS aid FROM erp_ar_postings WHERE workspace_id=? AND company_id=? AND receivable_account_id IS NOT NULL
+                  UNION ALL SELECT ? AS aid
+                ) x WHERE x.aid>0
+              )");
+        $q->execute([$wid, $cid, $partyId, $wid, $cid, $fallbackAr]);
         $balRaw = (string)$q->fetchColumn();
         // Normalize MySQL decimal to signed string without scientific notation.
         if (!preg_match('/^-?\d+(\.\d+)?$/', $balRaw)) {
@@ -541,10 +544,14 @@ final class AccountingPostingDomain
         $outstanding = self::signedFixed($units, 2);
         $act = pdo()->prepare("SELECT COUNT(*) FROM acc_voucher_lines l
             JOIN acc_vouchers v ON v.id=l.voucher_id AND v.workspace_id=l.workspace_id
-            JOIN erp_ar_postings p ON p.voucher_id=v.id AND p.workspace_id=v.workspace_id
-            WHERE l.workspace_id=? AND v.company_id=? AND v.source_type='o2c_ar' AND l.party_id=?
-              AND l.account_id=COALESCE(p.receivable_account_id, ?)");
-        $act->execute([$wid, $cid, $partyId, $fallbackAr > 0 ? $fallbackAr : -1]);
+            WHERE l.workspace_id=? AND v.company_id=? AND v.status IN ('approved','final') AND l.party_id=?
+              AND l.account_id IN (
+                SELECT DISTINCT x.aid FROM (
+                  SELECT receivable_account_id AS aid FROM erp_ar_postings WHERE workspace_id=? AND company_id=? AND receivable_account_id IS NOT NULL
+                  UNION ALL SELECT ? AS aid
+                ) x WHERE x.aid>0
+              )");
+        $act->execute([$wid, $cid, $partyId, $wid, $cid, $fallbackAr]);
         $hasActivity = (int)$act->fetchColumn() > 0;
         if ($units > 0) {
             $status = 'OPEN';

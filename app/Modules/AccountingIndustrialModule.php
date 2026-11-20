@@ -27,6 +27,12 @@ final class AccountingIndustrialModule
         if($action==='acc_o2c_deliver')self::o2cDeliver();
         if($action==='acc_o2c_invoice_delivery')self::o2cInvoiceFromDelivery();
         if($action==='acc_ar_post_invoice')self::arPostInvoice();
+        if($action==='acc_ar_receipt_draft')self::arReceiptDraft();
+        if($action==='acc_ar_receipt_approve')self::arReceiptApprove();
+        if($action==='acc_ar_receipt_post')self::arReceiptPost();
+        if($action==='acc_ar_allocate')self::arAllocate();
+        if($action==='acc_ar_receipt_reverse')self::arReceiptReverse();
+        if($action==='acc_ar_set_cash_gl')self::arSetCashGl();
         if($action==='acc_save_voucher')self::saveVoucher();
         if($action==='acc_delete_voucher')self::deleteVoucher();
         if($action==='acc_save_bom')self::saveBom();
@@ -475,6 +481,38 @@ final class AccountingIndustrialModule
         }
         $st=pdo()->prepare("SELECT c.*,p.name party_name FROM acc_checks c LEFT JOIN acc_parties p ON p.id=c.party_id WHERE c.workspace_id=? AND c.company_id=? ORDER BY c.due_date,c.id DESC LIMIT 100");$st->execute([Tenant::id(),AccountingRepository::companyId()]);
         foreach($st->fetchAll() as $x)echo '<div class="acc-list-row"><span><b>'.h($x['check_no']).'</b> — '.h($x['party_name']).'</span><small>'.h(AccountingRepository::faDate($x['due_date'])).' • '.number_format((float)$x['amount']).' • '.h($x['status']).'</small></div>';echo '</article></section>';
+
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();
+        echo '<section class="card"><div class="section-title"><h2>دریافت و تسویه AR</h2><span class="muted">Settlement='.h(ArSettlementDomain::SETTLEMENT).' — ثبت دفتر ≠ تسویه بانکی</span></div>';
+        if(Tenant::can('accounting.settings.manage')){
+            echo '<details><summary>حساب نقد/بانک دفتر کل برای تسویه</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_set_cash_gl">';
+            self::selectRows('cash_gl_account_id','حساب GL نقد/بانک (asset)',AccountingRepository::options('acc_accounts'),true);
+            echo '<button class="btn primary">ذخیره نگاشت نقد</button></form></details>';
+        }
+        if(Tenant::can('accounting.treasury.manage')){
+            echo '<details open><summary>+ پیش‌نویس دریافت مشتری</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_receipt_draft"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'">';
+            self::selectRows('party_id','مشتری',AccountingRepository::options('acc_parties'),true);
+            self::selectRows('cash_account_id','بانک/صندوق خزانه',AccountingRepository::options('acc_cash_accounts'),true);
+            self::input('receipt_date','تاریخ',Jalali::today(),'date');self::input('amount','مبلغ','','text');
+            echo '<label class="span2">شرح<textarea name="description"></textarea></label><button class="btn primary">ذخیره پیش‌نویس</button></form></details>';
+            echo '<details><summary>تخصیص دریافت به فاکتور</summary><form method="post" class="grid-form compact">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_allocate"><input type="hidden" name="idempotency_key" value="'.h(bin2hex(random_bytes(16))).'">';
+            self::input('receipt_id','شناسه رسید','','number');self::input('invoice_doc_id','شناسه فاکتور','','number');self::input('amount','مبلغ تخصیص','','text');
+            echo '<button class="btn primary">تخصیص</button></form></details>';
+        }
+        $rs=pdo()->prepare("SELECT r.*,p.name party_name FROM erp_ar_receipts r LEFT JOIN acc_parties p ON p.id=r.party_id WHERE r.workspace_id=? AND r.company_id=? ORDER BY r.id DESC LIMIT 50");
+        try{
+            $rs->execute([$wid,$cid]);
+            echo '<div class="table-wrap"><table><thead><tr><th>شماره</th><th>مشتری</th><th>مبلغ</th><th>وضعیت</th><th></th></tr></thead><tbody>';
+            foreach($rs->fetchAll() as $r){
+                echo '<tr><td>'.h($r['receipt_no']).'</td><td>'.h($r['party_name']).'</td><td>'.number_format((float)$r['amount']).'</td><td>'.h($r['status']).'</td><td class="row-actions">';
+                if(Tenant::can('accounting.treasury.manage') && $r['status']==='draft')echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_receipt_approve"><input type="hidden" name="receipt_id" value="'.(int)$r['id'].'"><button class="btn tiny">تأیید</button></form>';
+                if(Tenant::can('accounting.vouchers.manage') && $r['status']==='approved')echo '<form method="post" class="inline-form">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_receipt_post"><input type="hidden" name="receipt_id" value="'.(int)$r['id'].'"><button class="btn tiny primary">ثبت دفتر</button></form>';
+                if(Tenant::can('accounting.vouchers.manage') && $r['status']==='posted')echo '<form method="post" class="inline-form" onsubmit="return confirm(\'برگشت دریافت؟\')">'.csrf_field().'<input type="hidden" name="action" value="acc_ar_receipt_reverse"><input type="hidden" name="receipt_id" value="'.(int)$r['id'].'"><button class="btn tiny danger">برگشت</button></form>';
+                echo '</td></tr>';
+            }
+            echo '</tbody></table></div>';
+        }catch(Throwable $e){echo '<p class="muted">جداول تسویه هنوز migrate نشده‌اند.</p>';}
+        echo '</section>';
     }
 
     private static function reports(): void
@@ -780,6 +818,71 @@ final class AccountingIndustrialModule
         $out=AccountingPostingDomain::postCustomerInvoice($wid,$cid,$uid,$invoiceId,$idem);
         self::audit('ar.invoice.post','acc_vouchers',(int)$out['voucher_id'],'ثبت AR از فاکتور O2C',['invoice_doc_id'=>$invoiceId]);
         self::back('vouchers','view='.(int)$out['voucher_id']);
+    }
+
+    private static function arSetCashGl(): void
+    {
+        Tenant::requirePermission('accounting.settings.manage');
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        ArSettlementDomain::setCashGlMap($wid,$cid,$uid,(int)($_POST['cash_gl_account_id']??0));
+        self::audit('ar.map.cash_gl','erp_ar_company_maps',$cid,'تنظیم حساب نقد تسویه');
+        self::back('settings');
+    }
+
+    private static function arReceiptDraft(): void
+    {
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $out=ArSettlementDomain::createDraftReceipt($wid,$cid,$uid,[
+            'party_id'=>(int)($_POST['party_id']??0),
+            'cash_account_id'=>(int)($_POST['cash_account_id']??0),
+            'receipt_date'=>(string)($_POST['receipt_date']??''),
+            'amount'=>(string)($_POST['amount']??''),
+            'description'=>(string)($_POST['description']??''),
+            'idempotency_key'=>(string)($_POST['idempotency_key']??''),
+        ]);
+        self::audit('ar.receipt.draft','erp_ar_receipts',(int)$out['id'],'پیش‌نویس دریافت مشتری');
+        self::back('treasury');
+    }
+
+    private static function arReceiptApprove(): void
+    {
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $id=(int)($_POST['receipt_id']??0);
+        $out=ArSettlementDomain::approveReceipt($wid,$cid,$uid,$id);
+        self::audit('ar.receipt.approve','erp_ar_receipts',$id,'تأیید دریافت');
+        self::back('treasury');
+    }
+
+    private static function arReceiptPost(): void
+    {
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $id=(int)($_POST['receipt_id']??0);
+        $out=ArSettlementDomain::postReceipt($wid,$cid,$uid,$id);
+        self::audit('ar.receipt.post','erp_ar_receipts',$id,'ثبت دفتر دریافت',['voucher_id'=>$out['voucher_id']??null]);
+        self::back('vouchers','view='.(int)($out['voucher_id']??0));
+    }
+
+    private static function arAllocate(): void
+    {
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $out=ArSettlementDomain::allocate(
+            $wid,$cid,$uid,
+            (int)($_POST['receipt_id']??0),
+            (int)($_POST['invoice_doc_id']??0),
+            (string)($_POST['amount']??''),
+            (string)($_POST['idempotency_key']??'')
+        );
+        self::audit('ar.allocation.create','erp_ar_allocations',(int)$out['id'],'تخصیص دریافت به فاکتور');
+        self::back('treasury');
+    }
+
+    private static function arReceiptReverse(): void
+    {
+        $wid=Tenant::id();$cid=AccountingRepository::companyId();$uid=(int)Auth::user()['id'];
+        $id=(int)($_POST['receipt_id']??0);
+        $out=ArSettlementDomain::reverseReceipt($wid,$cid,$uid,$id);
+        self::audit('ar.receipt.reverse','erp_ar_receipts',$id,'برگشت دریافت');
+        self::back('treasury');
     }
 
     private static function saveVoucher(): void

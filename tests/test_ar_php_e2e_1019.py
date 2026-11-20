@@ -150,7 +150,7 @@ class ArPhpE2e1019(unittest.TestCase):
         self.assertTrue(first.get("ok"), first)
         self.assertFalse(first["result"]["existing"])
         self.assertEqual(first["result"]["status"], "posted")
-        self.assertEqual(first["result"]["settlement"], "NOT_IMPLEMENTED")
+        self.assertEqual(first["result"]["settlement"], "AVAILABLE")
         voucher_id = int(first["result"]["voucher_id"])
         self.assertEqual(first["result"]["net_total"], "1000.00")
 
