@@ -36,6 +36,7 @@ require_once APP_ROOT . '/app/Core/EnterpriseDomain.php';
 require_once APP_ROOT . '/app/Core/PurchaseMatchingDomain.php';
 require_once APP_ROOT . '/app/Core/TradeDomain.php';
 require_once APP_ROOT . '/app/Core/SalesDomain.php';
+require_once APP_ROOT . '/app/Core/OrderToCashDomain.php';
 require_once APP_ROOT . '/app/Core/BusinessIntelligenceDomain.php';
 require_once APP_ROOT . '/app/Core/CrmDomain.php';
 require_once APP_ROOT . '/app/Core/AiSchema.php';
@@ -69,6 +70,7 @@ if (file_exists($configFile)) {
         AccountingSchema::migrate(pdo());
         AccountingExtendedSchema::migrate(pdo());
         SalesDomain::migrate(pdo());
+        OrderToCashDomain::migrate(pdo());
         CrmDomain::migrate(pdo());
         ProductionDomain::migrate(pdo());
         ErpSuiteDomain::migrate(pdo());

@@ -1,17 +1,18 @@
 <?php
 /**
- * ERPSMART v10.3 Sales Fulfillment domain.
+ * ERPSMART Sales Fulfillment domain (hardened in v10.18 O2C).
  *
  * Invariants:
  * - canonical commercial documents remain acc_sales_docs / acc_sales_lines;
  * - reservations reuse acc_inventory_reservations and never move stock;
- * - delivery is the only Cycle-6 operation that posts outbound stock movement;
+ * - delivery is the only operation that posts outbound stock movement;
+ * - reserve/deliver require workflow approved|final (see OrderToCashDomain);
  * - landed-cost valuation is an overlay/read bridge; inbound history is never rewritten;
- * - no GL voucher or invoice finalization is performed by this domain.
+ * - no GL voucher or AR posting is performed by this domain.
  */
 final class SalesDomain
 {
-    public const VERSION='10.3.0';
+    public const VERSION='10.18.0';
 
     public static function migrate(PDO $pdo): void
     {
@@ -176,27 +177,33 @@ final class SalesDomain
         self::assertCompany($wid,$cid);$salesDocId=(int)($args['sales_doc_id']??0);$warehouseId=(int)($args['warehouse_id']??0);
         self::assertOwned($wid,$cid,'acc_sales_docs',$salesDocId);self::assertOwned($wid,$cid,'acc_warehouses',$warehouseId);
         $doc=self::document($wid,$cid,$salesDocId);
-        if(!$doc||!in_array((string)$doc['doc_type'],['invoice','preinvoice'],true)||in_array((string)$doc['workflow_status'],['void'],true))
-            throw new RuntimeException('سند فروش برای رزرو معتبر نیست.');
+        if(!$doc)throw new RuntimeException('سند فروش برای رزرو معتبر نیست.');
+        OrderToCashDomain::requireFulfillableStatus($doc);
         $requested=(array)($args['lines']??[]);if(!$requested)throw new RuntimeException('حداقل یک ردیف رزرو لازم است.');
         $ful=self::fulfillment($wid,$cid,['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId]);$map=[];
         foreach($ful['rows'] as $r)$map[(int)$r['sales_line_id']]=$r;
         $lines=[];$byItem=[];
         foreach($requested as $raw){
-            $lineId=(int)($raw['sales_line_id']??0);$qty=(float)($raw['quantity']??0);
+            $lineId=(int)($raw['sales_line_id']??0);
+            $qtyUnits=OrderToCashDomain::scaledQty((string)($raw['quantity']??'0'));
             if(!$lineId||!isset($map[$lineId]))throw new RuntimeException('ردیف فروش معتبر نیست.');
-            if($qty<=0||$qty>(float)$map[$lineId]['outstanding_qty']+0.000001)throw new RuntimeException('مقدار رزرو از باقیمانده فروش بیشتر است.');
-            $itemId=(int)$map[$lineId]['item_id'];$lines[]=['sales_line_id'=>$lineId,'item_id'=>$itemId,'quantity'=>$qty];
-            $byItem[$itemId]=($byItem[$itemId]??0)+$qty;
+            $outstanding=OrderToCashDomain::scaledQty((string)$map[$lineId]['outstanding_qty']);
+            if($qtyUnits<=0||$qtyUnits>$outstanding)throw new RuntimeException('مقدار رزرو از باقیمانده فروش بیشتر است.');
+            $itemId=(int)$map[$lineId]['item_id'];
+            $qty=OrderToCashDomain::fixedQty($qtyUnits);
+            $lines[]=['sales_line_id'=>$lineId,'item_id'=>$itemId,'quantity'=>$qty];
+            $byItem[$itemId]=($byItem[$itemId]??0)+$qtyUnits;
         }
         $current=self::reservationByItem($wid,$cid,$salesDocId,$warehouseId);
         $pos=InventoryDomain::inventoryPosition($wid,$cid,['warehouse_id'=>$warehouseId,'limit'=>300]);$positions=[];
         foreach($pos['rows'] as $r)$positions[(int)$r['id']]=$r;
-        foreach($byItem as $itemId=>$qty){
-            $available=(float)($positions[$itemId]['available']??0);$own=(float)($current[$itemId]['quantity']??0);
-            if($qty>$available+$own+0.000001)throw new RuntimeException('موجودی قابل رزرو برای یکی از اقلام کافی نیست.');
+        foreach($byItem as $itemId=>$qtyUnits){
+            $available=OrderToCashDomain::scaledQty((string)($positions[$itemId]['available']??'0'));
+            $own=OrderToCashDomain::scaledQty((string)($current[$itemId]['quantity']??'0'));
+            if($qtyUnits>$available+$own)throw new RuntimeException('موجودی قابل رزرو برای یکی از اقلام کافی نیست.');
         }
-        return ['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'document_no'=>$doc['document_no'],'lines'=>$lines,'by_item'=>$byItem,'notes'=>mb_substr(trim((string)($args['notes']??'')),0,500)];
+        $byItemFixed=[];foreach($byItem as $iid=>$u)$byItemFixed[$iid]=OrderToCashDomain::fixedQty((int)$u);
+        return ['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'document_no'=>$doc['document_no'],'lines'=>$lines,'by_item'=>$byItemFixed,'notes'=>mb_substr(trim((string)($args['notes']??'')),0,500)];
     }
 
     public static function reserveStock(int $wid,int $cid,int $userId,array $args): array
@@ -207,11 +214,23 @@ final class SalesDomain
             $lock=$pdo->prepare("SELECT id FROM acc_sales_docs WHERE id=? AND workspace_id=? AND company_id=? FOR UPDATE");
             $lock->execute([$salesDocId,$wid,$cid]);if(!$lock->fetchColumn())throw new RuntimeException('سند فروش پیدا نشد.');
             $norm=self::normalizeReservationArgs($wid,$cid,$args);
+            // Serialize competing reservations for the same warehouse+items across orders.
+            $itemIds=array_map('intval',array_keys($norm['by_item']));
+            if($itemIds){
+                $in=implode(',',array_fill(0,count($itemIds),'?'));
+                $params=array_merge([$wid,$cid,(int)$norm['warehouse_id']],$itemIds);
+                $pdo->prepare("SELECT id FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id IN ($in) AND status='active' FOR UPDATE")->execute($params);
+            }
+            // Replace active reservations atomically under sales-doc lock (already held).
             $pdo->prepare("DELETE FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND source_type='sales_doc' AND source_id=? AND status='active'")->execute([$wid,$cid,$salesDocId]);
             $ins=$pdo->prepare("INSERT INTO acc_inventory_reservations (workspace_id,company_id,warehouse_id,item_id,source_type,source_id,quantity,status,notes,created_by,created_at,updated_at) VALUES (?,?,?,?,'sales_doc',?,?,'active',?,?,NOW(),NOW())");
-            $qty=0.0;
-            foreach($norm['by_item'] as $itemId=>$amount){$ins->execute([$wid,$cid,$norm['warehouse_id'],$itemId,$salesDocId,$amount,$norm['notes']?:('رزرو فروش '.$norm['document_no']),$userId]);$qty+=$amount;}
+            $qtyUnits=0;
+            foreach($norm['by_item'] as $itemId=>$amount){
+                $ins->execute([$wid,$cid,$norm['warehouse_id'],$itemId,$salesDocId,$amount,$norm['notes']?:('رزرو فروش '.$norm['document_no']),$userId]);
+                $qtyUnits+=OrderToCashDomain::scaledQty((string)$amount);
+            }
             if($owns)$pdo->commit();
+            $qty=OrderToCashDomain::fixedQty($qtyUnits);
             Audit::logForWorkspace($wid,'sales.reserve','acc_sales_docs',$salesDocId,'رزرو موجودی برای '.$norm['document_no'],null,['warehouse_id'=>$norm['warehouse_id'],'quantity'=>$qty]);
             return ['entity'=>'acc_inventory_reservations','sales_doc_id'=>$salesDocId,'document_no'=>$norm['document_no'],'warehouse_id'=>$norm['warehouse_id'],'reserved_quantity'=>$qty,'status'=>'active'];
         }catch(Throwable $e){if($owns&&$pdo->inTransaction())$pdo->rollBack();throw $e;}
@@ -222,28 +241,37 @@ final class SalesDomain
         self::assertCompany($wid,$cid);$salesDocId=(int)($args['sales_doc_id']??0);$warehouseId=(int)($args['warehouse_id']??0);
         self::assertOwned($wid,$cid,'acc_sales_docs',$salesDocId);self::assertOwned($wid,$cid,'acc_warehouses',$warehouseId);
         $doc=self::document($wid,$cid,$salesDocId);
-        if(!$doc||!in_array((string)$doc['doc_type'],['invoice','preinvoice'],true)||in_array((string)$doc['workflow_status'],['void'],true))
-            throw new RuntimeException('سند فروش برای تحویل معتبر نیست.');
+        if(!$doc)throw new RuntimeException('سند فروش برای تحویل معتبر نیست.');
+        OrderToCashDomain::requireFulfillableStatus($doc);
         $date=AccountingRepository::date((string)($args['delivery_date']??''))?:date('Y-m-d');
         $requested=(array)($args['lines']??[]);if(!$requested)throw new RuntimeException('حداقل یک ردیف تحویل لازم است.');
         $ful=self::fulfillment($wid,$cid,['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId]);$map=[];
         foreach($ful['rows'] as $r)$map[(int)$r['sales_line_id']]=$r;
         $lines=[];$byItem=[];
         foreach($requested as $raw){
-            $lineId=(int)($raw['sales_line_id']??0);$qty=(float)($raw['quantity']??0);
+            $lineId=(int)($raw['sales_line_id']??0);
+            $qtyUnits=OrderToCashDomain::scaledQty((string)($raw['quantity']??'0'));
             if(!$lineId||!isset($map[$lineId]))throw new RuntimeException('ردیف فروش برای تحویل معتبر نیست.');
-            if($qty<=0||$qty>(float)$map[$lineId]['outstanding_qty']+0.000001)throw new RuntimeException('مقدار تحویل از باقیمانده فروش بیشتر است.');
-            $itemId=(int)$map[$lineId]['item_id'];$lines[]=['sales_line_id'=>$lineId,'item_id'=>$itemId,'quantity'=>$qty,'item_code'=>$map[$lineId]['item_code'],'item_name'=>$map[$lineId]['item_name']];
-            $byItem[$itemId]=($byItem[$itemId]??0)+$qty;
+            $outstanding=OrderToCashDomain::scaledQty((string)$map[$lineId]['outstanding_qty']);
+            if($qtyUnits<=0||$qtyUnits>$outstanding)throw new RuntimeException('مقدار تحویل از باقیمانده فروش بیشتر است.');
+            $itemId=(int)$map[$lineId]['item_id'];
+            $qty=OrderToCashDomain::fixedQty($qtyUnits);
+            $lines[]=['sales_line_id'=>$lineId,'item_id'=>$itemId,'quantity'=>$qty,'item_code'=>$map[$lineId]['item_code'],'item_name'=>$map[$lineId]['item_name']];
+            $byItem[$itemId]=($byItem[$itemId]??0)+$qtyUnits;
         }
         $reserved=self::reservationByItem($wid,$cid,$salesDocId,$warehouseId);
         $pos=InventoryDomain::inventoryPosition($wid,$cid,['warehouse_id'=>$warehouseId,'limit'=>300]);$positions=[];
         foreach($pos['rows'] as $r)$positions[(int)$r['id']]=$r;
-        foreach($byItem as $itemId=>$qty){
-            if($qty>(float)($reserved[$itemId]['quantity']??0)+0.000001)throw new RuntimeException('تحویل فقط از موجودی رزروشده همین سند مجاز است.');
-            if($qty>(float)($positions[$itemId]['on_hand']??0)+0.000001)throw new RuntimeException('موجودی فیزیکی برای تحویل کافی نیست.');
+        foreach($byItem as $itemId=>$qtyUnits){
+            $resUnits=OrderToCashDomain::scaledQty((string)($reserved[$itemId]['quantity']??'0'));
+            $onHand=OrderToCashDomain::scaledQty((string)($positions[$itemId]['on_hand']??'0'));
+            if($qtyUnits>$resUnits)throw new RuntimeException('تحویل فقط از موجودی رزروشده همین سند مجاز است.');
+            if($qtyUnits>$onHand)throw new RuntimeException('موجودی فیزیکی برای تحویل کافی نیست.');
         }
-        return ['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'document_no'=>$doc['document_no'],'delivery_date'=>$date,'lines'=>$lines,'by_item'=>$byItem,'notes'=>mb_substr(trim((string)($args['notes']??'')),0,1000)];
+        $byItemFixed=[];foreach($byItem as $iid=>$u)$byItemFixed[$iid]=OrderToCashDomain::fixedQty((int)$u);
+        $idem=trim((string)($args['idempotency_key']??''));
+        if($idem!==''&&!preg_match('/^[a-f0-9]{16,64}$/i',$idem))throw new RuntimeException('کلید idempotency نامعتبر است.');
+        return ['sales_doc_id'=>$salesDocId,'warehouse_id'=>$warehouseId,'document_no'=>$doc['document_no'],'delivery_date'=>$date,'lines'=>$lines,'by_item'=>$byItemFixed,'notes'=>mb_substr(trim((string)($args['notes']??'')),0,1000),'idempotency_key'=>$idem];
     }
 
     private static function costBasis(int $wid,int $cid,int $itemId,int $warehouseId=0): array
@@ -286,34 +314,49 @@ final class SalesDomain
             $resLock=$pdo->prepare("SELECT id FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND source_type='sales_doc' AND source_id=? AND status='active' FOR UPDATE");
             $resLock->execute([$wid,$cid,$salesDocId]);$resLock->fetchAll();
             $norm=self::normalizeDeliveryArgs($wid,$cid,$args);
+            if($norm['idempotency_key']!==''){
+                $q=$pdo->prepare('SELECT delivery_id FROM erp_o2c_delivery_idempotency WHERE workspace_id=? AND company_id=? AND sales_doc_id=? AND idempotency_key=? LIMIT 1');
+                $q->execute([$wid,$cid,$salesDocId,$norm['idempotency_key']]);$existing=(int)$q->fetchColumn();
+                if($existing>0){
+                    if($owns)$pdo->commit();
+                    return ['entity'=>'acc_sales_deliveries','id'=>$existing,'existing'=>true,'status'=>'posted','sales_doc_id'=>$salesDocId];
+                }
+            }
             $no='DLV-'.date('Ymd-His').'-'.strtoupper(bin2hex(random_bytes(2)));
             $pdo->prepare("INSERT INTO acc_sales_deliveries (workspace_id,company_id,delivery_no,delivery_date,sales_doc_id,warehouse_id,status,notes,created_by,posted_at,created_at,updated_at) VALUES (?,?,?,?,?,?,'posted',?,?,NOW(),NOW(),NOW())")
                 ->execute([$wid,$cid,$no,$norm['delivery_date'],$salesDocId,$norm['warehouse_id'],$norm['notes']?:null,$userId]);
             $deliveryId=(int)$pdo->lastInsertId();
+            if($norm['idempotency_key']!==''){
+                $pdo->prepare('INSERT INTO erp_o2c_delivery_idempotency (workspace_id,company_id,sales_doc_id,idempotency_key,delivery_id,created_at) VALUES (?,?,?,?,?,NOW())')
+                    ->execute([$wid,$cid,$salesDocId,$norm['idempotency_key'],$deliveryId]);
+            }
             $ins=$pdo->prepare("INSERT INTO acc_sales_delivery_lines (workspace_id,delivery_id,sales_line_id,item_id,quantity,unit_cost_irr,cost_basis,line_cost_irr,created_at) VALUES (?,?,?,?,?,?,?,?,NOW())");
             $move=$pdo->prepare("INSERT INTO acc_stock_movements (workspace_id,company_id,movement_date,movement_type,direction,warehouse_id,item_id,quantity,unit_cost,source_type,source_id,source_line_id,reference_no,status,created_by,created_at) VALUES (?,?,?,'sales_delivery','out',?,?,?,?, 'sales_delivery',?,?,?,'posted',?,NOW())");
-            $qtyTotal=0.0;$costTotal=0.0;$basisCache=[];
+            $qtyTotalUnits=0;$costTotal=0.0;$basisCache=[];
             foreach($norm['lines'] as $l){
                 $itemId=(int)$l['item_id'];if(!isset($basisCache[$itemId]))$basisCache[$itemId]=self::costBasis($wid,$cid,$itemId,$norm['warehouse_id']);
                 $basis=$basisCache[$itemId];$lineCost=(float)$l['quantity']*(float)$basis['unit_cost_irr'];
                 $ins->execute([$wid,$deliveryId,$l['sales_line_id'],$itemId,$l['quantity'],$basis['unit_cost_irr'],$basis['cost_basis'],$lineCost]);
                 $deliveryLineId=(int)$pdo->lastInsertId();
                 $move->execute([$wid,$cid,$norm['delivery_date'],$norm['warehouse_id'],$itemId,$l['quantity'],$basis['unit_cost_irr'],$deliveryId,$deliveryLineId,$no,$userId]);
-                $qtyTotal+=(float)$l['quantity'];$costTotal+=$lineCost;
+                $qtyTotalUnits+=OrderToCashDomain::scaledQty((string)$l['quantity']);$costTotal+=$lineCost;
             }
-            foreach($norm['by_item'] as $itemId=>$need){
+            foreach($norm['by_item'] as $itemId=>$needQty){
                 $st=$pdo->prepare("SELECT id,quantity FROM acc_inventory_reservations WHERE workspace_id=? AND company_id=? AND source_type='sales_doc' AND source_id=? AND warehouse_id=? AND item_id=? AND status='active' ORDER BY id FOR UPDATE");
-                $st->execute([$wid,$cid,$salesDocId,$norm['warehouse_id'],$itemId]);$remaining=(float)$need;
+                $st->execute([$wid,$cid,$salesDocId,$norm['warehouse_id'],$itemId]);$remaining=OrderToCashDomain::scaledQty((string)$needQty);
                 foreach($st->fetchAll() as $r){
-                    if($remaining<=0)break;$take=min($remaining,(float)$r['quantity']);$new=(float)$r['quantity']-$take;$remaining-=$take;
-                    if($new<=0.000001)$pdo->prepare("UPDATE acc_inventory_reservations SET quantity=0,status='consumed',updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([(int)$r['id'],$wid]);
-                    else $pdo->prepare("UPDATE acc_inventory_reservations SET quantity=?,updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([$new,(int)$r['id'],$wid]);
+                    if($remaining<=0)break;
+                    $have=OrderToCashDomain::scaledQty((string)$r['quantity']);
+                    $take=min($remaining,$have);$new=$have-$take;$remaining-=$take;
+                    if($new<=0)$pdo->prepare("UPDATE acc_inventory_reservations SET quantity=0,status='consumed',updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([(int)$r['id'],$wid]);
+                    else $pdo->prepare("UPDATE acc_inventory_reservations SET quantity=?,updated_at=NOW() WHERE id=? AND workspace_id=?")->execute([OrderToCashDomain::fixedQty($new),(int)$r['id'],$wid]);
                 }
-                if($remaining>0.000001)throw new RuntimeException('رزرو همزمان تغییر کرده است؛ تحویل متوقف شد.');
+                if($remaining>0)throw new RuntimeException('رزرو همزمان تغییر کرده است؛ تحویل متوقف شد.');
             }
             if($owns)$pdo->commit();
+            $qtyTotal=OrderToCashDomain::fixedQty($qtyTotalUnits);
             Audit::logForWorkspace($wid,'sales.delivery','acc_sales_deliveries',$deliveryId,'تحویل فروش '.$no,null,['sales_doc_id'=>$salesDocId,'quantity'=>$qtyTotal,'cost_irr'=>$costTotal]);
-            return ['entity'=>'acc_sales_deliveries','id'=>$deliveryId,'delivery_no'=>$no,'sales_doc_id'=>$salesDocId,'document_no'=>$norm['document_no'],'warehouse_id'=>$norm['warehouse_id'],'delivered_quantity'=>$qtyTotal,'cogs_irr'=>$costTotal,'status'=>'posted'];
+            return ['entity'=>'acc_sales_deliveries','id'=>$deliveryId,'delivery_no'=>$no,'sales_doc_id'=>$salesDocId,'document_no'=>$norm['document_no'],'warehouse_id'=>$norm['warehouse_id'],'delivered_quantity'=>$qtyTotal,'cogs_irr'=>$costTotal,'status'=>'posted','existing'=>false];
         }catch(Throwable $e){if($owns&&$pdo->inTransaction())$pdo->rollBack();throw $e;}
     }
 
