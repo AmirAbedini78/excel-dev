@@ -13,8 +13,8 @@
 | TR-1 | **PASS_REPRODUCED** | `tr1_acceptance.json` |
 | TR-2 | **PASS_REPRODUCED** | `tr2_acceptance.json` |
 | MF-1 | **PASS_REPRODUCED** | Lifecycle tested; WIP/FG valuation not fully supported; `UNVALUED` / GL `BLOCKED`; no unsupported auto GL |
-| SYS-1 | **BLOCKED_EXTERNAL** | Profile smoke only; browser NOT_RUN |
-| OPS-1 | **BLOCKED_EXTERNAL** | Provenance UNAVAILABLE; restore eng **CLOSED**; browser NOT_RUN |
+| SYS-1 | **PASS_EXISTING_EVIDENCE_VERIFIED** + **LOCAL_BROWSER_VERIFIED** | Local UAT screenshots; not STAGING_VERIFIED |
+| OPS-1 | **BLOCKED_EXTERNAL** | Provenance UNAVAILABLE; restore eng **CLOSED** |
 
 ## Blocker board
 
@@ -23,7 +23,7 @@
 | RC1-P1-005 MF concurrency | T0 | **CLOSED** | test_06 PASS; WMS codes; on_hand A=4 |
 | RC1-P1-005 Trading Persian | T0 | **CLOSED** | `P2P_SUPPLIER_INVOICE_DUPLICATE` + Persian |
 | RC1-P1-005 OPS restore | T0 | **CLOSED** | privileged restore+migrate×2 PASS |
-| RC1-P1-004 Browser SYS-1 | User/T6 | **OPEN / BLOCKED_EXTERNAL** | `T6-BROWSER-NOTES.md`; no screenshots |
+| RC1-P1-004 Browser SYS-1 | Agent B / T0 | **CLOSED (local)** | `LOCAL_BROWSER_VERIFIED`; staging residual P2 |
 | RC1-P1-001 OPS provenance | User | **OPEN / BLOCKED_EXTERNAL** | eng restore CLOSED; provenance UNAVAILABLE; see `OPS1-OWNER-ACTIONS.md` |
 | RC1-P1-006 GHA MySQL workflow | Owner | **OPEN / BLOCKED_EXTERNAL** | needs `gh auth refresh -h github.com -s workflow`; GHA E2E **not** enabled |
 | P2-002 PR #29 | T0 | **CLOSED** | superseded by PR #32; PR #29 closed |
@@ -33,7 +33,7 @@
 | Agent | Scope | Status |
 |-------|-------|--------|
 | **Agent A** | GHA / mandatory RC1 MySQL workflow | **DONE** — NOT installed; NOT_RUN; auth command documented |
-| **Agent B** | Authenticated browser RTL/login | **DONE** — BLOCKED_EXTERNAL; exact blockers listed |
+| **Agent B** | Authenticated browser RTL/login | **DONE** — **LOCAL_BROWSER_VERIFIED**; `evidence/browser/` |
 | **Agent C** | Provenance / migration | **DONE** — provenance **UNAVAILABLE**/`BLOCKED_EXTERNAL` (not FRESH_INSTALL); restore eng **CLOSED**; `OPS1-OWNER-ACTIONS.md` |
 | **Agent D** | Docs/acceptance reconciliation | **DONE** — SHA/classes/MF wording aligned |
 

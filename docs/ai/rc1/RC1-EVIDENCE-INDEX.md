@@ -25,7 +25,7 @@
 | TR-1 | **PASS_REPRODUCED** | `tr1_acceptance.json` | Script PASS + balances |
 | TR-2 | **PASS_REPRODUCED** | `tr2_acceptance.json` | Script PASS + settle `0.00` |
 | MF-1 | **PASS_REPRODUCED** | `mf1_acceptance.json` | Lifecycle PASS; `cost_class=UNVALUED`; `gl_valuation=BLOCKED`; WIP/FG valuation not fully supported; no auto GL |
-| SYS-1 | **BLOCKED_EXTERNAL** | `sys1_acceptance.json` + `agent_b_browser_status.json` | Profile smoke only; browser NOT_RUN |
+| SYS-1 | **PASS_EXISTING_EVIDENCE_VERIFIED** + **LOCAL_BROWSER_VERIFIED** | `sys1_acceptance.json` + `agent_b_browser_status.json` + `evidence/browser/` | Local UAT done; not STAGING_VERIFIED |
 | OPS-1 | **BLOCKED_EXTERNAL** | `ops1_acceptance.json` + `agent_c_provenance_status.json` | Provenance UNAVAILABLE; restore eng **CLOSED** |
 
 ## Commands
@@ -52,12 +52,13 @@
 | `tr1_acceptance.json` / `tr1_sandbox.json` | TR-1 | **PASS_REPRODUCED** |
 | `tr2_acceptance.json` | TR-2 | **PASS_REPRODUCED** |
 | `mf1_acceptance.json` / `mf1_e2e.json` / `mf1_probe.json` | MF-1 | **PASS_REPRODUCED** |
-| `sys1_acceptance.json` | SYS-1 profile smoke (not browser) | **BLOCKED_EXTERNAL** |
+| `sys1_acceptance.json` | SYS-1 smoke + local browser class | **PASS_EXISTING_EVIDENCE_VERIFIED** / **LOCAL_BROWSER_VERIFIED** |
 | `ops1_acceptance.json` | OPS-1 (provenance UNAVAILABLE) | **BLOCKED_EXTERNAL** |
 | `ops1_backup_restore_closure.json` | Privileged restore + migrate×2 | eng **CLOSED** |
 | `ops1_closure_backup.sql` | Disposable dump artifact (sha256 in JSON) | — |
 | `agent_a_gha_status.json` | GHA install/auth status | GHA **NOT_RUN** |
-| `agent_b_browser_status.json` | Browser UAT status | **BLOCKED_EXTERNAL** |
+| `agent_b_browser_status.json` | Browser UAT status | **LOCAL_BROWSER_VERIFIED** |
+| `browser/*.png` + logs | Genuine local UAT screenshots | **LOCAL_BROWSER_VERIFIED** |
 | `agent_c_provenance_status.json` | Provenance Path1/Path2 | **BLOCKED_EXTERNAL** |
 | `ops1_backup_restore_reverify.json` | Re-verify privileged restore+migrate×2 | eng CLOSED (reconfirm) |
 | `../OPS1-OWNER-ACTIONS.md` | Path1 confirmation text / Path2 dump checklist | owner action |
@@ -67,7 +68,7 @@
 
 ## Browser / screenshots
 
-**NOT_RUN** — `T6-BROWSER-NOTES.md`: `BLOCKED_EXTERNAL`; no `LOCAL_BROWSER_VERIFIED` / no `STAGING_VERIFIED`; no files under `docs/ai/rc1/screenshots/`.
+**LOCAL_BROWSER_VERIFIED** — `T6-BROWSER-NOTES.md` + `docs/ai/rc1/evidence/browser/` (9 PNGs). **Not** `STAGING_VERIFIED` (no staging URL).
 
 ## Classification legend used
 

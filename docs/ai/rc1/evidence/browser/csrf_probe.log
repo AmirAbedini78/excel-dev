@@ -1,0 +1,17 @@
+﻿RC1 Browser CSRF probe — local disposable UAT
+Date: 2026-11-20T20:54Z
+URL: http://127.0.0.1:8765
+DB: erpsmart_rc1_browser_uat @ erpsmart-p2p-mysql-test:3307
+
+1) Authenticated POST action=ui_cockpit_post_stock WITHOUT csrf
+   -> HTTP 419, body: CSRF token mismatch
+
+2) Authenticated POST with csrf=deadbeef
+   -> HTTP 419, body: CSRF token mismatch
+
+3) Authenticated POST WITH valid session csrf
+   -> Mutation refused by UiCockpitModule (RuntimeException flash:
+      کابین UX اجازه ثبت مستقیم موجودی/دفتر یا اجرای آزاد AI را ندارد.)
+   -> redirect 302 index.php (http_response_code 403 set before redirect)
+
+Note: T6 procedure text expected 403; observed CSRF gate is 419; domain refusal flashes after valid CSRF.

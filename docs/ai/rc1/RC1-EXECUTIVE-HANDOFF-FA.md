@@ -9,7 +9,7 @@
 
 ## خلاصه یک‌خطی
 
-بستن مهندسی P1های همزمانی MF، یونیکد cockpit، restore آزمایشی و دروازهٔ محلی CI MySQL **انجام و در main ادغام شد** (PR #32 @ `52fa7f12…`)؛ قراردادهای دامنه TR-1/TR-2/MF-1 روی MySQL آزمایشی **PASS_REPRODUCED** هستند. چرخهٔ عمر ساخت (lifecycle) تست شده؛ ارزش‌گذاری WIP/FG به‌طور کامل پشتیبانی نمی‌شود و GL خودکار WIP/FG وجود ندارد (`UNVALUED` / `GL_BLOCKED`). اما مرورگر واقعی SYS-1، provenance اسکیمای استقرار قبلی OPS-1، و نصب workflow اجباری GHA MySQL همچنان **خارجی/مسدود**اند — بنابراین پذیرش نهایی RC1 **مسدود** است، نه پذیرفته.
+بستن مهندسی P1های همزمانی MF، یونیکد cockpit، restore آزمایشی و دروازهٔ محلی CI MySQL **انجام و در main ادغام شد** (PR #32 @ `52fa7f12…`)؛ قراردادهای دامنه TR-1/TR-2/MF-1 روی MySQL آزمایشی **PASS_REPRODUCED** هستند. چرخهٔ عمر ساخت (lifecycle) تست شده؛ ارزش‌گذاری WIP/FG به‌طور کامل پشتیبانی نمی‌شود و GL خودکار WIP/FG وجود ندارد (`UNVALUED` / `GL_BLOCKED`). UAT مرورگر محلی SYS-1 **`LOCAL_BROWSER_VERIFIED`** شد (نه staging). اما provenance اسکیمای استقرار قبلی OPS-1 و نصب workflow اجباری GHA MySQL همچنان **خارجی/مسدود**اند — بنابراین پذیرش نهایی RC1 **مسدود** است، نه پذیرفته.
 
 ## ماتریس قرارداد (مستقل)
 
@@ -18,7 +18,7 @@
 | TR-1 | PASS_REPRODUCED |
 | TR-2 | PASS_REPRODUCED |
 | MF-1 | PASS_REPRODUCED (lifecycle؛ WIP/FG valuation ناقص؛ بدون auto GL) |
-| SYS-1 | BLOCKED_EXTERNAL |
+| SYS-1 | PASS_EXISTING_EVIDENCE_VERIFIED + LOCAL_BROWSER_VERIFIED (نه STAGING) |
 | OPS-1 | BLOCKED_EXTERNAL (restore مهندسی CLOSED) |
 
 ## آنچه در بستن P1 اثبات شد
@@ -33,9 +33,9 @@
 ## آنچه باقی است (اقدام دقیق مالک)
 
 1. **Provenance OPS-1:** یا dump ناشناس staging/قبلی (Path2) **یا** تأیید کتبی «هرگز deploy/نصب نشده» (Path1) — بدون اختراع `FRESH_INSTALL`  
-2. **UAT مرورگر:** سرو HTTP غیرتولیدی + `app/config.php` + کاربر آزمایشی؛ لاگین واقعی RTL/جلالی/IRR-Toman؛ اسکرین‌شات واقعی — تا آن زمان SYS-1 = `BLOCKED_EXTERNAL`  
+2. **UAT مرورگر محلی:** انجام شد (`LOCAL_BROWSER_VERIFIED`، `evidence/browser/`). برای `STAGING_VERIFIED` هنوز URL staging غیرتولیدی لازم است (اختیاری/P2).  
 3. **GHA MySQL+PHP:** یک‌بار `gh auth refresh -h github.com -s workflow` سپس کپی `docs/ai/rc1/ci/rc1-mysql-php-gate.yml` به `.github/workflows/` و اثبات SUCCESS واقعی — تا آن زمان **GHA E2E فعال اعلام نشود**  
-4. فقط پس از رفع P1های خارجی تصمیم deploy — هیچ deploy خودکاری انجام نشده  
+4. فقط پس از رفع P1های provenance و GHA تصمیم deploy — هیچ deploy خودکاری انجام نشده  
 
 ## پیوند شش گزارش ماندگار
 

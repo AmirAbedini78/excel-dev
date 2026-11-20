@@ -1,9 +1,10 @@
 # RC1 Blockers and Remediation
 
 **Independent open P0:** **0**  
-**Independent open P1 (blocking RC1 acceptance):** **3** (browser + provenance + GHA MySQL workflow not installed)  
-**Independent open P2:** **0** (PR #29 superseded/closed after PR #32)  
-**Final `main` SHA:** `52fa7f12f465653d6e445d484f1a8dda48215f45` (PR #32 merged)  
+**Independent open P1 (blocking RC1 acceptance):** **2** (provenance + GHA MySQL workflow not installed)  
+**Independent open P2:** **1** (optional staging browser — not claimed STAGING_VERIFIED)  
+**Engineering product SHA (PR #32):** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
+**Docs tip after PR #33:** `7455b7074c05c0ba63683fc8e435d3db6a069620`  
 **Verdict impact:** `RC1_BLOCKED` — `NOT_DEPLOYED`
 
 ## Contract class summary (independent)
@@ -13,8 +14,8 @@
 | TR-1 | **PASS_REPRODUCED** | none blocking |
 | TR-2 | **PASS_REPRODUCED** | none blocking |
 | MF-1 | **PASS_REPRODUCED** | Valid residual: WIP/FG valuation not fully supported; `UNVALUED` / GL `BLOCKED`; no auto GL |
-| SYS-1 | **BLOCKED_EXTERNAL** | Browser login+RTL missing (`T6-BROWSER-NOTES.md`) |
-| OPS-1 | **BLOCKED_EXTERNAL** | Provenance UNAVAILABLE; restore eng **CLOSED**; browser missing |
+| SYS-1 | **PASS_EXISTING_EVIDENCE_VERIFIED** + **LOCAL_BROWSER_VERIFIED** | Not `STAGING_VERIFIED` (no staging URL) |
+| OPS-1 | **BLOCKED_EXTERNAL** | Provenance UNAVAILABLE; restore eng **CLOSED**; local browser closed separately |
 
 ## P1 — Blocking (independent acceptance)
 
@@ -36,17 +37,17 @@
 
 **Owner Path2:** authorized anonymized dump + SHA-256 + `RC1_PROD_SCHEMA_PROVENANCE=<id>` + disposable restore/migrate×2 rehearsal (checklist in `OPS1-OWNER-ACTIONS.md`).
 
-### RC1-P1-004 — SYS-1 / OPS-1 browser login+RTL walkthrough missing
+### RC1-P1-004 — SYS-1 / OPS-1 browser login+RTL walkthrough
 
 | Field | Value |
 |-------|-------|
-| Severity | **P1** |
-| Contract | SYS-1 + OPS-1 |
-| Class | **BLOCKED_EXTERNAL** |
-| Owner | User staging-like / T6 |
-| Status | **OPEN** |
+| Severity | **P1 → CLOSED (local)** |
+| Contract | SYS-1 + OPS-1 browser |
+| Class | **LOCAL_BROWSER_VERIFIED** (not `STAGING_VERIFIED`) |
+| Owner | Agent B / T0 integrated |
+| Status | **CLOSED** for local disposable UAT; staging residual optional P2 |
 
-**Evidence:** `T6-BROWSER-NOTES.md`, `agent_b_browser_status.json` — host PHP missing; no `app/config.php`; no HTTP serve; no staging URL/credentials; screenshots **NOT_RUN**. Classification: neither `LOCAL_BROWSER_VERIFIED` nor `STAGING_VERIFIED`.
+**Evidence:** `T6-BROWSER-NOTES.md`, `agent_b_browser_status.json`, real screenshots under `docs/ai/rc1/evidence/browser/` (login/logout, trading+mfg cockpits, RTL/Jalali, IRR/Toman, isolation, limited role, CSRF 419, empty/blocked). Local stack: `erpsmart-rc1-browser-uat:8765` + DB `erpsmart_rc1_browser_uat`. Do **not** invent `STAGING_VERIFIED`.
 
 ### RC1-P1-006 — Mandatory GHA MySQL+PHP workflow not installed on Actions
 
