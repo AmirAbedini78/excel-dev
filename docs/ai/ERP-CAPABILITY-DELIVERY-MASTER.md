@@ -2,7 +2,8 @@
 
 **Maintained:** 2026-11-20 · **NOT_DEPLOYED**
 **Merged v10.20.1:** `b2cc0fb6fdda0608b5d6900f7a697e8976c582e1` (PR #13) · CI [44742035933](https://github.com/AmirAbedini78/excel-dev/actions/runs/44742035933)
-**In-flight:** v10.21.0 Iran-first foundations (`feature/erp-iran-first-foundations-v10.21.0`)
+**Merged v10.21.0:** `942d7765120637dd446e9d8611f373edc1edb1b3` (PR #14) · CI [44743805399](https://github.com/AmirAbedini78/excel-dev/actions/runs/44743805399)
+**Next:** AP posting kernel / domestic trading vertical / manufacturing costing pilot
 
 | Capability | Status | Notes |
 |---|---|---|
