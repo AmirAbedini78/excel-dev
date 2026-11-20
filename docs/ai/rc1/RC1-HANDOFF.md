@@ -2,7 +2,7 @@
 
 **Verdict:** `RC1_ACCEPTED`  
 **Release branch:** `release/erpsmart-rc1`  
-**Final SHA:** `995ac8f083f6ffb5446d7c2def7d4c6c5410dc92`  
+**Final SHA:** `c9f6eafdfec7081f869f97da1d7bfaaedf5b4a25`
 **Date:** 2026-11-20  
 **Deploy:** `NOT_DEPLOYED` (cPanel/production forbidden this campaign)
 
