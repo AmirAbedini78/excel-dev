@@ -1,0 +1,113 @@
+# RC1 acceptance gate — additive; does NOT replace commercial-mvp-gate.yml.
+#
+# IMPORTANT: The Commercial MVP Gate (release_gate.py --require-php --require-node)
+# is SOURCE-ONLY. It does not run real PHP domain methods against MySQL.
+# For RC1 exit, this workflow (or an equivalent verified sandbox run of
+# scripts/rc1_acceptance_gate.py) is mandatory. SKIP of PHP+MySQL E2E = FAIL RC gate.
+#
+# Default job is informational on PRs to release/erpsmart-rc1 (continue-on-error when
+# GitHub-hosted runners lack the verified disposable MySQL + erpsmart-o2c-php image).
+# Set repository variable RC1_ACCEPTANCE_REQUIRED=true to fail the check on SKIP/BLOCKED.
+
+name: RC1 Acceptance Gate
+
+on:
+  pull_request:
+    branches: [release/erpsmart-rc1]
+  push:
+    branches: [release/erpsmart-rc1, feature/rc1-t7-qa-release]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  note-source-gate-insufficient:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Document RC1 vs Commercial MVP Gate
+        run: |
+          echo "Commercial MVP Gate = source/runtime syntax + contract unit tests."
+          echo "RC1 REQUIRES real PHP PDO domain calls + disposable MySQL E2E."
+          echo "Harness: scripts/rc1_acceptance_gate.py"
+          echo "Contracts: TR-1 TR-2 MF-1 SYS-1 OPS-1"
+          echo "Verified local sandbox: erpsmart-p2p-mysql-test @ 3307 / erpsmart-o2c-php:8.2"
+
+  rc1-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: ${{ vars.RC1_ACCEPTANCE_REQUIRED != 'true' }}
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: erpsmart_rc1_t7_test
+          MYSQL_USER: p2p
+          MYSQL_PASSWORD: p2p_test
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pymysql
+        run: pip install pymysql
+      - name: Install PHP CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli php-mysql php-xml
+          php --version
+      - name: Wait for MySQL service
+        run: |
+          for i in $(seq 1 30); do
+            php -r 'try{$p=new PDO("mysql:host=127.0.0.1;port=3307","p2p","p2p_test");exit(0);}catch(Throwable $e){fwrite(STDERR,$e->getMessage()."\n");exit(1);}' \
+              && break
+            sleep 2
+          done
+      - name: Note CI sandbox differs from local verified container
+        run: |
+          echo "GitHub service MySQL is disposable but ID != local erpsmart-p2p-mysql-test."
+          echo "Gate verifies connectivity; local G0 identity remains the operator-verified sandbox."
+          echo "RC1_SANDBOX_RELAX=1 allows non-matching container when DOCKER_HOST mysql service used."
+      - name: Check for PHP Docker runner image
+        id: phpimg
+        run: |
+          if docker image inspect erpsmart-o2c-php:8.2 >/dev/null 2>&1; then
+            echo "has_image=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_image=0" >> "$GITHUB_OUTPUT"
+            echo "erpsmart-o2c-php:8.2 missing on runner — gate will FAIL (not silent PASS)."
+          fi
+      - name: Run RC1 acceptance gate
+        env:
+          RC1_REQUIRED: "1"
+          RC1_SANDBOX_RELAX: "1"
+          O2C_DB_HOST: "127.0.0.1"
+          O2C_DB_PORT: "3307"
+          O2C_DB_USER: "p2p"
+          O2C_DB_PASS: "p2p_test"
+          O2C_DB_NAME: "erpsmart_rc1_t7_test"
+        run: |
+          python scripts/rc1_acceptance_gate.py --strict-pass || {
+            code=$?
+            echo "rc1_acceptance_gate exit=$code"
+            if [ "${{ vars.RC1_ACCEPTANCE_REQUIRED }}" = "true" ]; then
+              exit $code
+            fi
+            echo "Non-required mode: evidence uploaded; continue-on-error absorbs failure."
+            exit $code
+          }
+      - name: Upload RC1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc1-acceptance-evidence
+          path: docs/ai/rc1/evidence/
+          if-no-files-found: warn

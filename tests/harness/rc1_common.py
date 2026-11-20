@@ -24,7 +24,7 @@ USER = os.environ.get("O2C_DB_USER", "p2p")
 PASSWORD = os.environ.get("O2C_DB_PASS", "p2p_test")
 # Prefer isolated RC1 schema to avoid cross-lane races on shared erpsmart_p2p_test.
 # Same disposable container; schema must still contain "test"/"e2e".
-DATABASE = os.environ.get("O2C_DB_NAME", "erpsmart_rc1_test")
+DATABASE = os.environ.get("O2C_DB_NAME", "erpsmart_rc1_t7_test")
 
 
 class Rc1Blocked(Exception):

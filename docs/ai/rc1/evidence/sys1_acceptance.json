@@ -1,0 +1,48 @@
+{
+  "contract": "SYS-1",
+  "status": "PASS",
+  "scope": "profile_smoke_php_mysql",
+  "result": {
+    "ok": true,
+    "service_initial": {
+      "profile_code": "service",
+      "modules_exclude_production": true
+    },
+    "retail": {
+      "profile_code": "retail",
+      "display_currency": "IRR",
+      "modules": [
+        "accounting",
+        "treasury",
+        "inventory",
+        "sales",
+        "crm"
+      ]
+    },
+    "company2": {
+      "profile_code": "service",
+      "display_currency": "TOMAN"
+    },
+    "canonical_tables": {
+      "acc_parties": true,
+      "acc_items": true
+    },
+    "functional_currency": "IRR",
+    "note": "SYS-1 profile smoke only; full browser login deferred to T6/OPS browser walkthrough."
+  },
+  "sandbox": {
+    "expected_name": "erpsmart-p2p-mysql-test",
+    "expected_id_prefix": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "database": "erpsmart_rc1_t7_test",
+    "port": "3307",
+    "php_image": "erpsmart-o2c-php:8.2",
+    "relax": false,
+    "verified_at": "2026-11-20T15:06:11Z",
+    "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "status": "running",
+    "image": "mysql:8.0",
+    "ok": true,
+    "DATABASE_TESTED": true
+  },
+  "residual": "Browser login walkthrough + full permission matrix still OPS/T6."
+}

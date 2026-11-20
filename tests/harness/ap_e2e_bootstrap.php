@@ -246,7 +246,7 @@ function ap_e2e_reset_schema(): void
     ApSettlementDomain::migrate($db);
 
     $db->exec("INSERT INTO companies (id,workspace_id,active) VALUES (1,10,1),(2,10,1)");
-    $db->exec("INSERT INTO workspace_modules (workspace_id,module_key,enabled) VALUES (10,'p2p',1)");
+    $db->exec("INSERT IGNORE INTO workspace_modules (workspace_id,module_key,enabled) VALUES (10,'p2p',1)");
     $db->exec("INSERT INTO acc_warehouses (id,workspace_id,company_id,code,name) VALUES (1,10,1,'WH1','Warehouse 1')");
     $db->exec("INSERT INTO acc_items (id,workspace_id,company_id,code,name) VALUES (1,10,1,'SKU1','Item1')");
     $db->exec("INSERT INTO acc_parties (id,workspace_id,company_id,code,name) VALUES (1,10,1,'S1','Supplier'),(2,10,2,'S2','OtherCoSupplier')");

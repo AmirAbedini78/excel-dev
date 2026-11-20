@@ -1,0 +1,26 @@
+{
+  "contract": "MF-1",
+  "status": "BLOCKED",
+  "owner": "T1/T2/T5",
+  "missing": [
+    "InventoryDomain::reserveForProduction",
+    "InventoryDomain::issueMaterial",
+    "InventoryDomain::receiveFinishedGoods",
+    "InventoryDomain::reverseMovement",
+    "ProductionDomain::createProductionOrder",
+    "ProductionDomain::issueMaterials",
+    "ProductionDomain::recordScrap",
+    "ProductionDomain::recordQcDisposition",
+    "ProductionDomain::receiveFinishedGoods",
+    "ProductionDomain::verifiedCostRollup",
+    "CostingAccounting* (T5 valuation resolver)"
+  ],
+  "pilot_present": {
+    "createBom": true,
+    "createPlan": true,
+    "preview": true,
+    "requirements": true
+  },
+  "defect": "RC1-P0-001 / RC1-P0-002",
+  "reason": "No production issue/FG stock API; no valuation resolver; BOM/plan pilot only."
+}
