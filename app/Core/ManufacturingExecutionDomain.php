@@ -157,6 +157,15 @@ final class ManufacturingExecutionDomain
             created_at DATETIME NOT NULL,
             PRIMARY KEY (workspace_id,company_id,source_type,source_id,idempotency_key)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        // Ensure stock lock table exists before any nested TX (CREATE TABLE would implicit-commit).
+        $db->exec("CREATE TABLE IF NOT EXISTS erp_o2c_stock_locks (
+            workspace_id INT NOT NULL,
+            company_id INT NOT NULL,
+            warehouse_id BIGINT NOT NULL,
+            item_id BIGINT NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (workspace_id,company_id,warehouse_id,item_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     private static function assertCompany(int $wid, int $cid): void
@@ -171,15 +180,41 @@ final class ManufacturingExecutionDomain
         }
     }
 
+    /** Normalize DB DECIMAL(20,6) / float inputs to scale-4 string before scaledQty. */
+    private static function normalizeQty($raw): string
+    {
+        if (is_int($raw)) {
+            return OrderToCashDomain::fixedQty(((int)$raw) * 10000);
+        }
+        if (is_float($raw)) {
+            return number_format($raw, 4, '.', '');
+        }
+        $s = trim((string)$raw);
+        if ($s === '') {
+            throw new RuntimeException('mf_qty_empty');
+        }
+        if (!is_numeric($s)) {
+            throw new RuntimeException('mf_qty_invalid');
+        }
+        // Truncate (not round-up) excess decimals from BOM DECIMAL(20,6) storage.
+        if (preg_match('/^([+-]?)(\d+)(?:\.(\d+))?$/', $s, $m)) {
+            $frac = substr(str_pad($m[3] ?? '', 4, '0'), 0, 4);
+            $whole = ltrim($m[2], '0');
+            if ($whole === '') {
+                $whole = '0';
+            }
+            return ($m[1] === '-' ? '-' : '').$whole.'.'.$frac;
+        }
+        return number_format((float)$s, 4, '.', '');
+    }
+
     private static function scaledQty($raw): int
     {
+        $norm = self::normalizeQty($raw);
         if (class_exists('OrderToCashDomain')) {
-            return OrderToCashDomain::scaledQty($raw);
+            return OrderToCashDomain::scaledQty($norm);
         }
-        if (is_float($raw) || is_int($raw)) {
-            $raw = number_format((float)$raw, 4, '.', '');
-        }
-        return PurchaseMatchingDomain::scaled((string)$raw, 4, 100000);
+        return PurchaseMatchingDomain::scaled($norm, 4, 100000);
     }
 
     private static function fixedQty(int $units): string

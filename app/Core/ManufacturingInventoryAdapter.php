@@ -85,21 +85,10 @@ final class ManufacturingInventoryAdapter
         return hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
-    private static function ensureLockTable(PDO $db): void
-    {
-        $db->exec("CREATE TABLE IF NOT EXISTS erp_o2c_stock_locks (
-            workspace_id INT NOT NULL,
-            company_id INT NOT NULL,
-            warehouse_id BIGINT NOT NULL,
-            item_id BIGINT NOT NULL,
-            updated_at DATETIME NOT NULL,
-            PRIMARY KEY (workspace_id,company_id,warehouse_id,item_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    }
-
     private static function lockTargets(PDO $db, int $wid, int $cid, int $warehouseId, array $itemIds): void
     {
-        self::ensureLockTable($db);
+        // erp_o2c_stock_locks must already exist (created in ManufacturingExecutionDomain::migrate).
+        // Never CREATE TABLE here — MySQL DDL would implicit-commit an outer transaction.
         if (class_exists('OrderToCashDomain') && method_exists('OrderToCashDomain', 'lockStockTargets')) {
             OrderToCashDomain::lockStockTargets($db, $wid, $cid, $warehouseId, $itemIds);
             return;
@@ -127,11 +116,21 @@ final class ManufacturingInventoryAdapter
 
     private static function scaledQty($raw): int
     {
-        if (class_exists('OrderToCashDomain')) {
-            return OrderToCashDomain::scaledQty($raw);
-        }
         if (is_float($raw) || is_int($raw)) {
             $raw = number_format((float)$raw, 4, '.', '');
+        } else {
+            $s = trim((string)$raw);
+            if (preg_match('/^([+-]?)(\d+)(?:\.(\d+))?$/', $s, $m)) {
+                $frac = substr(str_pad($m[3] ?? '', 4, '0'), 0, 4);
+                $whole = ltrim($m[2], '0');
+                if ($whole === '') {
+                    $whole = '0';
+                }
+                $raw = ($m[1] === '-' ? '-' : '').$whole.'.'.$frac;
+            }
+        }
+        if (class_exists('OrderToCashDomain')) {
+            return OrderToCashDomain::scaledQty($raw);
         }
         return PurchaseMatchingDomain::scaled((string)$raw, 4, 100000);
     }
@@ -144,17 +143,38 @@ final class ManufacturingInventoryAdapter
         return PurchaseMatchingDomain::fixed($units, 4);
     }
 
+    private static function onHandUnits(PDO $db, int $wid, int $cid, int $warehouseId, int $itemId): int
+    {
+        // Locking read so REPEATABLE READ sees latest committed movements after waiters wake.
+        $lock = $db->prepare("SELECT id,direction,quantity FROM acc_stock_movements
+            WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='posted'
+            ORDER BY id FOR UPDATE");
+        $lock->execute([$wid, $cid, $warehouseId, $itemId]);
+        $units = 0;
+        foreach ($lock->fetchAll() as $row) {
+            $q = self::scaledQty((string)$row['quantity']);
+            $units += ($row['direction'] === 'in') ? $q : -$q;
+        }
+        return $units;
+    }
+
+    private static function reservedUnits(PDO $db, int $wid, int $cid, int $warehouseId, int $itemId): int
+    {
+        $r = $db->prepare("SELECT id,quantity FROM acc_inventory_reservations
+            WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='active'
+            ORDER BY id FOR UPDATE");
+        $r->execute([$wid, $cid, $warehouseId, $itemId]);
+        $units = 0;
+        foreach ($r->fetchAll() as $row) {
+            $units += self::scaledQty((string)$row['quantity']);
+        }
+        return $units;
+    }
+
     private static function availableUnits(PDO $db, int $wid, int $cid, int $warehouseId, int $itemId): int
     {
-        $m = $db->prepare("SELECT COALESCE(SUM(CASE WHEN direction='in' THEN quantity ELSE -quantity END),0)
-            FROM acc_stock_movements WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='posted'");
-        $m->execute([$wid, $cid, $warehouseId, $itemId]);
-        $onHand = self::scaledQty((string)$m->fetchColumn());
-        $r = $db->prepare("SELECT COALESCE(SUM(quantity),0) FROM acc_inventory_reservations
-            WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='active'");
-        $r->execute([$wid, $cid, $warehouseId, $itemId]);
-        $reserved = self::scaledQty((string)$r->fetchColumn());
-        return $onHand - $reserved;
+        return self::onHandUnits($db, $wid, $cid, $warehouseId, $itemId)
+            - self::reservedUnits($db, $wid, $cid, $warehouseId, $itemId);
     }
 
     private static function loadIdempotency(PDO $db, int $wid, int $cid, string $sourceType, int $sourceId, string $key): ?array
@@ -206,7 +226,7 @@ final class ManufacturingInventoryAdapter
         }
         try {
             $db->prepare('SELECT id FROM companies WHERE workspace_id=? AND id=? FOR UPDATE')->execute([$wid, $cid]);
-            $prior = self::loadIdempotency($db, $wid, $cid, 'production_order', $orderId, $idem !== '' ? 'reserve:'.$idem : '');
+            $prior = self::loadIdempotency($db, $wid, $cid, 'mf_reserve', $orderId, $idem);
             if ($prior) {
                 if ($prior['request_hash'] !== $hash) {
                     throw new RuntimeException('mf_idempotency_payload_mismatch');
@@ -241,7 +261,7 @@ final class ManufacturingInventoryAdapter
                 'lines' => $normLines,
             ];
             if ($idem !== '') {
-                self::storeIdempotency($db, $wid, $cid, 'production_order', $orderId, 'reserve:'.$idem, $hash, $out);
+                self::storeIdempotency($db, $wid, $cid, 'mf_reserve', $orderId, $idem, $hash, $out);
             }
             if ($owns) {
                 $db->commit();
@@ -294,8 +314,7 @@ final class ManufacturingInventoryAdapter
         }
         try {
             $db->prepare('SELECT id FROM companies WHERE workspace_id=? AND id=? FOR UPDATE')->execute([$wid, $cid]);
-            $idemKey = $idem !== '' ? 'issue:'.$idem : '';
-            $prior = self::loadIdempotency($db, $wid, $cid, 'production_order', $orderId, $idemKey);
+            $prior = self::loadIdempotency($db, $wid, $cid, 'mf_issue', $orderId, $idem);
             if ($prior) {
                 if ($prior['request_hash'] !== $hash) {
                     throw new RuntimeException('mf_idempotency_payload_mismatch');
@@ -331,19 +350,10 @@ final class ManufacturingInventoryAdapter
                     }
                     $need -= $take;
                 }
-                $avail = self::availableUnits($db, $wid, $cid, $warehouseId, (int)$line['item_id']);
-                // After consuming own reservation, available already excludes others; need remaining must fit free stock.
-                // Recompute: on_hand after issue must not go negative vs other reservations.
-                $m = $db->prepare("SELECT COALESCE(SUM(CASE WHEN direction='in' THEN quantity ELSE -quantity END),0)
-                    FROM acc_stock_movements WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='posted'");
-                $m->execute([$wid, $cid, $warehouseId, (int)$line['item_id']]);
-                $onHand = self::scaledQty((string)$m->fetchColumn());
-                $r = $db->prepare("SELECT COALESCE(SUM(quantity),0) FROM acc_inventory_reservations
-                    WHERE workspace_id=? AND company_id=? AND warehouse_id=? AND item_id=? AND status='active'");
-                $r->execute([$wid, $cid, $warehouseId, (int)$line['item_id']]);
-                $reserved = self::scaledQty((string)$r->fetchColumn());
+                $onHand = self::onHandUnits($db, $wid, $cid, $warehouseId, (int)$line['item_id']);
+                $reserved = self::reservedUnits($db, $wid, $cid, $warehouseId, (int)$line['item_id']);
                 $issueQty = self::scaledQty($line['quantity']);
-                if ($onHand - $issueQty < $reserved) {
+                if ($onHand < $issueQty || ($onHand - $issueQty) < $reserved) {
                     throw new RuntimeException('mf_insufficient_stock');
                 }
             }
@@ -369,8 +379,8 @@ final class ManufacturingInventoryAdapter
                 'movement_type' => 'production_issue',
                 'lines' => $normLines,
             ];
-            if ($idemKey !== '') {
-                self::storeIdempotency($db, $wid, $cid, 'production_order', $orderId, $idemKey, $hash, $out);
+            if ($idem !== '') {
+                self::storeIdempotency($db, $wid, $cid, 'mf_issue', $orderId, $idem, $hash, $out);
             }
             if ($owns) {
                 $db->commit();
@@ -417,8 +427,7 @@ final class ManufacturingInventoryAdapter
         }
         try {
             $db->prepare('SELECT id FROM companies WHERE workspace_id=? AND id=? FOR UPDATE')->execute([$wid, $cid]);
-            $idemKey = $idem !== '' ? 'fg:'.$idem : '';
-            $prior = self::loadIdempotency($db, $wid, $cid, 'production_order', $orderId, $idemKey);
+            $prior = self::loadIdempotency($db, $wid, $cid, 'mf_fg', $orderId, $idem);
             if ($prior) {
                 if ($prior['request_hash'] !== $hash) {
                     throw new RuntimeException('mf_idempotency_payload_mismatch');
@@ -448,8 +457,8 @@ final class ManufacturingInventoryAdapter
                 'item_id' => $itemId,
                 'quantity' => $qty,
             ];
-            if ($idemKey !== '') {
-                self::storeIdempotency($db, $wid, $cid, 'production_order', $orderId, $idemKey, $hash, $out);
+            if ($idem !== '') {
+                self::storeIdempotency($db, $wid, $cid, 'mf_fg', $orderId, $idem, $hash, $out);
             }
             if ($owns) {
                 $db->commit();
@@ -486,8 +495,7 @@ final class ManufacturingInventoryAdapter
             }
             $hash = self::payloadHash(['movement_id' => $movementId]);
             $orderId = (int)$src['source_id'];
-            $idemKey = $idem !== '' ? 'rev:'.$idem : '';
-            $prior = self::loadIdempotency($db, $wid, $cid, 'production_order', $orderId, $idemKey);
+            $prior = self::loadIdempotency($db, $wid, $cid, 'mf_reverse', $orderId, $idem);
             if ($prior) {
                 if ($prior['request_hash'] !== $hash) {
                     throw new RuntimeException('mf_idempotency_payload_mismatch');
@@ -523,8 +531,8 @@ final class ManufacturingInventoryAdapter
                 'reversed_movement_id' => $movementId,
                 'reversal_movement_id' => $revId,
             ];
-            if ($idemKey !== '') {
-                self::storeIdempotency($db, $wid, $cid, 'production_order', $orderId, $idemKey, $hash, $out);
+            if ($idem !== '') {
+                self::storeIdempotency($db, $wid, $cid, 'mf_reverse', $orderId, $idem, $hash, $out);
             }
             if ($owns) {
                 $db->commit();

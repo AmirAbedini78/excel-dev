@@ -12,7 +12,7 @@ if (PHP_SAPI !== 'cli') {
 $host = getenv('O2C_DB_HOST') ?: '127.0.0.1';
 $port = (int)(getenv('O2C_DB_PORT') ?: '3307');
 // Dedicated disposable schema on the verified RC1 MySQL container (avoids cross-lane races on erpsmart_p2p_test).
-$dbName = getenv('O2C_DB_NAME') ?: 'erpsmart_mf1_test';
+$dbName = getenv('O2C_DB_NAME') ?: 'erpsmart_mf1_t1_test';
 $user = getenv('O2C_DB_USER') ?: 'p2p';
 $pass = getenv('O2C_DB_PASS') ?: 'p2p_test';
 
@@ -128,19 +128,32 @@ function mf_json_out($data): void
 function mf_e2e_ensure_database(): void
 {
     global $host, $port, $user, $pass, $dbName;
-    $pdo = new PDO(
-        sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port),
-        $user,
-        $pass,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-    $pdo->exec('CREATE DATABASE IF NOT EXISTS `'.$dbName.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-    // Grant is typically already present for p2p@% on this sandbox; ignore failures.
+    // Prefer sandbox root (container MYSQL_ROOT_PASSWORD) to create isolated MF schema once.
+    $rootPass = getenv('O2C_DB_ROOT_PASS') ?: 'p2p_test_root';
     try {
+        $pdo = new PDO(
+            sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port),
+            'root',
+            $rootPass,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
+        $pdo->exec('CREATE DATABASE IF NOT EXISTS `'.$dbName.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
         $pdo->exec("GRANT ALL ON `{$dbName}`.* TO 'p2p'@'%'");
         $pdo->exec('FLUSH PRIVILEGES');
+        return;
     } catch (Throwable $e) {
-        // ignore
+        // Fall through — database may already exist and be granted.
+    }
+    try {
+        $pdo = new PDO(
+            sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port),
+            $user,
+            $pass,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
+        $pdo->exec('CREATE DATABASE IF NOT EXISTS `'.$dbName.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+    } catch (Throwable $e) {
+        // connect() will surface access errors
     }
 }
 
@@ -155,106 +168,158 @@ function mf_e2e_reset_schema(): void
 {
     mf_e2e_connect();
     $db = pdo();
-    $db->exec('SET FOREIGN_KEY_CHECKS=0');
-    foreach ($db->query('SHOW TABLES') as $r) {
-        $t = array_values($r)[0];
-        $db->exec("DROP TABLE IF EXISTS `{$t}`");
+    $got = (int)$db->query("SELECT GET_LOCK('erpsmart_mf1_schema', 120)")->fetchColumn();
+    if ($got !== 1) {
+        throw new RuntimeException('mf_schema_lock_unavailable');
     }
-    $db->exec("CREATE TABLE companies (id INT PRIMARY KEY, workspace_id INT NOT NULL, active TINYINT NOT NULL DEFAULT 1)");
-    $db->exec("CREATE TABLE workspace_modules (
-      workspace_id INT NOT NULL, module_key VARCHAR(80) NOT NULL, enabled TINYINT NOT NULL DEFAULT 0,
-      PRIMARY KEY (workspace_id, module_key)
-    )");
-    $db->exec("CREATE TABLE acc_warehouses (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
-      code VARCHAR(64) NULL, name VARCHAR(120) NOT NULL, warehouse_type VARCHAR(40) NULL, address VARCHAR(255) NULL, active TINYINT NOT NULL DEFAULT 1
-    )");
-    $db->exec("CREATE TABLE acc_items (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
-      code VARCHAR(64) NOT NULL, name VARCHAR(120) NOT NULL, item_type VARCHAR(40) NOT NULL DEFAULT 'goods',
-      min_stock DECIMAL(20,4) NOT NULL DEFAULT 0, max_stock DECIMAL(20,4) NOT NULL DEFAULT 0,
-      purchase_price_1 DECIMAL(20,2) NOT NULL DEFAULT 0, active TINYINT NOT NULL DEFAULT 1
-    )");
-    $db->exec("CREATE TABLE acc_stock_movements (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, movement_date DATE NOT NULL,
-      movement_type VARCHAR(50) NOT NULL, direction VARCHAR(10) NOT NULL, warehouse_id BIGINT NOT NULL, item_id BIGINT NOT NULL,
-      quantity DECIMAL(20,4) NOT NULL, unit_cost DECIMAL(20,2) NOT NULL DEFAULT 0, source_type VARCHAR(60) NOT NULL,
-      source_id BIGINT NOT NULL, source_line_id BIGINT NULL, reference_no VARCHAR(120) NULL, status VARCHAR(30) NOT NULL DEFAULT 'posted',
-      created_by INT NULL, created_at DATETIME NULL,
-      INDEX idx_acc_stock_position (workspace_id,company_id,warehouse_id,item_id,status)
-    )");
-    $db->exec("CREATE TABLE acc_inventory_reservations (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
-      warehouse_id BIGINT NOT NULL, item_id BIGINT NOT NULL, source_type VARCHAR(60) NULL, source_id BIGINT NULL,
-      quantity DECIMAL(20,4) NOT NULL DEFAULT 0, status VARCHAR(30) NOT NULL DEFAULT 'active',
-      expires_at DATETIME NULL, notes VARCHAR(500) NULL, created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL,
-      INDEX idx_acc_inventory_reservation (workspace_id,company_id,warehouse_id,item_id,status)
-    )");
-    $db->exec("CREATE TABLE acc_fiscal_years (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
-      title VARCHAR(120) NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'open', is_active TINYINT NOT NULL DEFAULT 1,
-      created_at DATETIME NULL, updated_at DATETIME NULL
-    )");
-    $db->exec("CREATE TABLE acc_period_closes (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
-      fiscal_year_id BIGINT NOT NULL, period_key VARCHAR(20) NOT NULL, close_type VARCHAR(30) NOT NULL DEFAULT 'monthly',
-      status VARCHAR(30) NOT NULL DEFAULT 'open', closed_by INT NULL, closed_at DATETIME NULL,
-      created_at DATETIME NULL, updated_at DATETIME NULL,
-      UNIQUE KEY uniq_acc_period_close (workspace_id,company_id,fiscal_year_id,period_key)
-    )");
-    // Minimal purchase stubs so InventoryDomain::inventoryPosition → purchasePipeline does not fail.
-    $db->exec("CREATE TABLE acc_purchase_docs (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, doc_type VARCHAR(64) NOT NULL,
-      document_no VARCHAR(64) NOT NULL, document_date DATE NOT NULL, party_id BIGINT NOT NULL, warehouse_id BIGINT NULL,
-      workflow_status VARCHAR(32) NOT NULL, net_total DECIMAL(20,2) NOT NULL DEFAULT 0,
-      created_by INT NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL
-    )");
-    $db->exec("CREATE TABLE acc_purchase_lines (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, purchase_doc_id BIGINT NOT NULL,
-      line_no INT NOT NULL, item_id BIGINT NOT NULL, quantity DECIMAL(20,4) NOT NULL, unit_price DECIMAL(20,2) NOT NULL,
-      warehouse_id BIGINT NULL, line_total DECIMAL(20,2) NOT NULL, created_at DATETIME NOT NULL
-    )");
-    $db->exec("CREATE TABLE acc_inventory_receipts (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
-      receipt_no VARCHAR(64) NULL, receipt_date DATE NOT NULL, warehouse_id BIGINT NOT NULL,
-      source_type VARCHAR(40) NULL, purchase_doc_id BIGINT NOT NULL, supplier_id BIGINT NULL,
-      status VARCHAR(32) NOT NULL, created_by INT NULL, created_at DATETIME NULL
-    )");
-    $db->exec("CREATE TABLE acc_inventory_receipt_lines (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, receipt_id BIGINT NOT NULL,
-      line_no INT NOT NULL, purchase_line_id BIGINT NOT NULL, item_id BIGINT NOT NULL,
-      accepted_qty DECIMAL(20,4) NOT NULL DEFAULT 0, rejected_qty DECIMAL(20,4) NOT NULL DEFAULT 0, created_at DATETIME NULL
-    )");
-    $db->exec("CREATE TABLE erp_p2p_vendor_bills (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
-      canonical_doc_id BIGINT NULL, status VARCHAR(20) NOT NULL DEFAULT 'pending'
-    )");
-    $db->exec("CREATE TABLE acc_parties (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, name VARCHAR(120) NOT NULL
-    )");
-    $db->exec("CREATE TABLE acc_units (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, name VARCHAR(80) NOT NULL
-    )");
+    try {
+        $db->exec('SET FOREIGN_KEY_CHECKS=0');
+        // Prefer truncate over DROP to avoid cross-container metadata races on shared sandbox.
+        $ensure = static function (PDO $db, string $sql): void {
+            $db->exec($sql);
+        };
+        $ensure($db, "CREATE TABLE IF NOT EXISTS companies (id INT PRIMARY KEY, workspace_id INT NOT NULL, active TINYINT NOT NULL DEFAULT 1)");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS workspace_modules (
+          workspace_id INT NOT NULL, module_key VARCHAR(80) NOT NULL, enabled TINYINT NOT NULL DEFAULT 0,
+          PRIMARY KEY (workspace_id, module_key)
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_warehouses (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          code VARCHAR(64) NULL, name VARCHAR(120) NOT NULL, warehouse_type VARCHAR(40) NULL, address VARCHAR(255) NULL, active TINYINT NOT NULL DEFAULT 1
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_items (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          code VARCHAR(64) NOT NULL, name VARCHAR(120) NOT NULL, item_type VARCHAR(40) NOT NULL DEFAULT 'goods',
+          min_stock DECIMAL(20,4) NOT NULL DEFAULT 0, max_stock DECIMAL(20,4) NOT NULL DEFAULT 0,
+          purchase_price_1 DECIMAL(20,2) NOT NULL DEFAULT 0, active TINYINT NOT NULL DEFAULT 1
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_stock_movements (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, movement_date DATE NOT NULL,
+          movement_type VARCHAR(50) NOT NULL, direction VARCHAR(10) NOT NULL, warehouse_id BIGINT NOT NULL, item_id BIGINT NOT NULL,
+          quantity DECIMAL(20,4) NOT NULL, unit_cost DECIMAL(20,2) NOT NULL DEFAULT 0, source_type VARCHAR(60) NOT NULL,
+          source_id BIGINT NOT NULL, source_line_id BIGINT NULL, reference_no VARCHAR(120) NULL, status VARCHAR(30) NOT NULL DEFAULT 'posted',
+          created_by INT NULL, created_at DATETIME NULL,
+          INDEX idx_acc_stock_position (workspace_id,company_id,warehouse_id,item_id,status)
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_inventory_reservations (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          warehouse_id BIGINT NOT NULL, item_id BIGINT NOT NULL, source_type VARCHAR(60) NULL, source_id BIGINT NULL,
+          quantity DECIMAL(20,4) NOT NULL DEFAULT 0, status VARCHAR(30) NOT NULL DEFAULT 'active',
+          expires_at DATETIME NULL, notes VARCHAR(500) NULL, created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL,
+          INDEX idx_acc_inventory_reservation (workspace_id,company_id,warehouse_id,item_id,status)
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_fiscal_years (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          title VARCHAR(120) NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'open', is_active TINYINT NOT NULL DEFAULT 1,
+          created_at DATETIME NULL, updated_at DATETIME NULL
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_period_closes (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          fiscal_year_id BIGINT NOT NULL, period_key VARCHAR(20) NOT NULL, close_type VARCHAR(30) NOT NULL DEFAULT 'monthly',
+          status VARCHAR(30) NOT NULL DEFAULT 'open', closed_by INT NULL, closed_at DATETIME NULL,
+          created_at DATETIME NULL, updated_at DATETIME NULL,
+          UNIQUE KEY uniq_acc_period_close (workspace_id,company_id,fiscal_year_id,period_key)
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_purchase_docs (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, doc_type VARCHAR(64) NOT NULL,
+          document_no VARCHAR(64) NOT NULL, document_date DATE NOT NULL, party_id BIGINT NOT NULL, warehouse_id BIGINT NULL,
+          workflow_status VARCHAR(32) NOT NULL, net_total DECIMAL(20,2) NOT NULL DEFAULT 0,
+          created_by INT NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_purchase_lines (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, purchase_doc_id BIGINT NOT NULL,
+          line_no INT NOT NULL, item_id BIGINT NOT NULL, quantity DECIMAL(20,4) NOT NULL, unit_price DECIMAL(20,2) NOT NULL,
+          warehouse_id BIGINT NULL, line_total DECIMAL(20,2) NOT NULL, created_at DATETIME NOT NULL
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_inventory_receipts (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          receipt_no VARCHAR(64) NULL, receipt_date DATE NOT NULL, warehouse_id BIGINT NOT NULL,
+          source_type VARCHAR(40) NULL, purchase_doc_id BIGINT NOT NULL, supplier_id BIGINT NULL,
+          status VARCHAR(32) NOT NULL, created_by INT NULL, created_at DATETIME NULL
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_inventory_receipt_lines (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, receipt_id BIGINT NOT NULL,
+          line_no INT NOT NULL, purchase_line_id BIGINT NOT NULL, item_id BIGINT NOT NULL,
+          accepted_qty DECIMAL(20,4) NOT NULL DEFAULT 0, rejected_qty DECIMAL(20,4) NOT NULL DEFAULT 0, created_at DATETIME NULL
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS erp_p2p_vendor_bills (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          canonical_doc_id BIGINT NULL, status VARCHAR(20) NOT NULL DEFAULT 'pending'
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_parties (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL, name VARCHAR(120) NOT NULL
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_units (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, name VARCHAR(80) NOT NULL
+        )");
 
-    OrderToCashDomain::migrate($db);
-    ProductionDomain::migrate($db);
+        OrderToCashDomain::migrate($db);
+        ProductionDomain::migrate($db);
 
-    $db->exec("INSERT INTO companies (id,workspace_id,active) VALUES (1,10,1),(2,10,1)");
-    $db->exec("INSERT INTO workspace_modules (workspace_id,module_key,enabled) VALUES (10,'production',1)");
-    $db->exec("INSERT INTO acc_warehouses (id,workspace_id,company_id,code,name,active) VALUES
-      (1,10,1,'WH1','Raw/FG WH',1),(2,10,2,'WH2','OtherCo WH',1)");
-    // items: 1=FG, 2=compA, 3=compB for company1; 11/12/13 company2
-    $db->exec("INSERT INTO acc_items (id,workspace_id,company_id,code,name,item_type,purchase_price_1,active) VALUES
-      (1,10,1,'FG1','Finished Good','product',0,1),
-      (2,10,1,'RAW-A','Component A','goods',100.00,1),
-      (3,10,1,'RAW-B','Component B','goods',50.00,1),
-      (11,10,2,'FG2','Other FG','product',0,1),
-      (12,10,2,'RAW-X','Other A','goods',10,1),
-      (13,10,2,'RAW-Y','Other B','goods',10,1)");
-    $db->exec("INSERT INTO acc_fiscal_years (workspace_id,company_id,title,start_date,end_date,status,is_active,created_at,updated_at)
-      VALUES (10,1,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW()),
-             (10,2,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW())");
+        foreach ([
+            'erp_mf_idempotency','erp_mf_work_ops','erp_mf_scrap_events','erp_mf_fg_receipts','erp_mf_qc_events',
+            'erp_mf_material_issue_lines','erp_mf_material_issues','erp_mf_order_bom_snapshot','erp_mf_production_orders',
+            'erp_production_plans','erp_production_bom_lines','erp_production_boms',
+            'erp_o2c_stock_locks','erp_o2c_invoice_links','erp_o2c_delivery_idempotency','erp_o2c_invoice_idempotency',
+            'acc_inventory_reservations','acc_stock_movements','acc_inventory_receipt_lines','acc_inventory_receipts',
+            'erp_p2p_vendor_bills','acc_purchase_lines','acc_purchase_docs','acc_period_closes','acc_fiscal_years',
+            'acc_items','acc_warehouses','acc_parties','acc_units','workspace_modules','companies',
+        ] as $t) {
+            try {
+                $db->exec("DELETE FROM `{$t}`");
+            } catch (Throwable $e) {
+                // table may not exist yet
+            }
+        }
+
+        // Re-assert seed tables exist (another lane may DROP between CREATE and seed).
+        $ensure($db, "CREATE TABLE IF NOT EXISTS companies (id INT PRIMARY KEY, workspace_id INT NOT NULL, active TINYINT NOT NULL DEFAULT 1)");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS workspace_modules (
+          workspace_id INT NOT NULL, module_key VARCHAR(80) NOT NULL, enabled TINYINT NOT NULL DEFAULT 0,
+          PRIMARY KEY (workspace_id, module_key)
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_warehouses (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          code VARCHAR(64) NULL, name VARCHAR(120) NOT NULL, warehouse_type VARCHAR(40) NULL, address VARCHAR(255) NULL, active TINYINT NOT NULL DEFAULT 1
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_items (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          code VARCHAR(64) NOT NULL, name VARCHAR(120) NOT NULL, item_type VARCHAR(40) NOT NULL DEFAULT 'goods',
+          min_stock DECIMAL(20,4) NOT NULL DEFAULT 0, max_stock DECIMAL(20,4) NOT NULL DEFAULT 0,
+          purchase_price_1 DECIMAL(20,2) NOT NULL DEFAULT 0, active TINYINT NOT NULL DEFAULT 1
+        )");
+        $ensure($db, "CREATE TABLE IF NOT EXISTS acc_fiscal_years (
+          id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+          title VARCHAR(120) NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'open', is_active TINYINT NOT NULL DEFAULT 1,
+          created_at DATETIME NULL, updated_at DATETIME NULL
+        )");
+        OrderToCashDomain::migrate($db);
+        ProductionDomain::migrate($db);
+
+        $db->exec("DELETE FROM companies");
+        $db->exec("INSERT INTO companies (id,workspace_id,active) VALUES (1,10,1),(2,10,1)");
+        $db->exec("DELETE FROM workspace_modules");
+        $db->exec("INSERT INTO workspace_modules (workspace_id,module_key,enabled) VALUES (10,'production',1)");
+        $db->exec("DELETE FROM acc_warehouses");
+        $db->exec("INSERT INTO acc_warehouses (id,workspace_id,company_id,code,name,active) VALUES
+          (1,10,1,'WH1','Raw/FG WH',1),(2,10,2,'WH2','OtherCo WH',1)");
+        $db->exec("DELETE FROM acc_items");
+        $db->exec("INSERT INTO acc_items (id,workspace_id,company_id,code,name,item_type,purchase_price_1,active) VALUES
+          (1,10,1,'FG1','Finished Good','product',0,1),
+          (2,10,1,'RAW-A','Component A','goods',100.00,1),
+          (3,10,1,'RAW-B','Component B','goods',50.00,1),
+          (11,10,2,'FG2','Other FG','product',0,1),
+          (12,10,2,'RAW-X','Other A','goods',10,1),
+          (13,10,2,'RAW-Y','Other B','goods',10,1)");
+        $db->exec("DELETE FROM acc_fiscal_years");
+        $db->exec("INSERT INTO acc_fiscal_years (workspace_id,company_id,title,start_date,end_date,status,is_active,created_at,updated_at)
+          VALUES (10,1,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW()),
+                 (10,2,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW())");
+    } finally {
+        $db->query("SELECT RELEASE_LOCK('erpsmart_mf1_schema')");
+    }
 }
 
 /** Seed opening stock for components (posted movements). */

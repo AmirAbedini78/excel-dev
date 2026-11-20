@@ -178,12 +178,29 @@ try {
 
         case 'close_period_issue':
             $db = pdo();
-            $fy = (int)$db->query('SELECT id FROM acc_fiscal_years WHERE workspace_id=10 AND company_id=1 LIMIT 1')->fetchColumn();
+            $fyRow = $db->query('SELECT id FROM acc_fiscal_years WHERE workspace_id=10 AND company_id=1 LIMIT 1')->fetch();
+            if (!$fyRow) {
+                $db->exec("INSERT INTO acc_fiscal_years (workspace_id,company_id,title,start_date,end_date,status,is_active,created_at,updated_at)
+                    VALUES (10,1,'FY2026','2026-01-01','2026-12-31','open',1,NOW(),NOW())");
+                $fy = (int)$db->lastInsertId();
+            } else {
+                $fy = (int)$fyRow['id'];
+            }
+            $db->exec("CREATE TABLE IF NOT EXISTS acc_period_closes (
+              id BIGINT AUTO_INCREMENT PRIMARY KEY, workspace_id INT NOT NULL, company_id INT NOT NULL,
+              fiscal_year_id BIGINT NOT NULL, period_key VARCHAR(20) NOT NULL, close_type VARCHAR(30) NOT NULL DEFAULT 'monthly',
+              status VARCHAR(30) NOT NULL DEFAULT 'open', closed_by INT NULL, closed_at DATETIME NULL,
+              created_at DATETIME NULL, updated_at DATETIME NULL,
+              UNIQUE KEY uniq_acc_period_close (workspace_id,company_id,fiscal_year_id,period_key)
+            )");
             $db->prepare("INSERT INTO acc_period_closes (workspace_id,company_id,fiscal_year_id,period_key,close_type,status,created_at,updated_at)
                 VALUES (10,1,?,'2026-11','monthly','closed',NOW(),NOW())
                 ON DUPLICATE KEY UPDATE status='closed'")->execute([$fy]);
             try {
                 $order = ManufacturingExecutionDomain::getOrder(10, 1, (int)$args['order_id']);
+                if (!$order) {
+                    throw new RuntimeException('mf_order_not_found');
+                }
                 $lines = [];
                 foreach ($order['bom_snapshot'] as $s) {
                     $lines[] = ['snapshot_line_id' => (int)$s['id'], 'quantity' => '0.0001', 'unit_cost' => '1'];
@@ -210,6 +227,150 @@ try {
                 'native' => ManufacturingInventoryAdapter::nativeAvailable(),
                 'no_parallel_gl' => true,
             ]);
+            break;
+
+        case 'suite_gates':
+            // Shorter gate bundle (maker/checker, dup, period, oversell, mrp) — avoids long-run OOM kills.
+            $out = ['ok' => true, 'DATABASE_TESTED' => true, 'cases' => []];
+            $mark = static function (array &$out, string $name, bool $pass, $detail = null): void {
+                $out['cases'][$name] = ['pass' => $pass, 'detail' => $detail];
+                if (!$pass) {
+                    $out['ok'] = false;
+                }
+            };
+
+            // maker/checker + isolation + malformed
+            mf_e2e_reset_schema();
+            mf_seed_stock(2, '20.0000', 1, 1, '100.00');
+            mf_seed_stock(3, '20.0000', 1, 1, '50.00');
+            $same = false;
+            try {
+                $bomSame = ProductionDomain::createBom(10, 1, 1, [
+                    'code' => 'BOM-SAME-'.bin2hex(random_bytes(2)), 'output_item_id' => 1, 'output_qty' => '1',
+                    'lines' => [
+                        ['component_item_id' => 2, 'quantity_per' => '1', 'scrap_percent' => 0],
+                        ['component_item_id' => 3, 'quantity_per' => '1', 'scrap_percent' => 0],
+                    ],
+                ]);
+                ProductionDomain::approveBom(10, 1, 1, $bomSame);
+            } catch (Throwable $e) {
+                $same = true;
+            }
+            $bomId = mf_create_approved_bom();
+            $malformed = false;
+            try {
+                ManufacturingExecutionDomain::createOrder(10, 1, 1, [
+                    'bom_id' => $bomId, 'planned_qty' => 'not-a-number', 'raw_warehouse_id' => 1, 'fg_warehouse_id' => 1,
+                ]);
+            } catch (Throwable $e) {
+                $malformed = true;
+            }
+            $order = ManufacturingExecutionDomain::createOrder(10, 1, 1, [
+                'bom_id' => $bomId, 'planned_qty' => '2.0000', 'raw_warehouse_id' => 1, 'fg_warehouse_id' => 1,
+            ]);
+            $oid = (int)$order['id'];
+            $makerDenied = false;
+            try {
+                ManufacturingExecutionDomain::approveOrder(10, 1, 1, $oid);
+            } catch (Throwable $e) {
+                $makerDenied = str_contains($e->getMessage(), 'maker_checker');
+            }
+            ManufacturingExecutionDomain::approveOrder(10, 1, 2, $oid);
+            $hidden = ManufacturingExecutionDomain::getOrder(10, 2, $oid) === null;
+            $mark($out, 'maker_checker_isolation', $same && $malformed && $makerDenied && $hidden);
+
+            // 5) duplicate component + closed period
+            mf_e2e_reset_schema();
+            mf_seed_stock(2, '10.0000', 1, 1, '100.00');
+            mf_seed_stock(3, '10.0000', 1, 1, '50.00');
+            $bomId = mf_create_approved_bom();
+            $order = ManufacturingExecutionDomain::createOrder(10, 1, 1, [
+                'bom_id' => $bomId, 'planned_qty' => '2.0000', 'raw_warehouse_id' => 1, 'fg_warehouse_id' => 1,
+            ]);
+            $oid = (int)$order['id'];
+            ManufacturingExecutionDomain::approveOrder(10, 1, 2, $oid);
+            ManufacturingExecutionDomain::releaseOrder(10, 1, 1, $oid, hash('sha256', 'suite-dup-rel'));
+            $sid = (int)ManufacturingExecutionDomain::getOrder(10, 1, $oid)['bom_snapshot'][0]['id'];
+            $dup = false;
+            try {
+                ManufacturingExecutionDomain::issueMaterials(10, 1, 1, $oid, [
+                    ['snapshot_line_id' => $sid, 'quantity' => '0.1000'],
+                    ['snapshot_line_id' => $sid, 'quantity' => '0.1000'],
+                ], hash('sha256', 'suite-dup'));
+            } catch (Throwable $e) {
+                $dup = true;
+            }
+            $fy = (int)pdo()->query('SELECT id FROM acc_fiscal_years WHERE workspace_id=10 AND company_id=1 LIMIT 1')->fetchColumn();
+            pdo()->prepare("INSERT INTO acc_period_closes (workspace_id,company_id,fiscal_year_id,period_key,close_type,status,created_at,updated_at)
+                VALUES (10,1,?,'2026-11','monthly','closed',NOW(),NOW()) ON DUPLICATE KEY UPDATE status='closed'")->execute([$fy]);
+            $period = false;
+            try {
+                $order = ManufacturingExecutionDomain::getOrder(10, 1, $oid);
+                $pl = [];
+                foreach ($order['bom_snapshot'] as $s) {
+                    $pl[] = ['snapshot_line_id' => (int)$s['id'], 'quantity' => '0.0001', 'unit_cost' => '1'];
+                }
+                ManufacturingExecutionDomain::issueMaterials(10, 1, 1, $oid, $pl, hash('sha256', 'suite-period'), ['movement_date' => '2026-11-15']);
+            } catch (Throwable $e) {
+                $period = str_contains(strtolower($e->getMessage()), 'period');
+            }
+            $mark($out, 'duplicate_and_closed_period', $dup && $period);
+
+            // 6) two-order oversell guard (locking reads; second issue must fail after first takes stock)
+            mf_e2e_reset_schema();
+            mf_seed_stock(2, '10.0000', 1, 1, '100.00');
+            mf_seed_stock(3, '20.0000', 1, 1, '50.00');
+            $bomId = mf_create_approved_bom();
+            $o1 = ManufacturingExecutionDomain::createOrder(10, 1, 1, [
+                'bom_id' => $bomId, 'planned_qty' => '6.0000', 'raw_warehouse_id' => 1, 'fg_warehouse_id' => 1, 'order_no' => 'MO-S1',
+            ]);
+            $o2 = ManufacturingExecutionDomain::createOrder(10, 1, 1, [
+                'bom_id' => $bomId, 'planned_qty' => '6.0000', 'raw_warehouse_id' => 1, 'fg_warehouse_id' => 1, 'order_no' => 'MO-S2',
+            ]);
+            ManufacturingExecutionDomain::approveOrder(10, 1, 2, (int)$o1['id']);
+            ManufacturingExecutionDomain::approveOrder(10, 1, 2, (int)$o2['id']);
+            pdo()->prepare("UPDATE erp_mf_production_orders SET status='released',released_at=NOW(),updated_at=NOW() WHERE id IN (?,?)")
+                ->execute([(int)$o1['id'], (int)$o2['id']]);
+            $pack = static function (array $snap): array {
+                $rows = [];
+                foreach ($snap as $s) {
+                    $rows[] = [
+                        'snapshot_line_id' => (int)$s['id'],
+                        'quantity' => '6.0000',
+                        'unit_cost' => ((int)$s['component_item_id'] === 2) ? '100.00' : '50.00',
+                    ];
+                }
+                return $rows;
+            };
+            $lines1 = $pack(ManufacturingExecutionDomain::getOrder(10, 1, (int)$o1['id'])['bom_snapshot']);
+            $lines2 = $pack(ManufacturingExecutionDomain::getOrder(10, 1, (int)$o2['id'])['bom_snapshot']);
+            $firstOk = false;
+            $secondFail = false;
+            try {
+                ManufacturingExecutionDomain::issueMaterials(10, 1, 1, (int)$o1['id'], $lines1, str_repeat('b', 32));
+                $firstOk = true;
+            } catch (Throwable $e) {
+                $firstOk = false;
+            }
+            try {
+                ManufacturingExecutionDomain::issueMaterials(10, 1, 1, (int)$o2['id'], $lines2, str_repeat('c', 32));
+            } catch (Throwable $e) {
+                $secondFail = str_contains(strtolower($e->getMessage()), 'insufficient');
+            }
+            $mark($out, 'concurrent_issue', $firstOk && $secondFail && mf_on_hand(2) === '4.0000', [
+                'on_hand_a' => mf_on_hand(2), 'note' => 'serialized oversell guard; multi-process covered by concurrent_issue_prepare+one harness',
+            ]);
+
+            // 7) mrp + adapter
+            mf_e2e_reset_schema();
+            mf_seed_stock(2, '1.0000');
+            mf_seed_stock(3, '1.0000');
+            $bomId = mf_create_approved_bom();
+            $mrp = ManufacturingExecutionDomain::mrpRecommendations(10, 1, $bomId, '5.0000', 1);
+            $mark($out, 'mrp_adapter', $mrp['auto_po'] === false && $mrp['recommendation_count'] >= 1
+                && ManufacturingInventoryAdapter::mode() !== '');
+
+            mf_json_out($out);
             break;
 
         case 'lifecycle_happy':
