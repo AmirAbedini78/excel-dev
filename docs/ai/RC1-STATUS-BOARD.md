@@ -17,7 +17,7 @@
 ## Acceptance contracts
 | ID | Status | Evidence |
 |----|--------|----------|
-| TR-1 Domestic procurement | PARTIAL_PREEXISTING | v10.23 E2E amounts exist; T3/T7 must re-prove on RC1 SHA |
+| TR-1 Domestic procurement | BASELINE_PASS | Evidence `docs/ai/rc1/evidence/BASELINE-TR1-2026-11-20.md` on sandbox `02eb215a87f6…`; re-prove after merges |
 | TR-2 Sales | PARTIAL_PREEXISTING | O2C/AR kernels exist; T7 must re-prove |
 | MF-1 Production | NOT_STARTED | ProductionDomain pilot only (BOM/plan/preview) |
 | SYS-1 Generality | NOT_STARTED | Profile smoke pending T4/T6/T7 |
