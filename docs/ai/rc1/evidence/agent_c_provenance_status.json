@@ -1,8 +1,9 @@
 {
   "agent": "T0_MIGRATION_ARCHITECT",
   "scope": "OPS-1 provenance and legacy migration",
-  "verified_at_utc": "2026-11-21T09:45:00Z",
-  "origin_main_sha": "e474ff377731ad2d482b2bf4fec6c3d1a7d32c5c",
+  "verified_at_utc": "2026-11-21T10:50:00Z",
+  "origin_main_sha": "c5c644c386cbedde788c4e12e0585c43dc1b5a5d",
+  "candidate_sha": "03728b145e67f0f6fe2179fe6a7e1df0badad8e5",
   "production": "NOT_TOUCHED",
   "cpanel_prod": "NOT_RUN",
   "deployment_status": "EXISTING_DEPLOYMENT_CONFIRMED",
@@ -12,13 +13,18 @@
   "ops1_independent_class": "BLOCKED_EXTERNAL",
   "engineering_restore_class": "CLOSED",
   "structural_legacy_rehearsal_class": "PASS_SCHEMA_ONLY",
+  "anonymization_class": "PASS_LEAK_SCAN",
+  "anonymized_dump_sha256": "F3B92C0088A874A739FCD64BF25FA714010078C3EB95DFDF81ADC92335841DE2",
+  "data_reconciliation_class": "NOT_RUN_LOCAL_MYSQL_UNAVAILABLE",
+  "owner_attestation": "NOT_PROVIDED",
   "candidate_dump_sha256": "2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC",
   "candidate_safety": "UNSAFE_UNREDACTED_SECRETS_AND_PII",
-  "sanitized_schema_only_sha256": "3256AABC0EFC1E52AD5ADDA7576F39BA25D09B986AC18C0DF447E0BFEB832015",
   "backup_restore_evidence": {
     "synthetic_closure": "docs/ai/rc1/evidence/ops1_backup_restore_closure.json",
-    "legacy_structural": "docs/ai/rc1/evidence/ops1_legacy_schema_structural_rehearsal.json"
+    "legacy_structural": "docs/ai/rc1/evidence/ops1_legacy_schema_structural_rehearsal.json",
+    "anonymization": "docs/ai/rc1/evidence/ops1_legacy_anonymization.json",
+    "data_rehearsal": "docs/ai/rc1/evidence/ops1_legacy_data_rehearsal.json"
   },
-  "owner_actions": "docs/ai/rc1/LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md",
-  "recommendation": "Keep RC1-P1-001 OPEN until anonymized schema+data Path2 + reconciliation PASS. Do not claim FRESH_INSTALL or SCHEMA_UPGRADE_TESTED."
+  "owner_actions": "docs/ai/rc1/OPS1-OWNER-ACTIONS.md",
+  "recommendation": "Keep RC1-P1-001 OPEN until owner Path2 attestation + anonymized data migrate×2 reconciliation PASS. Do not claim FRESH_INSTALL or SCHEMA_UPGRADE_TESTED."
 }

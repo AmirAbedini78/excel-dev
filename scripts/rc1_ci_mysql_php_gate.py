@@ -3,6 +3,11 @@
 
 Unlike commercial source-only release_gate, this gate REQUIRES a live MySQL
 and Docker PHP image (or host PHP with mysqli). Exit 1 on skip or failure.
+
+Networking (dual host):
+  O2C_DB_HOST      — runner/host pymysql (often 127.0.0.1 on GHA)
+  O2C_DB_HOST_PHP  — hostname passed into PHP Docker (host.docker.internal)
+Never blindly forward loopback into PHP containers.
 """
 from __future__ import annotations
 
@@ -24,9 +29,28 @@ def _require_env() -> None:
         raise SystemExit(f"RC1_CI_MYSQL_PHP_GATE_FAIL: missing env {missing}")
 
 
+def _ensure_php_db_host() -> None:
+    """Set O2C_DB_HOST_PHP when absent; remap loopback so PHP Docker reaches MySQL."""
+    explicit = (os.environ.get("O2C_DB_HOST_PHP") or "").strip()
+    if explicit:
+        return
+    host = (os.environ.get("O2C_DB_HOST") or "").strip()
+    if host in {"127.0.0.1", "localhost", "::1"}:
+        os.environ["O2C_DB_HOST_PHP"] = "host.docker.internal"
+        print(
+            "RC1_CI_MYSQL_PHP_GATE: O2C_DB_HOST_PHP=host.docker.internal "
+            f"(remapped from runner O2C_DB_HOST={host})",
+            flush=True,
+        )
+    elif host:
+        os.environ["O2C_DB_HOST_PHP"] = host
+
+
 def main() -> int:
     os.environ.setdefault("RC1_REQUIRED", "1")
+    os.environ.setdefault("RC1_ALLOW_ANY_MYSQL", "1")
     _require_env()
+    _ensure_php_db_host()
 
     # Fail if Docker PHP image missing when tests need it.
     img = subprocess.run(
@@ -60,6 +84,13 @@ def main() -> int:
     loader = unittest.TestLoader()
     runner = unittest.TextTestRunner(verbosity=2, resultclass=FailOnSkipResult)
     any_fail = False
+    print(
+        "RC1_CI_MYSQL_PHP_GATE: "
+        f"runner_host={os.environ.get('O2C_DB_HOST')} "
+        f"php_host={os.environ.get('O2C_DB_HOST_PHP')} "
+        f"port={os.environ.get('O2C_DB_PORT')}",
+        flush=True,
+    )
     for db_name, test_name in cases:
         os.environ["O2C_DB_NAME"] = db_name
         suite = loader.loadTestsFromName(test_name)

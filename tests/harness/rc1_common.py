@@ -16,12 +16,37 @@ EVIDENCE_DIR = ROOT / "docs" / "ai" / "rc1" / "evidence"
 
 # Verified disposable sandbox (G0 / shared contracts §9)
 EXPECTED_CONTAINER_NAME = "erpsmart-p2p-mysql-test"
-EXPECTED_CONTAINER_ID_PREFIX = "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6"
+# Recreated disposable sandbox (zombie prior ID 02eb215a87f6… retired 2026-11-21).
+EXPECTED_CONTAINER_ID_PREFIX = os.environ.get(
+    "RC1_MYSQL_CONTAINER_ID_PREFIX",
+    "ab78c5c42f00463c9fa5092eb8512ee5c9168082d3387e3b36b9b15af9294baa",
+)
 PHP_IMAGE = "erpsmart-o2c-php:8.2"
-HOST = os.environ.get("O2C_DB_HOST", "host.docker.internal")
 PORT = os.environ.get("O2C_DB_PORT", "3307")
 USER = os.environ.get("O2C_DB_USER", "p2p")
 PASSWORD = os.environ.get("O2C_DB_PASS", "p2p_test")
+
+
+def _runner_db_host() -> str:
+    """Host-side (pymysql / runner) MySQL hostname — may be 127.0.0.1 on GHA."""
+    return (os.environ.get("O2C_DB_HOST") or "127.0.0.1").strip()
+
+
+def _php_db_host() -> str:
+    """In-container hostname for PHP Docker — never forward loopback blindly."""
+    explicit = (os.environ.get("O2C_DB_HOST_PHP") or "").strip()
+    if explicit:
+        return explicit
+    host = _runner_db_host()
+    if host in {"127.0.0.1", "localhost", "::1"}:
+        return "host.docker.internal"
+    return host or "host.docker.internal"
+
+
+# Backward-compatible alias; prefer _php_db_host() at call time.
+HOST = os.environ.get("O2C_DB_HOST_PHP") or os.environ.get("O2C_DB_HOST", "host.docker.internal")
+
+
 def _db_name() -> str:
     # Read at call time so rc1_acceptance_gate can isolate schemas per contract.
     return os.environ.get("O2C_DB_NAME", "erpsmart_rc1_test")
@@ -143,8 +168,9 @@ def verify_sandbox(*, required: bool | None = None) -> dict[str, Any]:
 
     try:
         # Ensure disposable schema exists before connect (CREATE IF NOT EXISTS).
+        runner_host = _runner_db_host()
         bootstrap = pymysql.connect(
-            host="127.0.0.1",
+            host=runner_host,
             port=int(PORT),
             user=USER,
             password=PASSWORD,
@@ -161,7 +187,7 @@ def verify_sandbox(*, required: bool | None = None) -> dict[str, Any]:
         finally:
             bootstrap.close()
         pymysql.connect(
-            host="127.0.0.1",
+            host=runner_host,
             port=int(PORT),
             user=USER,
             password=PASSWORD,
@@ -183,13 +209,14 @@ def php_runner(runner_rel: str, scenario: str = "run", args: dict | None = None,
     payload = json.dumps(args or {}, ensure_ascii=False)
     # Docker Desktop on Windows needs forward-slash bind mounts
     mount = str(ROOT).replace("\\", "/")
+    php_host = _php_db_host()
     cmd = [
         "docker",
         "run",
         "--rm",
         "--add-host=host.docker.internal:host-gateway",
         "-e",
-        f"O2C_DB_HOST={HOST}",
+        f"O2C_DB_HOST={php_host}",
         "-e",
         f"O2C_DB_PORT={PORT}",
         "-e",

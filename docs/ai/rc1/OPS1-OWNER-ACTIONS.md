@@ -20,11 +20,12 @@
 | Owner confirmed prior install | **YES** → Path1 invalid |
 | Candidate dump `zzflgmfd_excel2.sql` | Received — SHA recorded; **UNSAFE** secrets/PII; **not in Git** |
 | Schema-only sanitize + migrate×2 + rollback | **PASS** — `ops1_legacy_schema_structural_rehearsal.json` |
-| Path2 anonymized schema+data | **REQUIRED / incomplete** |
-| Data reconciliation (vouchers/stock/balances) | **NOT_RUN** |
+| Path2 anonymized schema+data (engineering offline) | **PRODUCED** — anon SHA `F3B92C0088…41DE2`; leak_scan PASS; **not in Git** |
+| Owner attestation / provenance id | **REQUIRED / missing** |
+| Data reconciliation (vouchers/stock/balances) | **NOT_RUN** (local disposable MySQL unavailable this pass) |
 | cPanel / production | **NOT_RUN** / forbidden |
 
-Independent OPS-1 remains **BLOCKED** until Path2 data rehearsal PASS.
+Independent OPS-1 remains **BLOCKED** until owner attestation + disposable data reconciliation PASS.
 
 ---
 
