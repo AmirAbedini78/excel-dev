@@ -10,10 +10,17 @@
 | Class | Meaning | Examples |
 |-------|---------|----------|
 | **SAFE_ADDITIVE** | New tables/columns via `CREATE IF NOT EXISTS` / guarded `ALTER` | `erp_ar_postings`, `erp_ap_*`, `erp_mf_*`, `erp_p2p_*`, `erp_o2c_*`, `erp_company_business_profiles` |
-| **REQUIRES_DATA_BACKFILL** | New NOT NULL / maps without legacy rows | AR/AP company maps, business profiles, costing policy |
-| **UNIT_SENSITIVE** | Money/qty semantics must not silently change | `acc_voucher_lines.debit/credit`, `acc_stock_movements.quantity/unit_cost`, trade `amount_irr` / `currency_code` default IRR |
+| **REQUIRES_DATA_BACKFILL** | New NOT NULL / maps without legacy rows | AR/AP company maps, business profiles, costing policy; `companies.workspace_id` / SaaS tenant backfill |
+| **BREAKING_RENAME** | Legacy name ≠ RC1 migrator name | `workspace_api_tokens` (legacy dump) → `api_access_tokens` (`ApiV1` / not in bootstrap gate — lazy on API use) |
+| **UNIT_SENSITIVE** | Money/qty semantics must not silently change | `acc_voucher_lines.debit/credit`, `acc_stock_movements.quantity/unit_cost`, trade `amount_irr` / `currency_code` default IRR; `display_currency` / `toman_factor` display-only |
 | **PRESERVE_IDENTITY** | Do not renumber | voucher ids, stock movement ids, company/workspace ids |
-| **UNKNOWN** | Needs column-level compare on verified dump | charset edge cases, NULL defaults, missing indexes on legacy phpMyAdmin form |
+| **UNKNOWN** | Needs column-level compare on verified dump | charset edge cases, NULL defaults, missing indexes on legacy phpMyAdmin form; full 110↔134 column inventory |
+
+### Rename / dual-compat note (Agent B)
+
+- Legacy dump includes `workspace_api_tokens`; RC1 creates `api_access_tokens` (+ `api_rate_buckets`) via `ApiV1` — **not** wired in the bootstrap cumulative gate.
+- Expand phase: **do not DROP/RENAME** legacy token table; keep dual-compat until Path2 data validate + explicit map.
+- Enforce/deprecate only after validate PASS on anonymized data.
 
 ## Legacy markers vs RC1
 

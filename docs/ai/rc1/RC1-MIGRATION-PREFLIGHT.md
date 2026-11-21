@@ -44,8 +44,10 @@ O2C_DB_NAME=erpsmart_rc1_legacy_schema_migrate
 Bootstrap/cache failure modes to watch:
 
 - `RuntimeCache::schemaReady` skipping migrates after partial failure → clear `schema.json` for rehearsal only  
-- `install.php` against existing install → refused by product; never use on legacy  
-- Cache dir pointing at wrong DB fingerprint  
+- `install.php` / `migrate_v2.php` → **incomplete** (base `Schema::migrate` only); never use as RC1 upgrade path  
+- Cache dir pointing at wrong DB fingerprint / non-writable cache falling back to temp → split schema gate  
+- `app_key` mismatch vs encrypted credential fingerprint → hard fail (`enforce_data_persistence_guard`)  
+- Legacy `workspace_api_tokens` vs RC1 `api_access_tokens` — no silent DROP during expand (see schema diff)  
 
 ## Go / No-Go
 
