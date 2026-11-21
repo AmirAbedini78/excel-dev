@@ -77,6 +77,63 @@ final class BusinessCopilotApi
         return array_values(array_unique($out));
     }
 
+    /**
+     * Wave4 UX enrichment: expose agent_task + evidence from result_json without
+     * mutating AiRepository (shared-file freeze). Never invent progress states.
+     */
+    private static function enrichWorkspaceJob(array $job): array
+    {
+        $full=AiRepository::jobForUser((int)($job['id']??0));
+        if(!$full)return$job;
+        $meta=json_decode((string)($full['result_json']??''),true);
+        if(!is_array($meta))$meta=[];
+
+        $agentTask=$meta['agent_task']??null;
+        if(is_array($agentTask)){
+            $state=strtoupper(trim((string)($agentTask['state']??$agentTask['status']??'')));
+            $job['agent_task']=[
+                'state'=>$state,
+                'message'=>self::textSlice(trim((string)($agentTask['message']??'')),500),
+                'updated_at'=>self::textSlice((string)($agentTask['updated_at']??$full['updated_at']??''),80),
+                'budget'=>(array)($agentTask['budget']??[]),
+            ];
+        }
+
+        $evidence=$meta['evidence']??null;
+        if(!is_array($evidence)&&is_array($agentTask))$evidence=$agentTask['evidence']??null;
+        if(is_array($evidence)){
+            $safe=[];
+            foreach(array_slice($evidence,0,40) as $row){
+                if(!is_array($row))continue;
+                $kind=strtoupper(trim((string)($row['kind']??$row['type']??'MODEL_INTERPRETATION')));
+                if(!in_array($kind,['LIVE_ERP_FACT','DOCUMENT_EVIDENCE','CALCULATED_FINDING','MODEL_INTERPRETATION'],true)){
+                    $kind='MODEL_INTERPRETATION';
+                }
+                $item=[
+                    'kind'=>$kind,
+                    'title'=>self::textSlice((string)($row['title']??$row['label']??$row['source']??'شواهد'),190),
+                    'value'=>self::textSlice((string)($row['value']??$row['text']??$row['snippet']??''),1000),
+                    'at'=>self::textSlice((string)($row['at']??$row['observed_at']??''),80),
+                ];
+                if(isset($row['amount_irr'])&&is_numeric($row['amount_irr']))$item['amount_irr']=(float)$row['amount_irr'];
+                if(isset($row['irr_scaled'])&&is_numeric($row['irr_scaled']))$item['irr_scaled']=(int)$row['irr_scaled'];
+                $safe[]=$item;
+            }
+            $job['evidence']=$safe;
+        }
+
+        // Proposal rows: keep server status; UI must not treat "proposed" as executed.
+        if(!empty($job['proposals'])&&is_array($job['proposals'])){
+            foreach($job['proposals'] as &$p){
+                if(!is_array($p))continue;
+                $p['status']=strtolower(trim((string)($p['status']??'proposed')));
+                $p['executed']=($p['status']==='executed');
+            }
+            unset($p);
+        }
+        return$job;
+    }
+
     public static function handle(): void
     {
         if(!Auth::check())self::json(['ok'=>false,'error'=>'auth_required'],401);
@@ -116,7 +173,7 @@ final class BusinessCopilotApi
             if($action==='job'){
                 $id=(int)($_GET['job_id']??0);$job=AiRepository::liveJobStateForUser($id,$cid);
                 if(!$job)self::json(['ok'=>false,'error'=>'job_not_found'],404);
-                self::json(['ok'=>true,'job'=>$job]);
+                self::json(['ok'=>true,'job'=>self::enrichWorkspaceJob($job)]);
             }
 
             if($action==='queue'){

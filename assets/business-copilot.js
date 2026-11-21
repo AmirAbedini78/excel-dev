@@ -34,11 +34,17 @@ const setConversationId=id=>{state.conversation_ids[String(scopeId())]=Number(id
 const save=()=>localStorage.setItem(globalKey,JSON.stringify({open:!!state.open,scope_company_id:scopeId(),conversation_ids:state.conversation_ids,refs:state.refs}));
 function open(v=true){state.open=!!v;shell.classList.toggle('is-open',state.open);document.querySelector('.copilot-backdrop')?.classList.toggle('is-open',state.open);document.body.classList.toggle('copilot-open',state.open);shell.setAttribute('aria-hidden',state.open?'false':'true');save();if(state.open)setTimeout(()=>input.focus(),60)}
 document.querySelectorAll('[data-copilot-open]').forEach(b=>b.addEventListener('click',()=>open(true)));document.querySelectorAll('[data-copilot-close]').forEach(b=>b.addEventListener('click',()=>open(false)));
+const WS=window.ERPSMART_AI_WORKSPACE||null;
+const moneyCtx={display_currency:String(cfg.display_currency||'IRR'),label_fa:String(cfg.money_label_fa||'ریال')};
 function msg(kind,text,id=''){const d=document.createElement('div');d.className=`copilot-message ${kind}`;if(id)d.dataset.jobMessage=id;d.textContent=text;thread.appendChild(d);thread.scrollTop=thread.scrollHeight;return d}
 function renderWelcome(extra=''){
     thread.innerHTML='';const box=document.createElement('div');box.className='copilot-welcome';
-    const b=document.createElement('b');b.textContent='دستیار آماده است.';const s=document.createElement('span');s.textContent=extra||'با @ در همه شرکت‌های این محیط کاری جست‌وجو کن؛ گفتگو و عملیات هر شرکت جدا نگه داشته می‌شود.';
-    box.append(b,s);thread.appendChild(box);
+    const b=document.createElement('b');b.textContent='فضای کار هوشمند آماده است.';
+    const s=document.createElement('span');s.textContent=extra||(WS&&WS.COPY.empty_thread)||'با @ در همه شرکت‌های این محیط کاری جست‌وجو کن؛ گفتگو و عملیات هر شرکت جدا نگه داشته می‌شود. پیشنهادها تا تأیید انسانی اجرا نمی‌شوند.';
+    box.append(b,s);
+    const hint=document.createElement('small');hint.className='ai-ws-model-hint';
+    hint.textContent=`تاریخ امروز: ${cfg.jalali_today||window.JALALI_TODAY||'—'} • نمایش مبلغ: ${moneyCtx.label_fa} (دفتر کل: ریال)`;
+    box.appendChild(hint);thread.appendChild(box);
 }
 function renderScope(){
     const c=scopeCompany();if(companySelect)companySelect.value=String(scopeId());if(scopeName)scopeName.textContent=`گفتگو: ${c?.name||'بدون شرکت'}`;renderPage();
@@ -80,8 +86,8 @@ async function loadConversation(id=conversationId(),cid=scopeId()){
     const u=new URL(cfg.endpoint,location.href);u.searchParams.set('action','conversation');u.searchParams.set('company_id',cid);u.searchParams.set('conversation_id',id);
     try{
         const response=await fetch(u,{credentials:'same-origin',headers:{'Accept':'application/json'}});const j=await responseJson(response);if(cid!==scopeId()||id!==conversationId())return;if(!response.ok||!j.ok)throw new Error(j.error||'conversation_failed');
-        thread.innerHTML='';const jobs=Array.isArray(j.jobs)?j.jobs:[];if(!jobs.length){renderWelcome('این گفتگو هنوز پیامی ندارد.');return}
-        jobs.forEach(x=>{msg('user',x.prompt||'');if(x.result_text)msg('ai',x.result_text);else if(x.error_text)msg('error',x.error_text);else msg('pending','در حال پردازش…',String(x.id))});thread.scrollTop=thread.scrollHeight
+        thread.innerHTML='';const jobs=Array.isArray(j.jobs)?j.jobs:[];if(!jobs.length){renderWelcome((WS&&WS.COPY.empty_thread)||'این گفتگو هنوز پیامی ندارد.');return}
+        jobs.forEach(x=>{msg('user',x.prompt||'');if(x.result_text)msg('ai',x.result_text);else if(x.error_text)msg('error',x.error_text);else{const p=msg('pending',(WS&&WS.COPY.loading_job)||'در حال پردازش…',String(x.id));if(WS)WS.renderProgress(p,{live:{message:(WS.COPY.loading_job||'در حال پردازش…')},status:x.status||'queued'})}});thread.scrollTop=thread.scrollHeight
     }catch(e){if(cid===scopeId()&&id===conversationId())renderWelcome('این گفتگو فعلاً قابل بازیابی نیست.')}
 }
 async function setScope(cid,{announce=true,restoreLatest=true}={}){
@@ -123,15 +129,22 @@ async function selectMention(r){
     if(!state.refs.some(x=>x.type===r.type&&Number(x.id)===Number(r.id)))state.refs.push({type:r.type,id:Number(r.id),label:r.label,code:r.code,icon:r.icon,company_id:scopeId(),company_name:r.company_name||scopeCompany()?.name||''});
     searchSeq++;menu.hidden=true;save();renderChips();input.focus()
 }
-function queueMentionSearch(){const t=mentionToken();clearTimeout(searchTimer);if(!t){menu.hidden=true;return}mentionStatus(t.query?'در حال جست‌وجوی همه شرکت‌ها…':'دسته‌بندی موجودیت‌ها');searchTimer=setTimeout(()=>searchMention(t.query),130)}
+function queueMentionSearch(){const t=mentionToken();clearTimeout(searchTimer);if(!t){menu.hidden=true;return}mentionStatus(t.query?(WS&&WS.COPY.loading_search)||'در حال جست‌وجوی همه شرکت‌ها…':'دسته‌بندی موجودیت‌ها');searchTimer=setTimeout(()=>searchMention(t.query),130)}
 input.addEventListener('input',queueMentionSearch);input.addEventListener('compositionend',queueMentionSearch);input.addEventListener('focus',()=>{if(mentionToken())queueMentionSearch()});input.addEventListener('keydown',e=>{if(e.key==='Escape')menu.hidden=true;if((e.ctrlKey||e.metaKey)&&e.key==='Enter')send()});document.addEventListener('click',e=>{if(!shell.contains(e.target))menu.hidden=true});
+function proposalHandlers(){
+    return{
+        onApprove:(id,box)=>proposalAction('approve_proposal',id,box),
+        onReject:(id,box)=>proposalAction('reject_proposal',id,box)
+    };
+}
 function renderProposalActions(host,job){
+    if(WS&&typeof WS.renderProposalCard==='function'){WS.renderProposalCard(host,job,proposalHandlers());return}
     const proposals=Array.isArray(job.proposals)?job.proposals.filter(p=>p&&String(p.status||'')==='proposed'):[];
     const pid=Number(job.proposal_id)||Number(proposals[0]?.id)||0;
     if(!pid&&!proposals.length)return;
     const box=document.createElement('div');box.className='copilot-proposal-actions';
     const summary=proposals[0]?.summary||proposals[0]?.tool_name||'پیشنهاد عملیاتی';
-    box.innerHTML=`<p class="copilot-proposal-summary">${esc(summary)}</p><div class="copilot-proposal-buttons"><button type="button" class="btn tiny primary" data-proposal-approve="${pid||proposals[0].id}">تأیید و اجرا</button><button type="button" class="btn tiny" data-proposal-reject="${pid||proposals[0].id}">رد</button></div>`;
+    box.innerHTML=`<p class="copilot-proposal-summary">${esc(summary)}</p><p class="ai-ws-proposal-note">این فقط پیشنهاد است و هنوز اجرا نشده است.</p><div class="copilot-proposal-buttons"><button type="button" class="btn tiny primary" data-proposal-approve="${pid||proposals[0].id}">تأیید و اجرا</button><button type="button" class="btn tiny" data-proposal-reject="${pid||proposals[0].id}">رد</button></div>`;
     host.appendChild(box);
     box.querySelector('[data-proposal-approve]')?.addEventListener('click',async()=>{const id=Number(box.querySelector('[data-proposal-approve]').getAttribute('data-proposal-approve'));await proposalAction('approve_proposal',id,box)});
     box.querySelector('[data-proposal-reject]')?.addEventListener('click',async()=>{const id=Number(box.querySelector('[data-proposal-reject]').getAttribute('data-proposal-reject'));await proposalAction('reject_proposal',id,box)});
@@ -139,26 +152,38 @@ function renderProposalActions(host,job){
 async function proposalAction(action,pid,box){
     if(!pid||!cfg.csrf)return;const fd=new FormData();fd.set('action',action);fd.set('csrf',cfg.csrf);fd.set('proposal_id',String(pid));
     try{const response=await fetch(cfg.endpoint,{method:'POST',credentials:'same-origin',body:fd,headers:{'Accept':'application/json'}});const j=await responseJson(response);if(!response.ok||!j.ok)throw new Error(j.error||'proposal_action_failed');
-        if(box&&box.parentElement){const note=document.createElement('p');note.className='copilot-proposal-done';note.textContent=action==='approve_proposal'?'پیشنهاد تأیید و اجرا شد.':'پیشنهاد رد شد.';box.replaceWith(note)}
-    }catch(e){alert('عملیات پیشنهاد ناموفق بود: '+e.message)}
+        if(box&&box.parentElement){
+            if(WS&&typeof WS.markProposalResult==='function')WS.markProposalResult(box,action);
+            else{const note=document.createElement('p');note.className='copilot-proposal-done';note.textContent=action==='approve_proposal'?'پیشنهاد تأیید و اجرا شد.':'پیشنهاد رد شد.';box.replaceWith(note)}
+        }
+    }catch(e){alert(((WS&&WS.COPY.error_proposal)||'عملیات پیشنهاد ناموفق بود')+': '+e.message)}
 }
 async function poll(jobId,node,cid){
     for(let i=0;i<180;i++){
         await new Promise(r=>setTimeout(r,i?1100:300));const u=new URL(cfg.endpoint,location.href);u.searchParams.set('action','job');u.searchParams.set('company_id',cid);u.searchParams.set('job_id',jobId);
         try{const response=await fetch(u,{credentials:'same-origin'});const j=await responseJson(response);if(!response.ok||!j.ok)continue;const x=j.job;if(x.terminal){if(cid===scopeId()&&document.body.contains(node)){node.classList.remove('pending');if(x.status==='succeeded'){node.classList.add('ai');node.textContent='';const text=document.createElement('div');text.className='copilot-ai-text';text.textContent=x.result_text||'پاسخ بدون متن پایان یافت.';node.appendChild(text);
-                if(x.awaiting_human_approval||x.proposal_id||(x.proposals&&x.proposals.length))renderProposalActions(node,x);
-            }else{node.classList.add('error');node.textContent=x.error_text||'پردازش ناموفق بود.'}thread.scrollTop=thread.scrollHeight}if(cid===scopeId())refreshConversations({restoreLatest:false,load:false});return}else if(cid===scopeId()&&document.body.contains(node)){node.textContent=(x.live&&x.live.message)||'در حال پردازش…'}}catch(e){}
+                if(WS&&typeof WS.applyJobUi==='function')WS.applyJobUi(node,x,moneyCtx,proposalHandlers());
+                else if(x.awaiting_human_approval||x.proposal_id||(x.proposals&&x.proposals.length))renderProposalActions(node,x);
+            }else{node.classList.add('error');node.textContent=x.error_text||'پردازش ناموفق بود.'}thread.scrollTop=thread.scrollHeight}if(cid===scopeId())refreshConversations({restoreLatest:false,load:false});return}else if(cid===scopeId()&&document.body.contains(node)){
+                if(WS&&typeof WS.applyJobUi==='function'){
+                    let liveText=node.querySelector('[data-ai-ws-live-text]');
+                    if(!liveText){node.textContent='';liveText=document.createElement('div');liveText.className='copilot-ai-text';liveText.dataset.aiWsLiveText='1';node.appendChild(liveText)}
+                    liveText.textContent=(x.live&&x.live.message)||(WS.COPY&&WS.COPY.loading_job)||'در حال پردازش…';
+                    WS.applyJobUi(node,x,moneyCtx,proposalHandlers());
+                }else{node.textContent=(x.live&&x.live.message)||'در حال پردازش…'}
+            }}catch(e){}
     }
-    if(cid===scopeId()&&document.body.contains(node)){node.classList.remove('pending');node.classList.add('error');node.textContent='پیگیری پاسخ بیش از حد طول کشید؛ نتیجه در مرکز فرمان قابل مشاهده است.'}
+    if(cid===scopeId()&&document.body.contains(node)){node.classList.remove('pending');node.classList.add('error');node.textContent=(WS&&WS.COPY&&WS.COPY.error_poll)||'پیگیری پاسخ بیش از حد طول کشید؛ نتیجه در مرکز فرمان قابل مشاهده است.'}
 }
 async function send(){
-    const prompt=input.value.trim();if(!prompt)return;const cid=scopeId();if(!cid)return;const btn=$('[data-copilot-send]');btn.disabled=true;msg('user',prompt);const pending=msg('pending','در صف پردازش…');
+    const prompt=input.value.trim();if(!prompt)return;const cid=scopeId();if(!cid)return;const btn=$('[data-copilot-send]');btn.disabled=true;msg('user',prompt);const pending=msg('pending',(WS&&WS.COPY&&WS.COPY.loading_job)||'در صف پردازش…');
+    if(WS)WS.renderProgress(pending,{live:{message:(WS.COPY&&WS.COPY.loading_job)||'در صف پردازش…'},status:'queued'});
     const refs=state.refs.filter(r=>Number(r.company_id||cid)===cid).map(({type,id})=>({type,id}));const pageRefs=Number(cfg.company_id)===cid?(cfg.current_page_refs||[]).map(({type,id})=>({type,id})):[];
     const fd=new FormData();fd.set('action','queue');fd.set('csrf',cfg.csrf);fd.set('company_id',cid);fd.set('conversation_id',conversationId()||'');fd.set('prompt',prompt);fd.set('context_refs_json',JSON.stringify(refs));fd.set('page_context_refs_json',JSON.stringify(pageRefs));fd.set('engine',engineSelect?.value||'');fd.set('model',modelSelect?.value||'');
     try{
         const response=await fetch(cfg.endpoint,{method:'POST',credentials:'same-origin',body:fd,headers:{'Accept':'application/json'}});const j=await responseJson(response);if(!response.ok||!j.ok)throw new Error(j.error||'queue_failed');
         if(cid!==scopeId())return;setConversationId(Number(j.conversation_id)||0);state.refs=[];save();renderChips();input.value='';input.focus();conversationSelect.value=String(conversationId());refreshConversations({restoreLatest:false,load:false});pending.dataset.jobMessage=String(j.job_id);poll(j.job_id,pending,cid)
-    }catch(e){if(cid===scopeId()&&document.body.contains(pending)){pending.classList.remove('pending');pending.classList.add('error');pending.textContent='ارسال ناموفق بود: '+e.message}}finally{btn.disabled=false}
+    }catch(e){if(cid===scopeId()&&document.body.contains(pending)){pending.classList.remove('pending');pending.classList.add('error');pending.textContent=((WS&&WS.COPY&&WS.COPY.error_send)||'ارسال ناموفق بود')+': '+e.message}}finally{btn.disabled=false}
 }
 $('[data-copilot-send]').addEventListener('click',send);
 companySelect?.addEventListener('change',()=>setScope(Number(companySelect.value),{announce:true,restoreLatest:true}));

@@ -1,0 +1,13 @@
+{
+  "suite": "wave4_universal_ai_workspace_browser",
+  "synthetic": true,
+  "production": false,
+  "static_ok": true,
+  "static_failures": [],
+  "proposal_rule": "proposed must never render as executed",
+  "progress_rule": "no fictitious agent_task steps",
+  "http_smoke": {
+    "skipped": true,
+    "reason": "WAVE4_BASE_URL unset"
+  }
+}

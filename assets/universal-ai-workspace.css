@@ -1,0 +1,52 @@
+/* ERPSMART Universal AI Workspace — Wave4 additive styles (RTL) */
+.ai-ws-progress{margin-top:8px;padding:8px;border:1px solid #e4e9f2;border-radius:10px;background:#fbfcff;display:grid;gap:6px}
+.ai-ws-progress-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ai-ws-progress-head strong{font-size:11px}
+.ai-ws-progress-head small{font-size:9px;color:#667085;direction:ltr}
+.ai-ws-progress-live p,.ai-ws-progress-msg{margin:0;font-size:10px;line-height:1.65;color:#475467}
+.ai-ws-progress-msg.muted{color:#98a2b3}
+.ai-ws-progress-steps{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.ai-ws-progress-steps li{display:flex;align-items:center;gap:6px;font-size:9px;color:#98a2b3}
+.ai-ws-progress-steps li::before{content:"";width:7px;height:7px;border-radius:50%;background:#d0d5dd;flex:0 0 auto}
+.ai-ws-progress-steps li[data-status="done"]{color:#027a48}
+.ai-ws-progress-steps li[data-status="done"]::before{background:#12b76a}
+.ai-ws-progress-steps li[data-status="current"]{color:#315fda;font-weight:800}
+.ai-ws-progress-steps li[data-status="current"]::before{background:#315fda;box-shadow:0 0 0 3px rgba(49,95,218,.18)}
+.ai-ws-progress-steps li[data-status="failed"]{color:#b42318}
+.ai-ws-progress-steps li[data-status="failed"]::before{background:#f04438}
+
+.ai-ws-badge{display:inline-flex;align-items:center;border-radius:6px;padding:2px 6px;font-size:8.5px;font-weight:800;background:#eef2f7;color:#475467}
+.ai-ws-badge.ok{background:#ecfdf3;color:#027a48}
+.ai-ws-badge.warn{background:#fffaeb;color:#b54708}
+.ai-ws-badge.danger{background:#fef3f2;color:#b42318}
+.ai-ws-badge.muted{background:#f2f4f7;color:#667085}
+
+.ai-ws-evidence{margin-top:8px;border:1px solid #e4e9f2;border-radius:10px;background:#fff;padding:0 8px}
+.ai-ws-evidence>summary{cursor:pointer;font-size:10.5px;font-weight:800;padding:8px 0;list-style:none}
+.ai-ws-evidence>summary::-webkit-details-marker{display:none}
+.ai-ws-evidence ol{margin:0 0 8px;padding:0 14px 0 0;display:grid;gap:7px}
+.ai-ws-evidence li{font-size:10px;line-height:1.55}
+.ai-ws-evidence li>div{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ai-ws-evidence li p{margin:3px 0;color:#344054;white-space:pre-wrap}
+.ai-ws-evidence li small{color:#98a2b3;direction:ltr;display:block}
+.ai-ws-evidence-warn{display:block;margin-top:2px;font-size:8.5px;color:#b54708;font-style:normal}
+.ai-ws-empty{margin:0 0 8px;font-size:9.5px;color:#98a2b3}
+
+.ai-ws-proposal-card{margin-top:8px;padding:9px;border:1px solid #f6d9a8;border-radius:10px;background:#fffaf0;display:grid;gap:6px}
+.ai-ws-proposal-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ai-ws-proposal-head strong{font-size:11px}
+.ai-ws-proposal-summary{margin:0;font-size:10.5px;line-height:1.65;color:#344054}
+.ai-ws-proposal-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:9px;color:#667085}
+.ai-ws-proposal-meta code{direction:ltr;background:#fff;border:1px solid #ead7b0;border-radius:6px;padding:2px 5px;font-size:8.5px}
+.ai-ws-proposal-note{margin:0;font-size:9.5px;color:#b54708;font-weight:700}
+.ai-ws-proposal-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.ai-ws-proposal-done{margin:8px 0 0;font-size:10px;font-weight:800}
+.ai-ws-proposal-done[data-executed="1"]{color:#027a48}
+.ai-ws-proposal-done[data-executed="0"]{color:#b42318}
+
+.copilot-message.pending .ai-ws-progress{margin-top:6px}
+.copilot-message.ai .ai-ws-evidence,.copilot-message.ai .ai-ws-proposal-card{max-width:100%}
+.copilot-welcome .ai-ws-model-hint{display:block;margin-top:4px;font-size:9px;color:#7a8493}
+
+/* Keep engine/model bar readable in RTL sidecar */
+.copilot-scopebar [data-ai-engine],.copilot-scopebar [data-ai-model]{direction:ltr;text-align:left}
