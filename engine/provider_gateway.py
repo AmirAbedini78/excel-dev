@@ -698,6 +698,268 @@ def _xai_chat(
     )
 
 
+# ---------------------------------------------------------------------------
+# Model discovery + connection/inference qualification hooks (Wave3 / T4)
+# Additive only — does not replace Ollama/Gemini/xAI/Cursor adapters or
+# change provider routing. Cloud probes never run under local_only.
+# ---------------------------------------------------------------------------
+
+
+def discover_provider_models(
+    cfg: dict[str, Any],
+    *,
+    local_models: list[str] | None = None,
+    probe_cloud: bool = False,
+    http_get: Any | None = None,
+) -> dict[str, Any]:
+    """Return configured (and optionally probed) model inventories per provider.
+
+    Privacy: when provider_strategy is local_only, cloud/xAI/cursor inventories
+    are omitted regardless of probe_cloud.
+    """
+    strategy = str(cfg.get("provider_strategy") or "local_first").strip().lower()
+    privacy_blocks_cloud = strategy == "local_only"
+    inventory: dict[str, Any] = {
+        "schema_version": "provider-discover-v1",
+        "provider_strategy": strategy,
+        "privacy": {
+            "local_only_blocks_cloud": privacy_blocks_cloud,
+            "cloud_fallback_ignores_privacy": False,
+        },
+        "providers": {},
+    }
+
+    local_list = [str(m).strip() for m in (local_models or []) if str(m).strip()]
+    if not local_list:
+        local_list = [m for m in _model_map(cfg, "local").values() if m]
+    inventory["providers"]["ollama"] = {
+        "configured_models": list(dict.fromkeys(local_list)),
+        "probed_models": [],
+        "source": "config_or_runtime",
+    }
+
+    if privacy_blocks_cloud:
+        inventory["providers"]["ollama"]["note"] = "cloud_providers_suppressed_by_local_only"
+        return inventory
+
+    if _cloud_enabled(cfg):
+        cloud = _cloud_cfg(cfg)
+        cloud_models = [m for m in _model_map(cfg, "cloud").values() if m]
+        for x in cloud.get("allowed_models") or []:
+            s = str(x).strip()
+            if s:
+                cloud_models.append(s)
+        entry: dict[str, Any] = {
+            "name": str(cloud.get("name") or "openai_compatible"),
+            "configured_models": list(dict.fromkeys(cloud_models)),
+            "probed_models": [],
+            "source": "config",
+        }
+        if probe_cloud and http_get is not None:
+            try:
+                base = str(cloud.get("base_url") or "").rstrip("/")
+                payload = http_get(base + "/models")
+                rows = payload.get("data") if isinstance(payload, dict) else None
+                probed: list[str] = []
+                if isinstance(rows, list):
+                    for row in rows:
+                        if isinstance(row, dict) and row.get("id"):
+                            probed.append(str(row["id"]))
+                entry["probed_models"] = probed
+                entry["source"] = "config+probe"
+            except Exception as exc:  # noqa: BLE001 — discovery must fail soft
+                entry["probe_error"] = type(exc).__name__
+        inventory["providers"]["cloud"] = entry
+
+    if _xai_enabled(cfg):
+        inventory["providers"]["xai"] = {
+            "configured_models": list(dict.fromkeys(sorted(_xai_model_ids(cfg)))),
+            "probed_models": [],
+            "source": "config",
+        }
+
+    if _cursor_agent_enabled(cfg):
+        inventory["providers"]["cursor"] = {
+            "configured_models": list(dict.fromkeys(sorted(_cursor_model_ids(cfg)))),
+            "probed_models": [],
+            "source": "config",
+        }
+
+    return inventory
+
+
+def qualify_provider_connection(
+    cfg: dict[str, Any],
+    provider: str,
+    *,
+    http_get: Any | None = None,
+    local_reachable: bool | None = None,
+) -> dict[str, Any]:
+    """Connection smoke for one provider. Sends no ERP business data."""
+    strategy = str(cfg.get("provider_strategy") or "local_first").strip().lower()
+    provider = str(provider or "").strip().lower()
+    result: dict[str, Any] = {
+        "provider": provider,
+        "connection": "unknown",
+        "reason": "",
+        "provider_strategy": strategy,
+    }
+
+    if strategy == "local_only" and provider in {"cloud", "gemini", "xai", "grok", "cursor"}:
+        result["connection"] = "blocked"
+        result["reason"] = "provider_blocked_by_local_only_policy"
+        return result
+
+    if provider in {"ollama", "local"}:
+        if local_reachable is True:
+            result["connection"] = "ok"
+            result["reason"] = "local_reachable"
+        elif local_reachable is False:
+            result["connection"] = "failed"
+            result["reason"] = "local_unreachable"
+        else:
+            result["connection"] = "skipped"
+            result["reason"] = "local_probe_not_supplied"
+        return result
+
+    if provider in {"cloud", "gemini"}:
+        if not _cloud_enabled(cfg):
+            result["connection"] = "failed"
+            result["reason"] = "cloud_provider_disabled"
+            return result
+        cloud = _cloud_cfg(cfg)
+        base = str(cloud.get("base_url") or "").rstrip("/")
+        if not base or not str(cloud.get("api_key") or "").strip():
+            result["connection"] = "failed"
+            result["reason"] = "cloud_provider_missing_base_url_or_api_key"
+            return result
+        if http_get is None:
+            result["connection"] = "skipped"
+            result["reason"] = "http_get_not_supplied"
+            return result
+        try:
+            http_get(base + "/models")
+            result["connection"] = "ok"
+            result["reason"] = "models_endpoint_reachable"
+        except Exception as exc:  # noqa: BLE001
+            result["connection"] = "failed"
+            result["reason"] = type(exc).__name__
+        return result
+
+    if provider in {"xai", "grok"}:
+        if not _xai_enabled(cfg):
+            result["connection"] = "failed"
+            result["reason"] = "xai_provider_disabled"
+            return result
+        result["connection"] = "skipped" if http_get is None else "ok"
+        result["reason"] = "xai_configured" if _xai_enabled(cfg) else "xai_provider_disabled"
+        if http_get is None:
+            result["reason"] = "http_get_not_supplied_config_ok"
+        return result
+
+    if provider == "cursor":
+        if not _cursor_agent_enabled(cfg):
+            result["connection"] = "failed"
+            result["reason"] = "cursor_agent_disabled"
+            return result
+        result["connection"] = "skipped"
+        result["reason"] = "cursor_configured_probe_deferred"
+        return result
+
+    result["connection"] = "failed"
+    result["reason"] = "unknown_provider"
+    return result
+
+
+def qualify_provider_inference(
+    cfg: dict[str, Any],
+    provider: str,
+    model: str,
+    *,
+    chat_fn: Any | None = None,
+) -> dict[str, Any]:
+    """Bounded inference qualification hook. Never ignores local_only privacy."""
+    strategy = str(cfg.get("provider_strategy") or "local_first").strip().lower()
+    provider = str(provider or "").strip().lower()
+    model = str(model or "").strip()
+    result: dict[str, Any] = {
+        "provider": provider,
+        "model": model,
+        "inference": "unknown",
+        "reason": "",
+        "provider_strategy": strategy,
+    }
+
+    if not model:
+        result["inference"] = "failed"
+        result["reason"] = "model_required"
+        return result
+
+    if strategy == "local_only" and provider in {"cloud", "gemini", "xai", "grok", "cursor"}:
+        result["inference"] = "blocked"
+        result["reason"] = "provider_blocked_by_local_only_policy"
+        return result
+
+    if chat_fn is None:
+        result["inference"] = "skipped"
+        result["reason"] = "chat_fn_not_supplied"
+        return result
+
+    try:
+        response = chat_fn(provider=provider, model=model, prompt="ping")
+        if not isinstance(response, dict):
+            raise ProviderGatewayError("inference_response_invalid")
+        result["inference"] = "ok"
+        result["reason"] = "bounded_inference_ok"
+        if response.get("model"):
+            result["actual_model"] = str(response.get("model"))
+    except Exception as exc:  # noqa: BLE001
+        result["inference"] = "failed"
+        result["reason"] = str(getattr(exc, "args", [type(exc).__name__])[0] if getattr(exc, "args", None) else type(exc).__name__)
+        if len(result["reason"]) > 200:
+            result["reason"] = type(exc).__name__
+    return result
+
+
+def build_qualification_report(
+    cfg: dict[str, Any],
+    *,
+    local_models: list[str] | None = None,
+    connection_results: dict[str, dict[str, Any]] | None = None,
+    inference_results: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Assemble an admin-safe report for AiProviderQualification / AiModule."""
+    discovery = discover_provider_models(cfg, local_models=local_models)
+    providers_out: dict[str, Any] = {}
+    for name, meta in (discovery.get("providers") or {}).items():
+        conn = (connection_results or {}).get(name) or {}
+        inf = (inference_results or {}).get(name) or {}
+        providers_out[name] = {
+            "connection": str(conn.get("connection") or "not_run"),
+            "inference": str(inf.get("inference") or "not_run"),
+            "models": list(meta.get("probed_models") or meta.get("configured_models") or []),
+            "reason": str(conn.get("reason") or inf.get("reason") or ""),
+        }
+
+    statuses = [p.get("connection") for p in providers_out.values()] + [p.get("inference") for p in providers_out.values()]
+    if any(s == "failed" for s in statuses):
+        status = "failed"
+    elif any(s == "blocked" for s in statuses):
+        status = "degraded"
+    elif providers_out and all(s in {"ok", "skipped", "not_run"} for s in statuses):
+        status = "passed" if any(s == "ok" for s in statuses) else "degraded"
+    else:
+        status = "not_run"
+
+    return {
+        "schema_version": "provider-qual-v1",
+        "status": status,
+        "providers": providers_out,
+        "privacy": discovery.get("privacy") or {},
+        "discovery": discovery,
+    }
+
+
 def install_provider_gateway(worker_cls: type) -> None:
     if getattr(worker_cls, "_provider_gateway_v1_installed", False):
         return

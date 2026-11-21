@@ -19,6 +19,14 @@ final class AiModule
             AiEnginePreferences::save((string)($_POST['engine']??''),(string)($_POST['model']??''));
             flash('موتور و مدل پیش‌فرض محیط کاری ذخیره شد.');redirect('index.php?page=ai&section=engine');
         }
+        if($action==='ai_save_provider_qualification'){
+            Tenant::requirePermission('ai.workers.manage');
+            $raw=(string)($_POST['qualification_json']??'');
+            $decoded=json_decode($raw,true);
+            if(!is_array($decoded)){flash('گزارش احراز مدل نامعتبر است.','warn');redirect('index.php?page=ai&section=engine');}
+            AiProviderQualification::saveReport($decoded);
+            flash('گزارش کشف/احراز ارائه‌دهنده ذخیره شد.');redirect('index.php?page=ai&section=engine');
+        }
         if($action==='ai_create_worker_token'){
             Tenant::requirePermission('ai.workers.manage');$wt=(string)($_POST['worker_type']??'ollama');$caps=match($wt){'gemini'=>['llm.gemini'],'grok'=>['llm.grok'],'cursor'=>['llm.cursor'],'gemini_cursor'=>['llm.gemini','llm.cursor'],'gemini_grok'=>['llm.gemini','llm.grok'],'cloud_all'=>['llm.gemini','llm.cursor','llm.grok'],default=>['llm','rag','forecast']};$token=AiRepository::createWorkerToken((string)($_POST['label']??'Local AI Worker'),$caps);$_SESSION['ai_new_worker_token']=$token;flash('توکن Worker ساخته شد؛ فقط همین یک‌بار متن کامل آن نمایش داده می‌شود.');redirect('index.php?page=ai&section=workers');
         }
@@ -202,6 +210,29 @@ final class AiModule
         $engineFields.='</select></label>';
         echo $engineFields.'<button class="btn primary" type="submit">ذخیره موتور پیش‌فرض</button></form>';
         echo '<p class="muted">Gemini → llm.gemini؛ Grok → llm.grok؛ Cursor → llm.cursor؛ Ollama → llm.</p></section>';
+
+        $mcp=McpFacade::policySummary();
+        $qual=AiProviderQualification::current();
+        $catalog=AiProviderQualification::discoveryCatalog();
+        echo '<section class="card"><h2>کشف مدل و احراز اتصال (Provider Gateway)</h2>';
+        echo '<p class="muted">هوک‌های discovery/qualification روی <code>engine/provider_gateway.py</code> هستند؛ این صفحه فقط گزارش امن (بدون کلید) را نشان می‌دهد. MCP به‌صورت پیش‌فرض خاموش است.</p>';
+        echo '<ul class="muted"><li>MCP enabled: <b>'.($mcp['enabled']?'yes':'no').'</b> (default off)</li>';
+        echo '<li>MCP protocol: <code>'.h((string)$mcp['protocol_version']).'</code> / facade <code>'.h((string)$mcp['facade_version']).'</code></li>';
+        echo '<li>Qualification status: <b>'.h((string)($qual['status']??'not_run')).'</b>';
+        if(!empty($qual['updated_at']))echo ' • '.h((string)$qual['updated_at']);
+        echo '</li></ul>';
+        echo '<div class="table-wrap"><table><thead><tr><th>Provider</th><th>Configured models</th><th>Connection</th><th>Inference</th></tr></thead><tbody>';
+        $providerRows=$qual['providers']??[];
+        foreach($catalog as $pkey=>$meta){
+            $row=is_array($providerRows[$pkey]??null)?$providerRows[$pkey]:[];
+            $models=implode(', ',(array)($meta['configured_models']??[]));
+            echo '<tr><td>'.h((string)$pkey).'</td><td>'.h($models).'</td><td>'.h((string)($row['connection']??'not_run')).'</td><td>'.h((string)($row['inference']??'not_run')).'</td></tr>';
+        }
+        echo '</tbody></table></div>';
+        echo '<details><summary>وارد کردن گزارش gateway (JSON بدون secret)</summary>';
+        echo '<form method="post" class="grid-form">'.csrf_field().'<input type="hidden" name="action" value="ai_save_provider_qualification">';
+        echo '<textarea name="qualification_json" rows="8" placeholder=\'{"status":"passed","providers":{"ollama":{"connection":"ok","inference":"ok","models":["qwen3.5:0.8b"]}},"privacy":{"provider_strategy":"local_first","local_only_blocks_cloud":true}}\'></textarea>';
+        echo '<button class="btn" type="submit">ذخیره گزارش احراز</button></form></details></section>';
         echo '<script src="assets/ai-engine-selector.js?v=1" defer></script>';
     }
 
