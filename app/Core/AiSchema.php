@@ -1,7 +1,8 @@
 <?php
 final class AiSchema
 {
-    public const VERSION='1.1.0';
+    /** Bump for Wave2 RAG document/ACL tables — T0 schema review required before merge. */
+    public const VERSION='1.2.0';
 
     public static function migrate(PDO $pdo): void
     {
@@ -189,6 +190,44 @@ final class AiSchema
                 updated_at DATETIME NULL,
                 UNIQUE KEY uniq_ai_rag_source (workspace_id,source_type,source_key),
                 INDEX idx_ai_rag_company (workspace_id,company_id,status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            // Wave2 enterprise RAG metadata (workspace → company → document). Index bytes stay in worker SQLite FTS5.
+            "CREATE TABLE IF NOT EXISTS ai_rag_documents (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                workspace_id INT NOT NULL,
+                company_id INT NOT NULL,
+                document_key VARCHAR(190) NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                lifecycle_state VARCHAR(30) NOT NULL DEFAULT 'UPLOAD',
+                content_type VARCHAR(80) NULL,
+                checksum CHAR(64) NULL,
+                storage_uri VARCHAR(1000) NULL,
+                chunk_count INT NOT NULL DEFAULT 0,
+                index_revision INT NOT NULL DEFAULT 0,
+                metadata_json JSON NULL,
+                created_by INT NULL,
+                created_at DATETIME NULL,
+                updated_at DATETIME NULL,
+                available_at DATETIME NULL,
+                archived_at DATETIME NULL,
+                deleted_at DATETIME NULL,
+                UNIQUE KEY uniq_ai_rag_doc (workspace_id,company_id,document_key),
+                INDEX idx_ai_rag_doc_lifecycle (workspace_id,company_id,lifecycle_state),
+                INDEX idx_ai_rag_doc_company (workspace_id,company_id,deleted_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            // Role ACL at document grain; retrieval allow-list is computed by AiRagAcl (PHP control plane).
+            "CREATE TABLE IF NOT EXISTS ai_rag_document_acl (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                workspace_id INT NOT NULL,
+                company_id INT NOT NULL,
+                document_id BIGINT NOT NULL,
+                role_key VARCHAR(80) NOT NULL,
+                can_retrieve TINYINT(1) NOT NULL DEFAULT 1,
+                created_at DATETIME NULL,
+                UNIQUE KEY uniq_ai_rag_acl (document_id,role_key),
+                INDEX idx_ai_rag_acl_lookup (workspace_id,company_id,role_key,can_retrieve)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         ];
     }
@@ -216,6 +255,8 @@ final class AiSchema
             ['ai.actions.approve','تایید عملیات پیشنهادی ایجنت','ai',301],
             ['ai.workers.manage','مدیریت نودها و توکن‌های موتور AI','ai',302],
             ['ai.audit.view','مشاهده ردپای اجرای AI','ai',303],
+            ['ai.rag.retrieve','بازیابی اسناد دانش با ACL','ai',304],
+            ['ai.rag.manage','مدیریت چرخه عمر اسناد RAG','ai',305],
         ];
         $ins=$pdo->prepare("INSERT INTO workspace_permissions (permission_key,title,group_key,sort_order)
             VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),group_key=VALUES(group_key),sort_order=VALUES(sort_order)");
@@ -229,8 +270,8 @@ final class AiSchema
             foreach($roles->fetchAll() as $r){
                 $keys=match($r['role_key']){
                     'owner','workspace_admin'=>array_column($defs,0),
-                    'manager','accountant'=>['ai.use','ai.actions.approve','ai.audit.view'],
-                    'viewer'=>['ai.use'],
+                    'manager','accountant'=>['ai.use','ai.actions.approve','ai.audit.view','ai.rag.retrieve','ai.rag.manage'],
+                    'viewer'=>['ai.use','ai.rag.retrieve'],
                     default=>[]
                 };
                 foreach($keys as $key){$pid->execute([$key]);$p=(int)$pid->fetchColumn();if($p)$rp->execute([(int)$r['id'],$p]);}
