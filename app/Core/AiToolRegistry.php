@@ -101,7 +101,109 @@ final class AiToolRegistry
                 'months'=>['type'=>'integer'],'include_checks'=>['type'=>'boolean']
             ]]],
             ['name'=>'copilot_capabilities','mode'=>'read','risk'=>'low','description'=>'فهرست مهارت‌ها و قابلیت‌های Business Copilot برای پاسخ محاوره‌ای «چه کارهایی می‌توانی انجام دهی؟»','parameters'=>['type'=>'object','properties'=>[]]],
+            // Manufacturing MF-1 honest reads (ProductionDomain / ManufacturingExecutionDomain). No auto WIP/FG GL.
+            ['name'=>'manufacturing_bom_read','mode'=>'read','risk'=>'low','required_permissions'=>['production.view'],'description'=>'خواندن BOM ساخت (لیست یا جزئیات) از ProductionDomain؛ ارزش‌گذاری WIP/FG را القا نمی‌کند','parameters'=>['type'=>'object','properties'=>[
+                'bom_id'=>['type'=>'integer'],'query'=>['type'=>'string']
+            ]]],
+            ['name'=>'manufacturing_order_read','mode'=>'read','risk'=>'low','required_permissions'=>['production.view'],'description'=>'خواندن دستور تولید MF و شواهد هزینه؛ cost_class ممکن است UNVALUED باشد و gl_posting همیشه GL_BLOCKED','parameters'=>['type'=>'object','properties'=>[
+                'production_order_id'=>['type'=>'integer'],'order_id'=>['type'=>'integer'],'limit'=>['type'=>'integer']
+            ]]],
+            ['name'=>'manufacturing_material_readiness','mode'=>'read','risk'=>'low','required_permissions'=>['production.view'],'description'=>'آمادگی مواد BOM در برابر موجودی (MRP-lite)؛ کمبود و UNVALUED را صریح برمی‌گرداند؛ PO خودکار نمی‌سازد','parameters'=>['type'=>'object','properties'=>[
+                'bom_id'=>['type'=>'integer'],'planned_qty'=>['type'=>'number'],'warehouse_id'=>['type'=>'integer']
+            ],'required'=>['bom_id','planned_qty','warehouse_id']]],
         ];
+    }
+
+    /**
+     * Wave1/2 adapter: map existing descriptors() onto agentic-next contract v0.1
+     * (docs/ai/agentic-next/04-AGENT-RUNTIME-CONTRACT.md). Single registry — no fork.
+     */
+    public static function contractDescriptors(): array
+    {
+        $out=[];
+        foreach(self::descriptors() as $d){
+            $out[]=self::toContractDescriptor($d);
+        }
+        return $out;
+    }
+
+    public static function contractDescriptor(string $idOrName): ?array
+    {
+        foreach(self::contractDescriptors() as $d){
+            if(($d['id']??'')===$idOrName||($d['name']??'')===$idOrName)return$d;
+        }
+        return null;
+    }
+
+    private static function toContractDescriptor(array $d): array
+    {
+        $name=(string)($d['name']??'');
+        $mode=(string)($d['mode']??'read');
+        $perms=$d['required_permissions']??self::inferRequiredPermissions($name,$mode);
+        if(!is_array($perms))$perms=[];
+        $perms=array_values(array_filter(array_map('strval',$perms),static fn($p)=>$p!==''));
+        return [
+            'id'=>(string)($d['id']??$name),
+            'name'=>$name,
+            'version'=>(string)($d['version']??'1.0'),
+            'mode'=>$mode,
+            'risk'=>(string)($d['risk']??'low'),
+            'required_permissions'=>$perms,
+            'company_scope'=>(string)($d['company_scope']??'required'),
+            'input_schema'=>$d['parameters']??['type'=>'object','properties'=>(object)[]],
+            'output_schema'=>$d['output_schema']??(object)[],
+            'max_rows'=>(int)($d['max_rows']??100),
+            'timeout_ms'=>(int)($d['timeout_ms']??15000),
+            'idempotency'=>(string)($d['idempotency']??($mode==='proposal'?'required':'not_applicable')),
+            'evidence_policy'=>(string)($d['evidence_policy']??'required'),
+            'audit_policy'=>(string)($d['audit_policy']??'summary'),
+            'description'=>(string)($d['description']??''),
+        ];
+    }
+
+    /** Soft defaults for contract surface; enforcement only when descriptor sets required_permissions. */
+    private static function inferRequiredPermissions(string $name,string $mode): array
+    {
+        if(str_starts_with($name,'manufacturing_'))return['production.view'];
+        if(str_starts_with($name,'crm_')||str_starts_with($name,'create_crm_')){
+            return $mode==='proposal'?['crm.manage']:['crm.view'];
+        }
+        if(str_starts_with($name,'trade_')||str_starts_with($name,'search_trade')||str_starts_with($name,'landed_')
+            ||str_starts_with($name,'create_trade')||str_starts_with($name,'add_trade')||$name==='shipment_commitment_impact'){
+            return $mode==='proposal'?['trade.manage']:['trade.view'];
+        }
+        if(in_array($name,['search_warehouses','search_purchase_documents','purchase_pipeline','inventory_position','replenishment_risk','create_warehouse_receipt'],true)
+            ||str_starts_with($name,'purchase_')){
+            return $mode==='proposal'?['inventory.manage']:['inventory.view'];
+        }
+        if(str_starts_with($name,'sales_')||str_starts_with($name,'search_sales')||str_starts_with($name,'confirm_sales')
+            ||str_starts_with($name,'reserve_sales')||str_starts_with($name,'deliver_sales')||str_starts_with($name,'create_sales')
+            ||str_starts_with($name,'create_o2c_')){
+            return $mode==='proposal'?['sales.edit']:['sales.view'];
+        }
+        if(in_array($name,['trial_balance','party_ledger','financial_analysis_bundle','company_snapshot','document_analytics',
+            'recent_sales','recent_purchases','check_analytics','search_cash_accounts','search_parties','search_items',
+            'periodic_business_report','create_voucher_draft','create_check','create_purchase_invoice_draft'],true)){
+            return $mode==='proposal'?['accounting.manage']:['accounting.view'];
+        }
+        if($name==='supplier_performance_summary')return['procurement.view'];
+        if($name==='copilot_capabilities')return['ai.use'];
+        return $mode==='proposal'?['ai.use']:['ai.use'];
+    }
+
+    private static function assertDescriptorPermissions(array $d): void
+    {
+        $perms=$d['required_permissions']??null;
+        if(!is_array($perms)||$perms===[])return;
+        if(!class_exists('Tenant',false)){
+            throw new RuntimeException('permission_context_unavailable');
+        }
+        foreach($perms as $p){
+            $p=(string)$p;
+            if($p!==''&&!Tenant::can($p)){
+                throw new RuntimeException('permission_denied:'.$p);
+            }
+        }
     }
 
     public static function bootstrapContext(int $wid,?int $cid): array
@@ -113,7 +215,8 @@ final class AiToolRegistry
             'mutations'=>'proposal_only',
             'human_approval_required'=>true,
             'financial_posting'=>'never_direct',
-            'instruction'=>'برای اطلاعات مالی عددی از ابزارهای خواندنی استفاده کن و برای تغییر داده فقط proposal بساز.'
+            'manufacturing_gl'=>'GL_BLOCKED',
+            'instruction'=>'برای اطلاعات مالی عددی از ابزارهای خواندنی استفاده کن و برای تغییر داده فقط proposal بساز. هزینه ساخت ممکن است UNVALUED باشد؛ GL ساخت WIP/FG مسدود (GL_BLOCKED) است.'
         ];
         return $ctx;
     }
@@ -122,6 +225,7 @@ final class AiToolRegistry
     {
         $wid=(int)$job['workspace_id'];$cid=$job['company_id']?(int)$job['company_id']:null;
         $d=self::descriptor($tool);if(!$d)throw new RuntimeException('tool_not_allowed');
+        self::assertDescriptorPermissions($d);
         if(($d['mode']??'')==='proposal'){
             $id=self::storeProposal($wid,$cid,(int)$job['id'],$tool,$args,self::proposalSummary($tool,$args),$idempotencyKey);
             return ['proposal_id'=>$id,'status'=>'awaiting_human_approval','tool'=>$tool];
@@ -169,8 +273,121 @@ final class AiToolRegistry
             'purchase_document_detail'=>self::purchaseDocumentDetail($wid,$cid,$args),
             'periodic_business_report'=>self::periodicBusinessReport($wid,$cid,$args),
             'copilot_capabilities'=>['version'=>AiCapabilityRegistry::VERSION,'skills'=>AiCapabilityRegistry::catalog(),'tools_count'=>count(self::descriptors())],
+            'manufacturing_bom_read'=>self::manufacturingBomRead($wid,$cid,$args),
+            'manufacturing_order_read'=>self::manufacturingOrderRead($wid,$cid,$args),
+            'manufacturing_material_readiness'=>self::manufacturingMaterialReadiness($wid,$cid,$args),
             default=>throw new RuntimeException('tool_not_implemented')
         };
+    }
+
+    private static function manufacturingBomRead(int $wid,int $cid,array $args): array
+    {
+        $bomId=(int)($args['bom_id']??0);
+        if($bomId>0){
+            $bom=ProductionDomain::getBom($wid,$cid,$bomId);
+            if(!$bom)throw new RuntimeException('manufacturing_bom_not_found');
+            return [
+                'evidence_kind'=>'LIVE_ERP_FACT',
+                'bom'=>$bom,
+                'valuation_implied'=>false,
+                'cost_class'=>null,
+                'gl_posting'=>'GL_BLOCKED',
+                'note'=>'BOM is structural master data; WIP/FG GL is not posted from this tool',
+            ];
+        }
+        $query=trim((string)($args['query']??''));
+        $rows=ProductionDomain::listBoms($wid,$cid);
+        if($query!==''){
+            $q=mb_strtolower($query);
+            $rows=array_values(array_filter($rows,static function($r)use($q){
+                $hay=mb_strtolower(trim(($r['code']??'').' '.($r['output_name']??'').' '.($r['output_code']??'')));
+                return $q===''||str_contains($hay,$q);
+            }));
+        }
+        $limit=100;
+        return [
+            'evidence_kind'=>'LIVE_ERP_FACT',
+            'count'=>count($rows),
+            'rows'=>array_slice($rows,0,$limit),
+            'gl_posting'=>'GL_BLOCKED',
+        ];
+    }
+
+    private static function manufacturingOrderRead(int $wid,int $cid,array $args): array
+    {
+        $orderId=(int)($args['production_order_id']??($args['order_id']??0));
+        if($orderId>0){
+            $order=ManufacturingExecutionDomain::getOrder($wid,$cid,$orderId);
+            if(!$order)throw new RuntimeException('manufacturing_order_not_found');
+            $cost=self::manufacturingCostSurface($wid,$cid,$orderId);
+            return [
+                'evidence_kind'=>'LIVE_ERP_FACT',
+                'order'=>$order,
+                'cost_evidence'=>$cost,
+                'cost_class'=>$cost['cost_class'],
+                'gl_posting'=>'GL_BLOCKED',
+                'gl_posted'=>false,
+                'never_auto_post_wip_fg_gl'=>true,
+            ];
+        }
+        $limit=max(1,min(100,(int)($args['limit']??50)));
+        $rows=ManufacturingExecutionDomain::listOrders($wid,$cid,$limit);
+        return [
+            'evidence_kind'=>'LIVE_ERP_FACT',
+            'count'=>count($rows),
+            'rows'=>$rows,
+            'gl_posting'=>'GL_BLOCKED',
+            'note'=>'Pass production_order_id for cost_class (often UNVALUED) and GL_BLOCKED detail',
+        ];
+    }
+
+    private static function manufacturingCostSurface(int $wid,int $cid,int $orderId): array
+    {
+        $rollup=ManufacturingCostEvidence::rollup($wid,$cid,$orderId);
+        $t5=null;
+        if(class_exists('CostingAccountingDomain',false)&&method_exists('CostingAccountingDomain','rollupProductionMaterialCost')){
+            try{$t5=CostingAccountingDomain::rollupProductionMaterialCost($wid,$cid,$orderId);}
+            catch(Throwable $e){$t5=['error'=>$e->getMessage()];}
+        }
+        $costClass=(string)($t5['classification']??$rollup['resolver_class']??'UNVALUED');
+        if($costClass===''||$costClass==='BLOCKED')$costClass='UNVALUED';
+        return [
+            'cost_class'=>$costClass,
+            'gl_posting'=>'GL_BLOCKED',
+            'gl_valuation'=>(string)($t5['gl_valuation']??$rollup['gl_posting']??'BLOCKED'),
+            'gl_posted'=>false,
+            'never_auto_post_wip_fg_gl'=>true,
+            'rollup'=>$rollup,
+            't5_material_rollup'=>is_array($t5)?$t5:null,
+            'honest_residual'=>'WIP/FG valuation may be UNVALUED; GL remains GL_BLOCKED (RC1 T5 policy)',
+        ];
+    }
+
+    private static function manufacturingMaterialReadiness(int $wid,int $cid,array $args): array
+    {
+        $bomId=(int)($args['bom_id']??0);
+        $planned=(float)($args['planned_qty']??0);
+        $wh=(int)($args['warehouse_id']??0);
+        if($bomId<1||$planned<=0||$wh<1){
+            throw new RuntimeException('manufacturing_readiness_args_required');
+        }
+        $preview=ProductionDomain::preview($wid,$cid,$bomId,$planned,$wh);
+        $mrp=ManufacturingExecutionDomain::mrpRecommendations($wid,$cid,$bomId,$planned,$wh);
+        $unpriced=(int)($preview['unpriced_lines']??0);
+        $estimate=(float)($preview['estimated_material_cost']??0);
+        $materialClass=($unpriced>0||$estimate<=0.0)?'UNVALUED':'PROVISIONAL_ESTIMATE';
+        return [
+            'evidence_kind'=>'LIVE_ERP_FACT',
+            'readiness'=>$preview,
+            'mrp_recommendations'=>$mrp,
+            'shortage_lines'=>(int)($preview['shortage_lines']??0),
+            'unpriced_lines'=>$unpriced,
+            'material_cost_estimate_class'=>$materialClass,
+            'gl_posting'=>'GL_BLOCKED',
+            'auto_po'=>false,
+            'posting'=>'never',
+            'note'=>'Recommendations never auto-create POs or post WIP/FG GL',
+        ];
     }
 
     private static function semanticRouteIdentity(array $args): array
