@@ -1,0 +1,633 @@
+{
+  "ok": true,
+  "drill": "rc1_staging_schema_migrate",
+  "started_at": "2026-11-21T18:18:15+00:00",
+  "repo_schema_version": "10.24.0-rc1",
+  "mode": "disposable_sim",
+  "dry_run": false,
+  "steps_log": [
+    {
+      "pass": 1,
+      "ok": true,
+      "ms": 33074,
+      "schema_json_cleared": 0,
+      "steps": [
+        {
+          "step": "Schema::migrate",
+          "ok": true,
+          "ms": 3608
+        },
+        {
+          "step": "Tenant::ensureSchema",
+          "ok": true,
+          "ms": 5423
+        },
+        {
+          "step": "ChoiceRegistry::ensureSchema",
+          "ok": true,
+          "ms": 291
+        },
+        {
+          "step": "Audit::ensureSchema",
+          "ok": true,
+          "ms": 37
+        },
+        {
+          "step": "FileLibrary::ensureSchema",
+          "ok": true,
+          "ms": 585
+        },
+        {
+          "step": "V5Schema::migrate",
+          "ok": true,
+          "ms": 1889
+        },
+        {
+          "step": "AccountingSchema::migrate",
+          "ok": true,
+          "ms": 3912
+        },
+        {
+          "step": "AccountingExtendedSchema::migrate",
+          "ok": true,
+          "ms": 3025
+        },
+        {
+          "step": "SalesDomain::migrate",
+          "ok": true,
+          "ms": 195
+        },
+        {
+          "step": "OrderToCashDomain::migrate",
+          "ok": true,
+          "ms": 365
+        },
+        {
+          "step": "AccountingPostingDomain::migrate",
+          "ok": true,
+          "ms": 892
+        },
+        {
+          "step": "ArSettlementDomain::migrate",
+          "ok": true,
+          "ms": 653
+        },
+        {
+          "step": "ApPostingDomain::migrate",
+          "ok": true,
+          "ms": 239
+        },
+        {
+          "step": "ApSettlementDomain::migrate",
+          "ok": true,
+          "ms": 222
+        },
+        {
+          "step": "BusinessProfileDomain::migrate",
+          "ok": true,
+          "ms": 99
+        },
+        {
+          "step": "CrmDomain::migrate",
+          "ok": true,
+          "ms": 1854
+        },
+        {
+          "step": "ProductionDomain::migrate",
+          "ok": true,
+          "ms": 2033
+        },
+        {
+          "step": "InventoryDomain::migrate",
+          "ok": true,
+          "ms": 403
+        },
+        {
+          "step": "ManufacturingExecutionDomain::migrate",
+          "ok": true,
+          "ms": 738
+        },
+        {
+          "step": "CostingAccountingDomain::migrate",
+          "ok": true,
+          "ms": 143
+        },
+        {
+          "step": "ErpSuiteDomain::migrate",
+          "ok": true,
+          "ms": 2069
+        },
+        {
+          "step": "WorkflowDomain::migrate",
+          "ok": true,
+          "ms": 281
+        },
+        {
+          "step": "EnterpriseDomain::migrate",
+          "ok": true,
+          "ms": 2959
+        },
+        {
+          "step": "PurchaseMatchingDomain::migrate",
+          "ok": true,
+          "ms": 371
+        },
+        {
+          "step": "AiSchema::migrate",
+          "ok": true,
+          "ms": 736
+        },
+        {
+          "step": "ModuleRegistry::ensureSchema",
+          "ok": true,
+          "ms": 24
+        },
+        {
+          "step": "RuntimeCache::markSchema",
+          "ok": true,
+          "ms": 14
+        }
+      ],
+      "tables_after": 181
+    },
+    {
+      "pass": 2,
+      "ok": true,
+      "ms": 8330,
+      "schema_json_cleared": 1,
+      "steps": [
+        {
+          "step": "Schema::migrate",
+          "ok": true,
+          "ms": 1480
+        },
+        {
+          "step": "Tenant::ensureSchema",
+          "ok": true,
+          "ms": 1420
+        },
+        {
+          "step": "ChoiceRegistry::ensureSchema",
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "Audit::ensureSchema",
+          "ok": true,
+          "ms": 76
+        },
+        {
+          "step": "FileLibrary::ensureSchema",
+          "ok": true,
+          "ms": 108
+        },
+        {
+          "step": "V5Schema::migrate",
+          "ok": true,
+          "ms": 630
+        },
+        {
+          "step": "AccountingSchema::migrate",
+          "ok": true,
+          "ms": 1938
+        },
+        {
+          "step": "AccountingExtendedSchema::migrate",
+          "ok": true,
+          "ms": 471
+        },
+        {
+          "step": "SalesDomain::migrate",
+          "ok": true,
+          "ms": 47
+        },
+        {
+          "step": "OrderToCashDomain::migrate",
+          "ok": true,
+          "ms": 30
+        },
+        {
+          "step": "AccountingPostingDomain::migrate",
+          "ok": true,
+          "ms": 12
+        },
+        {
+          "step": "ArSettlementDomain::migrate",
+          "ok": true,
+          "ms": 25
+        },
+        {
+          "step": "ApPostingDomain::migrate",
+          "ok": true,
+          "ms": 103
+        },
+        {
+          "step": "ApSettlementDomain::migrate",
+          "ok": true,
+          "ms": 62
+        },
+        {
+          "step": "BusinessProfileDomain::migrate",
+          "ok": true,
+          "ms": 22
+        },
+        {
+          "step": "CrmDomain::migrate",
+          "ok": true,
+          "ms": 66
+        },
+        {
+          "step": "ProductionDomain::migrate",
+          "ok": true,
+          "ms": 189
+        },
+        {
+          "step": "InventoryDomain::migrate",
+          "ok": true,
+          "ms": 105
+        },
+        {
+          "step": "ManufacturingExecutionDomain::migrate",
+          "ok": true,
+          "ms": 16
+        },
+        {
+          "step": "CostingAccountingDomain::migrate",
+          "ok": true,
+          "ms": 4
+        },
+        {
+          "step": "ErpSuiteDomain::migrate",
+          "ok": true,
+          "ms": 195
+        },
+        {
+          "step": "WorkflowDomain::migrate",
+          "ok": true,
+          "ms": 146
+        },
+        {
+          "step": "EnterpriseDomain::migrate",
+          "ok": true,
+          "ms": 977
+        },
+        {
+          "step": "PurchaseMatchingDomain::migrate",
+          "ok": true,
+          "ms": 62
+        },
+        {
+          "step": "AiSchema::migrate",
+          "ok": true,
+          "ms": 121
+        },
+        {
+          "step": "ModuleRegistry::ensureSchema",
+          "ok": true,
+          "ms": 3
+        },
+        {
+          "step": "RuntimeCache::markSchema",
+          "ok": true,
+          "ms": 11
+        }
+      ],
+      "tables_after": 181
+    }
+  ],
+  "env_identity": "disposable-staging-sim-lab",
+  "auth_present": true,
+  "preflight_reviewed": true,
+  "db": {
+    "host": "host.docker.internal",
+    "port": 3307,
+    "database": "erpsmart_rc1_staging_executor_test",
+    "username": "p2p"
+  },
+  "prod_identity_declared": {
+    "db_name": "zzflgmfd_excel2_PRODUCTION_DECLARED",
+    "host": "prod.example.invalid",
+    "differs_from_staging_db": true
+  },
+  "backup": {
+    "path": "/app/storage/cache/rc1_staging_executor_test/pre_migrate_fixture.sql",
+    "sha256": "95b16f2d3a804acc3099fc70e1e13b7d46acd044270343377f3f8bc753fef3be",
+    "bytes": 68,
+    "verified": true
+  },
+  "cache_dir": "/app/storage/cache/rc1_staging_executor_test",
+  "prod_cache_cleared": false,
+  "server_uuid": "ff0092ef-e5d1-11f1-9a87-2e6b1b469ce1",
+  "mysql_version": "8.0.46",
+  "tables_before": 0,
+  "maintenance_lock": {
+    "path": "/app/storage/maintenance/rc1_offline_migrate.lock",
+    "engaged": false,
+    "released": true
+  },
+  "tables_after": 181,
+  "migrate_twice": [
+    {
+      "pass": 1,
+      "ok": true,
+      "ms": 33074,
+      "schema_json_cleared": 0,
+      "steps": [
+        {
+          "step": "Schema::migrate",
+          "ok": true,
+          "ms": 3608
+        },
+        {
+          "step": "Tenant::ensureSchema",
+          "ok": true,
+          "ms": 5423
+        },
+        {
+          "step": "ChoiceRegistry::ensureSchema",
+          "ok": true,
+          "ms": 291
+        },
+        {
+          "step": "Audit::ensureSchema",
+          "ok": true,
+          "ms": 37
+        },
+        {
+          "step": "FileLibrary::ensureSchema",
+          "ok": true,
+          "ms": 585
+        },
+        {
+          "step": "V5Schema::migrate",
+          "ok": true,
+          "ms": 1889
+        },
+        {
+          "step": "AccountingSchema::migrate",
+          "ok": true,
+          "ms": 3912
+        },
+        {
+          "step": "AccountingExtendedSchema::migrate",
+          "ok": true,
+          "ms": 3025
+        },
+        {
+          "step": "SalesDomain::migrate",
+          "ok": true,
+          "ms": 195
+        },
+        {
+          "step": "OrderToCashDomain::migrate",
+          "ok": true,
+          "ms": 365
+        },
+        {
+          "step": "AccountingPostingDomain::migrate",
+          "ok": true,
+          "ms": 892
+        },
+        {
+          "step": "ArSettlementDomain::migrate",
+          "ok": true,
+          "ms": 653
+        },
+        {
+          "step": "ApPostingDomain::migrate",
+          "ok": true,
+          "ms": 239
+        },
+        {
+          "step": "ApSettlementDomain::migrate",
+          "ok": true,
+          "ms": 222
+        },
+        {
+          "step": "BusinessProfileDomain::migrate",
+          "ok": true,
+          "ms": 99
+        },
+        {
+          "step": "CrmDomain::migrate",
+          "ok": true,
+          "ms": 1854
+        },
+        {
+          "step": "ProductionDomain::migrate",
+          "ok": true,
+          "ms": 2033
+        },
+        {
+          "step": "InventoryDomain::migrate",
+          "ok": true,
+          "ms": 403
+        },
+        {
+          "step": "ManufacturingExecutionDomain::migrate",
+          "ok": true,
+          "ms": 738
+        },
+        {
+          "step": "CostingAccountingDomain::migrate",
+          "ok": true,
+          "ms": 143
+        },
+        {
+          "step": "ErpSuiteDomain::migrate",
+          "ok": true,
+          "ms": 2069
+        },
+        {
+          "step": "WorkflowDomain::migrate",
+          "ok": true,
+          "ms": 281
+        },
+        {
+          "step": "EnterpriseDomain::migrate",
+          "ok": true,
+          "ms": 2959
+        },
+        {
+          "step": "PurchaseMatchingDomain::migrate",
+          "ok": true,
+          "ms": 371
+        },
+        {
+          "step": "AiSchema::migrate",
+          "ok": true,
+          "ms": 736
+        },
+        {
+          "step": "ModuleRegistry::ensureSchema",
+          "ok": true,
+          "ms": 24
+        },
+        {
+          "step": "RuntimeCache::markSchema",
+          "ok": true,
+          "ms": 14
+        }
+      ],
+      "tables_after": 181
+    },
+    {
+      "pass": 2,
+      "ok": true,
+      "ms": 8330,
+      "schema_json_cleared": 1,
+      "steps": [
+        {
+          "step": "Schema::migrate",
+          "ok": true,
+          "ms": 1480
+        },
+        {
+          "step": "Tenant::ensureSchema",
+          "ok": true,
+          "ms": 1420
+        },
+        {
+          "step": "ChoiceRegistry::ensureSchema",
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "Audit::ensureSchema",
+          "ok": true,
+          "ms": 76
+        },
+        {
+          "step": "FileLibrary::ensureSchema",
+          "ok": true,
+          "ms": 108
+        },
+        {
+          "step": "V5Schema::migrate",
+          "ok": true,
+          "ms": 630
+        },
+        {
+          "step": "AccountingSchema::migrate",
+          "ok": true,
+          "ms": 1938
+        },
+        {
+          "step": "AccountingExtendedSchema::migrate",
+          "ok": true,
+          "ms": 471
+        },
+        {
+          "step": "SalesDomain::migrate",
+          "ok": true,
+          "ms": 47
+        },
+        {
+          "step": "OrderToCashDomain::migrate",
+          "ok": true,
+          "ms": 30
+        },
+        {
+          "step": "AccountingPostingDomain::migrate",
+          "ok": true,
+          "ms": 12
+        },
+        {
+          "step": "ArSettlementDomain::migrate",
+          "ok": true,
+          "ms": 25
+        },
+        {
+          "step": "ApPostingDomain::migrate",
+          "ok": true,
+          "ms": 103
+        },
+        {
+          "step": "ApSettlementDomain::migrate",
+          "ok": true,
+          "ms": 62
+        },
+        {
+          "step": "BusinessProfileDomain::migrate",
+          "ok": true,
+          "ms": 22
+        },
+        {
+          "step": "CrmDomain::migrate",
+          "ok": true,
+          "ms": 66
+        },
+        {
+          "step": "ProductionDomain::migrate",
+          "ok": true,
+          "ms": 189
+        },
+        {
+          "step": "InventoryDomain::migrate",
+          "ok": true,
+          "ms": 105
+        },
+        {
+          "step": "ManufacturingExecutionDomain::migrate",
+          "ok": true,
+          "ms": 16
+        },
+        {
+          "step": "CostingAccountingDomain::migrate",
+          "ok": true,
+          "ms": 4
+        },
+        {
+          "step": "ErpSuiteDomain::migrate",
+          "ok": true,
+          "ms": 195
+        },
+        {
+          "step": "WorkflowDomain::migrate",
+          "ok": true,
+          "ms": 146
+        },
+        {
+          "step": "EnterpriseDomain::migrate",
+          "ok": true,
+          "ms": 977
+        },
+        {
+          "step": "PurchaseMatchingDomain::migrate",
+          "ok": true,
+          "ms": 62
+        },
+        {
+          "step": "AiSchema::migrate",
+          "ok": true,
+          "ms": 121
+        },
+        {
+          "step": "ModuleRegistry::ensureSchema",
+          "ok": true,
+          "ms": 3
+        },
+        {
+          "step": "RuntimeCache::markSchema",
+          "ok": true,
+          "ms": 11
+        }
+      ],
+      "tables_after": 181
+    }
+  ],
+  "rc1_tables_present": {
+    "erp_ar_postings": true,
+    "erp_ap_postings": true,
+    "erp_mf_production_orders": true,
+    "erp_company_business_profiles": true,
+    "erp_p2p_vendor_bills": true,
+    "erp_o2c_invoice_links": true
+  },
+  "schema_complete": true,
+  "idempotent": true,
+  "install_php_used": false,
+  "docker_required": false,
+  "note": "Staging cumulative migrate×2 PASS. Not STAGING_VERIFIED / Not PRODUCTION_READY. Remote staging still requires owner auth.",
+  "finished_at": "2026-11-21T18:18:56+00:00"
+}

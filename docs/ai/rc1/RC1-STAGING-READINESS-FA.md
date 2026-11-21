@@ -5,9 +5,12 @@
 **SHA انتشار تغییرناپذیر:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
 **پذیرش مهندسی RC1:** `RC1_ACCEPTED`  
 **تولید:** `NOT_AUTHORIZED` / `NOT_DEPLOYED`  
-**دسترسی remote staging:** **مجاز نشده** (فقط برنامه)
+**دسترسی remote staging:** **مجاز نشده** (فقط برنامه)  
+**Pre-flight اجرا:** executor مهاجرت staging + پکیج + UAT روی شاخهٔ آماده‌سازی — **بدون** ادعای `STAGING_VERIFIED`
 
 > `RC1_ACCEPTED` ≠ `PRODUCTION_READY` ≠ `STAGING_VERIFIED`
+
+**ابزارهای pre-flight (بدون remote):** `scripts/rc1_staging_schema_migrate.php` · `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md` · `RC1-STAGING-PACKAGE-INTEGRITY.md` · `RC1-STAGING-UAT-PROCEDURES.md`
 
 ---
 
@@ -91,11 +94,12 @@ Commercial MVP به‌تنهایی برای RC1 کافی نیست؛ دروازه
 1. **معماری هدف:** ساب‌دامین/اکانت غیرتولید جدا؛ DB staging جدا از production MySQL.  
 2. **بسته:** ZIP از SHA `2c1cf65…` بدون secrets.  
 3. **پیکربندی:** `app/config.php` gitignored؛ `app_key` جدید staging؛ هرگز کپی production secrets.  
-4. **DB:** restore dump ناشناس یا seed مصنوعی → migrate آفلاین CLI → تأیید schema cache.  
-5. **Maintenance:** بنر نگهداری؛ قطع cron/worker تولید روی staging.  
-6. **Smoke:** login، شرکت، TR cockpit، MF cockpit (انتظار GL_BLOCKED)، یک پرداخت/رسید مصنوعی، گزارش مالی، CSRF منفی.  
-7. **Rollback:** بازگردانی dump pre-migrate + کد SHA قبلی.  
-8. **Go/No-Go:** بدون مجوز صریح مالک → هیچ تغییر remote.
+4. **DB:** restore dump ناشناس یا seed مصنوعی → `scripts/rc1_staging_schema_migrate.php` (نه `install.php` / نه اولین HTTP) → تأیید schema cache فقط staging.  
+5. **Maintenance:** قفل `storage/maintenance/rc1_offline_migrate.lock` (۵۰۳ وب تا اتمام migrate)؛ قطع cron/worker/SMS/پرداخت زنده روی staging.  
+6. **Smoke/UAT:** طبق `RC1-STAGING-UAT-PROCEDURES.md` و اسکلت Playwright `tests/staging_uat/` (فقط با `STAGING_BASE_URL` مجاز).  
+7. **Rollback:** بازگردانی dump pre-migrate + کد SHA قبلی (`RC1-ROLLBACK-RUNBOOK.md`).  
+8. **Go/No-Go:** بدون مجوز صریح مالک طبق `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md` → هیچ تغییر remote.  
+9. **پکیج:** `RC1-STAGING-PACKAGE-INTEGRITY.md` + `RC1-STAGING-RELEASE-PACKAGE-MANIFEST.md`.
 
 ## ۹. محدودیت MF و ادعاهای ممنوع
 
