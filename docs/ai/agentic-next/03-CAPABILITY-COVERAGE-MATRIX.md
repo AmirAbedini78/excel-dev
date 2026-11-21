@@ -1,4 +1,4 @@
-# 03 — Capability Coverage Matrix (seed)
+ï»¿# 03 - Capability Coverage Matrix (seed)
 
 | Domain | Read tools | Proposals | Notes |
 |--------|------------|-----------|-------|
