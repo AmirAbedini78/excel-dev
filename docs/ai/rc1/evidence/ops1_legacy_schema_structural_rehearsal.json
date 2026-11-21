@@ -1,0 +1,80 @@
+{
+  "drill": "legacy_schema_only_cumulative_migrate_x2",
+  "verified_at_utc": "2026-11-21T09:40:00Z",
+  "classification": "STRUCTURAL_ONLY_NOT_DATA_RECONCILED",
+  "deployment_status": "EXISTING_DEPLOYMENT_CONFIRMED",
+  "artifact_status": "LEGACY_SCHEMA_UNVERIFIED",
+  "schema_upgrade_tested_claim": "NOT_CLAIMED",
+  "fresh_install_claim": "NOT_ASSUMED",
+  "candidate_dump": {
+    "owner_path": "c:\\Users\\h\\Downloads\\zzflgmfd_excel2.sql",
+    "bytes": 1585278,
+    "sha256": "2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC",
+    "kind": "SCHEMA_PLUS_DATA",
+    "generator": "phpMyAdmin 5.2.3",
+    "server_version_claimed": "8.0.46-cll-lve",
+    "database_name": "zzflgmfd_excel2",
+    "create_table_count": 110,
+    "insert_statement_count": 97,
+    "definer_count": 0,
+    "git_commit_allowed": false,
+    "safety_classification": "UNSAFE_UNREDACTED_SECRETS_AND_PII",
+    "settings_markers_redacted": {
+      "schema_version": "3.1.0",
+      "saas_schema_version": "5.0.0",
+      "accounting_extended_schema_version": "7.0.0",
+      "ai_schema_version": "1.1.0"
+    }
+  },
+  "sanitized_schema_only": {
+    "offline_path": "c:\\Users\\h\\Downloads\\erpsmart-rc1-sanitize\\zzflgmfd_excel2.SCHEMA_ONLY.sanitized.sql",
+    "sha256": "3256AABC0EFC1E52AD5ADDA7576F39BA25D09B986AC18C0DF447E0BFEB832015",
+    "bytes": 147898,
+    "note": "INSERT rows omitted; secrets/PII removed by omission; NOT committed to Git"
+  },
+  "disposable_mysql": {
+    "container_name": "erpsmart-p2p-mysql-test",
+    "container_id": "02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6",
+    "server_uuid": "a73a8a84-e4bd-11f1-ad33-7e073bee960b",
+    "host_port": 3307,
+    "mysql_version": "8.0.46"
+  },
+  "databases": {
+    "baseline_untouched": {
+      "name": "erpsmart_rc1_legacy_schema_baseline",
+      "tables": 110,
+      "migrated": false
+    },
+    "migrate_clone": {
+      "name": "erpsmart_rc1_legacy_schema_migrate",
+      "tables_before": 110,
+      "tables_after": 182,
+      "migrate_x2": "PASS",
+      "pass1_ms": 63147,
+      "pass2_ms": 11851
+    },
+    "rollback_restore": {
+      "name": "erpsmart_rc1_legacy_schema_rollback",
+      "tables": 110,
+      "status": "PASS"
+    }
+  },
+  "rc1_tables_present_after_migrate": {
+    "erp_ar_postings": true,
+    "erp_ap_postings": true,
+    "erp_mf_production_orders": true,
+    "erp_company_business_profiles": true,
+    "erp_p2p_vendor_bills": true,
+    "erp_o2c_invoice_links": true
+  },
+  "runner": "scripts/rc1_legacy_schema_migrate_rehearsal.php",
+  "repo_schema_version": "10.24.0-rc1",
+  "origin_main_sha": "e474ff377731ad2d482b2bf4fec6c3d1a7d32c5c",
+  "data_reconciliation": "NOT_RUN",
+  "accounting_inventory_reconciliation": "NOT_RUN_SCHEMA_ONLY",
+  "production": "NOT_TOUCHED",
+  "cpanel": "NOT_RUN",
+  "ops1_independent_class": "BLOCKED_EXTERNAL",
+  "blocker": "RC1-P1-001 remains OPEN until owner provides verified anonymized schema+data artifact (or accepts Path2 checklist completion) enabling full data reconciliation",
+  "status": "STRUCTURAL_REHEARSAL_PASS_PROVENANCE_UNVERIFIED"
+}

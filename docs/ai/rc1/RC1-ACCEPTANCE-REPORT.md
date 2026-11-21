@@ -3,10 +3,11 @@
 **Owner:** T0 final RC1 acceptance closure  
 **Pre-closure baseline `main` SHA:** `2a30f5abac6291af2e6d3ccf1f87446335c84bad`  
 **Final `main` SHA (PR #32 merged):** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
+**Verified `origin/main` (2026-11-21):** `e474ff377731ad2d482b2bf4fec6c3d1a7d32c5c` (PR #34 tip)  
 **Closure branch:** `fix/rc1-stabilization-p1-closure` (merged via PR #32)  
 **Report date:** 2026-11-21  
 **DATABASE_TESTED:** **true** (disposable sandbox)  
-**Independent verdict:** **RC1_BLOCKED** — **NOT_DEPLOYED**
+**Independent verdict:** **RC1_BLOCKED** — **`EXISTING_DEPLOYMENT_CONFIRMED`** + **`LEGACY_SCHEMA_UNVERIFIED`** (RC1-P1-001 OPEN; no `FRESH_INSTALL`; no `SCHEMA_UPGRADE_TESTED`)
 
 ---
 
@@ -30,7 +31,7 @@
 | TR-2 | PASS | **PASS_REPRODUCED** | invoice/receipt settle to outstanding `0.00` |
 | MF-1 | PASS | **PASS_REPRODUCED** | Manufacturing **lifecycle** tested (BOM→plan→issue→FG/QC); concurrent issue 1+1; on_hand A=4; cost class `UNVALUED`; WIP/FG valuation **not fully supported**; GL posting `BLOCKED` — **no unsupported auto GL** (see `T5-VALUATION-DECISION.md`) |
 | SYS-1 | PASS (smoke) | **PASS_EXISTING_EVIDENCE_VERIFIED** + **LOCAL_BROWSER_VERIFIED** | Profile smoke + Agent B local UAT (`evidence/browser/`); **not** `STAGING_VERIFIED` |
-| OPS-1 | PASS (script w/ UNAVAILABLE env) | **BLOCKED_EXTERNAL** | Eng restore **CLOSED** (+ reverify); provenance class **UNAVAILABLE** — **no invented FRESH_INSTALL**; Path1/Path2 in `OPS1-OWNER-ACTIONS.md` |
+| OPS-1 | PASS (script w/ UNAVAILABLE env) | **BLOCKED_EXTERNAL** | Owner confirmed prior cPanel/server install → **`EXISTING_DEPLOYMENT_CONFIRMED`**. Candidate dump unsafe for Git; structural schema-only migrate×2 **PASS** (`ops1_legacy_schema_structural_rehearsal.json`) but **not** data reconciliation → **`LEGACY_SCHEMA_UNVERIFIED`**; **no** `FRESH_INSTALL` / **no** `SCHEMA_UPGRADE_TESTED`. Path2: `LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md` |
 
 **Mandatory E2E skipped in acceptance gate:** **0** (under RC1_REQUIRED).
 
@@ -55,8 +56,26 @@
 | Agent C — Provenance | **DONE** | Provenance **UNAVAILABLE** / `BLOCKED_EXTERNAL`; restore eng **CLOSED**; no FRESH_INSTALL; `OPS1-OWNER-ACTIONS.md` |
 | Agent D — Docs | **DONE** | Classes/SHA/MF wording reconciled; verdict remains `RC1_BLOCKED` |
 
+### Append — RC1-P1-001 migration architect pass (2026-11-21)
+
+| Item | Result |
+|------|--------|
+| `origin/main` | `e474ff377731ad2d482b2bf4fec6c3d1a7d32c5c` |
+| Deployment label | `EXISTING_DEPLOYMENT_CONFIRMED` |
+| Artifact label | `LEGACY_SCHEMA_UNVERIFIED` |
+| Candidate dump SHA-256 | `2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC` (offline) |
+| Structural migrate×2 | PASS (110→182) on disposable clone; baseline untouched |
+| Data reconciliation | NOT_RUN (schema-only) |
+| `SCHEMA_UPGRADE_TESTED` | NOT_CLAIMED |
+| RC1-P1-001 | **OPEN** → `RC1-P1-001_BLOCKED_WAITING_FOR_LEGACY_SCHEMA` |
+| Full RC1 acceptance | **RC1_BLOCKED** (P1-001 + P1-006 GHA still open) |
+
+Deliverables: `LEGACY-DEPLOYMENT-PROVENANCE.md`, `LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md`, `LEGACY-TO-RC1-SCHEMA-DIFF.md`, `RC1-MIGRATION-PREFLIGHT.md`, `RC1-MIGRATION-REHEARSAL.md`, `RC1-ROLLBACK-RUNBOOK.md`, blockers/acceptance updates.
+
 ### Evidence paths
 
+- `docs/ai/rc1/evidence/ops1_legacy_schema_structural_rehearsal.json`
+- `docs/ai/rc1/evidence/agent_c_provenance_status.json`
 - `docs/ai/rc1/evidence/rc1_gate_report.json`
 - `docs/ai/rc1/evidence/tr1_acceptance.json` / `tr2_acceptance.json`
 - `docs/ai/rc1/evidence/mf1_acceptance.json` / `mf1_e2e.json`

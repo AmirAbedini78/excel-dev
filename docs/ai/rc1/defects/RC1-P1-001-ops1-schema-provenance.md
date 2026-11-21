@@ -6,33 +6,32 @@
 | Severity | P1 |
 | Contract | OPS-1 |
 | Owner | **User/staging** (dump or Path1 confirmation) / **T7** (rehearsal) |
-| Status | **OPEN** for RC1 acceptance (final closure 2026-11-21) |
-| Prior note | Campaign briefly labeled RESOLVED via `UNAVAILABLE_NOT_DEPLOYED` PASS — **rejected** by independent closure (must not redefine DONE) |
-| Reporter | T7 / Independent auditor / Agent C |
+| Status | **OPEN** — `EXISTING_DEPLOYMENT_CONFIRMED` / `LEGACY_SCHEMA_UNVERIFIED` |
+| Prior note | Path1 `FRESH_INSTALL` **invalid** after owner confirmed prior cPanel/server install |
+| Reporter | T7 / Independent auditor / T0 Migration Architect |
 | Date | 2026-11-21 |
 
 ## Summary
-OPS-1 requires cumulative migration from an *actual prior deployed schema* where safely obtainable, **or** an explicit owner Path1 never-installed confirmation. Neither is available. Repo `RuntimeCache::SCHEMA_VERSION` is **not** production proof. **Do not invent `FRESH_INSTALL`.**
+OPS-1 requires cumulative migration evidence from an *actual prior deployed schema*. Owner confirmed prior install → **do not invent `FRESH_INSTALL`**. Candidate dump received but **unredacted secrets/PII** → artifact remains `LEGACY_SCHEMA_UNVERIFIED` until anonymized Path2 + data reconciliation. Repo `RuntimeCache::SCHEMA_VERSION` is **not** production proof. **Do not claim `SCHEMA_UPGRADE_TESTED`** on schema-only rehearsal alone.
 
 ## Actual
-- Gate script may exit PASS when `RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED`.
-- Independent classification: **BLOCKED_EXTERNAL**.
-- Disposable backup/restore + migrate×2 + rollback: engineering **CLOSED** (`ops1_backup_restore_closure.json`).
-- Provenance class remains `UNAVAILABLE_NOT_DEPLOYED` (`agent_c_provenance_status.json`).
+- Deployment status: **`EXISTING_DEPLOYMENT_CONFIRMED`**.
+- Candidate: `zzflgmfd_excel2.sql` SHA-256 `2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC` (offline only).
+- Structural schema-only sanitize + disposable migrate×2 + rollback: **PASS** (`ops1_legacy_schema_structural_rehearsal.json`) — **not** full upgrade acceptance.
+- Independent classification: **BLOCKED_EXTERNAL** until Path2 data artifact verified.
+- Engineering synthetic restore drill remains **CLOSED** (`ops1_backup_restore_closure.json`).
 
 ## Owner actions
 
-### Path1 — only if literally true
-Written confirmation (Persian or English), e.g.:
+### Path1 — CLOSED / INVALID
+Owner confirmed earlier installation existed → Path1 wording must **not** be used.
 
-> I confirm that ERPSMART / excel-dev has never been installed or deployed on any staging or production host for this campaign; schema provenance may be recorded as FRESH_INSTALL.
-
-### Path2 — anonymized prior schema
-1. Authorize anonymized export (PII scrubbed).  
-2. Provide dump artifact id + sha256.  
+### Path2 — anonymized prior schema + data (REQUIRED)
+1. Authorize anonymized export (PII/secrets scrubbed) — see `LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md`.  
+2. Provide dump artifact id + sha256 (anonymized file).  
 3. Set `RC1_PROD_SCHEMA_PROVENANCE=<artifact-id>`.  
-4. Restore into a **new** disposable schema only.  
-5. Run cumulative migrate ×2 + rollback restore; attach evidence under `docs/ai/rc1/evidence/`.
+4. Restore into a **new** disposable schema only (keep untouched baseline).  
+5. Run cumulative migrate ×2 + data reconciliation + rollback restore; attach evidence under `docs/ai/rc1/evidence/`.
 
 ## Fix path
-No cPanel/prod deploy by agents. After Path1 or Path2, re-run OPS-1 acceptance and update blockers.
+No cPanel/prod deploy by agents. After Path2 data rehearsal PASS, close RC1-P1-001 and update blockers/acceptance.

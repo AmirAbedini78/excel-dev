@@ -3,49 +3,40 @@
 **Agent:** C (Provenance & migration)  
 **Date:** 2026-11-20  
 **Contract:** OPS-1 / defect RC1-P1-001  
-**Campaign:** `NOT_DEPLOYED`  
-**Engineering restore:** **CLOSED** (disposable)  
-**Provenance:** **BLOCKED_EXTERNAL** / class **UNAVAILABLE**  
-**Do not invent `FRESH_INSTALL`.**
+**Campaign status:** `EXISTING_DEPLOYMENT_CONFIRMED` (owner confirmed prior cPanel/server install)  
+**Artifact status:** `LEGACY_SCHEMA_UNVERIFIED`  
+**Engineering restore:** **CLOSED** (disposable synthetic)  
+**Structural legacy schema-only rehearsal:** **PASS** (not data upgrade proof)  
+**Provenance:** **BLOCKED_EXTERNAL** until Path2 anonymized **data** artifact  
+**Do not invent `FRESH_INSTALL` or `SCHEMA_UPGRADE_TESTED`.**
 
 ---
 
-## Current truth (Agent C)
+## Current truth (T0 / Agent C)
 
 | Item | Class |
 |------|-------|
-| Disposable privileged dump/restore | **CLOSED** — `ops1_backup_restore_closure.json` + reverify `ops1_backup_restore_reverify.json` |
-| Migrate×2 on restored disposable DB | **CLOSED** |
-| Rollback restore (second disposable DB) | **CLOSED** |
-| Prior deployed / staging schema provenance | **UNAVAILABLE** → OPS-1 acceptance **BLOCKED_EXTERNAL** |
-| Path1 `FRESH_INSTALL` | **NOT claimed** — owner confirmation absent in this chat |
-| Path2 anonymized dump | **NOT provided** |
-| cPanel / production | **NOT_RUN** / forbidden without permission |
+| Disposable privileged dump/restore (synthetic) | **CLOSED** — `ops1_backup_restore_closure.json` + reverify |
+| Owner confirmed prior install | **YES** → Path1 invalid |
+| Candidate dump `zzflgmfd_excel2.sql` | Received — SHA recorded; **UNSAFE** secrets/PII; **not in Git** |
+| Schema-only sanitize + migrate×2 + rollback | **PASS** — `ops1_legacy_schema_structural_rehearsal.json` |
+| Path2 anonymized schema+data | **REQUIRED / incomplete** |
+| Data reconciliation (vouchers/stock/balances) | **NOT_RUN** |
+| cPanel / production | **NOT_RUN** / forbidden |
 
-Until Path1 **or** Path2 completes, independent OPS-1 remains **BLOCKED**. Script PASS under `RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED` is **not** acceptance closure.
-
----
-
-## Path 1 — Owner written confirmation (never installed)
-
-Use **only** if there has never been any staging/production/cPanel deploy of this product schema for this campaign.
-
-### Exact confirmation text (copy/paste reply)
-
-> I confirm as product/ops owner that ErpSmart for this RC1 campaign has **never** been installed or deployed to any staging or production host (including cPanel). There is **no** prior deployed MySQL schema to migrate from. I authorize classifying provenance as **FRESH_INSTALL** for OPS-1 / RC1-P1-001. Campaign remains **NOT_DEPLOYED** until an explicit future go-live.
-
-### After Path1 is received
-
-1. Record confirmation quote + date/actor in `defects/RC1-P1-001-ops1-schema-provenance.md`.
-2. Set evidence provenance to `FRESH_INSTALL` (not invented earlier).
-3. Keep disposable restore evidence as engineering proof only.
-4. Do **not** treat Path1 as license to touch production.
+Independent OPS-1 remains **BLOCKED** until Path2 data rehearsal PASS.
 
 ---
 
-## Path 2 — Authorized anonymized staging/prior dump
+## Path 1 — INVALID for this campaign
 
-Use when any prior deploy may exist or owner cannot swear Path1.
+Owner confirmed an earlier ERPSMART installation existed on server/cPanel with a database. **Do not** use FRESH_INSTALL wording.
+
+---
+
+## Path 2 — Authorized anonymized staging/prior dump (REQUIRED)
+
+Primary path. Full checklist: `LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md`.
 
 ### Dump checklist (owner / staging ops)
 
