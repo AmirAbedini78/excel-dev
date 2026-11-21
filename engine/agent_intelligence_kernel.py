@@ -33,9 +33,10 @@ from typing import Any, Callable
 
 import business_skills as BS
 import decision_brief as DB
+import agent_task_state as ATS
 from local_inference import token_upper_bound
 
-PATCH_VERSION = "v10.10.3-cycle12.3-agent-intelligence-kernel-v1.6"
+PATCH_VERSION = "v10.10.3-cycle12.3-agent-intelligence-kernel-v1.7"
 ANALYST_CONTRACT = DB.CONTRACT
 AGENT_KERNEL_ROUTE_FILE = Path(__file__).resolve().parent / "data" / "agent_kernel_model_route.json"
 KERNEL_CONTRACT = "erpsmart.agent-kernel.v1"
@@ -650,18 +651,35 @@ def _select_next_action(worker: Any, job: dict[str, Any], state: dict[str, Any],
         return selected
 
 
+def _persist_agent_task(worker: Any, job: dict[str, Any], state: dict[str, Any]) -> None:
+    task = state.get("agent_task")
+    if not isinstance(task, dict):
+        return
+    snap = ATS.snapshot_for_persist(task)
+    state["agent_task"] = snap
+    worker.trace(job, "kernel_task_state", "Durable agent_task checkpoint", {"agent_task": snap, "state": snap.get("state")})
+
+
 def _execute_action(worker: Any, job: dict[str, Any], state: dict[str, Any], action: dict[str, Any]) -> None:
     aid = str(action["id"])
-    if aid in state["executed_action_ids"]:
+    if aid in state["executed_action_ids"] or ATS.action_already_executed(state.get("agent_task") or {}, aid):
         raise RuntimeError("kernel_repeated_action_blocked")
     if len(state["tool_sequence"]) >= MAX_TOOL_CALLS:
         raise RuntimeError("kernel_tool_budget_exceeded")
     tool = str(action["tool"])
+    available = state.get("available_tools") or set()
+    if available and tool not in available:
+        state["agent_task"] = ATS.reject_invalid_tool(state.get("agent_task") or ATS.new_task(company_id=int(job.get("company_id") or 0)), tool, source="kernel")
+        _persist_agent_task(worker, job, state)
+        raise RuntimeError("kernel_invalid_tool_rejected")
     args = dict(action.get("arguments") or {})
     state["executed_action_ids"].add(aid)
     worker.trace(job, "kernel_tool", "Executing server-compiled read action", {"action_id": aid, "tool": tool, "argument_keys": sorted(args), "tool_call": len(state["tool_sequence"]) + 1})
     result = worker.tool(job, tool, args, BS.stable(int(job["id"]), "kernel-action", {"action_id": aid, "args": args}))
     state["tool_sequence"].append(tool)
+    if isinstance(state.get("agent_task"), dict):
+        state["agent_task"] = ATS.mark_read_action(state["agent_task"], aid, tool)
+        _persist_agent_task(worker, job, state)
     observer = str(action.get("observer") or "")
     if tool == "supplier_performance_summary":
         compact = _observe_supplier(state, result)
@@ -835,6 +853,19 @@ def _block_message(state: dict[str, Any], reason: str) -> tuple[str, dict[str, A
     }
 
 
+def _attach_agent_task_meta(meta: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+    task = state.get("agent_task")
+    if not isinstance(task, dict):
+        return meta
+    snap = ATS.snapshot_for_persist(task)
+    if int(snap.get("evidence_count") or 0) == 0:
+        snap["evidence_count"] = len(state.get("evidence") or [])
+    snap["planner_calls"] = int(state.get("planner_calls") or snap.get("planner_calls") or 0)
+    out = dict(meta)
+    out["agent_task"] = snap
+    return out
+
+
 def run_kernel(worker: Any, job: dict[str, Any], tools_desc: list[dict[str, Any]], capability: str | None = None) -> tuple[str, dict[str, Any]]:
     prompt = str(job.get("prompt") or "")
     entities = _all_entities(job)
@@ -842,6 +873,39 @@ def run_kernel(worker: Any, job: dict[str, Any], tools_desc: list[dict[str, Any]
     if not cap:
         raise ValueError("kernel_capability_required")
     available = _available_read_tools(tools_desc)
+    company_id = int(job.get("company_id") or 0)
+    prior = ATS.extract_from_result_json(job.get("result_json") or job.get("result") or {})
+    if prior is None:
+        agent_task = ATS.new_task(company_id=company_id, capability=cap, job_id=int(job.get("id") or 0))
+        agent_task = ATS.transition(agent_task, "VALIDATING", reason="kernel_start")
+    else:
+        if ATS.require_company_revalidation(prior, company_id):
+            agent_task = ATS.revalidate_for_company_change(prior, company_id)
+        else:
+            agent_task = ATS.resume_after_lease_recovery(prior, job_company_id=company_id)
+        if str(agent_task.get("state") or "") == "CREATED":
+            agent_task = ATS.transition(agent_task, "VALIDATING", reason="kernel_resume")
+        agent_task["capability"] = cap
+        agent_task["company_id"] = company_id
+
+    terminal = str(agent_task.get("state") or "")
+    if terminal in ("COMPLETED", "CANCELLED", "FAILED", "EXPIRED", "PARTIALLY_COMPLETED"):
+        meta = {
+            "provider": "deterministic",
+            "model": "none",
+            "mode": "agent_intelligence_kernel_resume_terminal",
+            "kernel": KERNEL_CONTRACT,
+            "kernel_version": PATCH_VERSION,
+            "capability": cap,
+            "tools_used": list(agent_task.get("tool_sequence") or []),
+            "agent_task": ATS.snapshot_for_persist(agent_task),
+            "guard_contract": "server_action_id_only+read_tools+grounded_finding_ids+budget_guard",
+        }
+        worker.trace(job, "kernel_task_state", "Idempotent resume of terminal agent_task", {"agent_task": meta["agent_task"]})
+        return "", meta
+
+    resumed_actions = {str(x) for x in (agent_task.get("executed_action_ids") or [])}
+    resumed_tools = [str(x) for x in (agent_task.get("tool_sequence") or [])]
     state: dict[str, Any] = {
         "prompt": prompt,
         "capability": cap,
@@ -850,30 +914,44 @@ def run_kernel(worker: Any, job: dict[str, Any], tools_desc: list[dict[str, Any]
         "observations": [],
         "evidence": [],
         "limitations": [],
-        "executed_action_ids": set(),
-        "tool_sequence": [],
-        "planner_calls": 0,
+        "executed_action_ids": set(resumed_actions),
+        "tool_sequence": list(resumed_tools),
+        "planner_calls": int(agent_task.get("planner_calls") or 0),
         "started": time.monotonic(),
         "deadline": time.monotonic() + max(5, min(120, float((getattr(worker, "cfg", {}) or {}).get("kernel_budget_seconds", 75)))),
         "planner_mode": str((getattr(worker, "cfg", {}) or {}).get("kernel_planner_mode", "auto")),
+        "available_tools": available,
+        "agent_task": agent_task,
     }
     worker.trace(job, "kernel_goal", "Agent Intelligence Kernel accepted a read-only business goal", {"capability": cap, "explicit_entities": len(state["explicit_entities"]), "context_entities": len(entities)})
     worker.trace(job, "kernel_capability_retrieval", "Bounded capability retrieved; action registry filtered by current read tools", {"capability": cap, "available_read_tools": len(available)})
+    if str(state["agent_task"].get("state") or "") == "VALIDATING":
+        state["agent_task"] = ATS.transition(state["agent_task"], "PLANNING", reason="capability_ok")
+    _persist_agent_task(worker, job, state)
 
     initial = _initial_action(cap, state, available)
     if not initial:
-        return _block_message(state, "required_read_tool_unavailable")
+        state["agent_task"] = ATS.transition(state["agent_task"], "BLOCKED", reason="required_read_tool_unavailable")
+        text, meta = _block_message(state, "required_read_tool_unavailable")
+        return text, _attach_agent_task_meta(meta, state)
     if initial.get("blocked"):
-        return _block_message(state, str(initial["blocked"]))
+        state["agent_task"] = ATS.transition(state["agent_task"], "BLOCKED", reason=str(initial["blocked"]))
+        text, meta = _block_message(state, str(initial["blocked"]))
+        return text, _attach_agent_task_meta(meta, state)
 
-    _execute_action(worker, job, state, initial)
+    if not ATS.action_already_executed(state["agent_task"], str(initial.get("id") or "")):
+        _execute_action(worker, job, state, initial)
     if state.get("scope_block"):
-        return _block_message(state, state["scope_block"])
+        state["agent_task"] = ATS.transition(state["agent_task"], "BLOCKED", reason=state["scope_block"])
+        text, meta = _block_message(state, state["scope_block"])
+        return text, _attach_agent_task_meta(meta, state)
 
     while len(state["tool_sequence"]) < MAX_TOOL_CALLS and state["planner_calls"] < MAX_PLANNER_CALLS:
         if time.monotonic() >= state["deadline"]:
             state["limitations"].append("بودجه زمانی خوانش تکمیلی تمام شد؛ نتیجه بر شواهد دریافت‌شده متکی است.")
             break
+        if str(state["agent_task"].get("state") or "") == "EXECUTING_READS":
+            state["agent_task"] = ATS.transition(state["agent_task"], "PLANNING", reason="bounded_replan")
         actions = _actions_after_observation(state, available)
         if not actions:
             break
@@ -883,16 +961,32 @@ def run_kernel(worker: Any, job: dict[str, Any], tools_desc: list[dict[str, Any]
         action = next((a for a in actions if str(a["id"]) == selected), None)
         if not action:
             worker.trace(job, "kernel_replan", "Planner selected unavailable action; terminating safely", {"selected_action": selected})
+            state["agent_task"] = ATS.reject_invalid_tool(state["agent_task"], selected, source="planner")
+            _persist_agent_task(worker, job, state)
             break
         try:
             _execute_action(worker, job, state, action)
         except Exception as exc:
+            if "invalid_tool" in str(exc):
+                break
             state["limitations"].append("خوانش تکمیلی در دسترس نبود؛ علت دقیق‌تر ریسک هنوز تأیید نشده است.")
             worker.trace(job, "kernel_fallback", "Optional read failed; primary evidence retained", {"error_type": type(exc).__name__})
             break
 
+    if str((state.get("agent_task") or {}).get("state") or "") == "BLOCKED":
+        text, meta = _block_message(state, str((state["agent_task"].get("block_reason") or "blocked")))
+        return text, _attach_agent_task_meta(meta, state)
+
+    state["agent_task"] = ATS.transition(state["agent_task"], "ANALYZING", reason="synthesize")
+    _persist_agent_task(worker, job, state)
     text, synthesis_meta = _synthesize(worker, job, state)
     elapsed = round(time.monotonic() - state["started"], 3)
+    state["agent_task"]["evidence_count"] = len(state["evidence"])
+    state["agent_task"]["planner_calls"] = state["planner_calls"]
+    if state["tool_sequence"] and not state["evidence"]:
+        state["agent_task"] = ATS.transition(state["agent_task"], "PARTIALLY_COMPLETED", reason="empty_evidence")
+    else:
+        state["agent_task"] = ATS.transition(state["agent_task"], "COMPLETED", reason="read_kernel_done")
     meta = {
         "provider": "grounded_agent_kernel" if synthesis_meta.get("synthesis") == "decision_model" else "deterministic",
         "model": synthesis_meta.get("model", "none"),
@@ -908,10 +1002,14 @@ def run_kernel(worker: Any, job: dict[str, Any], tools_desc: list[dict[str, Any]
         "synthesis": synthesis_meta.get("synthesis"),
         "synthesis_error": synthesis_meta.get("synthesis_error"),
         "confidence": synthesis_meta.get("confidence"),
-        "guard_contract": "server_action_id_only+read_tools+grounded_finding_ids+severity_guard",
+        "guard_contract": "server_action_id_only+read_tools+grounded_finding_ids+budget_guard",
         "metrics": {"elapsed_seconds": elapsed},
     }
-    worker.trace(job, "kernel_verify", "Agent Kernel completed within bounded tool/plan budget", {"capability": cap, "tool_calls": len(state["tool_sequence"]), "planner_calls": state["planner_calls"], "elapsed_seconds": elapsed})
+    meta = _attach_agent_task_meta(meta, state)
+    worker.trace(job, "kernel_verify", "Agent Kernel completed within bounded tool/plan budget", {
+        "capability": cap, "tool_calls": len(state["tool_sequence"]), "planner_calls": state["planner_calls"],
+        "elapsed_seconds": elapsed, "agent_task_state": meta["agent_task"]["state"],
+    })
     return text, meta
 
 

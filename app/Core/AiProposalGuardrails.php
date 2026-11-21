@@ -28,6 +28,12 @@ final class AiProposalGuardrails
         '/\bبدون\s+تایید\b/u',
         '/\bauto[- ]?post\b/i',
         '/\bdirect\s+stock\s+write\b/i',
+        // Privilege / approval-authority escalation via free text (Wave1 AI1)
+        '/\bgrant\s+(role\s*=\s*)?admin\b/i',
+        '/\bai\.actions\.approve\b/i',
+        '/\belevate\s+(permissions?|privileges?|access)\b/i',
+        '/\b(role|permission)\s*=\s*admin\b/i',
+        '/\bworkspace[_\s-]?owner\b/i',
     ];
 
     public static function descriptorMode(string $tool): ?string
