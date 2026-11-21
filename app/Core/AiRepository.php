@@ -390,9 +390,15 @@ final class AiRepository
                 'details'=>(array)($progress['details']??[]),
                 'trace'=>array_slice((array)($progress['trace']??[]),-30),
             ];
-            $live=json_encode(['live'=>$safe],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+            // Preserve durable agent_task across heartbeats (Wave1 contract).
+            $incomingTask=$safe['details']['agent_task']??null;
+            $encoded=AiAgentTaskState::mergeResultJson(
+                isset($job['result_json'])?(string)$job['result_json']:null,
+                $safe,
+                is_array($incomingTask)?$incomingTask:null
+            );
             pdo()->prepare("UPDATE ai_jobs SET status='running',started_at=COALESCE(started_at,NOW()),lease_expires_at=DATE_ADD(NOW(),INTERVAL ? SECOND),result_json=?,updated_at=NOW() WHERE id=?")
-                ->execute([$seconds,$live,$jobId]);
+                ->execute([$seconds,$encoded,$jobId]);
         }else{
             pdo()->prepare("UPDATE ai_jobs SET status='running',started_at=COALESCE(started_at,NOW()),lease_expires_at=DATE_ADD(NOW(),INTERVAL ? SECOND),updated_at=NOW() WHERE id=?")
                 ->execute([$seconds,$jobId]);
