@@ -35,9 +35,11 @@ jobs:
     env:
       RC1_ALLOW_ANY_MYSQL: "1"
       RC1_REQUIRED: "1"
-      # Linux GHA: job + docker --network host see the service on 127.0.0.1.
-      # Do NOT use host.docker.internal here (often unresolved on ubuntu-latest).
+      # Dual networking: runner pymysql vs PHP-in-Docker must differ on loopback.
+      # Host/job sees the service on 127.0.0.1; PHP containers use host.docker.internal
+      # (+ --add-host=host.docker.internal:host-gateway in the e2e harness).
       O2C_DB_HOST: "127.0.0.1"
+      O2C_DB_HOST_PHP: "host.docker.internal"
       O2C_DB_PORT: "3306"
       O2C_DB_USER: p2p
       O2C_DB_PASS: p2p_test
