@@ -9,11 +9,39 @@ import threading
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-HOST = os.environ.get("O2C_DB_HOST", "host.docker.internal")
 PORT = os.environ.get("O2C_DB_PORT", "3307")
 USER = os.environ.get("O2C_DB_USER", "p2p")
 PASSWORD = os.environ.get("O2C_DB_PASS", "p2p_test")
-DATABASE = os.environ.get("O2C_DB_NAME", "erpsmart_mf1_test")
+
+
+def _db_name() -> str:
+    # Call-time so rc1_ci_mysql_php_gate can isolate schemas per case.
+    return os.environ.get("O2C_DB_NAME", "erpsmart_mf1_test")
+
+
+def _runner_db_host() -> str:
+    """Host-side (pymysql / runner) MySQL hostname — may be 127.0.0.1 on GHA."""
+    return (os.environ.get("O2C_DB_HOST") or "127.0.0.1").strip()
+
+
+def _php_db_host() -> str:
+    """In-container hostname for PHP Docker — never forward loopback blindly.
+
+    O2C_DB_HOST=127.0.0.1 is correct on the GHA runner, but inside a bridge-network
+    PHP container 127.0.0.1 is the container itself, not the MySQL service.
+    Prefer O2C_DB_HOST_PHP; otherwise remap loopback → host.docker.internal.
+    """
+    explicit = (os.environ.get("O2C_DB_HOST_PHP") or "").strip()
+    if explicit:
+        return explicit
+    host = _runner_db_host()
+    if host in {"127.0.0.1", "localhost", "::1"}:
+        return "host.docker.internal"
+    return host or "host.docker.internal"
+
+
+# Backward-compatible alias (PHP path); prefer _php_db_host() at call time.
+HOST = os.environ.get("O2C_DB_HOST_PHP") or os.environ.get("O2C_DB_HOST", "host.docker.internal")
 
 
 def _docker_ok() -> bool:
@@ -32,13 +60,14 @@ def _docker_ok() -> bool:
 def _php(scenario: str, args: dict | None = None, timeout: int = 180) -> dict:
     if not _docker_ok():
         raise unittest.SkipTest("erpsmart-o2c-php:8.2 unavailable")
+    php_host = _php_db_host()
     cmd = [
         "docker",
         "run",
         "--rm",
         "--add-host=host.docker.internal:host-gateway",
         "-e",
-        f"O2C_DB_HOST={HOST}",
+        f"O2C_DB_HOST={php_host}",
         "-e",
         f"O2C_DB_PORT={PORT}",
         "-e",
@@ -46,7 +75,7 @@ def _php(scenario: str, args: dict | None = None, timeout: int = 180) -> dict:
         "-e",
         f"O2C_DB_PASS={PASSWORD}",
         "-e",
-        f"O2C_DB_NAME={DATABASE}",
+        f"O2C_DB_NAME={_db_name()}",
         "-v",
         f"{ROOT}:/app",
         "-w",
@@ -96,6 +125,10 @@ class ManufacturingMf1PhpE2e(unittest.TestCase):
             )
 
     def test_00_mysql_identity(self):
+        # CI service MySQL (RC1_ALLOW_ANY_MYSQL) is disposable but not the G0 named container.
+        if os.environ.get("RC1_ALLOW_ANY_MYSQL", "").strip() in {"1", "true", "TRUE", "yes"}:
+            self.assertTrue(_mysql_container_ok())
+            return
         r = subprocess.run(
             ["docker", "inspect", "-f", "{{.Id}} {{.Name}}", "erpsmart-p2p-mysql-test"],
             capture_output=True,
@@ -104,7 +137,10 @@ class ManufacturingMf1PhpE2e(unittest.TestCase):
         )
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("erpsmart-p2p-mysql-test", r.stdout)
-        self.assertTrue(r.stdout.strip().startswith("02eb215a87f6") or "02eb215a87f6" in r.stdout.replace("-", ""))
+        expect_prefix = os.environ.get("RC1_MYSQL_CONTAINER_ID_PREFIX", "ab78c5c42f00")[:12]
+        self.assertTrue(
+            r.stdout.strip().startswith(expect_prefix) or expect_prefix in r.stdout.replace("-", "")
+        )
 
     def test_01_lifecycle_happy_path(self):
         res = _php("lifecycle_happy")

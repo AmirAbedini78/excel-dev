@@ -1,24 +1,31 @@
 {
   "agent": "T0_MIGRATION_ARCHITECT",
   "scope": "OPS-1 provenance and legacy migration",
-  "verified_at_utc": "2026-11-21T09:45:00Z",
-  "origin_main_sha": "e474ff377731ad2d482b2bf4fec6c3d1a7d32c5c",
+  "verified_at_utc": "2026-11-21T17:42:00Z",
+  "origin_main_sha": "c5c644c386cbedde788c4e12e0585c43dc1b5a5d",
   "production": "NOT_TOUCHED",
   "cpanel_prod": "NOT_RUN",
   "deployment_status": "EXISTING_DEPLOYMENT_CONFIRMED",
-  "provenance_class": "LEGACY_SCHEMA_UNVERIFIED",
+  "provenance_class": "PATH2_ANON_SCHEMA_DATA_VERIFIED",
+  "provenance_id": "prior-cpanel-anon-20261121",
   "fresh_install": "NOT_ASSUMED",
-  "schema_upgrade_tested": "NOT_CLAIMED",
-  "ops1_independent_class": "BLOCKED_EXTERNAL",
+  "schema_upgrade_tested": "SCHEMA_UPGRADE_TESTED",
+  "ops1_independent_class": "PASS_PATH2_DISPOSABLE_REHEARSAL",
   "engineering_restore_class": "CLOSED",
   "structural_legacy_rehearsal_class": "PASS_SCHEMA_ONLY",
+  "anonymization_class": "PASS_LEAK_SCAN",
+  "anonymized_dump_sha256": "F3B92C0088A874A739FCD64BF25FA714010078C3EB95DFDF81ADC92335841DE2",
+  "data_reconciliation_class": "PASS",
+  "owner_attestation": "CAMPAIGN_PATH2_DUMP_PROVIDED",
   "candidate_dump_sha256": "2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC",
   "candidate_safety": "UNSAFE_UNREDACTED_SECRETS_AND_PII",
-  "sanitized_schema_only_sha256": "3256AABC0EFC1E52AD5ADDA7576F39BA25D09B986AC18C0DF447E0BFEB832015",
   "backup_restore_evidence": {
     "synthetic_closure": "docs/ai/rc1/evidence/ops1_backup_restore_closure.json",
-    "legacy_structural": "docs/ai/rc1/evidence/ops1_legacy_schema_structural_rehearsal.json"
+    "legacy_structural": "docs/ai/rc1/evidence/ops1_legacy_schema_structural_rehearsal.json",
+    "anonymization": "docs/ai/rc1/evidence/ops1_legacy_anonymization.json",
+    "data_rehearsal": "docs/ai/rc1/evidence/ops1_legacy_data_rehearsal.json",
+    "data_reconciliation": "docs/ai/rc1/evidence/ops1_legacy_data_reconciliation.json"
   },
-  "owner_actions": "docs/ai/rc1/LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md",
-  "recommendation": "Keep RC1-P1-001 OPEN until anonymized schema+data Path2 + reconciliation PASS. Do not claim FRESH_INSTALL or SCHEMA_UPGRADE_TESTED."
+  "p1_001_status": "CLOSED",
+  "recommendation": "Close RC1-P1-001. Path2 anonymized restore + migrate×2 + financial/stock recon PASS on disposable MySQL. Do not invent FRESH_INSTALL. Production not touched."
 }

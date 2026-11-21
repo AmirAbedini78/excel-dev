@@ -1,0 +1,56 @@
+{
+  "drill": "legacy_candidate_schema_aware_anonymization",
+  "verified_at_utc": "2026-11-21T10:00:00Z",
+  "origin_main_baseline_sha": "c5c644c386cbedde788c4e12e0585c43dc1b5a5d",
+  "tool": "scripts/rc1_legacy_dump_anonymize.py",
+  "candidate": {
+    "owner_path": "c:\\Users\\h\\Downloads\\zzflgmfd_excel2.sql",
+    "bytes": 1585278,
+    "sha256": "2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC",
+    "safety": "UNSAFE_UNREDACTED_SECRETS_AND_PII",
+    "git_commit_allowed": false
+  },
+  "anonymized_output": {
+    "offline_path": "c:\\Users\\h\\Downloads\\erpsmart-rc1-sanitize\\zzflgmfd_excel2.ANON.schema_data.sql",
+    "bytes": 519328,
+    "sha256": "F3B92C0088A874A739FCD64BF25FA714010078C3EB95DFDF81ADC92335841DE2",
+    "kind": "SCHEMA_PLUS_ANONYMIZED_DATA",
+    "git_commit_allowed": false
+  },
+  "transform_stats": {
+    "insert_tables": 97,
+    "insert_rows": 2260,
+    "names": 1023,
+    "notes": 1001,
+    "banking": 10,
+    "usernames": 3,
+    "economic": 13,
+    "phones": 32,
+    "emails": 12,
+    "addresses": 14,
+    "secrets": 137,
+    "urls": 6
+  },
+  "leak_scan": {
+    "pass": true,
+    "bcrypt_non_disposable": 0,
+    "private_key_pem": 0,
+    "url_with_userinfo": 0,
+    "phone_09_non_synthetic": 0,
+    "email_non_example": 0,
+    "synthetic_phone_0900": 32,
+    "synthetic_email_example_test": 12,
+    "note": "settings key name cron_secret may remain; values replaced with DISPOSABLE_SECRET_*"
+  },
+  "preserved": [
+    "PK/FK ids",
+    "workspace_id/company_id",
+    "voucher/stock document ids",
+    "signed amounts / qty / tax_amount",
+    "dates / status / state"
+  ],
+  "owner_attestation": "CAMPAIGN_PATH2_DUMP_PROVIDED",
+  "provenance_id": "prior-cpanel-anon-20261121",
+  "provenance_class": "PATH2_ANON_SCHEMA_DATA_VERIFIED",
+  "note": "Anonymized artifact produced offline; Path2 data rehearsal PASS; dump never committed"
+}

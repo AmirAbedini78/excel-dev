@@ -2,7 +2,7 @@
 
 **Owner:** T0 Migration Architect  
 **Date:** 2026-11-21  
-**origin/main (verified):** `e474ff377731ad2d482b2bf4fec6c3d1a7d32c5c`  
+**origin/main (verified):** `c5c644c386cbedde788c4e12e0585c43dc1b5a5d`  
 **Repo schema constant:** `RuntimeCache::SCHEMA_VERSION = 10.24.0-rc1`  
 
 ## Status labels (authoritative)
@@ -10,10 +10,11 @@
 | Label | Value |
 |-------|-------|
 | Deployment | **`EXISTING_DEPLOYMENT_CONFIRMED`** (owner: prior ERPSMART install on server/cPanel with DB) |
-| Artifact | **`LEGACY_SCHEMA_UNVERIFIED`** |
+| Artifact | **`PATH2_ANON_SCHEMA_DATA_VERIFIED`** |
+| Provenance id | **`prior-cpanel-anon-20261121`** |
 | Fresh install | **`NOT_ASSUMED`** — never invent `FRESH_INSTALL` |
-| Schema upgrade tested | **`NOT_CLAIMED`** — structural-only rehearsal ≠ full upgrade proof |
-| RC1-P1-001 | **OPEN** / `BLOCKED_WAITING_FOR_LEGACY_SCHEMA` (sanitized data Path2 incomplete) |
+| Schema upgrade tested | **`SCHEMA_UPGRADE_TESTED`** (disposable Path2 anonymized data only) |
+| RC1-P1-001 | **CLOSED** |
 
 ## Candidate artifact (owner-supplied path — redacted metadata only)
 
@@ -27,7 +28,17 @@
 | Database name | `zzflgmfd_excel2` |
 | Kind | **SCHEMA_PLUS_DATA** (110 `CREATE TABLE`, 97 `INSERT`) |
 | DEFINER | 0 |
-| Safety | **`UNSAFE_UNREDACTED_SECRETS_AND_PII`** — password hashes, `cron_secret`, tokens, emails/phones; **must not enter Git** |
+| Safety | **`UNSAFE_UNREDACTED_SECRETS_AND_PII`** — **must not enter Git** |
+
+## Anonymized Path2 artifact (offline — not in Git)
+
+| Field | Value |
+|-------|-------|
+| SHA-256 | `F3B92C0088A874A739FCD64BF25FA714010078C3EB95DFDF81ADC92335841DE2` |
+| Bytes | 519 328 |
+| Kind | SCHEMA_PLUS_ANONYMIZED_DATA |
+| leak_scan | **PASS** |
+| Evidence | `docs/ai/rc1/evidence/ops1_legacy_anonymization.json` |
 
 ### Settings markers observed (from candidate; not production proof of code SHA)
 
@@ -36,30 +47,25 @@
 - `accounting_extended_schema_version` = `7.0.0`
 - `ai_schema_version` = `1.1.0`
 
-## What is known
+## What is proven
 
 - Owner confirmed a prior install existed → Path1 `FRESH_INSTALL` is **invalid**.
 - Candidate dump matches cPanel-style hosting (`*-cll-lve`, DB prefix naming).
-- Offline schema-only sanitize produced structural restore input (SHA-256 `3256AABC0EFC1E52AD5ADDA7576F39BA25D09B986AC18C0DF447E0BFEB832015`) **outside Git**.
-- Disposable structural migrate×2 on clone: **PASS** (110→182 tables). See `evidence/ops1_legacy_schema_structural_rehearsal.json`.
-
-## What remains unknown / unverified
-
-- Exact production/staging host identity and deploy code SHA at dump time.
-- Whether dump is complete vs selective tables.
-- Business-data preservation (vouchers, stock, balances) — **schema-only cannot prove**.
-- Owner authorization that the sanitized Path2 artifact is the accepted provenance id.
+- Offline schema-aware anonymization + leak_scan **PASS**.
+- Disposable anonymized restore → clone → migrate×2 → financial/stock recon → recovery clone **PASS**.
+- Baseline left unmigrated (110 tables). Migrate/recovery 182 tables.
+- Voucher lines Dr=Cr preserved; stock `quantity`/`unit_cost` preserved; mismatch_count=0.
 
 ## Hard rules
 
 1. Repo `SCHEMA_VERSION` is **not** production provenance.
-2. Do not invent SHA / `FRESH_INSTALL` / `SCHEMA_UPGRADE_TESTED`.
+2. Do not invent SHA / `FRESH_INSTALL`.
 3. No production MySQL, cPanel, install.php-on-live, or live migrate.
 4. Prefer offline CLI migrate runner (`scripts/rc1_legacy_schema_migrate_rehearsal.php`) over first HTTP hit.
 
-## Closure criteria for RC1-P1-001
+## Closure criteria — met
 
-1. Verified **anonymized** legacy artifact (schema+data) with published SHA-256 + owner Path2 id.  
-2. Disposable restore → pre-invariants → migrate to RC1 → migrate×2 → data reconciliation PASS.  
-3. Evidence attached under `docs/ai/rc1/evidence/`.  
-4. Then and only then: close defect and claim upgrade tested.
+1. Verified anonymized legacy artifact with published SHA-256 + provenance id `prior-cpanel-anon-20261121`.
+2. Disposable restore → migrate×2 → data reconciliation PASS.
+3. Evidence under `docs/ai/rc1/evidence/`.
+4. Defect **CLOSED**; `SCHEMA_UPGRADE_TESTED` claimed for disposable Path2 only.

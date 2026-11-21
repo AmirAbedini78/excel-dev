@@ -12,14 +12,36 @@ import subprocess
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-HOST = os.environ.get("O2C_DB_HOST", "host.docker.internal")
 PORT = os.environ.get("O2C_DB_PORT", "3307")
 USER = os.environ.get("O2C_DB_USER", "p2p")
 PASSWORD = os.environ.get("O2C_DB_PASS", "p2p_test")
-# Dedicated schema on the verified sandbox container to avoid cross-lane DROP races.
-DATABASE = os.environ.get("O2C_DB_NAME", "erpsmart_t3_trading_test")
 MYSQL_CONTAINER = "erpsmart-p2p-mysql-test"
-EXPECTED_MYSQL_ID_PREFIX = "02eb215a87f6"
+
+
+def _db_name() -> str:
+    # Dedicated schema on the verified sandbox; call-time for gate isolation.
+    return os.environ.get("O2C_DB_NAME", "erpsmart_t3_trading_test")
+EXPECTED_MYSQL_ID_PREFIX = os.environ.get("RC1_MYSQL_CONTAINER_ID_PREFIX", "ab78c5c42f00")[:12]
+
+
+def _runner_db_host() -> str:
+    """Host-side (pymysql / runner) MySQL hostname — may be 127.0.0.1 on GHA."""
+    return (os.environ.get("O2C_DB_HOST") or "127.0.0.1").strip()
+
+
+def _php_db_host() -> str:
+    """In-container hostname for PHP Docker — never forward loopback blindly."""
+    explicit = (os.environ.get("O2C_DB_HOST_PHP") or "").strip()
+    if explicit:
+        return explicit
+    host = _runner_db_host()
+    if host in {"127.0.0.1", "localhost", "::1"}:
+        return "host.docker.internal"
+    return host or "host.docker.internal"
+
+
+# Backward-compatible alias; prefer _php_db_host() at call time.
+HOST = os.environ.get("O2C_DB_HOST_PHP") or os.environ.get("O2C_DB_HOST", "host.docker.internal")
 
 
 def _docker_ok() -> bool:
@@ -57,13 +79,14 @@ def _mysql_identity_ok() -> bool:
 def _php(scenario: str, args: dict | None = None, timeout: int = 240) -> dict:
     if not _docker_ok():
         raise unittest.SkipTest("erpsmart-o2c-php:8.2 unavailable")
+    php_host = _php_db_host()
     cmd = [
         "docker",
         "run",
         "--rm",
         "--add-host=host.docker.internal:host-gateway",
         "-e",
-        f"O2C_DB_HOST={HOST}",
+        f"O2C_DB_HOST={php_host}",
         "-e",
         f"O2C_DB_PORT={PORT}",
         "-e",
@@ -71,7 +94,7 @@ def _php(scenario: str, args: dict | None = None, timeout: int = 240) -> dict:
         "-e",
         f"O2C_DB_PASS={PASSWORD}",
         "-e",
-        f"O2C_DB_NAME={DATABASE}",
+        f"O2C_DB_NAME={_db_name()}",
         "-v",
         f"{ROOT}:/app",
         "-w",
@@ -103,7 +126,7 @@ class TradingCockpitPhpE2eRc1(unittest.TestCase):
             raise unittest.SkipTest("pymysql missing") from exc
         try:
             pymysql.connect(
-                host="127.0.0.1",
+                host=_runner_db_host(),
                 port=int(PORT),
                 user=USER,
                 password=PASSWORD,

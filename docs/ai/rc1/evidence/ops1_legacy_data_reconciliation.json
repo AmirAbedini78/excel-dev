@@ -1,0 +1,105 @@
+{
+  "drill": "legacy_anonymized_data_reconciliation",
+  "baseline": {
+    "database": "erpsmart_rc1_legacy_data_baseline",
+    "table_count": 110,
+    "counts": {
+      "users": 1,
+      "companies": 6,
+      "workspaces": 1,
+      "acc_fiscal_years": 3,
+      "acc_vouchers": 47,
+      "acc_voucher_lines": 117,
+      "acc_parties": 10,
+      "acc_cash_accounts": 3,
+      "acc_cash_transactions": 9,
+      "acc_checks": 5,
+      "acc_sales_docs": 14,
+      "acc_sales_lines": 29,
+      "acc_purchase_docs": 8,
+      "acc_purchase_lines": 15,
+      "acc_stock_movements": 2,
+      "acc_inventory_docs": 4,
+      "acc_inventory_lines": 17,
+      "acc_items": 13,
+      "acc_warehouses": 2,
+      "acc_accounts": 22,
+      "bank_reconciliations": 1
+    },
+    "sums": {
+      "acc_voucher_lines.debit": "18063580000.00",
+      "acc_voucher_lines.credit": "18063580000.00",
+      "acc_cash_transactions.amount": "2700000000.00",
+      "acc_stock_movements.quantity": "4.0000",
+      "acc_stock_movements.unit_cost": "560000000.00",
+      "acc_inventory_lines.quantity": "1094.0000",
+      "acc_inventory_lines.unit_cost": "1025750000.00",
+      "acc_sales_docs.tax_total": "501380000.00",
+      "acc_purchase_docs.tax_total": "534500000.00",
+      "acc_sales_lines.tax_amount": "501380000.00",
+      "acc_payroll_lines.tax_amount": "63000000.00"
+    },
+    "integrity": {
+      "voucher_lines_debit": "18063580000.00",
+      "voucher_lines_credit": "18063580000.00",
+      "voucher_lines_balanced": true,
+      "currency_note": "Raw decimal sums compared pre/post; no \u00f710 Toman reinterpretation applied"
+    }
+  },
+  "migrated": {
+    "database": "erpsmart_rc1_legacy_data_migrate",
+    "table_count": 182,
+    "counts": {
+      "users": 1,
+      "companies": 6,
+      "workspaces": 1,
+      "acc_fiscal_years": 3,
+      "acc_vouchers": 47,
+      "acc_voucher_lines": 117,
+      "acc_parties": 10,
+      "acc_cash_accounts": 3,
+      "acc_cash_transactions": 9,
+      "acc_checks": 5,
+      "acc_sales_docs": 14,
+      "acc_sales_lines": 29,
+      "acc_purchase_docs": 8,
+      "acc_purchase_lines": 15,
+      "acc_stock_movements": 2,
+      "acc_inventory_docs": 4,
+      "acc_inventory_lines": 17,
+      "acc_items": 13,
+      "acc_warehouses": 2,
+      "acc_accounts": 22,
+      "bank_reconciliations": 1
+    },
+    "sums": {
+      "acc_voucher_lines.debit": "18063580000.00",
+      "acc_voucher_lines.credit": "18063580000.00",
+      "acc_cash_transactions.amount": "2700000000.00",
+      "acc_stock_movements.quantity": "4.0000",
+      "acc_stock_movements.unit_cost": "560000000.00",
+      "acc_inventory_lines.quantity": "1094.0000",
+      "acc_inventory_lines.unit_cost": "1025750000.00",
+      "acc_sales_docs.tax_total": "501380000.00",
+      "acc_purchase_docs.tax_total": "534500000.00",
+      "acc_sales_lines.tax_amount": "501380000.00",
+      "acc_payroll_lines.tax_amount": "63000000.00"
+    },
+    "integrity": {
+      "voucher_lines_debit": "18063580000.00",
+      "voucher_lines_credit": "18063580000.00",
+      "voucher_lines_balanced": true,
+      "currency_note": "Raw decimal sums compared pre/post; no \u00f710 Toman reinterpretation applied"
+    }
+  },
+  "compare": {
+    "ok": true,
+    "meaningful_data": true,
+    "mismatches": [],
+    "pre_table_count": 110,
+    "post_table_count": 182,
+    "note": null
+  },
+  "host": "127.0.0.1",
+  "port": 3307
+}

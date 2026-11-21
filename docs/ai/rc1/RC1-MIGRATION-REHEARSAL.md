@@ -1,50 +1,45 @@
 # RC1 Migration Rehearsal Log
 
 **Date:** 2026-11-21  
-**Classification:** `STRUCTURAL_ONLY_NOT_DATA_RECONCILED`  
-**Evidence:** `docs/ai/rc1/evidence/ops1_legacy_schema_structural_rehearsal.json`
+**Classification:** `DATA_REHEARSAL_PASS` / `SCHEMA_UPGRADE_TESTED` (disposable Path2)  
+**Evidence:** `docs/ai/rc1/evidence/ops1_legacy_data_rehearsal.json` + `ops1_legacy_data_reconciliation.json`
 
-## Disposable identity
+## Disposable identity (Path2 data pass)
 
 | Field | Value |
 |-------|-------|
 | Container | `erpsmart-p2p-mysql-test` |
-| ID | `02eb215a87f6a726cf4efb1546f4b09865c9eb6eec9de1e9dc0e6b3163672db6` |
-| `@@server_uuid` | `a73a8a84-e4bd-11f1-ad33-7e073bee960b` |
+| ID | `9c00f40fc78a2d1b6cd6ea3b6cb6384c5295a04ffe5834eba487949a5e35833c` |
+| `@@server_uuid` | `ff0092ef-e5d1-11f1-9a87-2e6b1b469ce1` |
 | Port | 3307 |
+| Network | bridge (not host) |
+| Datadir | tmpfs (disposable) |
 | MySQL | 8.0.46 |
 
 ## Artifact used
 
-- **Not used for restore:** unredacted `zzflgmfd_excel2.sql` (secrets/PII).  
-- **Used:** offline schema-only sanitize SHA-256 `3256AABC0EFC1E52AD5ADDA7576F39BA25D09B986AC18C0DF447E0BFEB832015`.
+- **Not used for restore:** unredacted candidate dump (secrets/PII).  
+- **Used:** offline anonymized schema+data SHA-256 `F3B92C0088A874A739FCD64BF25FA714010078C3EB95DFDF81ADC92335841DE2`.
 
-## Steps executed
+## Steps executed (Path2 data)
 
-1. Restore schema-only → `erpsmart_rc1_legacy_schema_baseline` (110 tables).  
-2. Clone → `erpsmart_rc1_legacy_schema_migrate` (110).  
+1. Restore anonymized dump → `erpsmart_rc1_legacy_data_baseline` (110 tables).  
+2. Clone → `erpsmart_rc1_legacy_data_migrate`.  
 3. Offline cumulative migrate ×2 via `scripts/rc1_legacy_schema_migrate_rehearsal.php`.  
-4. Result: tables **182**; pass1 ~63s; pass2 ~12s; both **ok**.  
-5. RC1 additive tables present (`erp_ar_postings`, `erp_ap_postings`, `erp_mf_production_orders`, …).  
-6. Rollback restore → `erpsmart_rc1_legacy_schema_rollback` (110) **PASS**.  
-7. Baseline left **unmigrated** at 110.
+4. Result: tables **182**; pass1+pass2 **ok**.  
+5. Pre/post recon: counts match; voucher Dr=Cr `18063580000.00`; stock quantity `4.0000` / inventory qty `1094.0000` preserved; mismatch_count=0.  
+6. Recovery clone migrate **PASS** (182).  
+7. Rollback restore clone **PASS**.  
+8. Baseline left **unmigrated** at 110.
 
-## Not executed (blocked on verified data artifact)
-
-- Pre-migrate row/voucher/stock invariants on real anonymized data  
-- Post-migrate Dr/Cr / inventory / FK / open-obligation reconciliation  
-- RC1 acceptance gates on migrated **data** clone  
-- Claim `SCHEMA_UPGRADE_TESTED`
-
-## Recovery scenarios covered (structural)
+## Recovery scenarios covered
 
 | Scenario | Result |
 |----------|--------|
 | Migration on clone only | PASS — baseline intact |
 | Migrate ×2 idempotency | PASS |
-| Restore from schema-only dump after “failure” | PASS (rollback DB) |
-| Partial DDL / implicit commit | Mitigated by baseline+restore, not TX rollback |
+| Recovery clone from untouched baseline | PASS |
+| Restore from anonymized dump after “failure” | PASS (rollback DB) |
+| Financial/stock recon | PASS |
 
-## Next rehearsal (when Path2 data arrives)
-
-Restore anonymized dump → clone → invariants → migrate×2 → reconciliation → optional RC1 gates on **second** clone → never destroy sole restored baseline.
+Prior structural-only pass remains recorded in `ops1_legacy_schema_structural_rehearsal.json` (container `02eb215a87f6…`).
