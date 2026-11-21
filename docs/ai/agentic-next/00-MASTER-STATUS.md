@@ -5,6 +5,7 @@
 **Board updated:** 2026-11-21 (resume inspection)  
 **Verified `origin/main`:** `db849ca09b54c52e4729ee813abb1f6695549ac9`  
 **CI @ tip:** Commercial MVP Gate SUCCESS · RC1 MySQL+PHP Gate SUCCESS  
+**Board PR:** [#41](https://github.com/AmirAbedini78/excel-dev/pull/41) (`docs/agentic-next-master-board` @ `90683d4`) — docs only  
 **Production / cPanel / prod DB:** **NOT_AUTHORIZED** (non-negotiable)
 
 ---
