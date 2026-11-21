@@ -1,26 +1,24 @@
 {
-  "agent": "AGENT_C",
-  "scope": "OPS-1 provenance and migration",
-  "verified_at_utc": "2026-11-20T20:50:00Z",
-  "expected_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
-  "workspace_note": "Local main may lag expected pin; do not invent merge evidence",
-  "production": "NOT_DEPLOYED",
+  "agent": "T0_MIGRATION_ARCHITECT",
+  "scope": "OPS-1 provenance and legacy migration",
+  "verified_at_utc": "2026-11-21T09:45:00Z",
+  "origin_main_sha": "e474ff377731ad2d482b2bf4fec6c3d1a7d32c5c",
+  "production": "NOT_TOUCHED",
   "cpanel_prod": "NOT_RUN",
-  "provenance_class": "UNAVAILABLE",
+  "deployment_status": "EXISTING_DEPLOYMENT_CONFIRMED",
+  "provenance_class": "LEGACY_SCHEMA_UNVERIFIED",
   "fresh_install": "NOT_ASSUMED",
+  "schema_upgrade_tested": "NOT_CLAIMED",
   "ops1_independent_class": "BLOCKED_EXTERNAL",
   "engineering_restore_class": "CLOSED",
-  "migration_drill_class": "CLOSED_DISPOSABLE",
+  "structural_legacy_rehearsal_class": "PASS_SCHEMA_ONLY",
+  "candidate_dump_sha256": "2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC",
+  "candidate_safety": "UNSAFE_UNREDACTED_SECRETS_AND_PII",
+  "sanitized_schema_only_sha256": "3256AABC0EFC1E52AD5ADDA7576F39BA25D09B986AC18C0DF447E0BFEB832015",
   "backup_restore_evidence": {
-    "closure": "docs/ai/rc1/evidence/ops1_backup_restore_closure.json",
-    "reverify": "docs/ai/rc1/evidence/ops1_backup_restore_reverify.json",
-    "artifact": "docs/ai/rc1/evidence/ops1_closure_backup.sql",
-    "dump_sha256": "48806EBC7FE00E55010DA9B5B79C38F912BA332C429032E8C5C71C10B37C6CA2",
-    "partial_historical": [
-      "docs/ai/rc1/evidence/ops1_backup_restore_drill.json",
-      "docs/ai/rc1/evidence/ops1_backup_restore_independent.json"
-    ]
+    "synthetic_closure": "docs/ai/rc1/evidence/ops1_backup_restore_closure.json",
+    "legacy_structural": "docs/ai/rc1/evidence/ops1_legacy_schema_structural_rehearsal.json"
   },
-  "owner_actions": "docs/ai/rc1/OPS1-OWNER-ACTIONS.md",
-  "recommendation": "Keep OPS-1 BLOCKED_EXTERNAL until Path1 owner confirmation OR Path2 anonymized dump+rehearsal. Do not close provenance."
+  "owner_actions": "docs/ai/rc1/LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md",
+  "recommendation": "Keep RC1-P1-001 OPEN until anonymized schema+data Path2 + reconciliation PASS. Do not claim FRESH_INSTALL or SCHEMA_UPGRADE_TESTED."
 }

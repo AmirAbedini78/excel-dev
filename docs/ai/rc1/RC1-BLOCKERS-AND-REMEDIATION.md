@@ -1,11 +1,12 @@
 # RC1 Blockers and Remediation
 
 **Independent open P0:** **0**  
-**Independent open P1 (blocking RC1 acceptance):** **2** (provenance + GHA MySQL workflow not installed)  
+**Independent open P1 (blocking RC1 acceptance):** **2** (provenance Path2 incomplete + GHA MySQL workflow not installed)  
 **Independent open P2:** **1** (optional staging browser — not claimed STAGING_VERIFIED)  
 **Engineering product SHA (PR #32):** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
-**Docs tip after PR #33:** `7455b7074c05c0ba63683fc8e435d3db6a069620`  
-**Verdict impact:** `RC1_BLOCKED` — `NOT_DEPLOYED`
+**Docs tip after PR #34:** `e474ff377731ad2d482b2bf4fec6c3d1a7d32c5c` (`origin/main` verified 2026-11-21)  
+**Verdict impact:** `RC1_BLOCKED` — `EXISTING_DEPLOYMENT_CONFIRMED` + `LEGACY_SCHEMA_UNVERIFIED`  
+**Do not invent `FRESH_INSTALL` or `SCHEMA_UPGRADE_TESTED`.**
 
 ## Contract class summary (independent)
 
@@ -19,23 +20,27 @@
 
 ## P1 — Blocking (independent acceptance)
 
-### RC1-P1-001 — OPS-1 production/staging schema provenance unavailable
+### RC1-P1-001 — OPS-1 prior-deployment schema provenance / upgrade rehearsal
 
 | Field | Value |
 |-------|-------|
 | Severity | **P1** |
 | Contract | OPS-1 |
 | Class | **BLOCKED_EXTERNAL** |
-| Owner | User/staging ops |
-| Status | **OPEN** (engineering restore **CLOSED**) |
+| Owner | User/staging ops (Path2 anonymized data) / T0 (rehearsal) |
+| Status | **OPEN** — `EXISTING_DEPLOYMENT_CONFIRMED` + `LEGACY_SCHEMA_UNVERIFIED` |
 
-**Repro:** No anonymized staging/prod dump id provided; campaign `NOT_DEPLOYED`. Owner has **not** confirmed never-installed → provenance class **UNAVAILABLE** → **do not invent** `FRESH_INSTALL`.
+**Owner update (2026-11-21):** Prior ERPSMART install on server/cPanel **confirmed** → Path1 `FRESH_INSTALL` is **invalid**. Campaign label `NOT_DEPLOYED` must not be re-used as fresh-install proof.
 
-**Closure progress:** Disposable dump/restore with privileged admin **CLOSED** (`ops1_backup_restore_closure.json` + Agent C reverify `ops1_backup_restore_reverify.json`); migrate×2 + rollback restore **PASS**. Full Path1/Path2 wording: `OPS1-OWNER-ACTIONS.md`.
+**Candidate artifact:** owner path `zzflgmfd_excel2.sql` SHA-256 `2D695C068C…419EC` — phpMyAdmin schema+data; **UNSAFE_UNREDACTED_SECRETS_AND_PII** (not in Git). Details: `LEGACY-DEPLOYMENT-PROVENANCE.md`.
 
-**Owner Path1 (only if true):** paste exact English confirmation in `OPS1-OWNER-ACTIONS.md` (or FA equivalent: *«تأیید می‌کنم ERPSMART/excel-dev هرگز روی staging/production نصب/استقرار نشده؛ provenance می‌تواند FRESH_INSTALL باشد.»*).
+**Closure progress:**
+- Engineering disposable restore (synthetic) still **CLOSED** (`ops1_backup_restore_closure.json`).
+- **Structural** legacy schema-only sanitize → restore → migrate×2 → rollback restore **PASS** on disposable MySQL (`ops1_legacy_schema_structural_rehearsal.json`). Tables 110→182; baseline untouched.
+- **Not claimed:** `SCHEMA_UPGRADE_TESTED` (schema-only ≠ data preservation).
+- Full Path2 anonymized **data** dump + voucher/stock reconciliation still **required** to close.
 
-**Owner Path2:** authorized anonymized dump + SHA-256 + `RC1_PROD_SCHEMA_PROVENANCE=<id>` + disposable restore/migrate×2 rehearsal (checklist in `OPS1-OWNER-ACTIONS.md`).
+**Owner Path2 (required):** anonymized schema+data per `LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md` + SHA-256 + provenance id; then T0 data rehearsal. **Do not** invent Path1.
 
 ### RC1-P1-004 — SYS-1 / OPS-1 browser login+RTL walkthrough
 
