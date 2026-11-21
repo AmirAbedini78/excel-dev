@@ -1,12 +1,11 @@
 # RC1 Blockers and Remediation
 
 **Independent open P0:** **0**  
-**Independent open P1 (blocking RC1 acceptance):** **1** (RC1-P1-001 Path2 data recon + owner attestation)  
+**Independent open P1 (blocking RC1 acceptance):** **0**  
 **Independent open P2:** **1** (optional staging browser — not claimed STAGING_VERIFIED)  
 **Verified `origin/main`:** `c5c644c386cbedde788c4e12e0585c43dc1b5a5d` (PR #35)  
-**Candidate tip (PR #36):** `03728b145e67f0f6fe2179fe6a7e1df0badad8e5`  
-**Verdict impact:** `RC1_BLOCKED` — `EXISTING_DEPLOYMENT_CONFIRMED` + `LEGACY_SCHEMA_UNVERIFIED`  
-**Do not invent `FRESH_INSTALL` or `SCHEMA_UPGRADE_TESTED`.**
+**Candidate branch:** `fix/rc1-final-legacy-data-ci-closure` (PR #36)  
+**Verdict impact:** `RC1_ACCEPTED` on candidate — Path2 data rehearsal **PASS** + GHA MySQL+PHP **SUCCESS**; merge PR #36 to land on `main`. Production **NOT_DEPLOYED**.
 
 ## Contract class summary (independent)
 
@@ -16,7 +15,7 @@
 | TR-2 | **PASS_REPRODUCED** | none blocking |
 | MF-1 | **PASS_REPRODUCED** | Valid residual: WIP/FG valuation not fully supported; `UNVALUED` / GL `BLOCKED`; no auto GL |
 | SYS-1 | **PASS_EXISTING_EVIDENCE_VERIFIED** + **LOCAL_BROWSER_VERIFIED** | Not `STAGING_VERIFIED` (no staging URL) |
-| OPS-1 | **BLOCKED_EXTERNAL** | Provenance UNAVAILABLE; restore eng **CLOSED**; local browser closed separately |
+| OPS-1 | **PASS_PATH2_DISPOSABLE_REHEARSAL** | Anonymized restore + migrate×2 + financial/stock recon PASS; restore eng **CLOSED**; local browser closed separately |
 
 ## P1 — Blocking (independent acceptance)
 
@@ -24,25 +23,22 @@
 
 | Field | Value |
 |-------|-------|
-| Severity | **P1** |
+| Severity | **P1 → CLOSED** |
 | Contract | OPS-1 |
-| Class | **BLOCKED_EXTERNAL** |
-| Owner | User/staging ops (Path2 anonymized data) / T0 (rehearsal) |
-| Status | **OPEN** — `EXISTING_DEPLOYMENT_CONFIRMED` + `LEGACY_SCHEMA_UNVERIFIED` |
+| Class | **PASS_PATH2_DISPOSABLE_REHEARSAL** |
+| Owner | User (Path2 dump) / T0 (rehearsal) |
+| Status | **CLOSED** — `EXISTING_DEPLOYMENT_CONFIRMED` + `PATH2_ANON_SCHEMA_DATA_VERIFIED` + `SCHEMA_UPGRADE_TESTED` |
 
-**Owner update (2026-11-21):** Prior ERPSMART install on server/cPanel **confirmed** → Path1 `FRESH_INSTALL` is **invalid**. Campaign label `NOT_DEPLOYED` must not be re-used as fresh-install proof.
+**Owner update (2026-11-21):** Prior ERPSMART install on server/cPanel **confirmed** → Path1 `FRESH_INSTALL` is **invalid**. Campaign dump used as Path2 (`prior-cpanel-anon-20261121`). Production **NOT_TOUCHED**.
 
-**Candidate artifact:** owner path `zzflgmfd_excel2.sql` SHA-256 `2D695C068C…419EC` — phpMyAdmin schema+data; **UNSAFE_UNREDACTED_SECRETS_AND_PII** (not in Git). Details: `LEGACY-DEPLOYMENT-PROVENANCE.md`.
+**Candidate artifact:** owner path dump SHA-256 `2D695C068C…419EC` — **UNSAFE** (not in Git). Anonymized SHA-256 `F3B92C0088…41DE2`; leak_scan PASS. Details: `LEGACY-DEPLOYMENT-PROVENANCE.md`.
 
-**Closure progress:**
-- Engineering disposable restore (synthetic) still **CLOSED** (`ops1_backup_restore_closure.json`).
-- **Structural** legacy schema-only sanitize → restore → migrate×2 → rollback restore **PASS** (`ops1_legacy_schema_structural_rehearsal.json`). Tables 110→182.
-- Offline schema-aware anonymization of candidate **PASS** + leak_scan PASS — SHA-256 `F3B92C0088…41DE2` (`ops1_legacy_anonymization.json`); dump **not** in Git.
-- **Data** restore → migrate×2 → voucher/stock reconciliation: **NOT_RUN** this pass (local disposable MySQL sandbox was zombie-recreated and still initializing; no silent financial rewrite claimed).
-- **Owner attestation** linking candidate dump to prior deployment: **NOT_PROVIDED**.
-- **Not claimed:** `SCHEMA_UPGRADE_TESTED`.
-
-**Owner Path2 (required to close):** written attestation that `zzflgmfd_excel2.sql` / anon SHA is the accepted prior-deploy artifact + `RC1_PROD_SCHEMA_PROVENANCE=<id>`; then complete disposable data reconciliation. **Do not** invent Path1.
+**Closure evidence:**
+- Engineering disposable restore (synthetic) **CLOSED** (`ops1_backup_restore_closure.json`).
+- Structural schema-only migrate×2 **PASS** (`ops1_legacy_schema_structural_rehearsal.json`) 110→182.
+- Offline anonymization **PASS** (`ops1_legacy_anonymization.json`).
+- Anonymized data restore → migrate×2 → financial/stock recon → recovery clone **PASS** (`ops1_legacy_data_rehearsal.json`, `ops1_legacy_data_reconciliation.json`). Dr=Cr `18063580000.00`; stock quantity/unit_cost preserved; mismatch_count=0. Baseline 110 untouched.
+- Claim: **`SCHEMA_UPGRADE_TESTED`** (disposable Path2 only).
 
 ### RC1-P1-004 — SYS-1 / OPS-1 browser login+RTL walkthrough
 

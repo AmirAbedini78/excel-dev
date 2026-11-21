@@ -1,15 +1,14 @@
 # گزارش مدیریتی RC1 — تحویل اجرایی (فارسی)
 
-**تصمیم مهندسی/پذیرش مستقل:** `RC1_BLOCKED`  
+**تصمیم مهندسی/پذیرش مستقل:** `RC1_ACCEPTED` (شاخهٔ کاندید PR #36)  
 **استقرار تولید:** `NOT_DEPLOYED`  
-**SHA پایهٔ `main` قبل از بستن P1:** `2a30f5abac6291af2e6d3ccf1f87446335c84bad`  
-**SHA نهایی `main` پس از ادغام PR #32:** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
-**شاخهٔ بستن:** `fix/rc1-stabilization-p1-closure` → **ادغام‌شده با PR #32**  
-**تاریخ:** ۲۰۲۶-۱۱-۲۱ (بستن نهایی پذیرش)
+**SHA پایهٔ `main`:** `c5c644c386cbedde788c4e12e0585c43dc1b5a5d` (PR #35)  
+**شاخهٔ بستن نهایی:** `fix/rc1-final-legacy-data-ci-closure` → **PR #36**  
+**تاریخ:** ۲۰۲۶-۱۱-۲۱
 
 ## خلاصه یک‌خطی
 
-بستن مهندسی P1های همزمانی MF، یونیکد cockpit، restore آزمایشی و دروازهٔ محلی CI MySQL **انجام و در main ادغام شد** (PR #32 @ `52fa7f12…`)؛ قراردادهای دامنه TR-1/TR-2/MF-1 روی MySQL آزمایشی **PASS_REPRODUCED** هستند. چرخهٔ عمر ساخت (lifecycle) تست شده؛ ارزش‌گذاری WIP/FG به‌طور کامل پشتیبانی نمی‌شود و GL خودکار WIP/FG وجود ندارد (`UNVALUED` / `GL_BLOCKED`). UAT مرورگر محلی SYS-1 **`LOCAL_BROWSER_VERIFIED`** شد (نه staging). اما provenance اسکیمای استقرار قبلی OPS-1 و نصب workflow اجباری GHA MySQL همچنان **خارجی/مسدود**اند — بنابراین پذیرش نهایی RC1 **مسدود** است، نه پذیرفته.
+قراردادهای دامنه TR-1/TR-2/MF-1 روی MySQL آزمایشی **PASS_REPRODUCED** هستند. چرخهٔ عمر ساخت تست شده؛ ارزش‌گذاری WIP/FG کامل نیست و GL خودکار WIP/FG وجود ندارد (`UNVALUED` / `GL_BLOCKED`). UAT مرورگر محلی SYS-1 **`LOCAL_BROWSER_VERIFIED`** است (نه staging). Path2 دادهٔ ناشناس‌سازی‌شده restore → migrate×2 → تطبیق مالی/موجودی **PASS** (P1-001 بسته). دروازهٔ GHA MySQL+PHP **SUCCESS** (P1-006 بسته روی SHA کاندید). پذیرش RC1 روی کاندید **انجام شد**. تولید دست نخورده. برای نشستن روی `main` باید PR #36 ادغام شود.
 
 ## ماتریس قرارداد (مستقل)
 
@@ -19,23 +18,23 @@
 | TR-2 | PASS_REPRODUCED |
 | MF-1 | PASS_REPRODUCED (lifecycle؛ WIP/FG valuation ناقص؛ بدون auto GL) |
 | SYS-1 | PASS_EXISTING_EVIDENCE_VERIFIED + LOCAL_BROWSER_VERIFIED (نه STAGING) |
-| OPS-1 | BLOCKED_EXTERNAL (restore مهندسی CLOSED) |
+| OPS-1 | PASS_PATH2_DISPOSABLE_REHEARSAL (`SCHEMA_UPGRADE_TESTED` فقط Disposable) |
 
-## آنچه در بستن P1 اثبات شد
+## آنچه اثبات شد
 
 - MF همزمانی صدور: یک برنده + یک رد با کد WMS؛ موجودی منفی نمی‌شود  
 - Trading: رد تکراری با کد `P2P_SUPPLIER_INVOICE_DUPLICATE` + متن فارسی  
-- Dump/restore با ادمین موقت + migrate×2 + rollback روی کانتینر تأییدشده (مهندسی restore **بسته**)  
-- `rc1_ci_mysql_php_gate` محلی PASS (شکست روی skip)  
-- valuation همچنان `UNVALUED` و GL ساختگی نیست (`GL_BLOCKED`) — مطابق `T5-VALUATION-DECISION.md`  
-- Commercial MVP روی Final main: SUCCESS ولی **فقط source** — کافی برای RC1 نیست
+- Dump ناشناس‌سازی‌شده (خارج از Git) + leak_scan PASS  
+- Restore روی MySQL آزمایشی tmpfs/bridge → migrate×2 → Dr=Cr سندها برابر + quantity موجودی حفظ شد  
+- بازیابی از baseline دست‌نخورده **PASS**  
+- GHA `RC1 MySQL+PHP Gate` SUCCESS روی PR #36  
+- هیچ اتصال cPanel/تولید انجام نشد  
 
-## آنچه باقی است (اقدام دقیق مالک)
+## باقیمانده عملیاتی (غیر P1)
 
-1. **Provenance OPS-1:** یا dump ناشناس staging/قبلی (Path2) **یا** تأیید کتبی «هرگز deploy/نصب نشده» (Path1) — بدون اختراع `FRESH_INSTALL`  
-2. **UAT مرورگر محلی:** انجام شد (`LOCAL_BROWSER_VERIFIED`، `evidence/browser/`). برای `STAGING_VERIFIED` هنوز URL staging غیرتولیدی لازم است (اختیاری/P2).  
-3. **GHA MySQL+PHP:** یک‌بار `gh auth refresh -h github.com -s workflow` سپس کپی `docs/ai/rc1/ci/rc1-mysql-php-gate.yml` به `.github/workflows/` و اثبات SUCCESS واقعی — تا آن زمان **GHA E2E فعال اعلام نشود**  
-4. فقط پس از رفع P1های provenance و GHA تصمیم deploy — هیچ deploy خودکاری انجام نشده  
+1. **ادغام PR #36** به `origin/main` تا شواهد بستن روی main بنشیند.  
+2. UAT مرورگر staging اختیاری است (P2؛ الان فقط `LOCAL_BROWSER_VERIFIED`).  
+3. تصمیم deploy تولید فقط با اقدام صریح مالک — هیچ deploy خودکاری انجام نشده.
 
 ## پیوند شش گزارش ماندگار
 

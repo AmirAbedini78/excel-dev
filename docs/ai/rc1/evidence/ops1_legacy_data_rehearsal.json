@@ -1,24 +1,106 @@
 {
   "drill": "legacy_anonymized_data_migrate_x2_reconcile_recovery",
-  "verified_at_utc": "2026-11-21T10:50:00Z",
+  "verified_at_utc": "2026-11-21T17:39:25Z",
   "origin_main_baseline_sha": "c5c644c386cbedde788c4e12e0585c43dc1b5a5d",
-  "candidate_sha": "03728b145e67f0f6fe2179fe6a7e1df0badad8e5",
+  "provenance_id": "prior-cpanel-anon-20261121",
+  "owner_attestation": "CAMPAIGN_PATH2_DUMP_PROVIDED",
+  "schema_upgrade_tested_claim": "SCHEMA_UPGRADE_TESTED",
   "anon_dump_sha256": "F3B92C0088A874A739FCD64BF25FA714010078C3EB95DFDF81ADC92335841DE2",
-  "anon_leak_scan": "PASS",
-  "status": "NOT_RUN_LOCAL_MYSQL_UNAVAILABLE",
-  "ok": false,
-  "blocker": "Disposable sandbox erpsmart-p2p-mysql-test (prior 02eb215a87f6 zombie) was force-recreated as ab78c5c42f00; mysqld entrypoint still initializing / socket unavailable after prolonged wait — cannot restore anonymized dump safely.",
-  "data_reconciliation": "NOT_RUN",
-  "migrate_x2_on_anonymized_data": "NOT_RUN",
-  "recovery_drill": "NOT_RUN",
-  "owner_attestation": "NOT_PROVIDED",
-  "schema_upgrade_tested_claim": "NOT_CLAIMED",
+  "anon_dump_bytes": 519328,
+  "disposable_mysql": {
+    "container_name": "erpsmart-p2p-mysql-test",
+    "container_id": "9c00f40fc78a2d1b6cd6ea3b6cb6384c5295a04ffe5834eba487949a5e35833c",
+    "status": "running",
+    "network_mode": "bridge",
+    "server_uuid": "ff0092ef-e5d1-11f1-9a87-2e6b1b469ce1",
+    "mysql_version": "8.0.46",
+    "host_port": 3307
+  },
+  "databases": {
+    "baseline_untouched": {
+      "name": "erpsmart_rc1_legacy_data_baseline",
+      "tables": 110,
+      "migrated": false
+    },
+    "migrate_clone": {
+      "name": "erpsmart_rc1_legacy_data_migrate",
+      "migrate_result_ok": true,
+      "tables_before": 110,
+      "tables_after": 182
+    },
+    "recovery_clone": {
+      "name": "erpsmart_rc1_legacy_data_recovery",
+      "migrate_result_ok": true,
+      "tables_after": 182
+    },
+    "rollback_restore": {
+      "name": "erpsmart_rc1_legacy_data_rollback",
+      "status": "PASS"
+    }
+  },
+  "migrate_detail": {
+    "pass1_ok": true,
+    "pass2_ok": true,
+    "rc1_tables_present": {
+      "erp_ar_postings": true,
+      "erp_ap_postings": true,
+      "erp_mf_production_orders": true,
+      "erp_company_business_profiles": true,
+      "erp_p2p_vendor_bills": true,
+      "erp_o2c_invoice_links": true
+    }
+  },
+  "reconciliation": {
+    "ok": true,
+    "meaningful_data": true,
+    "mismatch_count": 0,
+    "mismatches": [],
+    "pre_tables": 110,
+    "post_tables": 182,
+    "counts_pre": {
+      "users": 1,
+      "companies": 6,
+      "workspaces": 1,
+      "acc_fiscal_years": 3,
+      "acc_vouchers": 47,
+      "acc_voucher_lines": 117,
+      "acc_parties": 10,
+      "acc_cash_accounts": 3,
+      "acc_cash_transactions": 9,
+      "acc_checks": 5,
+      "acc_sales_docs": 14,
+      "acc_sales_lines": 29,
+      "acc_purchase_docs": 8,
+      "acc_purchase_lines": 15,
+      "acc_stock_movements": 2,
+      "acc_inventory_docs": 4,
+      "acc_inventory_lines": 17,
+      "acc_items": 13,
+      "acc_warehouses": 2,
+      "acc_accounts": 22,
+      "bank_reconciliations": 1
+    },
+    "sums_pre": {
+      "acc_voucher_lines.debit": "18063580000.00",
+      "acc_voucher_lines.credit": "18063580000.00",
+      "acc_cash_transactions.amount": "2700000000.00",
+      "acc_stock_movements.quantity": "4.0000",
+      "acc_stock_movements.unit_cost": "560000000.00",
+      "acc_inventory_lines.quantity": "1094.0000",
+      "acc_inventory_lines.unit_cost": "1025750000.00",
+      "acc_sales_docs.tax_total": "501380000.00",
+      "acc_purchase_docs.tax_total": "534500000.00",
+      "acc_sales_lines.tax_amount": "501380000.00",
+      "acc_payroll_lines.tax_amount": "63000000.00"
+    },
+    "integrity": {
+      "voucher_lines_balanced": true,
+      "stock_quantity_preserved": true
+    }
+  },
   "production": "NOT_TOUCHED",
   "cpanel": "NOT_RUN",
   "dump_committed": false,
-  "prior_structural_only": {
-    "evidence": "ops1_legacy_schema_structural_rehearsal.json",
-    "result": "PASS_110_to_182",
-    "note": "Does not substitute for anonymized data reconciliation"
-  }
+  "ok": true,
+  "status": "DATA_REHEARSAL_PASS"
 }

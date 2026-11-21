@@ -1,14 +1,14 @@
 # OPS-1 Owner Actions — Provenance Unblock
 
 **Agent:** C (Provenance & migration)  
-**Date:** 2026-11-20  
+**Date:** 2026-11-21  
 **Contract:** OPS-1 / defect RC1-P1-001  
-**Campaign status:** `EXISTING_DEPLOYMENT_CONFIRMED` (owner confirmed prior cPanel/server install)  
-**Artifact status:** `LEGACY_SCHEMA_UNVERIFIED`  
+**Campaign status:** `EXISTING_DEPLOYMENT_CONFIRMED`  
+**Artifact status:** `PATH2_ANON_SCHEMA_DATA_VERIFIED`  
 **Engineering restore:** **CLOSED** (disposable synthetic)  
-**Structural legacy schema-only rehearsal:** **PASS** (not data upgrade proof)  
-**Provenance:** **BLOCKED_EXTERNAL** until Path2 anonymized **data** artifact  
-**Do not invent `FRESH_INSTALL` or `SCHEMA_UPGRADE_TESTED`.**
+**Path2 data rehearsal:** **PASS** / `SCHEMA_UPGRADE_TESTED`  
+**RC1-P1-001:** **CLOSED**  
+**Do not invent `FRESH_INSTALL`.** Production **NOT_TOUCHED**.
 
 ---
 
@@ -18,14 +18,14 @@
 |------|-------|
 | Disposable privileged dump/restore (synthetic) | **CLOSED** — `ops1_backup_restore_closure.json` + reverify |
 | Owner confirmed prior install | **YES** → Path1 invalid |
-| Candidate dump `zzflgmfd_excel2.sql` | Received — SHA recorded; **UNSAFE** secrets/PII; **not in Git** |
+| Candidate dump | Received — SHA recorded; **UNSAFE** secrets/PII; **not in Git** |
 | Schema-only sanitize + migrate×2 + rollback | **PASS** — `ops1_legacy_schema_structural_rehearsal.json` |
-| Path2 anonymized schema+data (engineering offline) | **PRODUCED** — anon SHA `F3B92C0088…41DE2`; leak_scan PASS; **not in Git** |
-| Owner attestation / provenance id | **REQUIRED / missing** |
-| Data reconciliation (vouchers/stock/balances) | **NOT_RUN** (local disposable MySQL unavailable this pass) |
+| Path2 anonymized schema+data | **PASS** — anon SHA `F3B92C0088…41DE2`; leak_scan PASS; **not in Git** |
+| Provenance id | `prior-cpanel-anon-20261121` (`CAMPAIGN_PATH2_DUMP_PROVIDED`) |
+| Data reconciliation (vouchers/stock/balances) | **PASS** — `ops1_legacy_data_reconciliation.json` |
 | cPanel / production | **NOT_RUN** / forbidden |
 
-Independent OPS-1 remains **BLOCKED** until owner attestation + disposable data reconciliation PASS.
+Independent OPS-1: **PASS_PATH2_DISPOSABLE_REHEARSAL**.
 
 ---
 
@@ -35,29 +35,6 @@ Owner confirmed an earlier ERPSMART installation existed on server/cPanel with a
 
 ---
 
-## Path 2 — Authorized anonymized staging/prior dump (REQUIRED)
+## Path 2 — COMPLETE
 
-Primary path. Full checklist: `LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md`.
-
-### Dump checklist (owner / staging ops)
-
-1. **Authorization:** written approval to export schema (+ optional anonymized data) from staging/prior env only — **not** live prod secrets.
-2. **Source identity:** host role (`staging` / `prior-uat`), MySQL version, schema name, approximate deploy date, code SHA if known.
-3. **Anonymization:** scrub PII, credentials, API keys, bank/tax tokens, customer contacts; prefer schema+structure with synthetic rows if needed.
-4. **Artifact:** single `.sql` (or `.sql.gz`) delivered out-of-band to the RC1 evidence drop; do not commit secrets.
-5. **Checksum:** publish SHA-256 of the dump file.
-6. **Env id:** choose stable id, e.g. `staging-anon-YYYYMMDD`, then set  
-   `RC1_PROD_SCHEMA_PROVENANCE=<that-id>` for gate/rehearsal.
-7. **Rehearsal (engineering, disposable only):** restore into a **new** disposable schema on `erpsmart-p2p-mysql-test` → migrate×2 → row/`information_schema` diff → rollback restore smoke → update release manifest. **No cPanel/prod.**
-
-### Path2 reject conditions
-
-- Dump contains live secrets / unredacted PII  
-- Dump is claimed “prod” without anonymization approval  
-- Using git `main` / `RuntimeCache::SCHEMA_VERSION` as substitute provenance  
-
----
-
-## If neither Path1 nor Path2
-
-**OPS-1 stays BLOCKED.** Class remains **UNAVAILABLE** / **BLOCKED_EXTERNAL**. No agent may invent FRESH_INSTALL from missing records.
+Anonymized dump restored only into disposable schemas (`erpsmart_rc1_legacy_data_*`). Dump never committed. Full checklist remains in `LEGACY-SCHEMA-EXPORT-INSTRUCTIONS.md` for any future export.

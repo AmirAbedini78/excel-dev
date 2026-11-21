@@ -1,6 +1,6 @@
 # RC1 Release Manifest
 
-**Decision:** `RC1_BLOCKED` — engineering P1-005 closed on Final main via PR #32; local browser **LOCAL_BROWSER_VERIFIED**; **acceptance incomplete** (provenance + GHA MySQL workflow; staging browser optional)  
+**Decision:** `RC1_ACCEPTED` on candidate PR #36 — P1-001 Path2 data rehearsal PASS; P1-006 GHA SUCCESS; local browser **LOCAL_BROWSER_VERIFIED**; staging browser optional P2  
 **Production deployment:** **NOT_DEPLOYED** (forbidden this campaign)
 
 ## Identity
@@ -25,7 +25,7 @@
 | TR-2 | PASS_REPRODUCED |
 | MF-1 | PASS_REPRODUCED (lifecycle; WIP/FG valuation not fully supported; no auto GL) |
 | SYS-1 | PASS_EXISTING_EVIDENCE_VERIFIED + LOCAL_BROWSER_VERIFIED (not STAGING_VERIFIED) |
-| OPS-1 | BLOCKED_EXTERNAL (restore eng CLOSED) |
+| OPS-1 | PASS_PATH2_DISPOSABLE_REHEARSAL (`SCHEMA_UPGRADE_TESTED` disposable) |
 
 ## Runtime requirements
 
@@ -39,8 +39,7 @@
 | Check | Notes |
 |-------|-------|
 | Commercial MVP `release-gate` @ Final main | SUCCESS https://github.com/AmirAbedini78/excel-dev/actions/runs/44810790482 — **source-only / insufficient** |
-| Mandatory RC1 MySQL+PHP | Proposed `docs/ai/rc1/ci/rc1-mysql-php-gate.yml` — **not** in `.github/workflows/`; real GHA **NOT_RUN**; **GHA E2E not enabled** |
-| Owner auth to install workflow | `gh auth refresh -h github.com -s workflow` |
+| Mandatory RC1 MySQL+PHP | Installed `.github/workflows/rc1-mysql-php-gate.yml`; GHA **SUCCESS** https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 |
 
 **Note:** Commercial CI alone does **not** prove RC1 PHP+MySQL domain E2E. Local green ≠ GHA green.
 
@@ -50,7 +49,7 @@
 |-------|--------|
 | Privileged dump/restore + migrate×2 + rollback | **PASS** — `ops1_backup_restore_closure.json` (eng **CLOSED**) |
 | Restore as restricted `p2p` without grant | **FAIL_ACCESS_DENIED_EXPECTED** |
-| Prior deployed schema cumulative migrate | **BLOCKED_EXTERNAL** — provenance `UNAVAILABLE_NOT_DEPLOYED`; no invented FRESH_INSTALL |
+| Prior deployed schema cumulative migrate | **PASS** Path2 anonymized data — `ops1_legacy_data_rehearsal.json` / `SCHEMA_UPGRADE_TESTED` disposable; no FRESH_INSTALL |
 
 ## MF costing / rollback caveats
 
@@ -62,4 +61,4 @@
 
 ## Zero production deploy statement
 
-No cPanel, production DB, live bank/tax/Sayad, or production credentials were used. Local browser UAT is **LOCAL_BROWSER_VERIFIED** (`evidence/browser/`). Staging UAT and commercial go-live still require **explicit user action** after provenance + GHA blockers clear.
+No cPanel, production DB, live bank/tax/Sayad, or production credentials were used. Local browser UAT is **LOCAL_BROWSER_VERIFIED** (`evidence/browser/`). Staging UAT and commercial go-live still require **explicit user action**. Merge PR #36 to land RC1 closure on `main`.

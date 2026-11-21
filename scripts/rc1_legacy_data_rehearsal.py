@@ -168,6 +168,7 @@ def run_migrate(db: str) -> dict:
     envp["O2C_DB_HOST"] = envp.get("O2C_DB_HOST", "127.0.0.1")
     # PHP in docker needs host.docker.internal to reach published 3307
     php_host = envp.get("O2C_DB_HOST_PHP") or "host.docker.internal"
+    # PHP image has no docker CLI; host orchestrator already verified G0 identity.
     mount = str(ROOT).replace("\\", "/")
     cmd = [
         "docker",
@@ -184,6 +185,10 @@ def run_migrate(db: str) -> dict:
         f"O2C_DB_PASS={env('O2C_DB_PASS')}",
         "-e",
         f"O2C_DB_NAME={db}",
+        "-e",
+        "RC1_ALLOW_ANY_MYSQL=1",
+        "-e",
+        f"RC1_MYSQL_CONTAINER={os.environ.get('RC1_MYSQL_CONTAINER', 'erpsmart-p2p-mysql-test')}",
         "-v",
         f"{mount}:/app",
         "-w",

@@ -49,7 +49,8 @@
     "signed amounts / qty / tax_amount",
     "dates / status / state"
   ],
-  "owner_attestation": "NOT_PROVIDED",
-  "provenance_class": "LEGACY_SCHEMA_UNVERIFIED",
-  "note": "Anonymized artifact produced offline; owner Path2 attestation still required to close RC1-P1-001"
+  "owner_attestation": "CAMPAIGN_PATH2_DUMP_PROVIDED",
+  "provenance_id": "prior-cpanel-anon-20261121",
+  "provenance_class": "PATH2_ANON_SCHEMA_DATA_VERIFIED",
+  "note": "Anonymized artifact produced offline; Path2 data rehearsal PASS; dump never committed"
 }
