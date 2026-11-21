@@ -67,6 +67,8 @@ final class Tenant
     private static array $permissions = ['production.view', 'production.manage', 'inventory.view'];
     public static function id(): int { return self::$wid; }
     public static function setId(int $id): void { self::$wid = $id; }
+    public static function setPermissions(array $permissions): void { self::$permissions = array_values($permissions); }
+    public static function permissions(): array { return self::$permissions; }
     public static function can(string $p): bool
     {
         if (!empty(Auth::user()['is_platform_admin'])) {
