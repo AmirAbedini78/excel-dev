@@ -7,14 +7,15 @@
  * Does NOT replace disposable rehearsal runner; that runner keeps Docker identity gates.
  *
  * Hard gates:
- *  - Explicit staging operator auth + verified env identity
+ *  - Explicit staging operator auth + REQUIRED expected token match (nonempty)
  *  - Refuse production-like hosts/DBs and missing identity/auth
  *  - Staging credentials via protected runtime env only (no config.php password fallback)
  *  - Staging DB identity must differ from declared production DB identity
- *  - Verified pre-migration backup path + SHA-256 required
+ *  - Verified pre-migration backup path + SHA-256 + restorable SQL shape required
  *  - Operator-reviewed dry-run/preflight ack required before apply
  *  - Engage web maintenance lock until offline migration completes
- *  - Record steps/failures as JSON evidence
+ *  - Schema-ready marker written under SAME cache root as web bootstrap
+ *  - Record steps/failures as JSON evidence (failed migrate leaves lock + failure marker)
  *  - Validate RC1 table completeness + migrate×2 idempotency
  *  - Never run install.php; never clear production schema cache
  *
@@ -102,13 +103,14 @@ function staging_disposable_db_ok(string $dbName): bool
     $allow = [
         'erpsmart_rc1_staging_executor_test',
         'erpsmart_rc1_staging_migrate_sim',
+        'erpsmart_rc1_staging_backup_test',
     ];
     if (in_array($dbName, $allow, true)) {
         return true;
     }
     return str_contains($dbName, 'erpsmart_rc1')
         && str_contains($dbName, 'staging')
-        && (str_contains($dbName, 'executor') || str_contains($dbName, 'migrate_sim') || str_contains($dbName, 'sim'));
+        && (str_contains($dbName, 'executor') || str_contains($dbName, 'migrate_sim') || str_contains($dbName, 'sim') || str_contains($dbName, 'backup'));
 }
 
 function staging_disposable_host_ok(string $host): bool
@@ -120,9 +122,44 @@ function staging_disposable_host_ok(string $host): bool
     return (bool)preg_match('/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/', $host);
 }
 
+function staging_web_cache_root(): string
+{
+    return APP_ROOT . '/storage/cache';
+}
+
 function staging_maintenance_lock_path(): string
 {
     return APP_ROOT . '/storage/maintenance/rc1_offline_migrate.lock';
+}
+
+function staging_failure_marker_path(): string
+{
+    return APP_ROOT . '/storage/maintenance/rc1_offline_migrate.FAILED.json';
+}
+
+/**
+ * Auth is NEVER optional: operator token alone ≠ authenticated.
+ * RC1_STAGING_AUTH_EXPECTED must be nonempty and match via hash_equals.
+ *
+ * @return array{0:string,1:string} [auth, identity]
+ */
+function staging_require_auth(array &$evidence): array
+{
+    $auth = staging_env('RC1_STAGING_OPERATOR_AUTH');
+    $identity = staging_env('RC1_STAGING_ENV_IDENTITY');
+    $expectedAuth = staging_env('RC1_STAGING_AUTH_EXPECTED');
+    if ($auth === null || $identity === null) {
+        staging_fail('staging authorization or env identity missing', $evidence);
+    }
+    if ($expectedAuth === null) {
+        staging_fail('RC1_STAGING_AUTH_EXPECTED is required (nonempty operator token alone is not authenticated)', $evidence);
+    }
+    if (!hash_equals($expectedAuth, $auth)) {
+        staging_fail('staging operator auth token mismatch', $evidence);
+    }
+    $evidence['auth_present'] = true;
+    $evidence['auth_expected_enforced'] = true;
+    return [$auth, $identity];
 }
 
 function staging_engage_maintenance(array &$evidence): void
@@ -151,7 +188,34 @@ function staging_release_maintenance(array &$evidence): void
     if (is_file($path)) {
         @unlink($path);
     }
+    $fail = staging_failure_marker_path();
+    if (is_file($fail)) {
+        @unlink($fail);
+    }
     $evidence['maintenance_lock'] = ['path' => $path, 'engaged' => false, 'released' => true];
+}
+
+function staging_write_failure_marker(array $evidence): void
+{
+    $dir = APP_ROOT . '/storage/maintenance';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0750, true);
+    }
+    $marker = [
+        'ok' => false,
+        'state' => 'MIGRATE_FAILED_OR_INTERRUPTED',
+        'recorded_at' => date('c'),
+        'maintenance_lock_engaged' => is_file(staging_maintenance_lock_path()),
+        'refused' => $evidence['refused'] ?? null,
+        'note' => $evidence['note'] ?? null,
+        'db' => $evidence['db'] ?? null,
+        'guidance' => 'Do not release maintenance until operator restores from verified backup or completes a successful migrate.',
+    ];
+    @file_put_contents(
+        staging_failure_marker_path(),
+        json_encode($marker, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT),
+        LOCK_EX
+    );
 }
 
 function staging_verify_backup(string $path, string $expectedSha, array &$evidence): void
@@ -166,6 +230,16 @@ function staging_verify_backup(string $path, string $expectedSha, array &$eviden
     if ($size === false || $size < 1) {
         staging_fail('pre-migration backup empty', $evidence);
     }
+    $minBytes = (int)(staging_env('RC1_PRE_MIGRATE_BACKUP_MIN_BYTES') ?? '256');
+    if ($minBytes < 64) {
+        $minBytes = 64;
+    }
+    if ($size < $minBytes) {
+        staging_fail(
+            "pre-migration backup too small ({$size} < {$minBytes} bytes) — refuse placeholder dumps",
+            $evidence
+        );
+    }
     $actual = hash_file('sha256', $path);
     if ($actual === false) {
         staging_fail('cannot hash pre-migration backup', $evidence);
@@ -173,12 +247,36 @@ function staging_verify_backup(string $path, string $expectedSha, array &$eviden
     if (!hash_equals(strtolower($expectedSha), strtolower($actual))) {
         staging_fail('pre-migration backup checksum mismatch', $evidence);
     }
+    $head = (string)@file_get_contents($path, false, null, 0, 4096);
+    $looksSql = (bool)preg_match(
+        '/(?:^|--\s*)(?:MySQL dump|MariaDB dump)|CREATE\s+TABLE|INSERT\s+INTO|DROP\s+TABLE/i',
+        $head
+    );
+    if (!$looksSql) {
+        staging_fail('pre-migration backup does not look like restorable SQL dump', $evidence);
+    }
     $evidence['backup'] = [
         'path' => $path,
         'sha256' => $actual,
         'bytes' => $size,
+        'min_bytes' => $minBytes,
+        'sql_shape_ok' => true,
         'verified' => true,
     ];
+}
+
+/**
+ * DB fingerprint must match web RuntimeCache::boot (host|port|database|username).
+ */
+function staging_db_fingerprint(array $dbCfg): string
+{
+    $fingerprint = implode('|', [
+        (string)($dbCfg['host'] ?? ''),
+        (string)($dbCfg['port'] ?? ''),
+        (string)($dbCfg['database'] ?? ''),
+        (string)($dbCfg['username'] ?? ''),
+    ]);
+    return substr(hash('sha256', $fingerprint !== '' ? $fingerprint : 'default'), 0, 16);
 }
 
 $started = date('c');
@@ -197,12 +295,10 @@ $wantReleaseOnly = in_array('--release-maintenance', $args, true);
 $forceDryRun = in_array('--dry-run', $args, true) || staging_truthy(staging_env('RC1_STAGING_DRY_RUN'));
 
 if ($wantReleaseOnly) {
-    // Releasing maintenance still requires auth (prevent accidental unlock).
-    $auth = staging_env('RC1_STAGING_OPERATOR_AUTH');
+    // Same auth strength as migrate path — never weaker.
+    staging_require_auth($evidence);
     $identity = staging_env('RC1_STAGING_ENV_IDENTITY');
-    if ($auth === null || $identity === null) {
-        staging_fail('release-maintenance requires RC1_STAGING_OPERATOR_AUTH and RC1_STAGING_ENV_IDENTITY', $evidence);
-    }
+    $evidence['env_identity'] = $identity;
     staging_release_maintenance($evidence);
     $evidence['ok'] = true;
     $evidence['mode'] = 'release_maintenance_only';
@@ -214,16 +310,8 @@ $targetMode = staging_env('RC1_STAGING_TARGET_MODE') ?? ($executorTest ? 'dispos
 $evidence['mode'] = $targetMode;
 $evidence['dry_run'] = $forceDryRun;
 
-// --- Gate: explicit auth + env identity ---
-$auth = staging_env('RC1_STAGING_OPERATOR_AUTH');
-$identity = staging_env('RC1_STAGING_ENV_IDENTITY');
-if ($auth === null || $identity === null) {
-    staging_fail('staging authorization or env identity missing', $evidence);
-}
-$expectedAuth = staging_env('RC1_STAGING_AUTH_EXPECTED');
-if ($expectedAuth !== null && !hash_equals($expectedAuth, $auth)) {
-    staging_fail('staging operator auth token mismatch', $evidence);
-}
+// --- Gate: explicit auth + env identity (expected token REQUIRED) ---
+[, $identity] = staging_require_auth($evidence);
 if (!preg_match('/staging/i', $identity) && $targetMode === 'staging') {
     staging_fail('RC1_STAGING_ENV_IDENTITY must identify staging role', $evidence);
 }
@@ -236,7 +324,6 @@ if ($targetMode === 'disposable_sim') {
     }
 }
 $evidence['env_identity'] = $identity;
-$evidence['auth_present'] = true;
 
 // --- Gate: operator-reviewed preflight ---
 $preflight = staging_env('RC1_STAGING_PREFLIGHT_REVIEWED');
@@ -301,26 +388,41 @@ if ($targetMode === 'disposable_sim') {
     }
 }
 
-// --- Gate: verified pre-migration backup + checksum ---
+// --- Gate: verified pre-migration backup + checksum + SQL shape ---
 $backupPath = staging_env_req('RC1_PRE_MIGRATE_BACKUP_PATH');
 $backupSha = staging_env_req('RC1_PRE_MIGRATE_BACKUP_SHA256');
 staging_verify_backup($backupPath, $backupSha, $evidence);
 
-// --- Cache isolation: staging-scoped only; never touch default prod cache root blindly ---
-$defaultCache = $ROOT . '/storage/cache';
-$cacheDir = staging_env('RC1_STAGING_CACHE_DIR') ?? ($ROOT . '/storage/cache/rc1_staging_migrate');
-$realCache = realpath($cacheDir) ?: $cacheDir;
-$realDefault = realpath($defaultCache) ?: $defaultCache;
-if ($targetMode === 'staging') {
-    // Allow subdirectory under storage/cache, but require explicit staging path segment.
-    if (!str_contains(str_replace('\\', '/', $realCache), 'staging')) {
-        staging_fail('RC1_STAGING_CACHE_DIR must be staging-scoped (path contains staging)', $evidence);
+// --- Cache: MUST match web bootstrap root so schema-ready is recognized ---
+$webCacheRoot = staging_web_cache_root();
+$cacheDir = staging_env('RC1_STAGING_CACHE_DIR') ?? $webCacheRoot;
+$norm = static function (string $p): string {
+    $r = realpath($p);
+    $use = $r !== false ? $r : $p;
+    return strtolower(str_replace('\\', '/', rtrim($use, '/\\')));
+};
+$realCache = $norm($cacheDir);
+$realWeb = $norm($webCacheRoot);
+$isolationAck = staging_truthy(staging_env('RC1_STAGING_CACHE_ISOLATION_ACK'));
+if ($realCache !== $realWeb && !$isolationAck) {
+    // Disposable sims may still use web root (db-hash isolates). Isolated roots require explicit ack
+    // and will NOT sync with web gate — refuse for real staging.
+    if ($targetMode === 'staging') {
+        staging_fail(
+            'RC1_STAGING_CACHE_DIR must equal web RuntimeCache root (storage/cache) so offline schema-ready is visible to HTTP',
+            $evidence
+        );
+    }
+    if ($targetMode === 'disposable_sim' && !str_contains($realCache, 'staging')) {
+        staging_fail('isolated disposable cache path must contain staging (or use web storage/cache)', $evidence);
     }
 }
 if (!is_dir($cacheDir) && !@mkdir($cacheDir, 0750, true)) {
     staging_fail('cannot create staging cache dir', $evidence);
 }
 $evidence['cache_dir'] = $cacheDir;
+$evidence['web_cache_root'] = $webCacheRoot;
+$evidence['cache_matches_web_root'] = ($realCache === $realWeb);
 $evidence['prod_cache_cleared'] = false;
 
 rc1_cumulative_migrate_autoload($ROOT);
@@ -334,6 +436,8 @@ $dbCfg = [
     'password' => $pass,
     'charset' => 'utf8mb4',
 ];
+$dbHash = staging_db_fingerprint($dbCfg);
+$evidence['db_config_fingerprint'] = $dbHash;
 
 RuntimeCache::boot($cacheDir, $dbCfg);
 
@@ -366,8 +470,13 @@ if ($forceDryRun) {
 
 $passes = [];
 foreach ([1, 2] as $i) {
-    // Clear ONLY staging-scoped schema markers between passes (idempotency proof).
-    $cleared = rc1_clear_schema_json_under($cacheDir);
+    // Clear ONLY this target's schema markers between passes (idempotency proof).
+    // Never wipe unrelated DB fingerprints under the shared web cache root.
+    $targetSchema = $cacheDir . '/runtime_cache/' . $dbHash . '/schema.json';
+    $cleared = 0;
+    if (is_file($targetSchema) && @unlink($targetSchema)) {
+        $cleared = 1;
+    }
     $t0 = microtime(true);
     $steps = rc1_run_cumulative_migrate($pdo);
     $ok = !in_array(false, array_column($steps, 'ok'), true);
@@ -376,6 +485,7 @@ foreach ([1, 2] as $i) {
         'ok' => $ok,
         'ms' => (int)((microtime(true) - $t0) * 1000),
         'schema_json_cleared' => $cleared,
+        'schema_marker' => $targetSchema,
         'steps' => $steps,
         'tables_after' => rc1_table_count($pdo, $dbName),
     ];
@@ -385,6 +495,7 @@ foreach ([1, 2] as $i) {
         $evidence['ok'] = false;
         $evidence['migrate_twice'] = $passes;
         $evidence['note'] = 'Migrate failed — maintenance lock LEFT ENGAGED; restore from verified backup; do not release until operator decision.';
+        staging_write_failure_marker($evidence);
         staging_emit($evidence, 1);
     }
 }
@@ -400,10 +511,20 @@ $evidence['schema_complete'] = $allPresent;
 $evidence['idempotent'] = ($passes[0]['ok'] ?? false) && ($passes[1]['ok'] ?? false);
 $evidence['install_php_used'] = false;
 $evidence['docker_required'] = false;
+$evidence['schema_ready_after'] = RuntimeCache::schemaReady(RuntimeCache::SCHEMA_VERSION);
+$evidence['schema_marker_path'] = $cacheDir . '/runtime_cache/' . $dbHash . '/schema.json';
 
 if (!$allPresent) {
     $evidence['ok'] = false;
     $evidence['note'] = 'Schema incomplete after migrate — maintenance remains engaged.';
+    staging_write_failure_marker($evidence);
+    staging_emit($evidence, 1);
+}
+
+if (!$evidence['schema_ready_after']) {
+    $evidence['ok'] = false;
+    $evidence['note'] = 'Schema marker missing after migrate — web would re-run DDL; maintenance remains engaged.';
+    staging_write_failure_marker($evidence);
     staging_emit($evidence, 1);
 }
 

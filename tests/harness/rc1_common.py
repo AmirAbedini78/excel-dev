@@ -94,7 +94,10 @@ def docker_image_ok(image: str = PHP_IMAGE) -> bool:
 
 def sandbox_relax() -> bool:
     """CI/service MySQL may not match the G0 named container; never relax for prod names."""
-    return os.environ.get("RC1_SANDBOX_RELAX", "").strip() in ("1", "true", "TRUE", "yes")
+    for key in ("RC1_SANDBOX_RELAX", "RC1_ALLOW_ANY_MYSQL"):
+        if os.environ.get(key, "").strip() in ("1", "true", "TRUE", "yes"):
+            return True
+    return False
 
 
 def verify_sandbox(*, required: bool | None = None) -> dict[str, Any]:

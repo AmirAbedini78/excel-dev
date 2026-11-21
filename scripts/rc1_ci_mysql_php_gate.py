@@ -81,6 +81,8 @@ def main() -> int:
             "tests.test_trading_cockpit_php_e2e_rc1.TradingCockpitPhpE2eRc1.test_tr1_exact_figures_and_cockpit_timeline",
         ),
     ]
+    # Staging safety suite (auth/cache/backup) — disposable DBs only.
+    staging_suite_name = "tests.rc1.test_rc1_staging_migrate_executor"
     loader = unittest.TestLoader()
     runner = unittest.TextTestRunner(verbosity=2, resultclass=FailOnSkipResult)
     any_fail = False
@@ -107,6 +109,22 @@ def main() -> int:
                     f"RC1_CI_MYSQL_PHP_GATE_FAIL: {len(result.skipped)} skip(s) on {db_name}",
                     flush=True,
                 )
+    os.environ["O2C_DB_NAME"] = "erpsmart_rc1_staging_executor_test"
+    os.environ.setdefault("RC1_ALLOW_ANY_MYSQL", "1")
+    staging_suite = loader.loadTestsFromName(staging_suite_name)
+    staging_result = runner.run(staging_suite)
+    if (
+        not staging_result.wasSuccessful()
+        or staging_result.failures
+        or staging_result.errors
+        or staging_result.skipped
+    ):
+        any_fail = True
+        if staging_result.skipped:
+            print(
+                f"RC1_CI_MYSQL_PHP_GATE_FAIL: {len(staging_result.skipped)} skip(s) on staging safety",
+                flush=True,
+            )
     if not any_fail:
         print("RC1_CI_MYSQL_PHP_GATE: PASS", flush=True)
         return 0

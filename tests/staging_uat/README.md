@@ -1,8 +1,10 @@
 # RC1 Staging UAT — Playwright skeleton (optional)
 
 **Purpose:** Executable examples for **future authorized staging** browser checks.  
-**SHA:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
-**Status:** Not run by default. Repo has **no** root `package.json`; adopt Playwright locally when owner provisions staging.
+**Staging-release SHA:** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**Product baseline:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
+**Status:** Not run by default. Repo has **no** root `package.json`; adopt Playwright locally when owner provisions staging.  
+**Classification:** see [`docs/ai/rc1/RC1-STAGING-UAT-INVENTORY.md`](../../docs/ai/rc1/RC1-STAGING-UAT-INVENTORY.md) — page-open â‰  full pay proof.
 
 ## Guardrails
 
@@ -53,4 +55,4 @@ npx playwright test
 
 ## Claiming verification
 
-Passing these tests **does not** imply `STAGING_VERIFIED`. Owner must follow procedure doc §16 and capture evidence under `docs/ai/rc1/evidence/browser/staging/`.
+Passing these tests **does not** imply `STAGING_VERIFIED`. Owner must follow procedure doc آ§16 and capture evidence under `docs/ai/rc1/evidence/browser/staging/`.

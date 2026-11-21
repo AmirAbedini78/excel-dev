@@ -1,0 +1,25 @@
+{
+  "campaign": "ERPSMART_FINAL_STAGING_SAFETY_PATCH",
+  "ok": true,
+  "staging_verified_claimed": false,
+  "product_feature_baseline": "2c1cf6592f246553c66c3bc90d00385bf65d4c29",
+  "pre_patch_main": "4764b3648ad1ec5a143afb81c020514699c6378e",
+  "authoritative_staging_release_sha": "POST_MERGE_MAIN_TIP_CI_GREEN",
+  "risks": {
+    "artifact_identity": "RESOLVED_SINGLE_STAGING_RELEASE_SHA",
+    "auth_expected_mandatory": "RESOLVED",
+    "release_maintenance_auth_parity": "RESOLVED",
+    "cli_web_cache_sync_first_http": "RESOLVED",
+    "restorable_backup_not_placeholder": "RESOLVED",
+    "uat_truthfulness_inventory": "RESOLVED"
+  },
+  "disposable_evidence": [
+    "staging_executor_migrate.json",
+    "staging_executor_first_http_probe.json",
+    "staging_executor_backup_integrity.json",
+    "staging_executor_backup_restore_migrate.json",
+    "staging_executor_dry_run.json"
+  ],
+  "remote_systems_changed": false,
+  "note": "Not STAGING_VERIFIED. Owner auth still required for remote staging."
+}

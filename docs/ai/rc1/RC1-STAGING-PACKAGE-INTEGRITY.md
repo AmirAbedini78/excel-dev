@@ -1,12 +1,13 @@
 # RC1 Staging Package Integrity (Agent B)
 
-**Campaign:** ERPSMART RC1 Staging Pre-Flight — Security & package audit  
-**Immutable product SHA:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
+**Campaign:** ERPSMART RC1 Staging Safety Patch — Security & package audit  
+**Authoritative staging-release SHA:** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**Product feature baseline (ancestry only):** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
 **Schema constant:** `RuntimeCache::SCHEMA_VERSION = 10.24.0-rc1`  
 **Date:** 2026-11-21  
 
-**Status labels (mandatory):** This document does **not** authorize deploy. **`NOT STAGING_VERIFIED`** · **`NOT PRODUCTION_READY`**.  
-`RC1_ACCEPTED` on `main` ≠ staging host proof.
+**Status labels (mandatory):** This document does **not** authorize deploy. **`NOT STAGING_VERIFIED`** آ· **`NOT PRODUCTION_READY`**.  
+`RC1_ACCEPTED` on product baseline â‰  staging host proof. Product-only `2c1cf65` ZIP is **not** the staging executable.
 
 ---
 
@@ -17,8 +18,8 @@
 ```powershell
 cd C:\Projects\excel-dev   # or your clone path
 git fetch origin
-git rev-parse 2c1cf6592f246553c66c3bc90d00385bf65d4c29^{commit}
-# Must print: 2c1cf6592f246553c66c3bc90d00385bf65d4c29
+git rev-parse POST_MERGE_MAIN_TIP_CI_GREEN^{commit}
+# Must print: POST_MERGE_MAIN_TIP_CI_GREEN
 ```
 
 ### 1.2 `git archive` (preferred)
@@ -27,40 +28,41 @@ Produces a **clean tree at exactly one commit** — no dirty working-tree files.
 
 ```powershell
 git archive --format=zip `
-  -o erpsmart-rc1-staging-2c1cf65.zip `
-  2c1cf6592f246553c66c3bc90d00385bf65d4c29
+  -o erpsmart-rc1-staging.zip `
+  POST_MERGE_MAIN_TIP_CI_GREEN
 ```
 
 POSIX:
 
 ```bash
 git archive --format=zip \
-  -o erpsmart-rc1-staging-2c1cf65.zip \
-  2c1cf6592f246553c66c3bc90d00385bf65d4c29
+  -o erpsmart-rc1-staging.zip \
+  POST_MERGE_MAIN_TIP_CI_GREEN
 ```
 
-Record archive SHA-256 (see §1.4 and `RC1-STAGING-RELEASE-PACKAGE-MANIFEST.md`).
+Record archive SHA-256 (see آ§1.4 and `RC1-STAGING-RELEASE-PACKAGE-MANIFEST.md`).
 
 ### 1.3 Alternative: `git checkout` + clean copy
 
 Use only if archive is unavailable:
 
-1. `git worktree add ../erpsmart-rc1-export 2c1cf6592f246553c66c3bc90d00385bf65d4c29`
-2. Copy tree **after** applying the exclude list (§2) into a fresh ZIP.
+1. `git worktree add ../erpsmart-rc1-export POST_MERGE_MAIN_TIP_CI_GREEN`
+2. Copy tree **after** applying the exclude list (آ§2) into a fresh ZIP.
 3. Remove worktree when done.
 
-**Never** zip the developer’s live `storage/cache`, local `app/config.php`, or untracked evidence temps.
+**Never** zip the developer's live `storage/cache`, local `app/config.php`, or untracked evidence temps.
 
 ### 1.4 Package fingerprint
 
 | Field | Example (prior T0 rehearsal @ same SHA; **recompute** on each build) |
 |-------|------------------------------------------------------------------------|
-| Product git SHA | `2c1cf6592f246553c66c3bc90d00385bf65d4c29` |
-| Archive name | `erpsmart-rc1-staging-2c1cf65.zip` |
+| Staging-release git SHA | `POST_MERGE_MAIN_TIP_CI_GREEN` |
+| Product baseline (ancestry) | `2c1cf6592f246553c66c3bc90d00385bf65d4c29` |
+| Archive name | `erpsmart-rc1-staging.zip` |
 | Byte size | ~2.1 MB (tree-only; varies slightly with doc tips) |
 | SHA-256 (whole ZIP) | Record at build time — prior doc cited `6F7E7011…6380` for one local archive |
 
-Helper: `python scripts/rc1_staging_package_hash.py erpsmart-rc1-staging-2c1cf65.zip`
+Helper: `python scripts/rc1_staging_package_hash.py erpsmart-rc1-staging.zip`
 
 ---
 
@@ -123,7 +125,7 @@ There is **no** `composer.json`; runtime is plain PHP. CI pins **PHP 8.2** (`tes
 | **apcu** | Optional object cache hint in stats — not required for RC1 |
 | **sodium** or libsodium | Not required today; crypto uses OpenSSL |
 
-### 3.3 Verify on host (cPanel → PHP Extensions or CLI)
+### 3.3 Verify on host (cPanel â†’ PHP Extensions or CLI)
 
 ```bash
 php -r "foreach (['pdo_mysql','mbstring','openssl','zip','curl','fileinfo','dom'] as \$e) echo \$e, ': ', extension_loaded(\$e)?'ok':'MISSING', PHP_EOL;"
@@ -163,7 +165,7 @@ If `storage/cache` is not writable, `RuntimeCache::boot` falls back to **system 
 
 ## 6. Staging-only configuration checklist
 
-Copy `app/config.sample.php` → `app/config.php` on the host (never commit).
+Copy `app/config.sample.php` â†’ `app/config.php` on the host (never commit).
 
 | Item | Staging rule |
 |------|----------------|
@@ -176,7 +178,7 @@ Copy `app/config.sample.php` → `app/config.php` on the host (never commit).
 
 - `enforce_data_persistence_guard()` (`app/Core/Helpers.php`) binds `app_key` to `settings.encryption_key_fingerprint_v4`.
 - Restoring an **anonymized legacy dump**: `app_key` in staging `config.php` must match the key used when credentials in that dump were encrypted, **or** re-key credentials per runbook before go-live smoke.
-- Mismatch → hard `RuntimeException` (Persian message) — **expected safety behavior**.
+- Mismatch â†’ hard `RuntimeException` (Persian message) — **expected safety behavior**.
 - For disposable rehearsal DBs, use rehearsal key documented offline — never production key.
 
 ### 6.2 Session / HTTPS
@@ -192,7 +194,7 @@ In DB `settings` (after restore) or via admin UI — clear or stub:
 - `notifications_sms_to`, Ghasedak API material
 - SMTP live inboxes (`smtp_username`, `smtp_password`, `notifications_email_to`)
 - `edge_service_url`, `edge_service_token`
-- `api_enabled` → `0` if external API surface must stay dark
+- `api_enabled` â†’ `0` if external API surface must stay dark
 - Rotate `cron_secret` in settings vs production
 
 ---
@@ -201,7 +203,7 @@ In DB `settings` (after restore) or via admin UI — clear or stub:
 
 | Surface | Risk | Staging safe mode |
 |---------|------|-------------------|
-| `cron.php` | Due reminders → **email/SMS** | **Do not** schedule cPanel cron hitting staging URL; or use wrong secret so 403 |
+| `cron.php` | Due reminders â†’ **email/SMS** | **Do not** schedule cPanel cron hitting staging URL; or use wrong secret so 403 |
 | `Notify::sendDueReminders` | SMTP + Ghasedak HTTP | Empty SMS/email targets; no API keys |
 | `ai_api.php` / worker tokens | External LLM + tool execution | Do not deploy `engine/` worker to staging unless isolated; revoke worker tokens; `api_enabled=0` |
 | `AiSuggestionEngine` (via cron) | DB writes | Blocked if cron disabled |
@@ -216,7 +218,7 @@ In DB `settings` (after restore) or via admin UI — clear or stub:
 
 - Application logs: `storage/logs/*.log` (gitignored) — may contain user actions; **no PII in Git**.
 - Staging logs: rotate via cPanel; do not ship logs in release ZIP.
-- AI / worker debug: keep `engine/` secrets out of package (§2).
+- AI / worker debug: keep `engine/` secrets out of package (آ§2).
 - Error display: `display_errors=Off` on staging mirror of prod.
 
 ---
@@ -257,7 +259,7 @@ Implementation: `app/Core/RuntimeCache.php`
 
 | Constraint | Mitigation |
 |------------|------------|
-| PHP selector | Choose **8.2+** and enable extensions (§3) |
+| PHP selector | Choose **8.2+** and enable extensions (آ§3) |
 | MySQL prefix names | Use dedicated staging DB name — never prod schema |
 | Cron URL | Disable or point nowhere |
 | `max_execution_time` / `memory_limit` | Offline migrate may need CLI `php` with raised limits via SSH if owner allows — **agents do not SSH** |

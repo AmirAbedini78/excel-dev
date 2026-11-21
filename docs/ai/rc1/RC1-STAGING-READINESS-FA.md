@@ -1,120 +1,122 @@
-# گزارش آمادگی Staging — ERPSMART RC1
+# ع¯ط²ط§ط±ط´ ط¢ظ…ط§ط¯ع¯غŒ Staging — ERPSMART RC1
 
-**تاریخ:** ۲۰۲۶-۱۱-۲۱  
-**مالک یکپارچه‌سازی:** T0 Release Engineering / Staging Acceptance  
-**SHA انتشار تغییرناپذیر:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
-**پذیرش مهندسی RC1:** `RC1_ACCEPTED`  
-**تولید:** `NOT_AUTHORIZED` / `NOT_DEPLOYED`  
-**دسترسی remote staging:** **مجاز نشده** (فقط برنامه)  
-**Pre-flight اجرا:** executor مهاجرت staging + پکیج + UAT روی شاخهٔ آماده‌سازی — **بدون** ادعای `STAGING_VERIFIED`
+**طھط§ط±غŒط®:** غ²غ°غ²غ¶-غ±غ±-غ²غ±  
+**ظ…ط§ظ„ع© غŒع©ظ¾ط§ط±ع†ظ‡â€Œط³ط§ط²غŒ:** T0 Release Engineering / Staging Acceptance  
+**SHA ط¨ط³طھظ‡ظ” staging (ظ…ط±ط¬ط¹ ظˆط§ط­ط¯):** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**ظ¾ط§غŒظ‡ظ” ظ…ط­طµظˆظ„ (ظ†غŒط§غŒ ظˆغŒعکع¯غŒ):** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
+**ظ¾ط°غŒط±ط´ ظ…ظ‡ظ†ط¯ط³غŒ RC1:** `RC1_ACCEPTED`  
+**طھظˆظ„غŒط¯:** `NOT_AUTHORIZED` / `NOT_DEPLOYED`  
+**ط¯ط³طھط±ط³غŒ remote staging:** **ظ…ط¬ط§ط² ظ†ط´ط¯ظ‡** (ظپظ‚ط· ط¨ط±ظ†ط§ظ…ظ‡)  
+**Pre-flight ط§ط¬ط±ط§:** executor ظ…ظ‡ط§ط¬ط±طھ staging + ظ¾ع©غŒط¬ + UAT ط±ظˆغŒ ط´ط§ط®ظ‡ظ” ط¢ظ…ط§ط¯ظ‡â€Œط³ط§ط²غŒ — **ط¨ط¯ظˆظ†** ط§ط¯ط¹ط§غŒ `STAGING_VERIFIED`
 
-> `RC1_ACCEPTED` ≠ `PRODUCTION_READY` ≠ `STAGING_VERIFIED`
+> `RC1_ACCEPTED` â‰  `PRODUCTION_READY` â‰  `STAGING_VERIFIED`
 
-**ابزارهای pre-flight (بدون remote):** `scripts/rc1_staging_schema_migrate.php` · `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md` · `RC1-STAGING-PACKAGE-INTEGRITY.md` · `RC1-STAGING-UAT-PROCEDURES.md`
+**ط§ط¨ط²ط§ط±ظ‡ط§غŒ pre-flight (ط¨ط¯ظˆظ† remote):** `scripts/rc1_staging_schema_migrate.php` آ· `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md` آ· `RC1-STAGING-PACKAGE-INTEGRITY.md` آ· `RC1-STAGING-UAT-PROCEDURES.md`
 
 ---
 
-## ۱. هویت پایه و انجماد ویژگی
+## غ±. ظ‡ظˆغŒطھ ظ¾ط§غŒظ‡ ظˆ ط§ظ†ط¬ظ…ط§ط¯ ظˆغŒعکع¯غŒ
 
-| مورد | مقدار |
+| ظ…ظˆط±ط¯ | ظ…ظ‚ط¯ط§ط± |
 |------|--------|
-| مخزن | `AmirAbedini78/excel-dev` |
-| شاخه | `main` |
-| SHA تأییدشده | `2c1cf6592f246553c66c3bc90d00385bf65d4c29` |
-| ادغام نهایی | PR #36 MERGED (`fix/rc1-final-legacy-data-ci-closure`) |
-| نسخهٔ اسکیما | `10.24.0-rc1` |
-| Feature freeze | فعال — فقط نقص‌های آمادگی staging |
+| ظ…ط®ط²ظ† | `AmirAbedini78/excel-dev` |
+| ط´ط§ط®ظ‡ | `main` |
+| SHA ط¨ط³طھظ‡ظ” staging | `POST_MERGE_MAIN_TIP_CI_GREEN` |
+| ظ¾ط§غŒظ‡ظ” ظ…ط­طµظˆظ„ | `2c1cf659…` + PR #38 + safety patch |
+| ط§ط¯ط؛ط§ظ… ظ…ط±ط¬ط¹ ظ…ط­طµظˆظ„ | PR #36 MERGEDط› safeguards: PR #38 + ط§غŒظ† ظ¾ع† |
+| ظ†ط³ط®ظ‡ظ” ط§ط³ع©غŒظ…ط§ | `10.24.0-rc1` |
+| Feature freeze | ظپط¹ط§ظ„ — ظپظ‚ط· ظ†ظ‚طµâ€Œظ‡ط§غŒ ط¢ظ…ط§ط¯ع¯غŒ staging |
 
-## ۲. وضعیت CI پس از ادغام (روی همان SHA)
+## غ². ظˆط¶ط¹غŒطھ CI ظ¾ط³ ط§ط² ط§ط¯ط؛ط§ظ… (ط±ظˆغŒ ظ‡ظ…ط§ظ† SHA)
 
-| دروازه | نتیجه | Run |
+| ط¯ط±ظˆط§ط²ظ‡ | ظ†طھغŒط¬ظ‡ | Run |
 |--------|--------|-----|
 | Commercial MVP Gate | **SUCCESS** | https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684788 |
 | RC1 MySQL+PHP Gate | **SUCCESS** | https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872 |
 
-Commercial MVP به‌تنهایی برای RC1 کافی نیست؛ دروازهٔ MySQL+PHP با fail-on-skip الزامی است و روی این SHA سبز است.
+Commercial MVP ط¨ظ‡â€Œطھظ†ظ‡ط§غŒغŒ ط¨ط±ط§غŒ RC1 ع©ط§ظپغŒ ظ†غŒط³طھط› ط¯ط±ظˆط§ط²ظ‡ظ” MySQL+PHP ط¨ط§ fail-on-skip ط§ظ„ط²ط§ظ…غŒ ط§ط³طھ ظˆ ط±ظˆغŒ ط§غŒظ† SHA ط³ط¨ط² ط§ط³طھ.
 
-## ۳. آرتیفکت انتشار و PHP/MySQL
+## غ³. ط¢ط±طھغŒظپع©طھ ط§ظ†طھط´ط§ط± ظˆ PHP/MySQL
 
-| مورد | وضعیت |
+| ظ…ظˆط±ط¯ | ظˆط¶ط¹غŒطھ |
 |------|--------|
-| منبع تغییرناپذیر | `git archive` / checkout از SHA بالا |
-| ساخت پیشنهادی | `git archive --format=zip -o erpsmart-rc1-2c1cf65.zip 2c1cf6592f246553c66c3bc90d00385bf65d4c29` (بدون `.env` / dump / `storage/cache` محلی) |
-| ساخته‌شده این پاس | **بله** (موقت) — ۲٬۱۱۹٬۴۰۷ بایت؛ SHA-256 `6F7E7011B9D3FF834A392E9004476E91981C30FF5C900857B1B6771D66DF6380`؛ در Git ذخیره نشد |
-| PHP | **8.2** (`erpsmart-o2c-php:8.2`؛ ext: `pdo_mysql`) |
-| MySQL | **8.0** (تصویر `mysql:8.0` در GHA و sandbox محلی) |
-| ارز کارکردی | IRR (نمایش تومان اختیاری) |
+| ظ…ظ†ط¨ط¹ طھط؛غŒغŒط±ظ†ط§ظ¾ط°غŒط± | `git archive` / checkout ط§ط² SHA ط¨ط§ظ„ط§ |
+| ط³ط§ط®طھ ظ¾غŒط´ظ†ظ‡ط§ط¯غŒ | `git archive --format=zip -o erpsmart-rc1-staging.zip POST_MERGE_MAIN_TIP_CI_GREEN` (ط¨ط¯ظˆظ† `.env` / dump / `storage/cache` ظ…ط­ظ„غŒ) |
+| ط³ط§ط®طھظ‡â€Œط´ط¯ظ‡ ط§غŒظ† ظ¾ط§ط³ | ظ¾ط³ ط§ط² ط§ط¯ط؛ط§ظ… ظ¾ع† ط§غŒظ…ظ†غŒطŒ ZIP ط±ط§ ط§ط² SHA ط¨ط³طھظ‡ ط¨ط§ط²ط³ط§ط²غŒ ظˆ checksum ط±ط§ ط«ط¨طھ ع©ظ†غŒط¯ — digest ظ‚ط¯غŒظ…غŒ `2c1cf65` ظ…ط¹طھط¨ط± ظ†غŒط³طھ |
+| PHP | **8.2** (`erpsmart-o2c-php:8.2`ط› ext: `pdo_mysql`) |
+| MySQL | **8.0** (طھطµظˆغŒط± `mysql:8.0` ط¯ط± GHA ظˆ sandbox ظ…ط­ظ„غŒ) |
+| ط§ط±ط² ع©ط§ط±ع©ط±ط¯غŒ | IRR (ظ†ظ…ط§غŒط´ طھظˆظ…ط§ظ† ط§ط®طھغŒط§ط±غŒ) |
 
-## ۴. آمادگی DB / مهاجرت / تطبیق رکوردی
+## غ´. ط¢ظ…ط§ط¯ع¯غŒ DB / ظ…ظ‡ط§ط¬ط±طھ / طھط·ط¨غŒظ‚ ط±ع©ظˆط±ط¯غŒ
 
-| مورد | طبقه / نتیجه |
+| ظ…ظˆط±ط¯ | ط·ط¨ظ‚ظ‡ / ظ†طھغŒط¬ظ‡ |
 |------|----------------|
-| استقرار قبلی | `EXISTING_DEPLOYMENT_CONFIRMED` |
-| Path2 dump ناشناس | `PATH2_ANON_SCHEMA_DATA_VERIFIED` (خارج از Git؛ leak_scan PASS) |
-| migrate×2 روی clone یک‌بارمصرف | **PASS** (۱۱۰→۱۸۲ جدول) |
-| تطبیق مالی/موجودی | **PASS** — vouchers ۴۷ / lines ۱۱۷؛ Dr=Cr `18063580000.00`؛ stock qty `4.0000`؛ inventory qty `1094.0000`؛ mismatch=0 |
-| `SCHEMA_UPGRADE_TESTED` | فقط disposable Path2 |
-| مسیر migrate | CLI/آفلاین اپراتور — **نه** اولین HTTP hit |
-| Preflight کش اسکیما | پاک‌سازی هدفمند `schema.json` برای fingerprint همان DB rehearsal |
-| `FRESH_INSTALL` | **فرض نشده** |
+| ط§ط³طھظ‚ط±ط§ط± ظ‚ط¨ظ„غŒ | `EXISTING_DEPLOYMENT_CONFIRMED` |
+| Path2 dump ظ†ط§ط´ظ†ط§ط³ | `PATH2_ANON_SCHEMA_DATA_VERIFIED` (ط®ط§ط±ط¬ ط§ط² Gitط› leak_scan PASS) |
+| migrateأ—2 ط±ظˆغŒ clone غŒع©â€Œط¨ط§ط±ظ…طµط±ظپ | **PASS** (غ±غ±غ°â†’غ±غ¸غ² ط¬ط¯ظˆظ„) |
+| طھط·ط¨غŒظ‚ ظ…ط§ظ„غŒ/ظ…ظˆط¬ظˆط¯غŒ | **PASS** — vouchers غ´غ· / lines غ±غ±غ·ط› Dr=Cr `18063580000.00`ط› stock qty `4.0000`ط› inventory qty `1094.0000`ط› mismatch=0 |
+| `SCHEMA_UPGRADE_TESTED` | ظپظ‚ط· disposable Path2 |
+| ظ…ط³غŒط± migrate | CLI/ط¢ظپظ„ط§غŒظ† ط§ظ¾ط±ط§طھظˆط± — **ظ†ظ‡** ط§ظˆظ„غŒظ† HTTP hit |
+| Preflight ع©ط´ ط§ط³ع©غŒظ…ط§ | ظ¾ط§ع©â€Œط³ط§ط²غŒ ظ‡ط¯ظپظ…ظ†ط¯ `schema.json` ط¨ط±ط§غŒ fingerprint ظ‡ظ…ط§ظ† DB rehearsal |
+| `FRESH_INSTALL` | **ظپط±ط¶ ظ†ط´ط¯ظ‡** |
 
-شواهد: `ops1_legacy_data_rehearsal.json`, `ops1_legacy_data_reconciliation.json`, `agent_c_provenance_status.json`, `RC1-MIGRATION-PREFLIGHT.md`.
+ط´ظˆط§ظ‡ط¯: `ops1_legacy_data_rehearsal.json`, `ops1_legacy_data_reconciliation.json`, `agent_c_provenance_status.json`, `RC1-MIGRATION-PREFLIGHT.md`.
 
-## ۵. پشتیبان / بازیابی / Rollback
+## غµ. ظ¾ط´طھغŒط¨ط§ظ† / ط¨ط§ط²غŒط§ط¨غŒ / Rollback
 
-| Drill | نتیجه |
+| Drill | ظ†طھغŒط¬ظ‡ |
 |-------|--------|
-| Dump/restore ممتاز + migrate×2 | **PASS** (`ops1_backup_restore_closure.json`) |
-| Restore با کاربر محدود بدون grant | `FAIL_ACCESS_DENIED_EXPECTED` |
-| Rollback rehearsal | restore از dump به اسکیمای جدا (DDL تراکنشی نیست) |
-| Runbook | `RC1-ROLLBACK-RUNBOOK.md` — فقط disposable؛ تولید خارج از باند مالک/DBA |
+| Dump/restore ظ…ظ…طھط§ط² + migrateأ—2 | **PASS** (`ops1_backup_restore_closure.json`) |
+| Restore ط¨ط§ ع©ط§ط±ط¨ط± ظ…ط­ط¯ظˆط¯ ط¨ط¯ظˆظ† grant | `FAIL_ACCESS_DENIED_EXPECTED` |
+| Rollback rehearsal | restore ط§ط² dump ط¨ظ‡ ط§ط³ع©غŒظ…ط§غŒ ط¬ط¯ط§ (DDL طھط±ط§ع©ظ†ط´غŒ ظ†غŒط³طھ) |
+| Runbook | `RC1-ROLLBACK-RUNBOOK.md` — ظپظ‚ط· disposableط› طھظˆظ„غŒط¯ ط®ط§ط±ط¬ ط§ط² ط¨ط§ظ†ط¯ ظ…ط§ظ„ع©/DBA |
 
-## ۶. UAT مرورگر کسب‌وکار
+## غ¶. UAT ظ…ط±ظˆط±ع¯ط± ع©ط³ط¨â€Œظˆع©ط§ط±
 
-| طبقه | وضعیت |
+| ط·ط¨ظ‚ظ‡ | ظˆط¶ط¹غŒطھ |
 |------|--------|
-| `LOCAL_BROWSER_VERIFIED` | **بله** — ۹ PNG واقعی + لاگ CSRF/session |
-| `STAGING_VERIFIED` | **خیر** — URL staging و مجوز remote داده نشده |
+| `LOCAL_BROWSER_VERIFIED` | **ط¨ظ„ظ‡** — غ¹ PNG ظˆط§ظ‚ط¹غŒ + ظ„ط§ع¯ CSRF/session |
+| `STAGING_VERIFIED` | **ط®غŒط±** — URL staging ظˆ ظ…ط¬ظˆط² remote ط¯ط§ط¯ظ‡ ظ†ط´ط¯ظ‡ |
 
-پوشش محلی (شواهد قبلی): login/logout، trading، manufacturing (بنر GL BLOCKED)، service/retail، RTL/Jalali، IRR/Toman، ایزوله شرکت، نقش محدود، CSRF ۴۱۹.  
-مسیر: `docs/ai/rc1/evidence/browser/` و `T6-BROWSER-NOTES.md`.
+ظ¾ظˆط´ط´ ظ…ط­ظ„غŒ (ط´ظˆط§ظ‡ط¯ ظ‚ط¨ظ„غŒ): login/logoutطŒ tradingطŒ manufacturing (ط¨ظ†ط± GL BLOCKED)طŒ service/retailطŒ RTL/JalaliطŒ IRR/TomanطŒ ط§غŒط²ظˆظ„ظ‡ ط´ط±ع©طھطŒ ظ†ظ‚ط´ ظ…ط­ط¯ظˆط¯طŒ CSRF غ´غ±غ¹.  
+ظ…ط³غŒط±: `docs/ai/rc1/evidence/browser/` ظˆ `T6-BROWSER-NOTES.md`.
 
-## ۷. امنیت / عملیات / کیفیت
+## غ·. ط§ظ…ظ†غŒطھ / ط¹ظ…ظ„غŒط§طھ / ع©غŒظپغŒطھ
 
-| مورد | یادداشت |
+| ظ…ظˆط±ط¯ | غŒط§ط¯ط¯ط§ط´طھ |
 |------|---------|
-| Secret scan (release_gate) | الگوی توکن/کلید خصوصی روی فایل‌های tracked |
-| Dump خام / PII | **ممنوع در Git**؛ کاندید dump = UNSAFE (فقط offline) |
-| رگرسیون TR-1..OPS-1 | GHA RC1 gate SUCCESS با fail-on-skip روی SHA نهایی |
-| همزمانی MF | تست concurrent issue: یک برنده + یک رد؛ موجودی منفی نمی‌شود |
-| میزبانی اشتراکی/cPanel | یادداشت‌های OPS1؛ هیچ mutation روی cPanel در این کارزار |
+| Secret scan (release_gate) | ط§ظ„ع¯ظˆغŒ طھظˆع©ظ†/ع©ظ„غŒط¯ ط®طµظˆطµغŒ ط±ظˆغŒ ظپط§غŒظ„â€Œظ‡ط§غŒ tracked |
+| Dump ط®ط§ظ… / PII | **ظ…ظ…ظ†ظˆط¹ ط¯ط± Git**ط› ع©ط§ظ†ط¯غŒط¯ dump = UNSAFE (ظپظ‚ط· offline) |
+| ط±ع¯ط±ط³غŒظˆظ† TR-1..OPS-1 | GHA RC1 gate SUCCESS ط¨ط§ fail-on-skip ط±ظˆغŒ SHA ظ†ظ‡ط§غŒغŒ |
+| ظ‡ظ…ط²ظ…ط§ظ†غŒ MF | طھط³طھ concurrent issue: غŒع© ط¨ط±ظ†ط¯ظ‡ + غŒع© ط±ط¯ط› ظ…ظˆط¬ظˆط¯غŒ ظ…ظ†ظپغŒ ظ†ظ…غŒâ€Œط´ظˆط¯ |
+| ظ…غŒط²ط¨ط§ظ†غŒ ط§ط´طھط±ط§ع©غŒ/cPanel | غŒط§ط¯ط¯ط§ط´طھâ€Œظ‡ط§غŒ OPS1ط› ظ‡غŒع† mutation ط±ظˆغŒ cPanel ط¯ط± ط§غŒظ† ع©ط§ط±ط²ط§ط± |
 
-## ۸. برنامه استقرار Staging (فقط مستندات — بدون remote)
+## غ¸. ط¨ط±ظ†ط§ظ…ظ‡ ط§ط³طھظ‚ط±ط§ط± Staging (ظپظ‚ط· ظ…ط³طھظ†ط¯ط§طھ — ط¨ط¯ظˆظ† remote)
 
-1. **معماری هدف:** ساب‌دامین/اکانت غیرتولید جدا؛ DB staging جدا از production MySQL.  
-2. **بسته:** ZIP از SHA `2c1cf65…` بدون secrets.  
-3. **پیکربندی:** `app/config.php` gitignored؛ `app_key` جدید staging؛ هرگز کپی production secrets.  
-4. **DB:** restore dump ناشناس یا seed مصنوعی → `scripts/rc1_staging_schema_migrate.php` (نه `install.php` / نه اولین HTTP) → تأیید schema cache فقط staging.  
-5. **Maintenance:** قفل `storage/maintenance/rc1_offline_migrate.lock` (۵۰۳ وب تا اتمام migrate)؛ قطع cron/worker/SMS/پرداخت زنده روی staging.  
-6. **Smoke/UAT:** طبق `RC1-STAGING-UAT-PROCEDURES.md` و اسکلت Playwright `tests/staging_uat/` (فقط با `STAGING_BASE_URL` مجاز).  
-7. **Rollback:** بازگردانی dump pre-migrate + کد SHA قبلی (`RC1-ROLLBACK-RUNBOOK.md`).  
-8. **Go/No-Go:** بدون مجوز صریح مالک طبق `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md` → هیچ تغییر remote.  
-9. **پکیج:** `RC1-STAGING-PACKAGE-INTEGRITY.md` + `RC1-STAGING-RELEASE-PACKAGE-MANIFEST.md`.
+1. **ظ…ط¹ظ…ط§ط±غŒ ظ‡ط¯ظپ:** ط³ط§ط¨â€Œط¯ط§ظ…غŒظ†/ط§ع©ط§ظ†طھ ط؛غŒط±طھظˆظ„غŒط¯ ط¬ط¯ط§ط› DB staging ط¬ط¯ط§ ط§ط² production MySQL.  
+2. **ط¨ط³طھظ‡:** ZIP ط§ط² SHA `2c1cf65…` ط¨ط¯ظˆظ† secrets.  
+3. **ظ¾غŒع©ط±ط¨ظ†ط¯غŒ:** `app/config.php` gitignoredط› `app_key` ط¬ط¯غŒط¯ stagingط› ظ‡ط±ع¯ط² ع©ظ¾غŒ production secrets.  
+4. **DB:** restore dump ظ†ط§ط´ظ†ط§ط³ غŒط§ seed ظ…طµظ†ظˆط¹غŒ â†’ `scripts/rc1_staging_schema_migrate.php` (ظ†ظ‡ `install.php` / ظ†ظ‡ ط§ظˆظ„غŒظ† HTTP) â†’ طھط£غŒغŒط¯ schema cache ظپظ‚ط· staging.  
+5. **Maintenance:** ظ‚ظپظ„ `storage/maintenance/rc1_offline_migrate.lock` (غµغ°غ³ ظˆط¨ طھط§ ط§طھظ…ط§ظ… migrate)ط› ظ‚ط·ط¹ cron/worker/SMS/ظ¾ط±ط¯ط§ط®طھ ط²ظ†ط¯ظ‡ ط±ظˆغŒ staging.  
+6. **Smoke/UAT:** ط·ط¨ظ‚ `RC1-STAGING-UAT-PROCEDURES.md` ظˆ ط§ط³ع©ظ„طھ Playwright `tests/staging_uat/` (ظپظ‚ط· ط¨ط§ `STAGING_BASE_URL` ظ…ط¬ط§ط²).  
+7. **Rollback:** ط¨ط§ط²ع¯ط±ط¯ط§ظ†غŒ dump pre-migrate + ع©ط¯ SHA ظ‚ط¨ظ„غŒ (`RC1-ROLLBACK-RUNBOOK.md`).  
+8. **Go/No-Go:** ط¨ط¯ظˆظ† ظ…ط¬ظˆط² طµط±غŒط­ ظ…ط§ظ„ع© ط·ط¨ظ‚ `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md` â†’ ظ‡غŒع† طھط؛غŒغŒط± remote.  
+9. **ظ¾ع©غŒط¬:** `RC1-STAGING-PACKAGE-INTEGRITY.md` + `RC1-STAGING-RELEASE-PACKAGE-MANIFEST.md`.
 
-## ۹. محدودیت MF و ادعاهای ممنوع
+## غ¹. ظ…ط­ط¯ظˆط¯غŒطھ MF ظˆ ط§ط¯ط¹ط§ظ‡ط§غŒ ظ…ظ…ظ†ظˆط¹
 
-- WIP/FG valuation در RC1 **کامل پشتیبانی نمی‌شود**؛ طبقه هزینه می‌تواند `UNVALUED` باشد.  
-- `WIP/FG GL = BLOCKED` — بدون GL خودکار WIP/FG (`T5-VALUATION-DECISION.md`).  
-- هیچ ادعای انطباق مقرراتی ایرانی (مالیات/صیاد/بانک زنده) در این کارزار ساخته نشده.  
-- `RC1_ACCEPTED` به‌معنی `PRODUCTION_READY` نیست.
+- WIP/FG valuation ط¯ط± RC1 **ع©ط§ظ…ظ„ ظ¾ط´طھغŒط¨ط§ظ†غŒ ظ†ظ…غŒâ€Œط´ظˆط¯**ط› ط·ط¨ظ‚ظ‡ ظ‡ط²غŒظ†ظ‡ ظ…غŒâ€Œطھظˆط§ظ†ط¯ `UNVALUED` ط¨ط§ط´ط¯.  
+- `WIP/FG GL = BLOCKED` — ط¨ط¯ظˆظ† GL ط®ظˆط¯ع©ط§ط± WIP/FG (`T5-VALUATION-DECISION.md`).  
+- ظ‡غŒع† ط§ط¯ط¹ط§غŒ ط§ظ†ط·ط¨ط§ظ‚ ظ…ظ‚ط±ط±ط§طھغŒ ط§غŒط±ط§ظ†غŒ (ظ…ط§ظ„غŒط§طھ/طµغŒط§ط¯/ط¨ط§ظ†ع© ط²ظ†ط¯ظ‡) ط¯ط± ط§غŒظ† ع©ط§ط±ط²ط§ط± ط³ط§ط®طھظ‡ ظ†ط´ط¯ظ‡.  
+- `RC1_ACCEPTED` ط¨ظ‡â€Œظ…ط¹ظ†غŒ `PRODUCTION_READY` ظ†غŒط³طھ.
 
-## ۱۰. اقدام مالک و حکم
+## غ±غ°. ط§ظ‚ط¯ط§ظ… ظ…ط§ظ„ع© ظˆ ط­ع©ظ…
 
-### برای `STAGING_VERIFIED` لازم است
-1. مجوز صریح remote staging (URL + دسترسی غیرتولید).  
-2. استقرار بسته از SHA `2c1cf65…` روی staging جدا.  
-3. UAT مرورگر واقعی روی staging با اسکرین‌شات جدید زیر `evidence/browser/staging/`.  
-4. تأیید migrate آفلاین روی DB staging و smoke checklist.
+### ط¨ط±ط§غŒ `STAGING_VERIFIED` ظ„ط§ط²ظ… ط§ط³طھ
+1. ظ…ط¬ظˆط² طµط±غŒط­ remote staging (URL + ط¯ط³طھط±ط³غŒ ط؛غŒط±طھظˆظ„غŒط¯).  
+2. ط§ط³طھظ‚ط±ط§ط± ط¨ط³طھظ‡ ط§ط² SHA `2c1cf65…` ط±ظˆغŒ staging ط¬ط¯ط§.  
+3. UAT ظ…ط±ظˆط±ع¯ط± ظˆط§ظ‚ط¹غŒ ط±ظˆغŒ staging ط¨ط§ ط§ط³ع©ط±غŒظ†â€Œط´ط§طھ ط¬ط¯غŒط¯ ط²غŒط± `evidence/browser/staging/`.  
+4. طھط£غŒغŒط¯ migrate ط¢ظپظ„ط§غŒظ† ط±ظˆغŒ DB staging ظˆ smoke checklist.
 
-### حکم این پاس
-به بخش انتهایی گزارش یکپارچهٔ T0 مراجعه شود (یک مقدار از: `STAGING_READY` | `STAGING_VERIFIED` | `STAGING_BLOCKED`).
+### ط­ع©ظ… ط§غŒظ† ظ¾ط§ط³
+ط¨ظ‡ ط¨ط®ط´ ط§ظ†طھظ‡ط§غŒغŒ ع¯ط²ط§ط±ط´ غŒع©ظ¾ط§ط±ع†ظ‡ظ” T0 ظ…ط±ط§ط¬ط¹ظ‡ ط´ظˆط¯ (غŒع© ظ…ظ‚ط¯ط§ط± ط§ط²: `STAGING_READY` | `STAGING_VERIFIED` | `STAGING_BLOCKED`).
