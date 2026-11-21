@@ -67,6 +67,8 @@ final class Tenant
     private static array $permissions = ['production.view', 'production.manage', 'inventory.view'];
     public static function id(): int { return self::$wid; }
     public static function setId(int $id): void { self::$wid = $id; }
+    public static function setPermissions(array $permissions): void { self::$permissions = array_values($permissions); }
+    public static function permissions(): array { return self::$permissions; }
     public static function can(string $p): bool
     {
         if (!empty(Auth::user()['is_platform_admin'])) {
@@ -142,7 +144,16 @@ function mf_e2e_ensure_database(): void
         $pass,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
-    $pdo->exec('CREATE DATABASE IF NOT EXISTS `'.$dbName.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+    // Sandbox user often lacks global CREATE; prefer an already-granted disposable schema.
+    try {
+        $pdo->exec('CREATE DATABASE IF NOT EXISTS `'.$dbName.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+    } catch (Throwable $e) {
+        $st = $pdo->prepare('SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=? LIMIT 1');
+        $st->execute([$dbName]);
+        if (!$st->fetchColumn()) {
+            throw $e;
+        }
+    }
     // Grant is typically already present for p2p@% on this sandbox; ignore failures.
     try {
         $pdo->exec("GRANT ALL ON `{$dbName}`.* TO 'p2p'@'%'");
