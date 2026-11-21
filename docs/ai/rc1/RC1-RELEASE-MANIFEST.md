@@ -1,7 +1,8 @@
 # RC1 Release Manifest
 
-**Decision:** `RC1_ACCEPTED` on candidate PR #36 — P1-001 Path2 data rehearsal PASS; P1-006 GHA SUCCESS; local browser **LOCAL_BROWSER_VERIFIED**; staging browser optional P2  
-**Production deployment:** **NOT_DEPLOYED** (forbidden this campaign)
+**Decision:** `RC1_ACCEPTED` on `main` — P1-001 Path2 data rehearsal PASS; P1-006 GHA SUCCESS on final SHA; local browser **LOCAL_BROWSER_VERIFIED**; staging browser optional P2  
+**Production deployment:** **NOT_DEPLOYED** (forbidden this campaign)  
+**Staging:** plan-ready; **not** `STAGING_VERIFIED` (remote staging auth not granted)
 
 ## Identity
 
@@ -9,11 +10,11 @@
 |-------|--------|
 | Repository | `AmirAbedini78/excel-dev` |
 | Pre-closure `origin/main` SHA | `2a30f5abac6291af2e6d3ccf1f87446335c84bad` |
-| **Final `origin/main` SHA** | **`52fa7f12f465653d6e445d484f1a8dda48215f45`** |
-| Closure merge | **PR #32** MERGED (`fix/rc1-stabilization-p1-closure` → main) |
-| Prior product merge | PR #30 |
-| Prior audit docs merge | PR #31 |
-| Superseded late T1 PR | **#29 CLOSED** (superseded by PR #32; lock/DDL ideas absorbed) |
+| Intermediate tips (historical) | PR #32 `52fa7f12…`; PR #35 `c5c644c…` |
+| **Final `origin/main` SHA** | **`2c1cf6592f246553c66c3bc90d00385bf65d4c29`** |
+| Closure merge | **PR #36** MERGED (`fix/rc1-final-legacy-data-ci-closure` → main) |
+| Prior product / audit merges | PR #30, #31, #32 |
+| Superseded late T1 PR | **#29 CLOSED** (superseded by PR #32) |
 | Schema version (repo) | `10.24.0-rc1` (`RuntimeCache::SCHEMA_VERSION`) |
 | Functional currency | IRR (Toman display opt-in) |
 
@@ -29,17 +30,17 @@
 
 ## Runtime requirements
 
-- PHP 8.2+ (local E2E uses Docker `erpsmart-o2c-php:8.2`; host PHP optional via Docker lint)
+- PHP 8.2+ (local E2E uses Docker `erpsmart-o2c-php:8.2` + `pdo_mysql`; host PHP optional via Docker lint)
 - MySQL 8.0 disposable for acceptance
 - Python 3.12+ for gates
 - Node 22 for JS syntax in commercial gate
 
-## Source gate hashes / CI
+## Source gate hashes / CI (final SHA)
 
 | Check | Notes |
 |-------|-------|
-| Commercial MVP `release-gate` @ Final main | SUCCESS https://github.com/AmirAbedini78/excel-dev/actions/runs/44810790482 — **source-only / insufficient** |
-| Mandatory RC1 MySQL+PHP | Installed `.github/workflows/rc1-mysql-php-gate.yml`; GHA **SUCCESS** https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 |
+| Commercial MVP `release-gate` @ `2c1cf65…` | SUCCESS https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684788 — **source-only / insufficient alone** |
+| Mandatory RC1 MySQL+PHP @ `2c1cf65…` | SUCCESS https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872 |
 
 **Note:** Commercial CI alone does **not** prove RC1 PHP+MySQL domain E2E. Local green ≠ GHA green.
 
@@ -61,4 +62,4 @@
 
 ## Zero production deploy statement
 
-No cPanel, production DB, live bank/tax/Sayad, or production credentials were used. Local browser UAT is **LOCAL_BROWSER_VERIFIED** (`evidence/browser/`). Staging UAT and commercial go-live still require **explicit user action**. Merge PR #36 to land RC1 closure on `main`.
+No cPanel, production DB, live bank/tax/Sayad, or production credentials were used. Local browser UAT is **LOCAL_BROWSER_VERIFIED** (`evidence/browser/`). Staging UAT and commercial go-live still require **explicit owner authorization**. See `RC1-STAGING-READINESS-FA.md`.

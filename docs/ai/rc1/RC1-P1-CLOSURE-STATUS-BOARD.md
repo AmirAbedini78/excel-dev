@@ -1,10 +1,9 @@
 # RC1 P1 Closure Status Board
 
-**Branch:** `fix/rc1-stabilization-p1-closure` → merged **PR #32**  
-**Pre-closure base SHA:** `2a30f5abac6291af2e6d3ccf1f87446335c84bad`  
-**Final main SHA:** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
+**Final main SHA:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29` (PR #36 MERGED)  
+**Historical base / intermediate:** `2a30f5…` → PR #32 `52fa7f12…`  
 **Production:** `NOT_DEPLOYED`  
-**Independent verdict:** `RC1_ACCEPTED` on candidate PR #36 (merge to `main` still pending; production `NOT_DEPLOYED`)
+**Independent verdict:** `RC1_ACCEPTED` on `main`
 
 ## Contract matrix (independent)
 
@@ -25,18 +24,18 @@
 | RC1-P1-005 OPS restore | T0 | **CLOSED** | privileged restore+migrate×2 PASS |
 | RC1-P1-004 Browser SYS-1 | Agent B / T0 | **CLOSED (local)** | `LOCAL_BROWSER_VERIFIED`; staging residual P2 |
 | RC1-P1-001 OPS provenance | User + T0 | **CLOSED** | Path2 anon restore+migrate×2+financial/stock recon PASS; `SCHEMA_UPGRADE_TESTED` |
-| RC1-P1-006 GHA MySQL workflow | T0 | **CLOSED_ON_CANDIDATE_SHA** | GHA SUCCESS https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 ; merge PR #36 |
+| RC1-P1-006 GHA MySQL workflow | T0 | **CLOSED on main** | Post-merge SUCCESS https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872 |
 | P2-002 PR #29 | T0 | **CLOSED** | superseded by PR #32; PR #29 closed |
 
 ## Peer agent lanes (final)
 
 | Agent | Scope | Status |
 |-------|-------|--------|
-| **Agent A** | GHA / mandatory RC1 MySQL workflow | **DONE** — installed; GHA SUCCESS; P1-006 **CLOSED_ON_CANDIDATE_SHA** |
-| **Agent B** | Authenticated browser RTL/login | **DONE** — **LOCAL_BROWSER_VERIFIED**; `evidence/browser/` |
-| **Agent C** | Provenance / migration | **DONE** — Path2 data rehearsal **PASS**; P1-001 **CLOSED**; `SCHEMA_UPGRADE_TESTED` |
-| **Agent D** | Docs/acceptance reconciliation | **DONE** — SHA/classes/MF wording aligned |
+| **Agent A** | GHA / mandatory RC1 MySQL workflow | **DONE** — SUCCESS on final main SHA |
+| **Agent B** | Authenticated browser RTL/login | **DONE** — **LOCAL_BROWSER_VERIFIED** |
+| **Agent C** | Provenance / migration | **DONE** — Path2 data rehearsal **PASS**; P1-001 **CLOSED** |
+| **Agent D** | Docs/acceptance reconciliation | **DONE** — SHA pins updated for staging readiness |
 
-**Gates:** local `rc1_ci_mysql_php_gate` PASS; GHA RC1 MySQL+PHP SUCCESS on PR #36; Path2 data recon PASS.
+**Gates:** post-merge Commercial + RC1 MySQL+PHP SUCCESS on `2c1cf65…`; Path2 data recon PASS.
 
-**Independent verdict:** `RC1_ACCEPTED` on candidate (merge PR #36 to land on `main`)
+**Independent verdict:** `RC1_ACCEPTED` on `main`

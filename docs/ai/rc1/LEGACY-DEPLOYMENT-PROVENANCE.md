@@ -2,7 +2,7 @@
 
 **Owner:** T0 Migration Architect  
 **Date:** 2026-11-21  
-**origin/main (verified):** `c5c644c386cbedde788c4e12e0585c43dc1b5a5d`  
+**origin/main (verified):** `2c1cf6592f246553c66c3bc90d00385bf65d4c29` (PR #36; Path2 work historically on `c5c644c…`)  
 **Repo schema constant:** `RuntimeCache::SCHEMA_VERSION = 10.24.0-rc1`  
 
 ## Status labels (authoritative)

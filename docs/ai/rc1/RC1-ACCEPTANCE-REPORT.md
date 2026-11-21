@@ -2,12 +2,12 @@
 
 **Owner:** T0 final RC1 acceptance closure  
 **Pre-closure baseline `main` SHA:** `2a30f5abac6291af2e6d3ccf1f87446335c84bad`  
-**Final `main` SHA (PR #32 merged):** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
-**Verified `origin/main` (2026-11-21):** `c5c644c386cbedde788c4e12e0585c43dc1b5a5d` (PR #35 tip)  
-**Closure branch:** `fix/rc1-final-legacy-data-ci-closure` (PR #36)  
+**Intermediate tips (historical):** PR #32 `52fa7f12…`; PR #35 `c5c644c…`  
+**Verified `origin/main` (final):** `2c1cf6592f246553c66c3bc90d00385bf65d4c29` (PR #36 MERGED)  
+**Closure branch:** `fix/rc1-final-legacy-data-ci-closure` → **merged PR #36**  
 **Report date:** 2026-11-21  
 **DATABASE_TESTED:** **true** (disposable sandbox; Path2 anonymized data)  
-**Independent verdict:** **RC1_ACCEPTED** on candidate — P1-001 **CLOSED** (`SCHEMA_UPGRADE_TESTED` disposable Path2) + P1-006 **CLOSED** (GHA SUCCESS). Merge PR #36 to land on `main`. Production **NOT_DEPLOYED**. No `FRESH_INSTALL`.
+**Independent verdict:** **RC1_ACCEPTED** on `main` — P1-001 **CLOSED** (`SCHEMA_UPGRADE_TESTED` disposable Path2) + P1-006 **CLOSED** (GHA SUCCESS on final SHA). Production **NOT_DEPLOYED**. Staging **not** `STAGING_VERIFIED`. No `FRESH_INSTALL`.
 
 ---
 
@@ -37,7 +37,7 @@
 
 **Commercial MVP CI on Final main:** SUCCESS (source-only) — https://github.com/AmirAbedini78/excel-dev/actions/runs/44810790482 — **insufficient** alone for RC1 acceptance.
 
-**GHA MySQL+PHP mandatory workflow:** **INSTALLED** at `.github/workflows/rc1-mysql-php-gate.yml` (dual `O2C_DB_HOST` / `O2C_DB_HOST_PHP`). Real GHA run on candidate `03728b1…`: **SUCCESS** — https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555. RC1-P1-006 **CLOSED** on candidate SHA (merge to `main` still pending). Evidence: `agent_a_gha_status.json`.
+**GHA MySQL+PHP mandatory workflow:** **INSTALLED** at `.github/workflows/rc1-mysql-php-gate.yml` (dual `O2C_DB_HOST` / `O2C_DB_HOST_PHP`). Post-merge on final SHA `2c1cf65…`: **SUCCESS** — https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872. Historical candidate SUCCESS: https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555. RC1-P1-006 **CLOSED** on `main`. Evidence: `agent_a_gha_status.json` + post-merge runs.
 
 **Local gates:** `rc1_ci_mysql_php_gate` PASS; `rc1_acceptance_gate --strict-pass` script PASS=5; `release_gate --require-php --require-node` on tip.
 
@@ -51,7 +51,7 @@
 
 | Lane | Status | Result |
 |------|--------|--------|
-| Agent A — GHA | **DONE** | Workflow installed; GHA SUCCESS on `03728b1…` (run 44894856555); P1-006 CLOSED on candidate |
+| Agent A — GHA | **DONE** | Workflow installed; post-merge SUCCESS on `2c1cf65…` (run 44931684872); P1-006 CLOSED on main |
 | Agent B — Browser | **DONE** | **`LOCAL_BROWSER_VERIFIED`** — real screenshots under `evidence/browser/`; not `STAGING_VERIFIED` |
 | Agent C — Provenance | **DONE** | Path2 anon restore + migrate×2 + recon PASS; P1-001 **CLOSED**; `SCHEMA_UPGRADE_TESTED` |
 | Agent D — Docs | **DONE** | Classes/SHA/MF wording reconciled; verdict remains `RC1_BLOCKED` |
@@ -73,8 +73,8 @@
 | Owner Path2 | `CAMPAIGN_PATH2_DUMP_PROVIDED` |
 | `SCHEMA_UPGRADE_TESTED` | **CLAIMED** (disposable Path2 only) |
 | RC1-P1-001 | **CLOSED** |
-| RC1-P1-006 | **CLOSED** on candidate SHA (GHA SUCCESS) |
-| Full RC1 acceptance | **RC1_ACCEPTED** on candidate (merge PR #36 to land on main) |
+| RC1-P1-006 | **CLOSED** on `main` (post-merge GHA SUCCESS) |
+| Full RC1 acceptance | **RC1_ACCEPTED** on `main` @ `2c1cf65…` |
 
 Deliverables: anonymizer/reconcile scripts, `ops1_legacy_anonymization.json`, GHA workflow install, blockers/acceptance updates.
 
