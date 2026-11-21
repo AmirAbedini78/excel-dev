@@ -3,7 +3,7 @@
 **Lane:** D — Staging deployment plan (docs only)  
 **Campaign:** ERPSMART RC1 STAGING RELEASE READINESS  
 **Date:** 2026-11-21  
-**Authoritative staging-release SHA:** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**Authoritative staging-release SHA:** `14fcf69c669f63ad33dc40f6e10043aa580e04d0`  
 **Product feature baseline:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
 **Includes:** PR #38 staging executor + safety patch  
 **Authorization:** Remote staging access **NOT** granted. This document is a **plan only**. No remote mutate, no cPanel/SSH/FTP by agents, no production language that implies go-live authorization.

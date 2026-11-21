@@ -3,7 +3,7 @@
 **Lane:** C — Operational Staging UAT (procedures + test skeleton only)  
 **Campaign:** ERPSMART RC1 Staging Pre-Flight  
 **Date:** 2026-11-21  
-**Authoritative staging-release SHA:** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**Authoritative staging-release SHA:** `14fcf69c669f63ad33dc40f6e10043aa580e04d0`  
 **Product feature baseline:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
 **Schema:** `10.24.0-rc1` (`RuntimeCache::SCHEMA_VERSION`)
 

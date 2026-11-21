@@ -1,7 +1,7 @@
 # RC1 Staging Package Integrity (Agent B)
 
 **Campaign:** ERPSMART RC1 Staging Safety Patch — Security & package audit  
-**Authoritative staging-release SHA:** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**Authoritative staging-release SHA:** `14fcf69c669f63ad33dc40f6e10043aa580e04d0`  
 **Product feature baseline (ancestry only):** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
 **Schema constant:** `RuntimeCache::SCHEMA_VERSION = 10.24.0-rc1`  
 **Date:** 2026-11-21  
@@ -18,8 +18,8 @@
 ```powershell
 cd C:\Projects\excel-dev   # or your clone path
 git fetch origin
-git rev-parse POST_MERGE_MAIN_TIP_CI_GREEN^{commit}
-# Must print: POST_MERGE_MAIN_TIP_CI_GREEN
+git rev-parse 14fcf69c669f63ad33dc40f6e10043aa580e04d0^{commit}
+# Must print: 14fcf69c669f63ad33dc40f6e10043aa580e04d0
 ```
 
 ### 1.2 `git archive` (preferred)
@@ -29,7 +29,7 @@ Produces a **clean tree at exactly one commit** — no dirty working-tree files.
 ```powershell
 git archive --format=zip `
   -o erpsmart-rc1-staging.zip `
-  POST_MERGE_MAIN_TIP_CI_GREEN
+  14fcf69c669f63ad33dc40f6e10043aa580e04d0
 ```
 
 POSIX:
@@ -37,7 +37,7 @@ POSIX:
 ```bash
 git archive --format=zip \
   -o erpsmart-rc1-staging.zip \
-  POST_MERGE_MAIN_TIP_CI_GREEN
+  14fcf69c669f63ad33dc40f6e10043aa580e04d0
 ```
 
 Record archive SHA-256 (see آ§1.4 and `RC1-STAGING-RELEASE-PACKAGE-MANIFEST.md`).
@@ -46,7 +46,7 @@ Record archive SHA-256 (see آ§1.4 and `RC1-STAGING-RELEASE-PACKAGE-MANIFEST.md
 
 Use only if archive is unavailable:
 
-1. `git worktree add ../erpsmart-rc1-export POST_MERGE_MAIN_TIP_CI_GREEN`
+1. `git worktree add ../erpsmart-rc1-export 14fcf69c669f63ad33dc40f6e10043aa580e04d0`
 2. Copy tree **after** applying the exclude list (آ§2) into a fresh ZIP.
 3. Remove worktree when done.
 
@@ -56,7 +56,7 @@ Use only if archive is unavailable:
 
 | Field | Example (prior T0 rehearsal @ same SHA; **recompute** on each build) |
 |-------|------------------------------------------------------------------------|
-| Staging-release git SHA | `POST_MERGE_MAIN_TIP_CI_GREEN` |
+| Staging-release git SHA | `14fcf69c669f63ad33dc40f6e10043aa580e04d0` |
 | Product baseline (ancestry) | `2c1cf6592f246553c66c3bc90d00385bf65d4c29` |
 | Archive name | `erpsmart-rc1-staging.zip` |
 | Byte size | ~2.1 MB (tree-only; varies slightly with doc tips) |

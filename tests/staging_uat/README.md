@@ -1,7 +1,7 @@
 # RC1 Staging UAT — Playwright skeleton (optional)
 
 **Purpose:** Executable examples for **future authorized staging** browser checks.  
-**Staging-release SHA:** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**Staging-release SHA:** `14fcf69c669f63ad33dc40f6e10043aa580e04d0`  
 **Product baseline:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
 **Status:** Not run by default. Repo has **no** root `package.json`; adopt Playwright locally when owner provisions staging.  
 **Classification:** see [`docs/ai/rc1/RC1-STAGING-UAT-INVENTORY.md`](../../docs/ai/rc1/RC1-STAGING-UAT-INVENTORY.md) — page-open â‰  full pay proof.
