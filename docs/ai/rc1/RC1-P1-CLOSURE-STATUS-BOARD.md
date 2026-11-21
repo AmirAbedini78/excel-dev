@@ -24,8 +24,8 @@
 | RC1-P1-005 Trading Persian | T0 | **CLOSED** | `P2P_SUPPLIER_INVOICE_DUPLICATE` + Persian |
 | RC1-P1-005 OPS restore | T0 | **CLOSED** | privileged restore+migrate×2 PASS |
 | RC1-P1-004 Browser SYS-1 | Agent B / T0 | **CLOSED (local)** | `LOCAL_BROWSER_VERIFIED`; staging residual P2 |
-| RC1-P1-001 OPS provenance | User | **OPEN / BLOCKED_EXTERNAL** | eng restore CLOSED; provenance UNAVAILABLE; see `OPS1-OWNER-ACTIONS.md` |
-| RC1-P1-006 GHA MySQL workflow | Owner | **OPEN / BLOCKED_EXTERNAL** | needs `gh auth refresh -h github.com -s workflow`; GHA E2E **not** enabled |
+| RC1-P1-001 OPS provenance | User + T0 | **OPEN / BLOCKED_EXTERNAL** | anon dump+leak_scan PASS; data recon NOT_RUN; owner attestation missing |
+| RC1-P1-006 GHA MySQL workflow | T0 | **CLOSED_ON_CANDIDATE_SHA** | GHA SUCCESS https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 ; merge PR #36 |
 | P2-002 PR #29 | T0 | **CLOSED** | superseded by PR #32; PR #29 closed |
 
 ## Peer agent lanes (final)

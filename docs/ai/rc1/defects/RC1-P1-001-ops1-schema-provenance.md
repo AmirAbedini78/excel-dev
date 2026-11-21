@@ -16,9 +16,12 @@ OPS-1 requires cumulative migration evidence from an *actual prior deployed sche
 
 ## Actual
 - Deployment status: **`EXISTING_DEPLOYMENT_CONFIRMED`**.
-- Candidate: `zzflgmfd_excel2.sql` SHA-256 `2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC` (offline only).
-- Structural schema-only sanitize + disposable migrate×2 + rollback: **PASS** (`ops1_legacy_schema_structural_rehearsal.json`) — **not** full upgrade acceptance.
-- Independent classification: **BLOCKED_EXTERNAL** until Path2 data artifact verified.
+- Candidate: `zzflgmfd_excel2.sql` SHA-256 `2D695C068CD8EBAE6C8010FE6A9FE254E6F0392B97B5D6FB1329DE07A63419EC` (checksum re-verified).
+- Offline schema-aware anonymization + leak_scan: **PASS** — anon SHA-256 `F3B92C0088A874A739FCD64BF25FA714010078C3EB95DFDF81ADC92335841DE2` (`ops1_legacy_anonymization.json`); dump not in Git.
+- Structural schema-only migrate×2 + rollback: **PASS** (prior) — **not** full upgrade acceptance.
+- Anonymized **data** restore → migrate×2 → reconciliation: **NOT_RUN** (`ops1_legacy_data_rehearsal.json` — local disposable MySQL unavailable after sandbox recreate).
+- Owner attestation linking candidate to prior deployment: **NOT_PROVIDED**.
+- Independent classification: **BLOCKED_EXTERNAL**.
 - Engineering synthetic restore drill remains **CLOSED** (`ops1_backup_restore_closure.json`).
 
 ## Owner actions

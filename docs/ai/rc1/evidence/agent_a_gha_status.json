@@ -1,7 +1,12 @@
 {
   "lane": "T0 / Agent A — GHA MySQL+PHP E2E (RC1-P1-006)",
-  "verified_at_utc": "2026-11-21T10:30:00Z",
+  "verified_at_utc": "2026-11-21T10:35:00Z",
   "baseline_main_sha": "c5c644c386cbedde788c4e12e0585c43dc1b5a5d",
+  "candidate_sha": "03728b145e67f0f6fe2179fe6a7e1df0badad8e5",
+  "pr": {
+    "number": 36,
+    "url": "https://github.com/AmirAbedini78/excel-dev/pull/36"
+  },
   "networking_fix": {
     "O2C_DB_HOST": "runner/pymysql (127.0.0.1 on GHA)",
     "O2C_DB_HOST_PHP": "PHP Docker in-container (host.docker.internal)",
@@ -15,11 +20,14 @@
   "fail_on_skip": true,
   "disposable_dbs": ["erpsmart_mf1_test", "erpsmart_t3_trading_test"],
   "real_gha_run": {
-    "status": "PENDING_PUSH",
-    "url": null,
-    "conclusion": null,
-    "note": "Workflow installed on branch; claim GHA E2E enabled only after SUCCESS on final SHA"
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555",
+    "head_sha": "03728b145e67f0f6fe2179fe6a7e1df0badad8e5",
+    "job": "rc1-mysql-php",
+    "note": "Real Actions SUCCESS on PR tip; local green ≠ claim basis"
   },
-  "gha_e2e_enabled_claim": false,
-  "p1_006_status": "OPEN"
+  "gha_e2e_enabled_claim": true,
+  "p1_006_status": "CLOSED_ON_CANDIDATE_SHA",
+  "merged_to_main": false
 }
