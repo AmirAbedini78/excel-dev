@@ -61,6 +61,7 @@ require_once APP_ROOT . '/app/Core/AiEntityRegistry.php';
 require_once APP_ROOT . '/app/Core/AiContextResolver.php';
 require_once APP_ROOT . '/app/Core/AiContextEnvelope.php';
 require_once APP_ROOT . '/app/Core/AiEnginePreferences.php';
+require_once APP_ROOT . '/app/Core/AiAgentTaskState.php';
 require_once APP_ROOT . '/app/Core/AiRepository.php';
 require_once APP_ROOT . '/app/Core/BusinessCopilotApi.php';
 require_once APP_ROOT . '/app/Core/BusinessCopilot.php';
