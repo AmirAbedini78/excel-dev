@@ -1,0 +1,41 @@
+{
+  "lane": "T0 Staging Release Readiness Orchestrator",
+  "verified_at_utc": "2026-11-21T18:00:00Z",
+  "immutable_main_sha": "2c1cf6592f246553c66c3bc90d00385bf65d4c29",
+  "pr36_merged": true,
+  "rc1_engineering": "RC1_ACCEPTED",
+  "production": "NOT_AUTHORIZED",
+  "remote_staging_auth": false,
+  "ci": {
+    "commercial_mvp": {
+      "conclusion": "success",
+      "url": "https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684788",
+      "head_sha": "2c1cf6592f246553c66c3bc90d00385bf65d4c29"
+    },
+    "rc1_mysql_php": {
+      "conclusion": "success",
+      "url": "https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872",
+      "head_sha": "2c1cf6592f246553c66c3bc90d00385bf65d4c29"
+    }
+  },
+  "browser": {
+    "LOCAL_BROWSER_VERIFIED": true,
+    "STAGING_VERIFIED": false,
+    "blocker": "NO_STAGING_URL_OR_OWNER_AUTH"
+  },
+  "mf_valuation": {
+    "wip_fg": "UNVALUED",
+    "gl": "BLOCKED"
+  },
+  "ops1": "PASS_PATH2_DISPOSABLE_REHEARSAL",
+  "release_artifact": {
+    "method": "git archive --format=zip",
+    "sha": "2c1cf6592f246553c66c3bc90d00385bf65d4c29",
+    "built_this_pass": true,
+    "committed": false,
+    "bytes": 2119407,
+    "sha256": "6F7E7011B9D3FF834A392E9004476E91981C30FF5C900857B1B6771D66DF6380",
+    "note": "Reproducible; zip not stored in git"
+  },
+  "staging_verdict_candidate": "STAGING_READY"
+}

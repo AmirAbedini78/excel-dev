@@ -25,10 +25,15 @@ Do not treat Commercial MVP Gate alone as RC1 pass.
 
 Do **not** forward loopback into PHP containers. Gate remaps loopback → `host.docker.internal` when `O2C_DB_HOST_PHP` is unset. E2E harnesses pass `--add-host=host.docker.internal:host-gateway`.
 
-## GitHub Actions (enabled on candidate)
+## GitHub Actions (on final main)
+
+| Workflow | Final SHA `2c1cf659…` | Result |
+|----------|------------------------|--------|
+| Commercial MVP Gate | https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684788 | **SUCCESS** (source-only) |
+| RC1 MySQL+PHP Gate | https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872 | **SUCCESS** (fail-on-skip) |
 
 - Installed: `.github/workflows/rc1-mysql-php-gate.yml`
 - Source mirror: `docs/ai/rc1/ci/rc1-mysql-php-gate.yml`
-- Real SUCCESS: https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 on SHA `03728b145e67f0f6fe2179fe6a7e1df0badad8e5` (PR #36)
-- Evidence: `docs/ai/rc1/evidence/agent_a_gha_status.json`
-- Local green ≠ GHA green — claim basis is the Actions SUCCESS above.
+- Historical candidate SUCCESS (pre-merge PR #36): https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555
+- Evidence: `docs/ai/rc1/evidence/agent_a_gha_status.json` (candidate era); post-merge claim basis = runs above on `2c1cf65…`
+- Local green ≠ GHA green — post-merge Actions SUCCESS is the claim basis for main.

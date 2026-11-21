@@ -3,9 +3,8 @@
 **Independent open P0:** **0**  
 **Independent open P1 (blocking RC1 acceptance):** **0**  
 **Independent open P2:** **1** (optional staging browser — not claimed STAGING_VERIFIED)  
-**Verified `origin/main`:** `c5c644c386cbedde788c4e12e0585c43dc1b5a5d` (PR #35)  
-**Candidate branch:** `fix/rc1-final-legacy-data-ci-closure` (PR #36)  
-**Verdict impact:** `RC1_ACCEPTED` on candidate — Path2 data rehearsal **PASS** + GHA MySQL+PHP **SUCCESS**; merge PR #36 to land on `main`. Production **NOT_DEPLOYED**.
+**Verified `origin/main`:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29` (PR #36 MERGED)  
+**Verdict impact:** `RC1_ACCEPTED` on `main` — Path2 data rehearsal **PASS** + post-merge GHA Commercial + MySQL+PHP **SUCCESS**. Production **NOT_DEPLOYED**. Staging readiness ≠ `STAGING_VERIFIED` without owner remote auth.
 
 ## Contract class summary (independent)
 
@@ -58,11 +57,11 @@
 |-------|-------|
 | Severity | **P1 → CLOSED (candidate)** |
 | Contract | OPS-1 / CI gate |
-| Class | **GHA_E2E_ENABLED** on candidate SHA |
+| Class | **GHA_E2E_ENABLED** on final main SHA |
 | Owner | T0 |
-| Status | **CLOSED_ON_CANDIDATE_SHA** — merge PR #36 to land on `main` |
+| Status | **CLOSED on main** — post-merge SUCCESS https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872 |
 
-**Evidence:** `agent_a_gha_status.json`. Installed `.github/workflows/rc1-mysql-php-gate.yml` with dual host (`O2C_DB_HOST=127.0.0.1`, `O2C_DB_HOST_PHP=host.docker.internal`) + fail-on-skip. Real Actions **SUCCESS**: https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 on `03728b145e67…`. Local green ≠ claim basis — GHA SUCCESS is the claim basis.
+**Evidence:** `agent_a_gha_status.json` (candidate era) + post-merge runs on `2c1cf65…`. Installed `.github/workflows/rc1-mysql-php-gate.yml` with dual host + fail-on-skip. Local green ≠ claim basis — post-merge GHA SUCCESS is the claim basis.
 
 ## P1 — Engineering closed (on main via PR #32)
 

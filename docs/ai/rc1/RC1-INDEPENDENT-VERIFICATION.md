@@ -2,19 +2,20 @@
 
 **Auditor:** T0 final RC1 acceptance closure  
 **Verified at (UTC):** 2026-11-21  
-**Decision:** `RC1_ACCEPTED` on candidate PR #36  
-**Production:** `NOT_DEPLOYED`
+**Decision:** `RC1_ACCEPTED` on `main`  
+**Production:** `NOT_DEPLOYED`  
+**Staging browser:** `LOCAL_BROWSER_VERIFIED` only (not `STAGING_VERIFIED`)
 
 ## Git / release provenance
 
 | Item | Verified value |
 |------|----------------|
 | Pre-closure `origin/main` SHA | `2a30f5abac6291af2e6d3ccf1f87446335c84bad` |
-| **Final `origin/main` SHA** | **`52fa7f12f465653d6e445d484f1a8dda48215f45`** |
-| Closure merge | **PR #32** MERGED (`fix/rc1-stabilization-p1-closure`) |
-| PR #30 | MERGED (product RC1) |
-| PR #31 | MERGED (audit docs) |
-| PR #29 | **CLOSED** — superseded by PR #32; lock/DDL ideas absorbed |
+| Intermediate (PR #32) | `52fa7f12f465653d6e445d484f1a8dda48215f45` |
+| **Final `origin/main` SHA** | **`2c1cf6592f246553c66c3bc90d00385bf65d4c29`** |
+| Closure merge | **PR #36** MERGED (`fix/rc1-final-legacy-data-ci-closure`) |
+| Prior merges | PR #30, #31, #32 |
+| PR #29 | **CLOSED** — superseded by PR #32 |
 | Schema constant | `RuntimeCache::SCHEMA_VERSION = 10.24.0-rc1` |
 
 ## Contract classification (closure re-check)
@@ -35,9 +36,9 @@
 | `python scripts/rc1_acceptance_gate.py --strict-pass` | script **PASS=5** under `RC1_PROD_SCHEMA_PROVENANCE=UNAVAILABLE_NOT_DEPLOYED` — independent acceptance still **BLOCKED** |
 | `python scripts/release_gate.py --require-php --require-node` | tip evidence logs under `docs/ai/rc1/evidence/` |
 | Disposable sandbox | `erpsmart-p2p-mysql-test` / `02eb215a87f6…` / `server_uuid=a73a8a84-e4bd-11f1-ad33-7e073bee960b` / port 3307 |
-| Agent A GHA | **SUCCESS** — `.github/workflows/rc1-mysql-php-gate.yml`; run https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 (and subsequent PR #36 SUCCESS) |
+| Agent A GHA (post-merge) | **SUCCESS** — Commercial https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684788 · RC1 MySQL+PHP https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872 |
 | Agent B browser screenshots | **LOCAL_BROWSER_VERIFIED** — `docs/ai/rc1/evidence/browser/` |
 
 ## Verdict rationale
 
-Engineering P1-005 closed via PR #32. Path2 anonymized data migrate×2 + recon **PASS** (P1-001 **CLOSED**, `SCHEMA_UPGRADE_TESTED` disposable). GHA MySQL+PHP **SUCCESS** (P1-006 **CLOSED** on candidate). Local SYS-1 remains **LOCAL_BROWSER_VERIFIED** (not staging). Therefore **`RC1_ACCEPTED`** on candidate PR #36. Merge to `main` still pending. Production `NOT_DEPLOYED`. Do **not** invent `STAGING_VERIFIED` / `FRESH_INSTALL`. WIP/FG valuation remains not fully supported (`UNVALUED` / `GL_BLOCKED`).
+Engineering P1-005 closed via PR #32. Path2 anonymized data migrate×2 + recon **PASS** (P1-001 **CLOSED**, `SCHEMA_UPGRADE_TESTED` disposable). Post-merge GHA Commercial + MySQL+PHP **SUCCESS** on `2c1cf65…` (P1-006 **CLOSED** on main). Local SYS-1 remains **LOCAL_BROWSER_VERIFIED** (not staging). Therefore **`RC1_ACCEPTED`** on `main`. Production `NOT_DEPLOYED`. Do **not** invent `STAGING_VERIFIED` / `FRESH_INSTALL`. WIP/FG valuation remains not fully supported (`UNVALUED` / `GL_BLOCKED`).

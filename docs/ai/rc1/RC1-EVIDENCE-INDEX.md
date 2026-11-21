@@ -1,11 +1,11 @@
 # RC1 Evidence Index
 
 **Pre-closure baseline SHA:** `2a30f5abac6291af2e6d3ccf1f87446335c84bad`  
-**Final `main` SHA (PR #32 merged):** `52fa7f12f465653d6e445d484f1a8dda48215f45`  
-**Closure branch:** `fix/rc1-stabilization-p1-closure` → **merged PR #32**  
+**Final `main` SHA:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29` (PR #36 MERGED)  
+**Historical intermediate:** PR #32 `52fa7f12…`  
 **Environment:** Windows system-2; Docker MySQL + `erpsmart-o2c-php:8.2`  
 **Secrets:** redacted — default disposable `p2p` / test DB only; never production.  
-**Independent verdict:** `RC1_ACCEPTED` on candidate PR #36 — production `NOT_DEPLOYED`
+**Independent verdict:** `RC1_ACCEPTED` on `main` — production `NOT_DEPLOYED`; browser `LOCAL_BROWSER_VERIFIED` only
 
 ## Sandbox identity (beyond DB name)
 
@@ -38,12 +38,13 @@
 | Commercial source+E2E local | `python scripts/release_gate.py --require-php --require-node` | tip run (see `release_gate_closure_final.log`) |
 | Disposable restore closure | privileged dump/restore + migrate×2 | **PASS** `ops1_backup_restore_closure.json` (eng CLOSED) |
 
-## CI URLs
+## CI URLs (pin final SHA)
 
-- PR #32 Commercial MVP (PR check): https://github.com/AmirAbedini78/excel-dev/actions/runs/44810526566  
-- Final main push Commercial MVP @ `52fa7f12…`: https://github.com/AmirAbedini78/excel-dev/actions/runs/44810790482 (**SUCCESS**, source-only)  
+- Commercial MVP @ `2c1cf65…`: https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684788 (**SUCCESS**, source-only)  
+- RC1 MySQL+PHP @ `2c1cf65…`: https://github.com/AmirAbedini78/excel-dev/actions/runs/44931684872 (**SUCCESS**)  
 - Mandatory RC1 MySQL workflow: `.github/workflows/rc1-mysql-php-gate.yml`  
-- **Agent A GHA MySQL+PHP:** **SUCCESS** — https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 (`agent_a_gha_status.json`). P1-006 **CLOSED_ON_CANDIDATE_SHA**.
+- Historical candidate GHA: https://github.com/AmirAbedini78/excel-dev/actions/runs/44894856555 (`agent_a_gha_status.json`)  
+- Staging readiness summary: `staging_readiness_t0_status.json` + `RC1-STAGING-READINESS-FA.md`
 
 ## Artifacts (`docs/ai/rc1/evidence/`)
 
