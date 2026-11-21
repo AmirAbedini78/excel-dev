@@ -1,0 +1,45 @@
+{
+  "ok": true,
+  "drill": "rc1_staging_schema_migrate",
+  "started_at": "2026-11-21T18:18:12+00:00",
+  "repo_schema_version": "10.24.0-rc1",
+  "mode": "disposable_sim",
+  "dry_run": true,
+  "steps_log": [
+    {
+      "phase": "dry_run",
+      "ok": true
+    }
+  ],
+  "env_identity": "disposable-staging-sim-lab",
+  "auth_present": true,
+  "preflight_reviewed": true,
+  "db": {
+    "host": "host.docker.internal",
+    "port": 3307,
+    "database": "erpsmart_rc1_staging_executor_test",
+    "username": "p2p"
+  },
+  "prod_identity_declared": {
+    "db_name": "zzflgmfd_excel2_PRODUCTION_DECLARED",
+    "host": "prod.example.invalid",
+    "differs_from_staging_db": true
+  },
+  "backup": {
+    "path": "/app/storage/cache/rc1_staging_executor_test/pre_migrate_fixture.sql",
+    "sha256": "95b16f2d3a804acc3099fc70e1e13b7d46acd044270343377f3f8bc753fef3be",
+    "bytes": 68,
+    "verified": true
+  },
+  "cache_dir": "/app/storage/cache/rc1_staging_executor_test",
+  "prod_cache_cleared": false,
+  "server_uuid": "ff0092ef-e5d1-11f1-9a87-2e6b1b469ce1",
+  "mysql_version": "8.0.46",
+  "tables_before": 0,
+  "maintenance_lock": {
+    "path": "/app/storage/maintenance/rc1_offline_migrate.lock",
+    "engaged": true
+  },
+  "note": "Dry-run/preflight only — no migrate applied. Re-run without --dry-run / RC1_STAGING_DRY_RUN after review.",
+  "finished_at": "2026-11-21T18:18:12+00:00"
+}

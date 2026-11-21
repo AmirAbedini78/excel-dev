@@ -108,23 +108,31 @@ Disposable local rehearsal used container MySQL; **staging** uses owner cPanel M
 4. Prefer additive migrations; no automated down-migration shipped.
 5. Run migrate **twice** (idempotency) on staging after first successful pass, mirroring disposable rehearsal.
 
-### 4.2 Preferred offline path (from preflight)
+### 4.2 Preferred offline path (staging operator CLI)
 
-Local/disposable template (adapt host/port/user/name for staging secrets store — never commit passwords):
-
-```text
-scripts/rc1_legacy_schema_migrate_rehearsal.php
-```
+**Staging entrypoint (no Docker dependency; shared hosting / cPanel friendly):**
 
 ```text
-O2C_DB_HOST=<staging-mysql-host>
-O2C_DB_PORT=<staging-port>
-O2C_DB_USER=<staging-user>
-O2C_DB_NAME=<staging-db-name>
-# O2C_DB_PASS from owner secret store
+scripts/rc1_staging_schema_migrate.php
 ```
 
-On shared hosting, operator may run equivalent PHP CLI via SSH/cron **if** owner provides that channel; agents must not initiate it.
+Shared cumulative steps (no duplicated DDL): `scripts/lib/rc1_cumulative_migrate.php`  
+Disposable rehearsal runner (Docker identity gates **unweakened**): `scripts/rc1_legacy_schema_migrate_rehearsal.php`
+
+Required staging env (secrets out-of-band — never commit):
+
+```text
+RC1_STAGING_OPERATOR_AUTH=<owner-issued-token>
+RC1_STAGING_ENV_IDENTITY=<must-identify-staging>
+RC1_STAGING_PREFLIGHT_REVIEWED=1
+RC1_STAGING_DB_HOST / PORT / USER / PASS / NAME
+RC1_PROD_DB_NAME=<declared-prod-db-for-refuse-gate>
+RC1_PRE_MIGRATE_BACKUP_PATH + RC1_PRE_MIGRATE_BACKUP_SHA256
+RC1_STAGING_CACHE_DIR=<path-containing-staging>
+# Optional: RC1_STAGING_DRY_RUN=1  then apply without dry-run
+```
+
+Remote execute still requires **new** written owner auth — see `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md`. Agents must not initiate remote migrate.
 
 ### 4.3 Staging migrate sequence (planned)
 
@@ -170,20 +178,22 @@ On shared hosting, operator may run equivalent PHP CLI via SSH/cron **if** owner
 
 Adapt from `T6-BROWSER-NOTES.md` local cases; capture under agreed path (e.g. `docs/ai/rc1/evidence/browser/staging/`) **after** owner authorizes remote work.
 
-| # | Case | Pass criteria |
-|---|------|---------------|
-| S1 | Health / login page | Staging URL loads; login form RTL |
-| S2 | Login / logout | Auth session works; logout → login |
-| S3 | Company select / isolation | Company filter isolates data |
-| S4 | Trading cockpit | Loads; RTL; no 500 |
-| S5 | Manufacturing cockpit | Loads; expect WIP/FG **BLOCKED** / valuation banners — **do not** expect auto GL FG |
-| S6 | Service / retail profiles | Loads; IRR / Toman display behavior coherent |
-| S7 | Jalali date | Header/calendar Jalali coherent |
-| S8 | Limited role | Viewer cannot perform forbidden writes |
-| S9 | CSRF | Bad/missing token → HTTP 419 |
-| S10 | Empty / error states | Empty pipelines without fatal errors |
-| S11 | Post-migrate schema gate | App does not re-run destructive migrate on first hit; cache consistent |
-| S12 | Financial spot check (if seeded) | Sample voucher Dr=Cr; stock qty not silently altered |
+**Executable UAT (step-by-step):** [`RC1-STAGING-UAT-PROCEDURES.md`](RC1-STAGING-UAT-PROCEDURES.md) — maps each smoke row to procedure IDs (UAT-AUTH-*, UAT-TENANT-*, etc.), pass criteria, and evidence filenames. Optional Playwright examples: `tests/staging_uat/` (`STAGING_BASE_URL` required; fail-closed if unset or production-like host). **Current browser class remains `LOCAL_BROWSER_VERIFIED` only** — not `STAGING_VERIFIED`.
+
+| # | Case | Pass criteria | UAT procedure(s) |
+|---|------|---------------|------------------|
+| S1 | Health / login page | Staging URL loads; login form RTL | UAT-AUTH-001 |
+| S2 | Login / logout | Auth session works; logout → login | UAT-AUTH-002, UAT-AUTH-003 |
+| S3 | Company select / isolation | Company filter isolates data | UAT-TENANT-001, UAT-TENANT-002 |
+| S4 | Trading cockpit | Loads; RTL; no 500 | UAT-P2P-001, UAT-UX-001 |
+| S5 | Manufacturing cockpit | Loads; expect WIP/FG **BLOCKED** / valuation banners — **do not** expect auto GL FG | UAT-MF-001 |
+| S6 | Service / retail profiles | Loads; IRR / Toman display behavior coherent | UAT-SVC-001, UAT-RTL-RETAIL-001, UAT-UX-003 |
+| S7 | Jalali date | Header/calendar Jalali coherent | UAT-UX-002 |
+| S8 | Limited role | Viewer cannot perform forbidden writes | UAT-TENANT-003 |
+| S9 | CSRF | Bad/missing token → HTTP 419 | UAT-SEC-001, UAT-SEC-002 |
+| S10 | Empty / error states | Empty pipelines without fatal errors | UAT-EMPTY-001 |
+| S11 | Post-migrate schema gate | App does not re-run destructive migrate on first hit; cache consistent | UAT-FIN-003 |
+| S12 | Financial spot check (if seeded) | Sample voucher Dr=Cr; stock qty not silently altered | UAT-FIN-001, UAT-FIN-002 |
 
 **Explicit non-goals for smoke:** claiming Iranian regulatory compliance; posting live bank/tax/Sayad; proving WIP/FG valuation complete.
 

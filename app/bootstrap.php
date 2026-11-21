@@ -72,6 +72,19 @@ require_once APP_ROOT . '/app/Core/DashboardTradingCockpit.php';
 require_once APP_ROOT . '/app/Core/DashboardManufacturingCockpit.php';
 require_once APP_ROOT . '/app/Core/Xlsx.php';
 
+// Offline staging/ops migrate lock — block web until operator CLI completes.
+// CLI runners and install.php are not gated here; never auto-clears production cache.
+$rc1OfflineLock = APP_ROOT . '/storage/maintenance/rc1_offline_migrate.lock';
+if (PHP_SAPI !== 'cli' && is_file($rc1OfflineLock)) {
+    http_response_code(503);
+    header('Retry-After: 120');
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>تعمیرات</title></head>';
+    echo '<body><h1>سامانه موقتاً در حالت مهاجرت آفلاین است</h1>';
+    echo '<p>Offline schema migration in progress. Please retry shortly.</p></body></html>';
+    exit;
+}
+
 if (file_exists($configFile)) {
     DB::connect($CONFIG['db']);
     RuntimeCache::boot(APP_ROOT . '/storage/cache', $CONFIG['db'] ?? []);
