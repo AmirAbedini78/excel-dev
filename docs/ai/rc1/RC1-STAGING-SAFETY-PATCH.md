@@ -7,7 +7,7 @@
 
 ## One package rule
 
-**Post-merge rule:** After this PR merges and both GHA workflows are green on `main`, replace every `14fcf69c669f63ad33dc40f6e10043aa580e04d0` token with that exact `origin/main` SHA (single authoritative staging-release pin). Until then the token is a deliberate placeholder so the commit does not self-reference the wrong hash.
+**Pin status:** Authoritative staging-release package SHA below is the PR #39 merge tip on `main` after both GHA workflows succeeded. Docs-pin PR #40 only fills this identity; do not claim `STAGING_VERIFIED`.
 
 Deployable staging ZIP / document-root pin = **ONE** SHA:
 
