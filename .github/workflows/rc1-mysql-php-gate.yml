@@ -44,6 +44,8 @@ jobs:
       O2C_DB_USER: p2p
       O2C_DB_PASS: p2p_test
       O2C_DB_NAME: erpsmart_mf1_test
+      O2C_DB_ROOT_USER: root
+      O2C_DB_ROOT_PASS: p2p_test_root
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,8 +63,12 @@ jobs:
             mysql -h127.0.0.1 -P3306 -uroot -pp2p_test_root -e "
               CREATE DATABASE IF NOT EXISTS erpsmart_mf1_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
               CREATE DATABASE IF NOT EXISTS erpsmart_t3_trading_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+              CREATE DATABASE IF NOT EXISTS erpsmart_rc1_staging_executor_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+              CREATE DATABASE IF NOT EXISTS erpsmart_rc1_staging_backup_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
               GRANT ALL PRIVILEGES ON erpsmart_mf1_test.* TO 'p2p'@'%';
               GRANT ALL PRIVILEGES ON erpsmart_t3_trading_test.* TO 'p2p'@'%';
+              GRANT ALL PRIVILEGES ON erpsmart_rc1_staging_executor_test.* TO 'p2p'@'%';
+              GRANT ALL PRIVILEGES ON erpsmart_rc1_staging_backup_test.* TO 'p2p'@'%';
               FLUSH PRIVILEGES;
             "
       - name: RC1 mandatory PHP+MySQL gate (fail on skip)

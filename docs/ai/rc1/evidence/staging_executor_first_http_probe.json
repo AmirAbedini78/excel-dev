@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "drill": "rc1_staging_first_http_probe",
+  "schema_ready": true,
+  "would_rerun_cumulative_ddl": false,
+  "ddl_invocations_if_http": 0,
+  "first_http_skips_ddl": true,
+  "schema_info": {
+    "version": "10.24.0-rc1",
+    "database_hash": "323cba39238d23e7",
+    "updated_at": "2026-11-21T18:39:20+00:00",
+    "php": "8.2.35"
+  },
+  "db_config_fingerprint": "323cba39238d23e7",
+  "cache_dir": "/app/storage/cache",
+  "schema_marker_path": "/app/storage/cache/runtime_cache/323cba39238d23e7/schema.json",
+  "schema_marker_exists": true,
+  "repo_schema_version": "10.24.0-rc1"
+}
