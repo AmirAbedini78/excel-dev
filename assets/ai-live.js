@@ -16,6 +16,7 @@
     kernel_plan: "برنامه‌ریزی محدود Agent",
     kernel_tool: "خواندن شواهد کسب‌وکار",
     kernel_observation: "مشاهده نتیجه ابزار",
+    kernel_task_state: "ذخیره وضعیت پایدار Agent",
     kernel_replan: "بازبرنامه‌ریزی محدود Agent",
     kernel_verify: "اعتبارسنجی تصمیم و شواهد",
     kernel_answer: "پاسخ تصمیم‌محور",
