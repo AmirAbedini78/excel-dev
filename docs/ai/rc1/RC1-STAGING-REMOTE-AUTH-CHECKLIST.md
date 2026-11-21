@@ -1,7 +1,7 @@
 # RC1 Staging — Remote Authorization Checklist (explicit owner gate)
 
 **Status:** Remote staging execute **NOT AUTHORIZED** until every item below is signed by the owner.  
-**Authoritative staging-release SHA:** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**Authoritative staging-release SHA:** `14fcf69c669f63ad33dc40f6e10043aa580e04d0`  
 **Product feature baseline (ancestry):** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
 **Labels:** `RC1_ACCEPTED` + engineering `STAGING_READY` â‰  `STAGING_VERIFIED` â‰  `PRODUCTION_READY`.
 
@@ -13,7 +13,7 @@ Agents must **not** deploy, SSH, FTP, or cPanel-mutate staging without a **new**
 
 | # | Item | Owner value / sign-off |
 |---|------|------------------------|
-| A1 | Staging-release package SHA is exactly `POST_MERGE_MAIN_TIP_CI_GREEN` (includes migrate safeguards; not product-only `2c1cf65`) | âکگ |
+| A1 | Staging-release package SHA is exactly `14fcf69c669f63ad33dc40f6e10043aa580e04d0` (includes migrate safeguards; not product-only `2c1cf65`) | âکگ |
 | A2 | Staging host / URL (HTTPS) is non-production | âکگ URL: ________ |
 | A3 | Staging MySQL DB name (â‰  production) | âکگ DB: ________ |
 | A4 | Production DB name declared for refuse-gate (`RC1_PROD_DB_NAME`) | âکگ |
@@ -45,7 +45,7 @@ Owner must issue **new** written authorization including:
 
 1. Scope = **staging only** (named URL + DB).  
 2. Exclude production / live bank / tax / SMS / payment side effects.  
-3. Pin staging-release package SHA `POST_MERGE_MAIN_TIP_CI_GREEN`.  
+3. Pin staging-release package SHA `14fcf69c669f63ad33dc40f6e10043aa580e04d0`.  
 4. Authorize offline CLI migrate via `rc1_staging_schema_migrate.php` with mandatory `RC1_STAGING_AUTH_EXPECTED`.  
 5. Acknowledge MF residual: WIP/FG may be `UNVALUED` / `GL_BLOCKED`.  
 6. Acknowledge that success still requires smoke evidence before any `STAGING_VERIFIED` claim.

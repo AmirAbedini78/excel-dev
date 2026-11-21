@@ -2,7 +2,7 @@
 
 **طھط§ط±غŒط®:** غ²غ°غ²غ¶-غ±غ±-غ²غ±  
 **ظ…ط§ظ„ع© غŒع©ظ¾ط§ط±ع†ظ‡â€Œط³ط§ط²غŒ:** T0 Release Engineering / Staging Acceptance  
-**SHA ط¨ط³طھظ‡ظ” staging (ظ…ط±ط¬ط¹ ظˆط§ط­ط¯):** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**SHA ط¨ط³طھظ‡ظ” staging (ظ…ط±ط¬ط¹ ظˆط§ط­ط¯):** `14fcf69c669f63ad33dc40f6e10043aa580e04d0`  
 **ظ¾ط§غŒظ‡ظ” ظ…ط­طµظˆظ„ (ظ†غŒط§غŒ ظˆغŒعکع¯غŒ):** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
 **ظ¾ط°غŒط±ط´ ظ…ظ‡ظ†ط¯ط³غŒ RC1:** `RC1_ACCEPTED`  
 **طھظˆظ„غŒط¯:** `NOT_AUTHORIZED` / `NOT_DEPLOYED`  
@@ -21,7 +21,7 @@
 |------|--------|
 | ظ…ط®ط²ظ† | `AmirAbedini78/excel-dev` |
 | ط´ط§ط®ظ‡ | `main` |
-| SHA ط¨ط³طھظ‡ظ” staging | `POST_MERGE_MAIN_TIP_CI_GREEN` |
+| SHA ط¨ط³طھظ‡ظ” staging | `14fcf69c669f63ad33dc40f6e10043aa580e04d0` |
 | ظ¾ط§غŒظ‡ظ” ظ…ط­طµظˆظ„ | `2c1cf659…` + PR #38 + safety patch |
 | ط§ط¯ط؛ط§ظ… ظ…ط±ط¬ط¹ ظ…ط­طµظˆظ„ | PR #36 MERGEDط› safeguards: PR #38 + ط§غŒظ† ظ¾ع† |
 | ظ†ط³ط®ظ‡ظ” ط§ط³ع©غŒظ…ط§ | `10.24.0-rc1` |
@@ -41,7 +41,7 @@ Commercial MVP ط¨ظ‡â€Œطھظ†ظ‡ط§غŒغŒ ط¨ط±ط§غŒ RC1 �
 | ظ…ظˆط±ط¯ | ظˆط¶ط¹غŒطھ |
 |------|--------|
 | ظ…ظ†ط¨ط¹ طھط؛غŒغŒط±ظ†ط§ظ¾ط°غŒط± | `git archive` / checkout ط§ط² SHA ط¨ط§ظ„ط§ |
-| ط³ط§ط®طھ ظ¾غŒط´ظ†ظ‡ط§ط¯غŒ | `git archive --format=zip -o erpsmart-rc1-staging.zip POST_MERGE_MAIN_TIP_CI_GREEN` (ط¨ط¯ظˆظ† `.env` / dump / `storage/cache` ظ…ط­ظ„غŒ) |
+| ط³ط§ط®طھ ظ¾غŒط´ظ†ظ‡ط§ط¯غŒ | `git archive --format=zip -o erpsmart-rc1-staging.zip 14fcf69c669f63ad33dc40f6e10043aa580e04d0` (ط¨ط¯ظˆظ† `.env` / dump / `storage/cache` ظ…ط­ظ„غŒ) |
 | ط³ط§ط®طھظ‡â€Œط´ط¯ظ‡ ط§غŒظ† ظ¾ط§ط³ | ظ¾ط³ ط§ط² ط§ط¯ط؛ط§ظ… ظ¾ع† ط§غŒظ…ظ†غŒطŒ ZIP ط±ط§ ط§ط² SHA ط¨ط³طھظ‡ ط¨ط§ط²ط³ط§ط²غŒ ظˆ checksum ط±ط§ ط«ط¨طھ ع©ظ†غŒط¯ — digest ظ‚ط¯غŒظ…غŒ `2c1cf65` ظ…ط¹طھط¨ط± ظ†غŒط³طھ |
 | PHP | **8.2** (`erpsmart-o2c-php:8.2`ط› ext: `pdo_mysql`) |
 | MySQL | **8.0** (طھطµظˆغŒط± `mysql:8.0` ط¯ط± GHA ظˆ sandbox ظ…ط­ظ„غŒ) |

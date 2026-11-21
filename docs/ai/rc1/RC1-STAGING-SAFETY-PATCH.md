@@ -2,16 +2,16 @@
 
 **Campaign:** ERPSMART FINAL STAGING SAFETY PATCH  
 **Product feature baseline (immutable ancestry):** `2c1cf6592f246553c66c3bc90d00385bf65d4c29`  
-**Authoritative staging-release package SHA:** `POST_MERGE_MAIN_TIP_CI_GREEN`  
+**Authoritative staging-release package SHA:** `14fcf69c669f63ad33dc40f6e10043aa580e04d0`  
 **Prior main before patch:** `4764b3648ad1ec5a143afb81c020514699c6378e` (PR #38 merged)
 
 ## One package rule
 
-**Post-merge rule:** After this PR merges and both GHA workflows are green on `main`, replace every `POST_MERGE_MAIN_TIP_CI_GREEN` token with that exact `origin/main` SHA (single authoritative staging-release pin). Until then the token is a deliberate placeholder so the commit does not self-reference the wrong hash.
+**Post-merge rule:** After this PR merges and both GHA workflows are green on `main`, replace every `14fcf69c669f63ad33dc40f6e10043aa580e04d0` token with that exact `origin/main` SHA (single authoritative staging-release pin). Until then the token is a deliberate placeholder so the commit does not self-reference the wrong hash.
 
 Deployable staging ZIP / document-root pin = **ONE** SHA:
 
-`POST_MERGE_MAIN_TIP_CI_GREEN`
+`14fcf69c669f63ad33dc40f6e10043aa580e04d0`
 
 That tree includes:
 

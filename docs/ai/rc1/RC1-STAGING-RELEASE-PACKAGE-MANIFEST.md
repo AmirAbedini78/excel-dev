@@ -9,8 +9,8 @@
 | Field | Value |
 |-------|--------|
 | Repository | `AmirAbedini78/excel-dev` |
-| **Authoritative staging-release SHA** | **`POST_MERGE_MAIN_TIP_CI_GREEN`** |
-| Short pin | *(first 7 of staging-release SHA)* |
+| **Authoritative staging-release SHA** | **`14fcf69c669f63ad33dc40f6e10043aa580e04d0`** |
+| Short pin | `14fcf69` |
 | Product feature baseline (ancestry) | `2c1cf6592f246553c66c3bc90d00385bf65d4c29` |
 | Includes | RC1 product + PR #38 staging executor + safety patch (auth/cache/backup) |
 | Schema (repo constant) | `10.24.0-rc1` (`RuntimeCache::SCHEMA_VERSION`) |
@@ -32,8 +32,8 @@
 
 | Field | Guidance |
 |-------|----------|
-| Suggested filename | `erpsmart-rc1-staging-POST_MERGE_MAIN_TIP_CI_GREEN7.zip` |
-| Build command | `git archive --format=zip -o erpsmart-rc1-staging.zip POST_MERGE_MAIN_TIP_CI_GREEN` |
+| Suggested filename | `erpsmart-rc1-staging-14fcf69c669f63ad33dc40f6e10043aa580e04d07.zip` |
+| Build command | `git archive --format=zip -o erpsmart-rc1-staging.zip 14fcf69c669f63ad33dc40f6e10043aa580e04d0` |
 | Integrity doc | `RC1-STAGING-PACKAGE-INTEGRITY.md` |
 | Must include | `scripts/rc1_staging_schema_migrate.php`, `scripts/lib/rc1_cumulative_migrate.php`, `storage/maintenance` bootstrap path, `app/bootstrap.php` offline lock |
 
