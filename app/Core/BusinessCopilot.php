@@ -42,32 +42,39 @@ final class BusinessCopilot
         $company=AccountingRepository::company();$cid=(int)($company['id']??0);$uid=(int)(Auth::user()['id']??0);$pageRefs=self::currentPageRefs();$pageEntities=[];
         if($cid&&$pageRefs){try{$pageEntities=AiContextResolver::resolve(Tenant::id(),$cid,$pageRefs);}catch(Throwable $e){$pageEntities=[];}}
         $companies=[];foreach(AccountingRepository::companies() as $c)$companies[]=['id'=>(int)$c['id'],'name'=>(string)$c['name']];
+        $money=IranLocalizationMoney::companyDisplayContext(Tenant::id(),$cid>0?$cid:0);
         $config=[
             'workspace_id'=>Tenant::id(),'user_id'=>$uid,
             'company_id'=>$cid,'company_name'=>(string)($company['name']??''),'companies'=>$companies,
             'page'=>(string)($_GET['page']??'dashboard'),'current_page_refs'=>$pageRefs,'current_page_entities'=>$pageEntities,
             'csrf'=>csrf_token(),'skills'=>AiCapabilityRegistry::catalog(),'endpoint'=>'index.php?copilot_api=1',
-            'engine_selection'=>AiEnginePreferences::current(),'engine_models'=>AiEnginePreferences::models()
+            'engine_selection'=>AiEnginePreferences::current(),'engine_models'=>AiEnginePreferences::models(),
+            'display_currency'=>(string)($money['display_currency']??'IRR'),
+            'money_label_fa'=>(string)($money['label_fa']??'ریال'),
+            'jalali_today'=>Jalali::today(),
+            'workspace_ux'=>'universal_ai_v1'
         ];
-        echo '<button type="button" class="copilot-fab" data-copilot-open aria-label="باز کردن Business Copilot">◉</button>';
-        echo '<div class="copilot-backdrop" data-copilot-close></div><aside id="business-copilot" class="copilot-sidecar" aria-hidden="true" data-copilot-config="'.h(json_encode($config,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)).'">';
-        echo '<header class="copilot-head"><div><span>ERPSMART</span><strong>Business Copilot</strong><small data-copilot-scope-name>گفتگو: '.h((string)($company['name']??'بدون شرکت')).'</small></div><div class="copilot-head-actions"><a class="btn tiny" href="index.php?page=ai">مرکز فرمان</a><button class="btn tiny" type="button" data-copilot-close>×</button></div></header>';
+        echo '<button type="button" class="copilot-fab" data-copilot-open aria-label="باز کردن فضای کار هوشمند">◉</button>';
+        echo '<div class="copilot-backdrop" data-copilot-close></div><aside id="business-copilot" class="copilot-sidecar" aria-hidden="true" data-universal-ai-workspace="1" data-copilot-config="'.h(json_encode($config,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)).'">';
+        echo '<header class="copilot-head"><div><span>ERPSMART</span><strong>فضای کار هوشمند</strong><small data-copilot-scope-name>گفتگو: '.h((string)($company['name']??'بدون شرکت')).'</small></div><div class="copilot-head-actions"><a class="btn tiny" href="index.php?page=ai">مرکز فرمان</a><button class="btn tiny" type="button" data-copilot-close>×</button></div></header>';
         echo '<div class="copilot-scopebar"><label><span>شرکت گفتگو</span><select data-copilot-company>';
         foreach($companies as $c)echo '<option value="'.(int)$c['id'].'" '.((int)$c['id']===$cid?'selected':'').'>'.h($c['name']).'</option>';
         echo '</select></label><label><span>گفتگو</span><select data-copilot-conversation><option value="0">گفتگوی جدید</option></select></label><button type="button" class="btn tiny" data-copilot-new>＋ جدید</button></div>';
-        echo '<div class="copilot-scopebar"><label>موتور<select data-ai-engine>';
+        echo '<div class="copilot-scopebar"><label><span>موتور</span><select data-ai-engine>';
         $sel=AiEnginePreferences::current();
         foreach(['ollama'=>'Ollama','gemini'=>'Gemini API','grok'=>'Grok (x.ai)','cursor'=>'Cursor Cloud'] as $name=>$label)echo '<option value="'.h($name).'"'.($sel['provider']===$name?' selected':'').'>'.h($label).'</option>';
-        echo '</select></label><label>مدل<select data-ai-model>';
+        echo '</select></label><label><span>مدل</span><select data-ai-model>';
         foreach(AiEnginePreferences::models() as $prov=>$models)foreach($models as $m)echo '<option data-engine="'.h($prov).'" value="'.h($m).'"'.($m===$sel['model']?' selected':'').'>'.h($m).'</option>';
         echo '</select></label></div>';
         echo '<div class="copilot-page-context" data-copilot-page-context></div>';
-        echo '<div class="copilot-thread" data-copilot-thread><div class="copilot-welcome"><b>دستیار آماده است.</b><span><code>@</code> در کل محیط کاری جست‌وجو می‌کند؛ اگر موجودیت متعلق به شرکت دیگری باشد، فقط زمینه گفتگوی Copilot به همان شرکت تغییر می‌کند.</span></div></div>';
+        echo '<div class="copilot-thread" data-copilot-thread><div class="copilot-welcome"><b>فضای کار هوشمند آماده است.</b><span><code>@</code> در کل محیط کاری جست‌وجو می‌کند؛ پیشنهادها تا تأیید انسانی اجرا نمی‌شوند.</span><small class="ai-ws-model-hint">تاریخ امروز: '.h(Jalali::today()).' • نمایش مبلغ: '.h((string)($money['label_fa']??'ریال')).' (دفتر کل: ریال)</small></div></div>';
         echo '<div class="copilot-preview" data-copilot-preview hidden></div>';
         echo '<div class="copilot-composer"><div class="copilot-chips" data-copilot-chips></div><div class="copilot-mention-menu" data-copilot-mention-menu hidden></div>';
         echo '<div class="copilot-quick-actions"><button type="button" data-copilot-template="برای این شرکت یک بریف مدیریتی کوتاه از ۵ موضوع مهم امروز در فروش، خرید، موجودی، مطالبات و بازرگانی بده؛ هر مورد را با داده ERP و اقدام پیشنهادی مشخص کن.">بریف مدیرعامل</button><button type="button" data-copilot-template="/financial-report گزارش مدیریتی ماه جاری: فروش، خرید، تراز و چک‌های باز را با اعداد ERP خلاصه کن.">گزارش مالی ماه</button><button type="button" data-copilot-template="آخرین فاکتورهای فروش این شرکت را لیست کن؛ اگر یکی مشخص است جزئیات خطوط و وضعیت تحویل را بگو.">فاکتور فروش</button><button type="button" data-copilot-template="پرونده‌های بازرگانی، محموله‌ها، ETA، گمرک و Landed Cost این شرکت را بررسی کن و ریسک‌های فوری و اقدام بعدی را اولویت‌بندی کن.">ریسک بازرگانی</button><button type="button" data-copilot-template="موجودی، رزرو، ورودی مورد انتظار و ریسک کمبود این شرکت را بررسی کن و اقلام پرریسک را اولویت‌بندی کن.">ریسک موجودی</button><button type="button" data-copilot-template="وضعیت مطالبات، پرداخت‌ها و فشار نقدینگی این شرکت را بر اساس داده‌های موجود بررسی کن و موارد فوری را بگو.">نقدینگی و وصول</button></div>';
-        echo '<textarea rows="3" data-copilot-input placeholder="مثلاً: وضعیت معاملاتمون با @کارخانه ... چطوره؟"></textarea><div class="copilot-compose-actions"><span class="muted">@ جست‌وجوی سراسری موجودیت • داده‌ها هر بار از ERP تازه خوانده می‌شوند</span><button class="btn primary" type="button" data-copilot-send>ارسال</button></div></div>';
+        echo '<textarea rows="3" data-copilot-input placeholder="مثلاً: وضعیت معاملاتمون با @کارخانه ... چطوره؟"></textarea><div class="copilot-compose-actions"><span class="muted">@ موجودیت • / مهارت • پیشنهادها بدون تأیید اجرا نمی‌شوند</span><button class="btn primary" type="button" data-copilot-send>ارسال</button></div></div>';
         echo '</aside>';
+        echo '<link rel="stylesheet" href="assets/universal-ai-workspace.css?v=1.0.0">';
+        echo '<script src="assets/universal-ai-workspace.js?v=1.0.0"></script>';
         echo '<script src="assets/ai-engine-selector.js?v=1" defer></script>';
         echo '<script src="assets/business-copilot-cycle12.js?v=10.11.0" defer></script>';
     }
