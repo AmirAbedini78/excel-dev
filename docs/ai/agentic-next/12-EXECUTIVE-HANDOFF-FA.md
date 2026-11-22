@@ -1,37 +1,39 @@
 # 12 - تحويل اجرايي (فارسي)
 
-**SHA نهايي مهندسي (Wave4):** `092e9cc68435845f23b99a16a8fcea473e0c7514`  
-**Tip `origin/main` (پس از PR #52):** `a53019c6531e9be29274a6159b725737cde64547`  
-**وضعيت توليد:** NOT_AUTHORIZED / NOT_DEPLOYED
+**SHA غيرقابل‌تغيير Agentic AI (tip):** `e9797662d85807a3a128d548e6557439800a689b` (PR #53)  
+**Wave4 integrate (نيا):** `092e9cc68435845f23b99a16a8fcea473e0c7514`  
+**بستهٔ انتشار مستقيم:** `14-DIRECT-PRODUCTION-RELEASE-PACKAGE.md`  
+**وضعيت توليد:** بسته آمادهٔ Go/No-Go اپراتور — **NOT_DEPLOYED** (بدون mutation زنده توسط T0)
 
 ## چه كاري اكنون واقعاً ممكن است
 
 - گفتگوي grounded با ابزارهاي ERP خواندني از طريق Kernel و Copilot/Workspace
 - بازيابي اسناد با ACL و citation از نوع DOCUMENT_EVIDENCE
 - ابزارهاي توليد (BOM/دستور/آمادگي مواد) با UNVALUED و GL_BLOCKED صريح
-- facade MCP (خاموش به صورت پيش‌فرض؛ مسير فعال‌سازي امن آماده — عضويت شركت سمت سرور)
+- facade MCP (**خاموش به‌صورت پيش‌فرض**؛ در اين بسته فعال نمي‌شود)
 - كشف/صلاحيت مدل از Provider Gateway (نياز به credential مالك براي ابر)
-- بسته staging قابل اجرا در پين `14fcf69` + executor آفلاين (محلي PASS؛ remote در انتظار ميزبان)
+- بستهٔ PHP + Worker با SHA-256 ثبت‌شده براي استقرار **كنترل‌شده** (نه auto `.cpanel.yml` كور)
 
 ## چه چيزي نياز به تاييد انساني دارد
 
 هر mutation كسب‌وكار: proposal -> approve -> اجرا از دامنه كانونيك
 
-## قبل از استقرار
+## قبل از استقرار توليد (مالك / اپراتور)
 
-1. سبز بودن Commercial MVP + RC1 MySQL/PHP روي SHA نهايي  
-2. به‌روزرساني Worker + PHP  
-3. فعال‌كردن MCP فقط با `mcp_enabled=1` روي ميزبان غيرتوليد پس از مرور امنيت (پيش‌فرض همچنان خاموش)  
-4. عدم دسترسي به production در اين كمپين  
-5. براي `STAGING_VERIFIED`: URL/DB/اسرار staging جدا + امضاي `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md`
+1. تأييد tip = `e979766…` و مطابقت hash بسته‌ها  
+2. سبز بودن Commercial MVP + RC1 MySQL/PHP روي همان tip  
+3. sync كنترل‌شدهٔ PHP (**بدون** بازنويسي كور `storage` و `app/config.php`) + به‌روزرساني جداگانهٔ Worker  
+4. rehearsal مهاجرت `AiSchema 1.2.0` روي كپي disposable از DB ناشناس‌شدهٔ واقعي  
+5. MCP همچنان `0` / غايب — فعال‌سازي فقط با runbook جدا و مجوز جدا  
+6. امضاي Go كتبي مالك + backup + rollback owner
 
-## وضعيت گام‌هاي بعد از پذيرش
+## وضعيت
 
 | مورد | وضعيت |
 |------|--------|
-| MCP | PATH_READY / DISABLED_BY_DEFAULT (runbook اپراتور آماده؛ فلگ commit نشده) |
-| Staging | READY / WAITING_FOR_STAGING_HOST (نه STAGING_VERIFIED) |
-| Browser محلي | LOCAL_BROWSER_VERIFIED روي tip (نه staging) |
+| MCP | PATH_READY / DISABLED_BY_DEFAULT — در بستهٔ توليد **فعال نمي‌شود** |
+| Staging | SKIPPED_BY_OWNER (پين RC1 `14fcf69` فقط آرشيو) |
+| بستهٔ مستقيم توليد | PACKAGE_DOCUMENTED — به چک‌لیست Go/No-Go در doc 14 مراجعه شود |
 | Production | NOT_DEPLOYED |
 
-كمپين پس از اين تحويل متوقف مي‌شود؛ كار غير بحراني فقط در backlog.
+جزئيات فني، hashها، شكاف‌هاي `.cpanel.yml` و چک‌لیست اپراتور: `14-DIRECT-PRODUCTION-RELEASE-PACKAGE.md`.
