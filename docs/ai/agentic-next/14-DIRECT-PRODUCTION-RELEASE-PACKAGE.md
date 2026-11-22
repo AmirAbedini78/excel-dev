@@ -13,8 +13,8 @@
 | Repository | `AmirAbedini78/excel-dev` |
 | **Prior Agentic AI freeze SHA** | `e9797662d85807a3a128d548e6557439800a689b` (PR #53 waves AI1–AI4 + MCP path) |
 | **Stabilization overlay** | PR closing cPanel sync P0 + real legacy AI migrate + MF MySQL fixture (this package) |
-| **Stabilization tip SHA (pre-merge)** | `2be0e365e95764c01abf896ca7994bf54f95ed24` |
-| **Release tip SHA** | Prefer merge commit on `main` after CI green; until then use stabilization tip above for ZIP rebuild |
+| **Release tip SHA (immutable)** | `5bb1e2739905a3280d47277a57427e88c964d7ab` (merge PR #55) |
+| Short | `5bb1e27` |
 | `AiSchema::VERSION` | `1.2.0` |
 | Agent task schema | `erpsmart.agent_task.v1` |
 | MCP | **DISABLED BY DEFAULT** — do **not** set `mcp_enabled=1` in this package |
@@ -60,12 +60,12 @@ python scripts/rc1_staging_package_hash.py erpsmart-agentic-ai-worker-$SHA.zip
 
 **Note:** `install.php` is intentionally **excluded** from the PHP archive allowlist used by controlled sync (no public installer overwrite).
 
-### Recorded SHA-256 (local rebuild @ `2be0e36`)
+### Recorded SHA-256 (local rebuild @ `5bb1e27`)
 
 | Package | Archive SHA-256 | Tree manifest SHA-256 | Files |
 |---------|-----------------|------------------------|------:|
-| PHP | `123edff7b42d0a47af38d6109afb6277dc3493070f446a48abb28dc00f831d39` | `3961543e851a75904965a9df46a42ae2b10650dd700359f93fec4c2de9bbb015` | 144 |
-| Worker | `a7e71439fd4a9343e2666b4c5f845863d14670602ab58444d33727e290112bb6` | `7a9b2f6498228fba245c73cee957cb3bb46ed2f7811ed6a26f1c3bf7add32e54` | 42 |
+| PHP | `c07610ff9fc23d9d1553fd91c7e91967d280ee23c394143bb01210bc533e03f1` | `3961543e851a75904965a9df46a42ae2b10650dd700359f93fec4c2de9bbb015` | 144 |
+| Worker | `7b6927d808b4f17e8e4a546dde0d8ab75c08d3fe7f175e79cd8dbe6572604739` | `7a9b2f6498228fba245c73cee957cb3bb46ed2f7811ed6a26f1c3bf7add32e54` | 42 |
 
 Re-verify before any operator action: `Get-FileHash -Algorithm SHA256 <zip>` / `sha256sum`.
 
@@ -232,8 +232,8 @@ Script: `scripts/agentic_controlled_cpanel_sync.py`
 
 | # | Check | P0/P1 | Status |
 |---|-------|-------|--------|
-| 1 | Tip SHA freeze verified after merge | P0 | pending merge |
-| 2 | PHP + Worker archive hashes match tip | P0 | rebuild after merge |
+| 1 | Tip SHA freeze verified after merge | P0 | **CLOSED** `5bb1e27` |
+| 2 | PHP + Worker archive hashes match tip | P0 | **CLOSED** (local rebuild recorded) |
 | 3 | Controlled sync excludes storage user data + `app/config.php`; `.cpanel.yml` fail-closed | P0 | **CLOSED** |
 | 4 | Pre-deploy backup + dump SHA recorded | P0 | operator |
 | 5 | Anonymized **real** legacy DB disposable migrate PASS | P0 | **CLOSED** |
