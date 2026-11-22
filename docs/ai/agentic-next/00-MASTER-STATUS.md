@@ -2,10 +2,11 @@
 
 **Authority:** T0 Chief Architect  
 **Campaign:** ENTERPRISE AI-NATIVE TRANSFORMATION  
-**Board updated:** 2026-11-22 (local staging-like continue)  
-**Verified `origin/main` tip:** `a53019c6531e9be29274a6159b725737cde64547` (PR #52 MCP secure path)  
+**Board updated:** 2026-11-23 (T0 direct-production package — no live deploy)  
+**Verified `origin/main` tip (immutable Agentic AI freeze):** `e9797662d85807a3a128d548e6557439800a689b` (PR #53; includes PR #52)  
 **Engineering Wave4 integrate SHA:** `092e9cc68435845f23b99a16a8fcea473e0c7514` (ancestor of tip)  
-**Production / cPanel / prod DB:** **NOT_AUTHORIZED** (non-negotiable)
+**Direct-production package:** `14-DIRECT-PRODUCTION-RELEASE-PACKAGE.md` (operator Go/No-Go; **NOT_DEPLOYED**)  
+**Production / cPanel / prod DB:** **NOT_AUTHORIZED** until explicit owner GO on package checklist (non-negotiable)
 
 ---
 
@@ -24,14 +25,15 @@
 
 ---
 
-## Post-acceptance next steps (2026-11-22)
+## Post-acceptance next steps (2026-11-23)
 
 | Track | Status | Notes |
 |-------|--------|-------|
-| MCP secure enablement path | **PATH_READY / STILL_DISABLED_BY_DEFAULT** | Operator runbook `13-MCP-OPERATOR-ENABLE-RUNBOOK.md`; lookalike-enable adversarial covered. Ops may set `mcp_enabled=1` on **non-prod only** — flag not committed. |
-| Staging package @ `14fcf69` | **READY / WAITING_FOR_STAGING_HOST** | Local disposable migrate executor **PASS** (12/12) on tip. Remote host/credentials **not provided** ⇒ not `STAGING_VERIFIED`. |
-| Local browser UAT (tip) | **LOCAL_BROWSER_VERIFIED** | Playwright screenshots + CSRF 419/RBAC on disposable stack `127.0.0.1:8765`. **Not** staging. |
-| Production | **NOT_DEPLOYED** | No cPanel / prod MySQL / `.cpanel.yml` destination changes. |
+| MCP secure enablement path | **PATH_READY / STILL_DISABLED_BY_DEFAULT** | Operator runbook `13-MCP-OPERATOR-ENABLE-RUNBOOK.md`; lookalike-enable adversarial covered. Ops may set `mcp_enabled=1` on **non-prod only** — flag not committed. **Not activated in production package.** |
+| Staging package @ `14fcf69` | **SKIPPED_BY_OWNER** | Owner chose controlled direct-production package path; `14fcf69` remains RC1 archive pin only (not full AI tip). |
+| Local browser UAT | **LOCAL_BROWSER_VERIFIED** (on prior tip evidence) | Not a substitute for production cutover. |
+| Direct-production package @ `e979766` | **PACKAGE_DOCUMENTED** | PHP+Worker ZIPs + hashes + Go/No-Go in `14-DIRECT-PRODUCTION-RELEASE-PACKAGE.md`. **No live mutation.** |
+| Production | **NOT_DEPLOYED** | No cPanel / prod MySQL / `.cpanel.yml` destination changes by T0. |
 
 ---
 
@@ -46,6 +48,7 @@
 | [#42](https://github.com/AmirAbedini78/excel-dev/pull/42) | Wave4 Workspace |
 | [#51](https://github.com/AmirAbedini78/excel-dev/pull/51) | Acceptance board |
 | [#52](https://github.com/AmirAbedini78/excel-dev/pull/52) | MCP secure enablement path |
+| [#53](https://github.com/AmirAbedini78/excel-dev/pull/53) | Local UAT evidence + MCP operator enable runbook |
 
 Superseded closed: #43, #45, #46, #47.
 
