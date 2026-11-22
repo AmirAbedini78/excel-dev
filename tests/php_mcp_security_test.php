@@ -126,4 +126,28 @@ $readCall = McpFacade::handle([
 ], $auth, $on, $descriptors, static fn($t, $a, $c, $w) => ['company_id' => $c, 'ok' => true], null);
 mcp_assert(($readCall['result']['structuredContent']['ok'] ?? false) === true, 'read tool executes');
 
+// 6) Company membership intersection — client hints never expand scope
+$full = McpFacade::resolveAllowedCompanyIds([10, 20, 30], []);
+mcp_assert($full === [10, 20, 30], 'empty client hint keeps membership');
+$narrow = McpFacade::resolveAllowedCompanyIds([10, 20, 30], [20]);
+mcp_assert($narrow === [20], 'client hint may narrow');
+$spoof = McpFacade::resolveAllowedCompanyIds([10, 20], [99, 10]);
+mcp_assert($spoof === [10], 'spoofed company ids dropped');
+$emptyMem = McpFacade::resolveAllowedCompanyIds([], [10, 99]);
+mcp_assert($emptyMem === [], 'empty membership fail-closed');
+$crossTenant = McpFacade::resolveAllowedCompanyIds([10], [20]);
+mcp_assert($crossTenant === [], 'cross-tenant header alone yields empty');
+
+$spoofAuth = [
+    'ok' => true,
+    'workspace_id' => 1,
+    'allowed_company_ids' => McpFacade::resolveAllowedCompanyIds([10], [99]),
+    'permissions' => ['ai.use'],
+];
+$spoofCall = McpFacade::handle([
+    'jsonrpc' => '2.0', 'id' => 11, 'method' => 'tools/call',
+    'params' => ['name' => 'company_snapshot', 'arguments' => ['company_id' => 99]],
+], $spoofAuth, $on, $descriptors, static fn() => ['ok' => true], null);
+mcp_assert(($spoofCall['error']['data']['error_code'] ?? '') === 'wrong_company', 'header-spoof tools/call rejected');
+
 echo "MCP_SECURITY_PASS\n";

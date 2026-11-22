@@ -1,7 +1,7 @@
 {
   "ok": true,
   "drill": "rc1_staging_schema_migrate",
-  "started_at": "2026-11-21T18:39:13+00:00",
+  "started_at": "2026-11-22T04:23:45+00:00",
   "repo_schema_version": "10.24.0-rc1",
   "mode": "disposable_sim",
   "dry_run": true,
@@ -47,5 +47,5 @@
     "engaged": true
   },
   "note": "Dry-run/preflight only — no migrate applied. Re-run without --dry-run / RC1_STAGING_DRY_RUN after review.",
-  "finished_at": "2026-11-21T18:39:13+00:00"
+  "finished_at": "2026-11-22T04:23:47+00:00"
 }

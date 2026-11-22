@@ -67,6 +67,22 @@ class McpSecurityLogic(unittest.TestCase):
         self.assertIn("acct_ws_", api)
         self.assertIn("unauthorized", api)
         self.assertNotRegex(api, r"mcp_enabled.*=.*['\"]1['\"]")
+        # Client company header must not be trusted as sole membership authority.
+        self.assertIn("resolveAllowedCompanyIds", api)
+        self.assertIn("Server-side membership is authoritative", api)
+        self.assertIn("workspace_mismatch", api)
+
+    def test_company_intersection_fail_closed(self):
+        self.assertIn("resolveAllowedCompanyIds", FACADE)
+        self.assertIn("never expand", FACADE.lower())
+        suite = (ROOT / "tests/php_mcp_security_test.php").read_text(encoding="utf-8")
+        for needle in (
+            "spoofed company ids dropped",
+            "empty membership fail-closed",
+            "header-spoof tools/call rejected",
+            "cross-tenant header alone yields empty",
+        ):
+            self.assertIn(needle, suite)
 
 
 if __name__ == "__main__":

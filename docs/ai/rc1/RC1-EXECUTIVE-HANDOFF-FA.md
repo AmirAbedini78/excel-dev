@@ -3,8 +3,8 @@
 **تصمیم مهندسی/پذیرش مستقل:** `RC1_ACCEPTED` (روی `main`)  
 **استقرار تولید:** `NOT_DEPLOYED` / `NOT_AUTHORIZED`  
 **SHA نهایی `main`:** `2c1cf6592f246553c66c3bc90d00385bf65d4c29` (PR #36 MERGED)  
-**آمادگی staging:** برنامه و مهندسی آماده‌اند؛ **`STAGING_VERIFIED` نیست** (مجوز remote staging داده نشده)  
-**تاریخ:** ۲۰۲۶-۱۱-۲۱
+**آمادگی staging:** `STAGING_READY` / **`WAITING_FOR_STAGING_HOST`** — بسته پین `14fcf69` + executor آفلاین محلی PASS؛ **`STAGING_VERIFIED` نیست** (URL/مجوز remote داده نشده)  
+**تاریخ:** ۲۰۲۶-۱۱-۲۲ (بازخوانی پس از next-steps؛ بدون تغییر production)
 
 ## خلاصه یک‌خطی
 

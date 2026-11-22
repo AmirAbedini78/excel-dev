@@ -197,6 +197,47 @@ final class McpFacade
     }
 
     /**
+     * Resolve allowed company IDs for an MCP session.
+     *
+     * Server membership is authoritative. Optional client hints (e.g. X-ERP-Company-Ids)
+     * may only narrow the set — never expand it. Empty membership ⇒ fail-closed.
+     *
+     * @param list<int> $workspaceCompanyIds Companies that belong to the authenticated workspace
+     * @param list<int> $clientRequestedIds Optional client-supplied subset (untrusted)
+     * @return list<int>
+     */
+    public static function resolveAllowedCompanyIds(array $workspaceCompanyIds, array $clientRequestedIds = []): array
+    {
+        $membership = [];
+        foreach ($workspaceCompanyIds as $id) {
+            $n = (int)$id;
+            if ($n > 0) {
+                $membership[$n] = $n;
+            }
+        }
+        if ($membership === []) {
+            return [];
+        }
+        $requested = [];
+        foreach ($clientRequestedIds as $id) {
+            $n = (int)$id;
+            if ($n > 0) {
+                $requested[$n] = $n;
+            }
+        }
+        if ($requested === []) {
+            return array_values($membership);
+        }
+        $out = [];
+        foreach ($requested as $id) {
+            if (isset($membership[$id])) {
+                $out[] = $id;
+            }
+        }
+        return $out;
+    }
+
+    /**
      * Resolve a tools/call against allowlist. Never executes domain mutations.
      *
      * @param list<array<string,mixed>>|null $registryDescriptors
