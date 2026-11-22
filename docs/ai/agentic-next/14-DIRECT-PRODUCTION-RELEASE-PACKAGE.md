@@ -13,7 +13,8 @@
 | Repository | `AmirAbedini78/excel-dev` |
 | **Prior Agentic AI freeze SHA** | `e9797662d85807a3a128d548e6557439800a689b` (PR #53 waves AI1–AI4 + MCP path) |
 | **Stabilization overlay** | PR closing cPanel sync P0 + real legacy AI migrate + MF MySQL fixture (this package) |
-| **Release tip SHA** | *Set to merge commit of stabilization PR on `main` after CI green* — rebuild ZIPs from that tip only |
+| **Stabilization tip SHA (pre-merge)** | `2be0e365e95764c01abf896ca7994bf54f95ed24` |
+| **Release tip SHA** | Prefer merge commit on `main` after CI green; until then use stabilization tip above for ZIP rebuild |
 | `AiSchema::VERSION` | `1.2.0` |
 | Agent task schema | `erpsmart.agent_task.v1` |
 | MCP | **DISABLED BY DEFAULT** — do **not** set `mcp_enabled=1` in this package |
@@ -58,6 +59,15 @@ python scripts/rc1_staging_package_hash.py erpsmart-agentic-ai-worker-$SHA.zip
 ```
 
 **Note:** `install.php` is intentionally **excluded** from the PHP archive allowlist used by controlled sync (no public installer overwrite).
+
+### Recorded SHA-256 (local rebuild @ `2be0e36`)
+
+| Package | Archive SHA-256 | Tree manifest SHA-256 | Files |
+|---------|-----------------|------------------------|------:|
+| PHP | `123edff7b42d0a47af38d6109afb6277dc3493070f446a48abb28dc00f831d39` | `3961543e851a75904965a9df46a42ae2b10650dd700359f93fec4c2de9bbb015` | 144 |
+| Worker | `a7e71439fd4a9343e2666b4c5f845863d14670602ab58444d33727e290112bb6` | `7a9b2f6498228fba245c73cee957cb3bb46ed2f7811ed6a26f1c3bf7add32e54` | 42 |
+
+Re-verify before any operator action: `Get-FileHash -Algorithm SHA256 <zip>` / `sha256sum`.
 
 **Secrets excluded by design:** `app/config.php`, `engine/config.json`, `engine/.env*`, SQL dumps, keys — never ship runtime secrets in the ZIP.
 
