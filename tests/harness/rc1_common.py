@@ -16,10 +16,10 @@ EVIDENCE_DIR = ROOT / "docs" / "ai" / "rc1" / "evidence"
 
 # Verified disposable sandbox (G0 / shared contracts §9)
 EXPECTED_CONTAINER_NAME = "erpsmart-p2p-mysql-test"
-# Recreated disposable sandbox (zombie prior ID 02eb215a87f6… retired 2026-11-21).
+# Recreated disposable sandbox (zombie IDs 02eb215a87f6… / ab78c5c42f00… retired 2026-11-22).
 EXPECTED_CONTAINER_ID_PREFIX = os.environ.get(
     "RC1_MYSQL_CONTAINER_ID_PREFIX",
-    "ab78c5c42f00463c9fa5092eb8512ee5c9168082d3387e3b36b9b15af9294baa",
+    "9c00f40fc78a2d1b6cd6ea3b6cb6384c5295a04ffe5834eba487949a5e35833c",
 )
 PHP_IMAGE = "erpsmart-o2c-php:8.2"
 PORT = os.environ.get("O2C_DB_PORT", "3307")

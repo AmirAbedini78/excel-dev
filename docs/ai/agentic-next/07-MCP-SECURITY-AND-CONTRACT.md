@@ -20,8 +20,10 @@ Missing/unset/`0` ⇒ fail-closed (`mcp_disabled`). Writes remain proposal-only 
 
 ## Secure enablement path (ops)
 
+Operator checklist (non-prod only): [`13-MCP-OPERATOR-ENABLE-RUNBOOK.md`](13-MCP-OPERATOR-ENABLE-RUNBOOK.md).
+
 1. Ship tip with adversarial suite green (`tests/php_mcp_security_test.php`, `tests/test_mcp_security_logic.py`).
-2. On **non-production** only, set `mcp_enabled=1` via settings UI/DB — do not commit the flag.
+2. On **non-production** only, set `mcp_enabled=1` via settings UI/DB — do not commit the flag. Only the exact string `"1"` enables; lookalikes (`true`/`yes`/`on`) stay fail-closed.
 3. Issue workspace API token with `read` scope; call `mcp_api.php` with Bearer + optional company narrow header.
 4. Confirm GET health returns `enabled:true` and write tools return `awaiting_human_approval`.
 5. Keep production / cPanel at `mcp_enabled=0` until separate owner authorization.

@@ -1,0 +1,52 @@
+{
+  "ok": true,
+  "classification": "LOCAL_BROWSER_VERIFIED",
+  "STAGING_VERIFIED": false,
+  "base_url": "http://127.0.0.1:8765",
+  "verified_at_utc": "2026-11-22T20:20:15.437Z",
+  "tool": "playwright-chromium-channel-chrome",
+  "cases": [
+    {
+      "step": "login",
+      "url": "http://127.0.0.1:8765/index.php"
+    },
+    {
+      "step": "calendar",
+      "title": "تقویم کاری - ERPSMART",
+      "rtl": "rtl"
+    },
+    {
+      "step": "trading",
+      "title": "کابین تجارت (TR-1) - ERPSMART"
+    },
+    {
+      "step": "manufacturing",
+      "title": "کابین تولید (MF-1) - ERPSMART"
+    },
+    {
+      "step": "service",
+      "title": "خدمات مشتریان - ERPSMART"
+    },
+    {
+      "step": "settings_c2",
+      "title": "تنظیمات - ERPSMART"
+    },
+    {
+      "step": "isolation",
+      "title": "تقویم کاری - ERPSMART"
+    },
+    {
+      "step": "settings_c1",
+      "title": "تنظیمات - ERPSMART"
+    },
+    {
+      "step": "logout",
+      "url": "http://127.0.0.1:8765/index.php?page=login"
+    },
+    {
+      "step": "limited",
+      "title": "کابین تجارت (TR-1) - ERPSMART",
+      "url": "http://127.0.0.1:8765/index.php?page=trading_cockpit"
+    }
+  ]
+}

@@ -1,21 +1,20 @@
 {
   "lane": "Agent B — Authenticated browser UAT",
-  "verified_at_utc": "2026-11-20T20:54:00Z",
-  "agent_head_sha": "d75dd6abb88086c34613472ace247d87369839d0",
-  "expected_main_sha": "52fa7f12f465653d6e445d484f1a8dda48215f45",
-  "docs_main_sha_at_integration": "7455b7074c05c0ba63683fc8e435d3db6a069620",
+  "verified_at_utc": "2026-11-22T20:20:15Z",
+  "agent_head_sha": "a53019c6531e9be29274a6159b725737cde64547",
+  "expected_main_sha": "a53019c6531e9be29274a6159b725737cde64547",
   "classification": "LOCAL_BROWSER_VERIFIED",
   "LOCAL_BROWSER_VERIFIED": true,
   "STAGING_VERIFIED": false,
-  "browser_tool": "cursor-ide-browser MCP",
+  "browser_tool": "playwright-chromium-channel-chrome (+ python HTTP CSRF/RBAC probes)",
   "local_url": "http://127.0.0.1:8765",
   "container": "erpsmart-rc1-browser-uat",
   "disposable_db": "erpsmart_rc1_browser_uat",
   "sandbox_mysql": {
     "name": "erpsmart-p2p-mysql-test",
-    "id_prefix": "02eb215a87f6",
+    "id_prefix": "9c00f40fc78a",
     "port": 3307,
-    "server_uuid": "a73a8a84-e4bd-11f1-ad33-7e073bee960b"
+    "server_uuid": "c097f150-e6b0-11f1-84d8-9ad0ee01f487"
   },
   "cases": {
     "login_logout": "DONE",
@@ -25,7 +24,7 @@
     "service_retail": "DONE",
     "rtl": "DONE",
     "jalali": "DONE",
-    "irr_toman": "DONE",
+    "irr_toman": "DONE_HTTP_PROFILE_SEED",
     "isolation": "DONE",
     "negative_perms": "DONE",
     "csrf": "DONE_HTTP_419",
@@ -45,7 +44,9 @@
     "docs/ai/rc1/evidence/browser/09-limited-viewer-trading.png"
   ],
   "logs": [
-    "docs/ai/rc1/evidence/browser/csrf_probe.log",
+    "docs/ai/rc1/evidence/browser/csrf_probe_rerun.log",
+    "docs/ai/rc1/evidence/browser/local_http_uat_rerun.json",
+    "docs/ai/rc1/evidence/browser/local_uat_playwright_rerun.json",
     "docs/ai/rc1/evidence/browser/session.log"
   ],
   "sys1_recommendation": "LOCAL_BROWSER_VERIFIED — do not claim STAGING_VERIFIED or redefine SYS-1 staging PASS",

@@ -2,8 +2,8 @@
 
 **Authority:** T0 Chief Architect  
 **Campaign:** ENTERPRISE AI-NATIVE TRANSFORMATION  
-**Board updated:** 2026-11-22 (post-acceptance next steps)  
-**Verified `origin/main` tip (pre-this-PR):** `af4b1ffdf0fa8189addb297f17b12a07e4c53bac`  
+**Board updated:** 2026-11-22 (local staging-like continue)  
+**Verified `origin/main` tip:** `a53019c6531e9be29274a6159b725737cde64547` (PR #52 MCP secure path)  
 **Engineering Wave4 integrate SHA:** `092e9cc68435845f23b99a16a8fcea473e0c7514` (ancestor of tip)  
 **Production / cPanel / prod DB:** **NOT_AUTHORIZED** (non-negotiable)
 
@@ -28,8 +28,9 @@
 
 | Track | Status | Notes |
 |-------|--------|-------|
-| MCP secure enablement path | **PATH_READY / STILL_DISABLED_BY_DEFAULT** | Company membership authoritative; header may only narrow; adversarial suite extended. Ops may set `mcp_enabled=1` on **non-prod only** — flag not committed. |
-| Staging package @ `14fcf69` | **READY / WAITING_FOR_STAGING_HOST** | Local `git archive` + hash + disposable migrate executor **PASS**. Remote host/credentials **not provided** ⇒ not `STAGING_VERIFIED`. |
+| MCP secure enablement path | **PATH_READY / STILL_DISABLED_BY_DEFAULT** | Operator runbook `13-MCP-OPERATOR-ENABLE-RUNBOOK.md`; lookalike-enable adversarial covered. Ops may set `mcp_enabled=1` on **non-prod only** — flag not committed. |
+| Staging package @ `14fcf69` | **READY / WAITING_FOR_STAGING_HOST** | Local disposable migrate executor **PASS** (12/12) on tip. Remote host/credentials **not provided** ⇒ not `STAGING_VERIFIED`. |
+| Local browser UAT (tip) | **LOCAL_BROWSER_VERIFIED** | Playwright screenshots + CSRF 419/RBAC on disposable stack `127.0.0.1:8765`. **Not** staging. |
 | Production | **NOT_DEPLOYED** | No cPanel / prod MySQL / `.cpanel.yml` destination changes. |
 
 ---
@@ -44,6 +45,7 @@
 | [#49](https://github.com/AmirAbedini78/excel-dev/pull/49) | Wave3 integrate |
 | [#42](https://github.com/AmirAbedini78/excel-dev/pull/42) | Wave4 Workspace |
 | [#51](https://github.com/AmirAbedini78/excel-dev/pull/51) | Acceptance board |
+| [#52](https://github.com/AmirAbedini78/excel-dev/pull/52) | MCP secure enablement path |
 
 Superseded closed: #43, #45, #46, #47.
 

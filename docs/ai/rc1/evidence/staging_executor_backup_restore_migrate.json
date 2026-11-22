@@ -1,7 +1,7 @@
 {
   "ok": true,
   "drill": "rc1_staging_schema_migrate",
-  "started_at": "2026-11-22T04:25:12+00:00",
+  "started_at": "2026-11-22T20:14:15+00:00",
   "repo_schema_version": "10.24.0-rc1",
   "mode": "disposable_sim",
   "dry_run": false,
@@ -9,144 +9,144 @@
     {
       "pass": 1,
       "ok": true,
-      "ms": 44052,
-      "schema_json_cleared": 1,
+      "ms": 13629,
+      "schema_json_cleared": 0,
       "schema_marker": "/app/storage/cache/runtime_cache/721153795758b3f7/schema.json",
       "steps": [
         {
           "step": "Schema::migrate",
           "ok": true,
-          "ms": 10501
+          "ms": 2562
         },
         {
           "step": "Tenant::ensureSchema",
           "ok": true,
-          "ms": 10558
+          "ms": 5474
         },
         {
           "step": "ChoiceRegistry::ensureSchema",
           "ok": true,
-          "ms": 565
+          "ms": 342
         },
         {
           "step": "Audit::ensureSchema",
           "ok": true,
-          "ms": 185
+          "ms": 194
         },
         {
           "step": "FileLibrary::ensureSchema",
           "ok": true,
-          "ms": 386
+          "ms": 574
         },
         {
           "step": "V5Schema::migrate",
           "ok": true,
-          "ms": 3249
+          "ms": 950
         },
         {
           "step": "AccountingSchema::migrate",
           "ok": true,
-          "ms": 4701
+          "ms": 627
         },
         {
           "step": "AccountingExtendedSchema::migrate",
           "ok": true,
-          "ms": 1902
+          "ms": 659
         },
         {
           "step": "SalesDomain::migrate",
           "ok": true,
-          "ms": 74
+          "ms": 784
         },
         {
           "step": "OrderToCashDomain::migrate",
           "ok": true,
-          "ms": 602
+          "ms": 265
         },
         {
           "step": "AccountingPostingDomain::migrate",
           "ok": true,
-          "ms": 243
+          "ms": 28
         },
         {
           "step": "ArSettlementDomain::migrate",
           "ok": true,
-          "ms": 782
+          "ms": 65
         },
         {
           "step": "ApPostingDomain::migrate",
           "ok": true,
-          "ms": 283
+          "ms": 38
         },
         {
           "step": "ApSettlementDomain::migrate",
           "ok": true,
-          "ms": 164
+          "ms": 15
         },
         {
           "step": "BusinessProfileDomain::migrate",
           "ok": true,
-          "ms": 82
+          "ms": 5
         },
         {
           "step": "CrmDomain::migrate",
           "ok": true,
-          "ms": 507
+          "ms": 44
         },
         {
           "step": "ProductionDomain::migrate",
           "ok": true,
-          "ms": 1214
+          "ms": 84
         },
         {
           "step": "InventoryDomain::migrate",
           "ok": true,
-          "ms": 480
+          "ms": 33
         },
         {
           "step": "ManufacturingExecutionDomain::migrate",
           "ok": true,
-          "ms": 70
+          "ms": 17
         },
         {
           "step": "CostingAccountingDomain::migrate",
           "ok": true,
-          "ms": 53
+          "ms": 4
         },
         {
           "step": "ErpSuiteDomain::migrate",
           "ok": true,
-          "ms": 1391
+          "ms": 171
         },
         {
           "step": "WorkflowDomain::migrate",
           "ok": true,
-          "ms": 652
+          "ms": 32
         },
         {
           "step": "EnterpriseDomain::migrate",
           "ok": true,
-          "ms": 3293
+          "ms": 419
         },
         {
           "step": "PurchaseMatchingDomain::migrate",
           "ok": true,
-          "ms": 767
+          "ms": 37
         },
         {
           "step": "AiSchema::migrate",
           "ok": true,
-          "ms": 1252
+          "ms": 179
         },
         {
           "step": "ModuleRegistry::ensureSchema",
           "ok": true,
-          "ms": 66
+          "ms": 5
         },
         {
           "step": "RuntimeCache::markSchema",
           "ok": true,
-          "ms": 17
+          "ms": 8
         }
       ],
       "tables_after": 184
@@ -154,19 +154,19 @@
     {
       "pass": 2,
       "ok": true,
-      "ms": 4007,
+      "ms": 2111,
       "schema_json_cleared": 1,
       "schema_marker": "/app/storage/cache/runtime_cache/721153795758b3f7/schema.json",
       "steps": [
         {
           "step": "Schema::migrate",
           "ok": true,
-          "ms": 136
+          "ms": 85
         },
         {
           "step": "Tenant::ensureSchema",
           "ok": true,
-          "ms": 1127
+          "ms": 894
         },
         {
           "step": "ChoiceRegistry::ensureSchema",
@@ -176,57 +176,57 @@
         {
           "step": "Audit::ensureSchema",
           "ok": true,
-          "ms": 7
+          "ms": 5
         },
         {
           "step": "FileLibrary::ensureSchema",
           "ok": true,
-          "ms": 10
+          "ms": 8
         },
         {
           "step": "V5Schema::migrate",
           "ok": true,
-          "ms": 262
+          "ms": 143
         },
         {
           "step": "AccountingSchema::migrate",
           "ok": true,
-          "ms": 486
+          "ms": 243
         },
         {
           "step": "AccountingExtendedSchema::migrate",
           "ok": true,
-          "ms": 280
+          "ms": 260
         },
         {
           "step": "SalesDomain::migrate",
           "ok": true,
-          "ms": 20
+          "ms": 5
         },
         {
           "step": "OrderToCashDomain::migrate",
           "ok": true,
-          "ms": 35
+          "ms": 21
         },
         {
           "step": "AccountingPostingDomain::migrate",
           "ok": true,
-          "ms": 10
+          "ms": 8
         },
         {
           "step": "ArSettlementDomain::migrate",
           "ok": true,
-          "ms": 31
+          "ms": 19
         },
         {
           "step": "ApPostingDomain::migrate",
           "ok": true,
-          "ms": 25
+          "ms": 18
         },
         {
           "step": "ApSettlementDomain::migrate",
           "ok": true,
-          "ms": 19
+          "ms": 7
         },
         {
           "step": "BusinessProfileDomain::migrate",
@@ -236,62 +236,62 @@
         {
           "step": "CrmDomain::migrate",
           "ok": true,
-          "ms": 62
+          "ms": 45
         },
         {
           "step": "ProductionDomain::migrate",
           "ok": true,
-          "ms": 65
+          "ms": 37
         },
         {
           "step": "InventoryDomain::migrate",
           "ok": true,
-          "ms": 93
+          "ms": 28
         },
         {
           "step": "ManufacturingExecutionDomain::migrate",
           "ok": true,
-          "ms": 10
+          "ms": 13
         },
         {
           "step": "CostingAccountingDomain::migrate",
           "ok": true,
-          "ms": 7
+          "ms": 1
         },
         {
           "step": "ErpSuiteDomain::migrate",
           "ok": true,
-          "ms": 107
+          "ms": 25
         },
         {
           "step": "WorkflowDomain::migrate",
           "ok": true,
-          "ms": 14
+          "ms": 7
         },
         {
           "step": "EnterpriseDomain::migrate",
           "ok": true,
-          "ms": 598
+          "ms": 104
         },
         {
           "step": "PurchaseMatchingDomain::migrate",
           "ok": true,
-          "ms": 29
+          "ms": 15
         },
         {
           "step": "AiSchema::migrate",
           "ok": true,
-          "ms": 413
+          "ms": 92
         },
         {
           "step": "ModuleRegistry::ensureSchema",
           "ok": true,
-          "ms": 130
+          "ms": 2
         },
         {
           "step": "RuntimeCache::markSchema",
           "ok": true,
-          "ms": 16
+          "ms": 11
         }
       ],
       "tables_after": 184
@@ -314,7 +314,7 @@
   },
   "backup": {
     "path": "/app/storage/cache/rc1_staging_executor_test/restorable_pre_migrate.sql",
-    "sha256": "d550bcdff6b8ee02054332763a60cbda75508a72c06d72e022c36b74e0a74f05",
+    "sha256": "092d08c3f27daab2dd872cabd7b1e102d678bb4643c234ab1358e457e7ad7af8",
     "bytes": 2397,
     "min_bytes": 256,
     "sql_shape_ok": true,
@@ -325,7 +325,7 @@
   "cache_matches_web_root": true,
   "prod_cache_cleared": false,
   "db_config_fingerprint": "721153795758b3f7",
-  "server_uuid": "ff0092ef-e5d1-11f1-9a87-2e6b1b469ce1",
+  "server_uuid": "c097f150-e6b0-11f1-84d8-9ad0ee01f487",
   "mysql_version": "8.0.46",
   "tables_before": 1,
   "maintenance_lock": {
@@ -338,144 +338,144 @@
     {
       "pass": 1,
       "ok": true,
-      "ms": 44052,
-      "schema_json_cleared": 1,
+      "ms": 13629,
+      "schema_json_cleared": 0,
       "schema_marker": "/app/storage/cache/runtime_cache/721153795758b3f7/schema.json",
       "steps": [
         {
           "step": "Schema::migrate",
           "ok": true,
-          "ms": 10501
+          "ms": 2562
         },
         {
           "step": "Tenant::ensureSchema",
           "ok": true,
-          "ms": 10558
+          "ms": 5474
         },
         {
           "step": "ChoiceRegistry::ensureSchema",
           "ok": true,
-          "ms": 565
+          "ms": 342
         },
         {
           "step": "Audit::ensureSchema",
           "ok": true,
-          "ms": 185
+          "ms": 194
         },
         {
           "step": "FileLibrary::ensureSchema",
           "ok": true,
-          "ms": 386
+          "ms": 574
         },
         {
           "step": "V5Schema::migrate",
           "ok": true,
-          "ms": 3249
+          "ms": 950
         },
         {
           "step": "AccountingSchema::migrate",
           "ok": true,
-          "ms": 4701
+          "ms": 627
         },
         {
           "step": "AccountingExtendedSchema::migrate",
           "ok": true,
-          "ms": 1902
+          "ms": 659
         },
         {
           "step": "SalesDomain::migrate",
           "ok": true,
-          "ms": 74
+          "ms": 784
         },
         {
           "step": "OrderToCashDomain::migrate",
           "ok": true,
-          "ms": 602
+          "ms": 265
         },
         {
           "step": "AccountingPostingDomain::migrate",
           "ok": true,
-          "ms": 243
+          "ms": 28
         },
         {
           "step": "ArSettlementDomain::migrate",
           "ok": true,
-          "ms": 782
+          "ms": 65
         },
         {
           "step": "ApPostingDomain::migrate",
           "ok": true,
-          "ms": 283
+          "ms": 38
         },
         {
           "step": "ApSettlementDomain::migrate",
           "ok": true,
-          "ms": 164
+          "ms": 15
         },
         {
           "step": "BusinessProfileDomain::migrate",
           "ok": true,
-          "ms": 82
+          "ms": 5
         },
         {
           "step": "CrmDomain::migrate",
           "ok": true,
-          "ms": 507
+          "ms": 44
         },
         {
           "step": "ProductionDomain::migrate",
           "ok": true,
-          "ms": 1214
+          "ms": 84
         },
         {
           "step": "InventoryDomain::migrate",
           "ok": true,
-          "ms": 480
+          "ms": 33
         },
         {
           "step": "ManufacturingExecutionDomain::migrate",
           "ok": true,
-          "ms": 70
+          "ms": 17
         },
         {
           "step": "CostingAccountingDomain::migrate",
           "ok": true,
-          "ms": 53
+          "ms": 4
         },
         {
           "step": "ErpSuiteDomain::migrate",
           "ok": true,
-          "ms": 1391
+          "ms": 171
         },
         {
           "step": "WorkflowDomain::migrate",
           "ok": true,
-          "ms": 652
+          "ms": 32
         },
         {
           "step": "EnterpriseDomain::migrate",
           "ok": true,
-          "ms": 3293
+          "ms": 419
         },
         {
           "step": "PurchaseMatchingDomain::migrate",
           "ok": true,
-          "ms": 767
+          "ms": 37
         },
         {
           "step": "AiSchema::migrate",
           "ok": true,
-          "ms": 1252
+          "ms": 179
         },
         {
           "step": "ModuleRegistry::ensureSchema",
           "ok": true,
-          "ms": 66
+          "ms": 5
         },
         {
           "step": "RuntimeCache::markSchema",
           "ok": true,
-          "ms": 17
+          "ms": 8
         }
       ],
       "tables_after": 184
@@ -483,19 +483,19 @@
     {
       "pass": 2,
       "ok": true,
-      "ms": 4007,
+      "ms": 2111,
       "schema_json_cleared": 1,
       "schema_marker": "/app/storage/cache/runtime_cache/721153795758b3f7/schema.json",
       "steps": [
         {
           "step": "Schema::migrate",
           "ok": true,
-          "ms": 136
+          "ms": 85
         },
         {
           "step": "Tenant::ensureSchema",
           "ok": true,
-          "ms": 1127
+          "ms": 894
         },
         {
           "step": "ChoiceRegistry::ensureSchema",
@@ -505,57 +505,57 @@
         {
           "step": "Audit::ensureSchema",
           "ok": true,
-          "ms": 7
+          "ms": 5
         },
         {
           "step": "FileLibrary::ensureSchema",
           "ok": true,
-          "ms": 10
+          "ms": 8
         },
         {
           "step": "V5Schema::migrate",
           "ok": true,
-          "ms": 262
+          "ms": 143
         },
         {
           "step": "AccountingSchema::migrate",
           "ok": true,
-          "ms": 486
+          "ms": 243
         },
         {
           "step": "AccountingExtendedSchema::migrate",
           "ok": true,
-          "ms": 280
+          "ms": 260
         },
         {
           "step": "SalesDomain::migrate",
           "ok": true,
-          "ms": 20
+          "ms": 5
         },
         {
           "step": "OrderToCashDomain::migrate",
           "ok": true,
-          "ms": 35
+          "ms": 21
         },
         {
           "step": "AccountingPostingDomain::migrate",
           "ok": true,
-          "ms": 10
+          "ms": 8
         },
         {
           "step": "ArSettlementDomain::migrate",
           "ok": true,
-          "ms": 31
+          "ms": 19
         },
         {
           "step": "ApPostingDomain::migrate",
           "ok": true,
-          "ms": 25
+          "ms": 18
         },
         {
           "step": "ApSettlementDomain::migrate",
           "ok": true,
-          "ms": 19
+          "ms": 7
         },
         {
           "step": "BusinessProfileDomain::migrate",
@@ -565,62 +565,62 @@
         {
           "step": "CrmDomain::migrate",
           "ok": true,
-          "ms": 62
+          "ms": 45
         },
         {
           "step": "ProductionDomain::migrate",
           "ok": true,
-          "ms": 65
+          "ms": 37
         },
         {
           "step": "InventoryDomain::migrate",
           "ok": true,
-          "ms": 93
+          "ms": 28
         },
         {
           "step": "ManufacturingExecutionDomain::migrate",
           "ok": true,
-          "ms": 10
+          "ms": 13
         },
         {
           "step": "CostingAccountingDomain::migrate",
           "ok": true,
-          "ms": 7
+          "ms": 1
         },
         {
           "step": "ErpSuiteDomain::migrate",
           "ok": true,
-          "ms": 107
+          "ms": 25
         },
         {
           "step": "WorkflowDomain::migrate",
           "ok": true,
-          "ms": 14
+          "ms": 7
         },
         {
           "step": "EnterpriseDomain::migrate",
           "ok": true,
-          "ms": 598
+          "ms": 104
         },
         {
           "step": "PurchaseMatchingDomain::migrate",
           "ok": true,
-          "ms": 29
+          "ms": 15
         },
         {
           "step": "AiSchema::migrate",
           "ok": true,
-          "ms": 413
+          "ms": 92
         },
         {
           "step": "ModuleRegistry::ensureSchema",
           "ok": true,
-          "ms": 130
+          "ms": 2
         },
         {
           "step": "RuntimeCache::markSchema",
           "ok": true,
-          "ms": 16
+          "ms": 11
         }
       ],
       "tables_after": 184
@@ -641,5 +641,5 @@
   "schema_ready_after": true,
   "schema_marker_path": "/app/storage/cache/runtime_cache/721153795758b3f7/schema.json",
   "note": "Staging cumulative migrate×2 PASS. Not STAGING_VERIFIED / Not PRODUCTION_READY. Remote staging still requires owner auth.",
-  "finished_at": "2026-11-22T04:26:01+00:00"
+  "finished_at": "2026-11-22T20:14:32+00:00"
 }

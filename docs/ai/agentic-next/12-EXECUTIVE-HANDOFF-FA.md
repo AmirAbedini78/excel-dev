@@ -1,7 +1,7 @@
 # 12 - تحويل اجرايي (فارسي)
 
 **SHA نهايي مهندسي (Wave4):** `092e9cc68435845f23b99a16a8fcea473e0c7514`  
-**Tip پذيرش + اسناد (main، پيش از PR مسير امن MCP):** `af4b1ffdf0fa8189addb297f17b12a07e4c53bac`  
+**Tip `origin/main` (پس از PR #52):** `a53019c6531e9be29274a6159b725737cde64547`  
 **وضعيت توليد:** NOT_AUTHORIZED / NOT_DEPLOYED
 
 ## چه كاري اكنون واقعاً ممكن است
@@ -29,8 +29,9 @@
 
 | مورد | وضعيت |
 |------|--------|
-| MCP | PATH_READY / DISABLED_BY_DEFAULT |
+| MCP | PATH_READY / DISABLED_BY_DEFAULT (runbook اپراتور آماده؛ فلگ commit نشده) |
 | Staging | READY / WAITING_FOR_STAGING_HOST (نه STAGING_VERIFIED) |
+| Browser محلي | LOCAL_BROWSER_VERIFIED روي tip (نه staging) |
 | Production | NOT_DEPLOYED |
 
 كمپين پس از اين تحويل متوقف مي‌شود؛ كار غير بحراني فقط در backlog.

@@ -1,0 +1,170 @@
+{
+  "ok": true,
+  "classification": "LOCAL_BROWSER_VERIFIED",
+  "LOCAL_BROWSER_VERIFIED": true,
+  "STAGING_VERIFIED": false,
+  "base_url": "http://127.0.0.1:8765",
+  "verified_at_utc": "2026-11-22T20:20:22Z",
+  "tool": "python-urllib-authenticated-http",
+  "note": "Cursor browser MCP cannot reach host loopback; Playwright CDN geo-blocked. HTTP+prior PNG evidence.",
+  "admin_login": {
+    "post": 200,
+    "follow": null,
+    "csrf": "a1c37aaf00ef96ed898b71e8c54d872f66a1c95d44347f07",
+    "flags": {
+      "rtl": true,
+      "jalali": true,
+      "blocked": false,
+      "irr": true,
+      "toman": false,
+      "login_form": false,
+      "bytes": 34775
+    }
+  },
+  "cases": {
+    "calendar": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": false,
+      "irr": true,
+      "toman": false,
+      "login_form": false,
+      "bytes": 34768
+    },
+    "trading": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": true,
+      "irr": true,
+      "toman": false,
+      "login_form": false,
+      "bytes": 23781
+    },
+    "manufacturing": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": true,
+      "irr": true,
+      "toman": false,
+      "login_form": false,
+      "bytes": 25061
+    },
+    "service": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": false,
+      "irr": true,
+      "toman": false,
+      "login_form": false,
+      "bytes": 21684
+    },
+    "settings_c2": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": false,
+      "irr": true,
+      "toman": false,
+      "login_form": false,
+      "bytes": 22857
+    },
+    "settings_c1": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": false,
+      "irr": true,
+      "toman": true,
+      "login_form": false,
+      "bytes": 22857
+    },
+    "calendar_c1": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": false,
+      "irr": true,
+      "toman": true,
+      "login_form": false,
+      "bytes": 28915
+    },
+    "modules": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": false,
+      "irr": true,
+      "toman": true,
+      "login_form": false,
+      "bytes": 37851
+    },
+    "industrial": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": false,
+      "irr": true,
+      "toman": true,
+      "login_form": false,
+      "bytes": 23151
+    },
+    "p2p": {
+      "http": 200,
+      "rtl": true,
+      "jalali": true,
+      "blocked": true,
+      "irr": true,
+      "toman": true,
+      "login_form": false,
+      "bytes": 21816
+    }
+  },
+  "csrf_probes": {
+    "missing": {
+      "http": 419,
+      "csrf_mismatch": true,
+      "body_snip": "CSRF token mismatch"
+    },
+    "bad": {
+      "http": 419,
+      "csrf_mismatch": true,
+      "body_snip": "CSRF token mismatch"
+    },
+    "valid": {
+      "http": 200,
+      "csrf_mismatch": true,
+      "body_snip": "<!doctype html><html lang=\"fa\" dir=\"rtl\"><head>\r     <meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\r     <title>تقویم کاری - ERPSMART</ti"
+    }
+  },
+  "limited": {
+    "login": {
+      "post": 200,
+      "follow": null,
+      "csrf": "1f693c9017bcf20830a7beabdd1653bdc581d8878c2cbef6",
+      "flags": {
+        "rtl": true,
+        "jalali": true,
+        "blocked": false,
+        "irr": false,
+        "toman": false,
+        "login_form": false,
+        "bytes": 17777
+      }
+    },
+    "trading_http": 200,
+    "flags": {
+      "rtl": true,
+      "jalali": true,
+      "blocked": true,
+      "irr": false,
+      "toman": false,
+      "login_form": false,
+      "bytes": 5573
+    },
+    "has_purchase_manage_text": false
+  }
+}

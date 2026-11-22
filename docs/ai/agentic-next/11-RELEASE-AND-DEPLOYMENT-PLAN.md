@@ -10,8 +10,9 @@
 | PHP control plane update | required |
 | Worker image/update | required if kernel/RAG/provider changed |
 | Migrations | additive `AiSchema` only; run on disposable DBs first |
-| MCP | **DISABLED BY DEFAULT**; secure enablement path ready — ops may set `mcp_enabled=1` on non-prod only |
+| MCP | **DISABLED BY DEFAULT**; secure enablement path + operator runbook `13-MCP-OPERATOR-ENABLE-RUNBOOK.md` — ops may set `mcp_enabled=1` on non-prod only |
 | Staging | Package pin `14fcf69` = `WAITING_FOR_STAGING_HOST` (not `STAGING_VERIFIED`) |
+| Local browser | `LOCAL_BROWSER_VERIFIED` on tip `a53019c…` disposable stack — not staging |
 | Production | **NOT_AUTHORIZED** / **NOT_DEPLOYED** |
 
 ## Rollback
