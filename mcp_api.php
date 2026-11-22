@@ -107,36 +107,47 @@ function mcp_auth_context(): array
     }
     try {
         Tenant::boot();
+        if (class_exists('Tenant') && method_exists('Tenant', 'id') && Tenant::id() !== $workspaceId) {
+            return ['ok' => false, 'error' => 'workspace_mismatch', 'code' => 'forbidden'];
+        }
     } catch (Throwable $e) {
-        // Company list may still come from header below.
+        // Membership still resolved from workspace_id below; boot failure ⇒ empty companies.
     }
 
+    // Server-side membership is authoritative. Client header may only narrow.
+    $membership = [];
+    try {
+        $st = pdo()->prepare(
+            'SELECT id FROM companies WHERE workspace_id=? AND active=1 ORDER BY id'
+        );
+        $st->execute([$workspaceId]);
+        foreach ($st->fetchAll() as $row) {
+            $id = (int)($row['id'] ?? 0);
+            if ($id > 0) {
+                $membership[] = $id;
+            }
+        }
+    } catch (Throwable $e) {
+        $membership = [];
+    }
+
+    $clientHint = [];
     $companyHeader = trim((string)($_SERVER['HTTP_X_ERP_COMPANY_IDS'] ?? ''));
-    $allowed = [];
     if ($companyHeader !== '') {
         foreach (preg_split('/\s*,\s*/', $companyHeader) as $part) {
             $id = (int)$part;
             if ($id > 0) {
-                $allowed[] = $id;
+                $clientHint[] = $id;
             }
-        }
-    } elseif (class_exists('AccountingRepository') && method_exists('AccountingRepository', 'companies')) {
-        try {
-            foreach (AccountingRepository::companies() as $c) {
-                $id = (int)($c['id'] ?? 0);
-                if ($id > 0) {
-                    $allowed[] = $id;
-                }
-            }
-        } catch (Throwable $e) {
-            $allowed = [];
         }
     }
+
+    $allowed = McpFacade::resolveAllowedCompanyIds($membership, $clientHint);
 
     return [
         'ok' => true,
         'workspace_id' => $workspaceId,
-        'allowed_company_ids' => array_values(array_unique($allowed)),
+        'allowed_company_ids' => $allowed,
         'permissions' => ['ai.use'],
         'user_id' => (int)($token['user_id'] ?? 0),
     ];

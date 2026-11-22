@@ -22,9 +22,21 @@
 | Label | Status |
 |-------|--------|
 | **STAGING_VERIFIED** | **NO** — remote staging auth not granted |
+| **WAITING_FOR_STAGING_HOST** | **YES** — package + offline executor ready; owner URL/DB/auth missing |
 | **PRODUCTION_READY** | **NO** |
 | **PRODUCTION_DEPLOYED** | **NO** |
 | Local browser class | `LOCAL_BROWSER_VERIFIED` (separate from this manifest) |
+
+### Local rebuild evidence (2026-11-22 — operator cache only, not committed)
+
+| Field | Value |
+|-------|--------|
+| Build | `git archive --format=zip -o erpsmart-rc1-staging.zip 14fcf69c669f63ad33dc40f6e10043aa580e04d0` |
+| Bytes | `2188129` |
+| Archive SHA-256 | `f9400aebdeb16b8d7f0ce39085354157624a02bfd9578d496a043da196cfdbf2` |
+| Tree manifest SHA-256 | `f3a5c012cbe26be1b1334cfe9c2695e1d35e829ad816f1ef7ff9a061e39bdc03` |
+| File count (hashed tree) | `489` |
+| Disposable migrate executor | `tests.rc1.test_rc1_staging_migrate_executor` **12/12 OK** (local MySQL sandbox; not remote) |
 
 ---
 

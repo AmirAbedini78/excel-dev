@@ -2,7 +2,7 @@
   "ok": true,
   "drill": "staging_restorable_backup_integrity",
   "backup_bytes": 2397,
-  "backup_sha256": "c5008ef4aa95033e2143b75051800b4b930f6ca7e912f9fa0439cb692f7bb5dd",
+  "backup_sha256": "d550bcdff6b8ee02054332763a60cbda75508a72c06d72e022c36b74e0a74f05",
   "restored_db_identity": "erpsmart_rc1_staging_backup_test",
   "row_invariants_ok": true,
   "migrate_x2_ok": true,

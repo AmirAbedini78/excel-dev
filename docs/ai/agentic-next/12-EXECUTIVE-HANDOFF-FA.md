@@ -1,6 +1,7 @@
 # 12 - تحويل اجرايي (فارسي)
 
-**SHA نهايي مهندسي:** `092e9cc68435845f23b99a16a8fcea473e0c7514`  
+**SHA نهايي مهندسي (Wave4):** `092e9cc68435845f23b99a16a8fcea473e0c7514`  
+**Tip پذيرش + اسناد (main، پيش از PR مسير امن MCP):** `af4b1ffdf0fa8189addb297f17b12a07e4c53bac`  
 **وضعيت توليد:** NOT_AUTHORIZED / NOT_DEPLOYED
 
 ## چه كاري اكنون واقعاً ممكن است
@@ -8,8 +9,9 @@
 - گفتگوي grounded با ابزارهاي ERP خواندني از طريق Kernel و Copilot/Workspace
 - بازيابي اسناد با ACL و citation از نوع DOCUMENT_EVIDENCE
 - ابزارهاي توليد (BOM/دستور/آمادگي مواد) با UNVALUED و GL_BLOCKED صريح
-- facade MCP (خاموش به صورت پيش‌فرض)
+- facade MCP (خاموش به صورت پيش‌فرض؛ مسير فعال‌سازي امن آماده — عضويت شركت سمت سرور)
 - كشف/صلاحيت مدل از Provider Gateway (نياز به credential مالك براي ابر)
+- بسته staging قابل اجرا در پين `14fcf69` + executor آفلاين (محلي PASS؛ remote در انتظار ميزبان)
 
 ## چه چيزي نياز به تاييد انساني دارد
 
@@ -19,7 +21,16 @@
 
 1. سبز بودن Commercial MVP + RC1 MySQL/PHP روي SHA نهايي  
 2. به‌روزرساني Worker + PHP  
-3. فعال‌نکردن MCP تا تأييد امنيت عملياتي  
+3. فعال‌كردن MCP فقط با `mcp_enabled=1` روي ميزبان غيرتوليد پس از مرور امنيت (پيش‌فرض همچنان خاموش)  
 4. عدم دسترسي به production در اين كمپين  
+5. براي `STAGING_VERIFIED`: URL/DB/اسرار staging جدا + امضاي `RC1-STAGING-REMOTE-AUTH-CHECKLIST.md`
+
+## وضعيت گام‌هاي بعد از پذيرش
+
+| مورد | وضعيت |
+|------|--------|
+| MCP | PATH_READY / DISABLED_BY_DEFAULT |
+| Staging | READY / WAITING_FOR_STAGING_HOST (نه STAGING_VERIFIED) |
+| Production | NOT_DEPLOYED |
 
 كمپين پس از اين تحويل متوقف مي‌شود؛ كار غير بحراني فقط در backlog.

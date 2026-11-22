@@ -6,12 +6,13 @@
 
 | Item | Value |
 |------|-------|
-| Exact source SHA | _pending Wave4 merge_ |
+| Exact source SHA | Wave4 `092e9cc`; acceptance tip `af4b1ff` (+ MCP secure-path PR when merged) |
 | PHP control plane update | required |
 | Worker image/update | required if kernel/RAG/provider changed |
 | Migrations | additive `AiSchema` only; run on disposable DBs first |
-| MCP | remains **disabled** until security acceptance recorded |
-| Production | **NOT_AUTHORIZED** |
+| MCP | **DISABLED BY DEFAULT**; secure enablement path ready — ops may set `mcp_enabled=1` on non-prod only |
+| Staging | Package pin `14fcf69` = `WAITING_FOR_STAGING_HOST` (not `STAGING_VERIFIED`) |
+| Production | **NOT_AUTHORIZED** / **NOT_DEPLOYED** |
 
 ## Rollback
 

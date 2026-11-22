@@ -120,3 +120,20 @@ Commercial MVP ط¨ظ‡â€Œطھظ†ظ‡ط§غŒغŒ ط¨ط±ط§غŒ RC1 �
 
 ### ط­ع©ظ… ط§غŒظ† ظ¾ط§ط³
 ط¨ظ‡ ط¨ط®ط´ ط§ظ†طھظ‡ط§غŒغŒ ع¯ط²ط§ط±ط´ غŒع©ظ¾ط§ط±ع†ظ‡ظ” T0 ظ…ط±ط§ط¬ط¹ظ‡ ط´ظˆط¯ (غŒع© ظ…ظ‚ط¯ط§ط± ط§ط²: `STAGING_READY` | `STAGING_VERIFIED` | `STAGING_BLOCKED`).
+
+---
+
+## Status addendum (2026-11-22, English — encoding-safe)
+
+| Label | Value |
+|-------|-------|
+| Staging package SHA | 14fcf69c669f63ad33dc40f6e10043aa580e04d0 |
+| Engineering readiness | STAGING_READY |
+| Host gate | WAITING_FOR_STAGING_HOST |
+| Remote UAT | **not** STAGING_VERIFIED |
+| Local package archive SHA-256 | f9400aebdeb16b8d7f0ce39085354157624a02bfd9578d496a043da196cfdbf2 |
+| Disposable migrate executor | 12/12 PASS (tests.rc1.test_rc1_staging_migrate_executor) |
+| Production | NOT_DEPLOYED / NOT_AUTHORIZED |
+
+Owner input still required for remote: non-prod HTTPS URL, staging DB name != prod, distinct credentials/app_key, signed RC1-STAGING-REMOTE-AUTH-CHECKLIST.md (D1-D6), operator token RC1_STAGING_AUTH_EXPECTED.
+
