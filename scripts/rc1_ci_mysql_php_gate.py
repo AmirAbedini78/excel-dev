@@ -65,15 +65,14 @@ def _ensure_disposable_databases(names: list[str]) -> None:
         or os.environ.get("MYSQL_ROOT_PASSWORD")
         or "p2p_test_root"
     )
-    sql_parts = []
+    statements: list[str] = []
     for name in names:
-        sql_parts.append(
+        statements.append(
             f"CREATE DATABASE IF NOT EXISTS `{name}` "
-            "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; "
-            f"GRANT ALL PRIVILEGES ON `{name}`.* TO 'p2p'@'%';"
+            "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
         )
-    sql_parts.append("FLUSH PRIVILEGES;")
-    sql = " ".join(sql_parts)
+        statements.append(f"GRANT ALL PRIVILEGES ON `{name}`.* TO 'p2p'@'%'")
+    statements.append("FLUSH PRIVILEGES")
 
     container = os.environ.get("RC1_MYSQL_CONTAINER", "erpsmart-p2p-mysql-test")
     insp = subprocess.run(
@@ -82,6 +81,7 @@ def _ensure_disposable_databases(names: list[str]) -> None:
         text=True,
     )
     if insp.returncode == 0 and container in (insp.stdout or ""):
+        sql = "; ".join(statements) + ";"
         r = subprocess.run(
             ["docker", "exec", container, "mysql", "-uroot", f"-p{root_pass}", "-e", sql],
             capture_output=True,
@@ -108,7 +108,8 @@ def _ensure_disposable_databases(names: list[str]) -> None:
     )
     try:
         with conn.cursor() as cur:
-            for stmt in sql_parts:
+            # One statement per execute — pymysql multi-statement is off by default.
+            for stmt in statements:
                 cur.execute(stmt)
         conn.commit()
     finally:
