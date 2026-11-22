@@ -14,7 +14,7 @@
 | Staging | **SKIPPED_BY_OWNER** — RC1 pin `14fcf69` is archive only, not AI tip |
 | Local browser | prior `LOCAL_BROWSER_VERIFIED` evidence — not production |
 | Production | Package ready for **explicit Go/No-Go**; **NOT_DEPLOYED** by T0 |
-| `.cpanel.yml` audit | Gaps: missing `copilot_api.php` / `mcp_api.php`; **P0** blind `cp -R storage` — use controlled sync |
+| `.cpanel.yml` audit | **Fail-closed** (auto-deploy disabled). Authoritative method: `scripts/agentic_controlled_cpanel_sync.py` (preserves storage + `app/config.php`; allowlists `copilot_api.php` / `mcp_api.php`) |
 
 ## Rollback
 

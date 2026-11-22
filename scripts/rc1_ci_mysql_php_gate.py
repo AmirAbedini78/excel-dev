@@ -46,11 +46,89 @@ def _ensure_php_db_host() -> None:
         os.environ["O2C_DB_HOST_PHP"] = host
 
 
+def _ensure_disposable_databases(names: list[str]) -> None:
+    """CREATE + GRANT disposable schemas for p2p (p2p often lacks CREATE DATABASE).
+
+    Prefer docker exec into the named sandbox container; fall back to root TCP.
+    Never accepts prod-like names.
+    """
+    forbidden = ("prod", "production", "zzflgmfd", "cpanel", "live", "baseline")
+    for name in names:
+        low = name.lower()
+        if any(x in low for x in forbidden):
+            raise SystemExit(f"RC1_CI_MYSQL_PHP_GATE_FAIL: refused db name {name}")
+        if "test" not in low and "e2e" not in low and "staging" not in low:
+            raise SystemExit(f"RC1_CI_MYSQL_PHP_GATE_FAIL: non-disposable db {name}")
+
+    root_pass = (
+        os.environ.get("O2C_DB_ROOT_PASS")
+        or os.environ.get("MYSQL_ROOT_PASSWORD")
+        or "p2p_test_root"
+    )
+    sql_parts = []
+    for name in names:
+        sql_parts.append(
+            f"CREATE DATABASE IF NOT EXISTS `{name}` "
+            "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; "
+            f"GRANT ALL PRIVILEGES ON `{name}`.* TO 'p2p'@'%';"
+        )
+    sql_parts.append("FLUSH PRIVILEGES;")
+    sql = " ".join(sql_parts)
+
+    container = os.environ.get("RC1_MYSQL_CONTAINER", "erpsmart-p2p-mysql-test")
+    insp = subprocess.run(
+        ["docker", "inspect", "-f", "{{.Name}}", container],
+        capture_output=True,
+        text=True,
+    )
+    if insp.returncode == 0 and container in (insp.stdout or ""):
+        r = subprocess.run(
+            ["docker", "exec", container, "mysql", "-uroot", f"-p{root_pass}", "-e", sql],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if r.returncode != 0:
+            raise SystemExit(f"RC1_CI_MYSQL_PHP_GATE_FAIL: db ensure via docker: {r.stderr[-400:]}")
+        print(f"RC1_CI_MYSQL_PHP_GATE: ensured DBs via {container}: {names}", flush=True)
+        return
+
+    try:
+        import pymysql  # type: ignore
+    except ImportError as exc:
+        raise SystemExit("RC1_CI_MYSQL_PHP_GATE_FAIL: pymysql missing for db ensure") from exc
+    conn = pymysql.connect(
+        host=os.environ["O2C_DB_HOST"],
+        port=int(os.environ["O2C_DB_PORT"]),
+        user=os.environ.get("O2C_DB_ROOT_USER") or "root",
+        password=root_pass,
+        charset="utf8mb4",
+        connect_timeout=10,
+    )
+    try:
+        with conn.cursor() as cur:
+            for stmt in sql_parts:
+                cur.execute(stmt)
+        conn.commit()
+    finally:
+        conn.close()
+    print(f"RC1_CI_MYSQL_PHP_GATE: ensured DBs via TCP root: {names}", flush=True)
+
+
 def main() -> int:
     os.environ.setdefault("RC1_REQUIRED", "1")
     os.environ.setdefault("RC1_ALLOW_ANY_MYSQL", "1")
     _require_env()
     _ensure_php_db_host()
+    _ensure_disposable_databases(
+        [
+            "erpsmart_mf1_test",
+            "erpsmart_t3_trading_test",
+            "erpsmart_rc1_staging_executor_test",
+            "erpsmart_rc1_staging_backup_test",
+        ]
+    )
 
     # Fail if Docker PHP image missing when tests need it.
     img = subprocess.run(
