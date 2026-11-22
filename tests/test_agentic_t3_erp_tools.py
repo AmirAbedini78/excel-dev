@@ -45,9 +45,7 @@ def _docker_ok() -> bool:
         return False
 
 
-def _mysql_ok() -> bool:
-    if os.environ.get("RC1_ALLOW_ANY_MYSQL", "").strip() in {"1", "true", "TRUE", "yes"}:
-        return True
+def _named_mysql_container_ok() -> bool:
     try:
         r = subprocess.run(
             ["docker", "inspect", "-f", "{{.Name}}", "erpsmart-p2p-mysql-test"],
@@ -58,6 +56,74 @@ def _mysql_ok() -> bool:
         return r.returncode == 0 and "erpsmart-p2p-mysql-test" in (r.stdout or "")
     except Exception:
         return False
+
+
+def _mysql_ok() -> bool:
+    """True when a disposable MySQL is expected to be reachable for this suite."""
+    if _named_mysql_container_ok():
+        return True
+    # CI service MySQL (RC1 gate): allow without the named container.
+    if os.environ.get("RC1_ALLOW_ANY_MYSQL", "").strip() in {"1", "true", "TRUE", "yes"}:
+        return True
+    return False
+
+
+def _ensure_mf1_database() -> None:
+    """Create disposable erpsmart_mf1_test + GRANT for p2p (p2p cannot CREATE DATABASE).
+
+    Mirrors .github/workflows/rc1-mysql-php-gate.yml bootstrap. Never production.
+    """
+    db = _db_name()
+    if "test" not in db.lower() and "mf" not in db.lower() and "e2e" not in db.lower():
+        raise AssertionError(f"REFUSED non-disposable db name: {db}")
+    container = os.environ.get("RC1_MYSQL_CONTAINER", "erpsmart-p2p-mysql-test")
+    root_pass = os.environ.get("O2C_DB_ROOT_PASS") or os.environ.get("MYSQL_ROOT_PASSWORD") or "p2p_test_root"
+
+    # Prefer docker exec root when the named sandbox container is present.
+    if _named_mysql_container_ok():
+        sql = (
+            f"CREATE DATABASE IF NOT EXISTS `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; "
+            f"GRANT ALL PRIVILEGES ON `{db}`.* TO 'p2p'@'%'; "
+            f"FLUSH PRIVILEGES;"
+        )
+        r = subprocess.run(
+            ["docker", "exec", container, "mysql", "-uroot", f"-p{root_pass}", "-e", sql],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=60,
+        )
+        if r.returncode != 0:
+            raise AssertionError(f"mf1_db_ensure_failed: {r.stderr[-500:]}")
+        return
+
+    # CI service MySQL (no named container): root TCP + one statement per execute.
+    try:
+        import pymysql  # type: ignore
+    except ImportError as exc:
+        raise unittest.SkipTest("pymysql unavailable to ensure mf1 disposable DB") from exc
+    try:
+        conn = pymysql.connect(
+            host=_runner_db_host(),
+            port=int(PORT),
+            user=os.environ.get("O2C_DB_ROOT_USER") or "root",
+            password=root_pass,
+            charset="utf8mb4",
+            connect_timeout=10,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise unittest.SkipTest(f"mf1_mysql_unreachable:{exc}") from exc
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"CREATE DATABASE IF NOT EXISTS `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+            )
+            cur.execute(f"GRANT ALL PRIVILEGES ON `{db}`.* TO 'p2p'@'%'")
+            cur.execute("FLUSH PRIVILEGES")
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def _php(script: str, *argv: str, timeout: int = 180) -> subprocess.CompletedProcess[str]:
@@ -145,6 +211,7 @@ class AgenticT3ErpToolsTest(unittest.TestCase):
     def test_mf_tools_mysql_unvalued_gl_blocked_and_permission(self):
         if not _mysql_ok():
             raise unittest.SkipTest("erpsmart-p2p-mysql-test unavailable")
+        _ensure_mf1_database()
         reset = _runner("reset")
         self.assertTrue(reset.get("ok"), reset)
         contract = _runner("contract_descriptors")

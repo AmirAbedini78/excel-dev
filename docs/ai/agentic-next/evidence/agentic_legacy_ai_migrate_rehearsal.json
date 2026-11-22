@@ -1,0 +1,660 @@
+{
+  "ok": true,
+  "drill": "agentic_legacy_anonymized_ai_migrate_x2_recon_recovery",
+  "verified_at_utc": "2026-11-22T21:07:02Z",
+  "production": "NOT_TOUCHED",
+  "prod_migrate": "NOT_RUN",
+  "provenance_id": "prior-cpanel-anon-20261121",
+  "anon_dump_path_offline": "c:\\Users\\h\\Downloads\\erpsmart-rc1-sanitize\\zzflgmfd_excel2.ANON.schema_data.sql",
+  "anon_dump_sha256": "F3B92C0088A874A739FCD64BF25FA714010078C3EB95DFDF81ADC92335841DE2",
+  "anon_dump_bytes": 519328,
+  "git_commit_dump": false,
+  "disposable_mysql": {
+    "container_name": "erpsmart-p2p-mysql-test",
+    "inspect": "9c00f40fc78a2d1b6cd6ea3b6cb6384c5295a04ffe5834eba487949a5e35833c running bridge",
+    "server_uuid": "c097f150-e6b0-11f1-84d8-9ad0ee01f487",
+    "mysql_version": "8.0.46",
+    "host_port": 3307
+  },
+  "databases": {
+    "baseline_untouched": {
+      "name": "erpsmart_agentic_legacy_ai_baseline",
+      "tables": 110,
+      "migrated": false
+    },
+    "migrate_clone": {
+      "name": "erpsmart_agentic_legacy_ai_migrate",
+      "tables_before": 110,
+      "tables_after": 184,
+      "migrate_pass1": {
+        "ok": true,
+        "db": "erpsmart_agentic_legacy_ai_migrate",
+        "ms": 3196,
+        "tables": 184,
+        "ai_schema_version": null,
+        "ai_tables": [
+          "ai_action_proposals",
+          "ai_conversations",
+          "ai_feedback",
+          "ai_jobs",
+          "ai_rag_document_acl",
+          "ai_rag_documents",
+          "ai_rag_sources",
+          "ai_semantic_routes",
+          "ai_suggestions",
+          "ai_worker_nodes",
+          "ai_worker_tokens"
+        ],
+        "rc1_tables": {
+          "erp_ar_postings": true,
+          "erp_ap_postings": true,
+          "erp_mf_production_orders": true,
+          "erp_company_business_profiles": true,
+          "erp_p2p_vendor_bills": true,
+          "erp_o2c_invoice_links": true
+        },
+        "steps": [
+          {
+            "step": "Schema::migrate",
+            "ok": true,
+            "ms": 179
+          },
+          {
+            "step": "Tenant::ensureSchema",
+            "ok": true,
+            "ms": 927
+          },
+          {
+            "step": "ChoiceRegistry::ensureSchema",
+            "ok": true,
+            "ms": 97
+          },
+          {
+            "step": "Audit::ensureSchema",
+            "ok": true,
+            "ms": 4
+          },
+          {
+            "step": "FileLibrary::ensureSchema",
+            "ok": true,
+            "ms": 5
+          },
+          {
+            "step": "V5Schema::migrate",
+            "ok": true,
+            "ms": 148
+          },
+          {
+            "step": "AccountingSchema::migrate",
+            "ok": true,
+            "ms": 327
+          },
+          {
+            "step": "AccountingExtendedSchema::migrate",
+            "ok": true,
+            "ms": 178
+          },
+          {
+            "step": "SalesDomain::migrate",
+            "ok": true,
+            "ms": 3
+          },
+          {
+            "step": "OrderToCashDomain::migrate",
+            "ok": true,
+            "ms": 57
+          },
+          {
+            "step": "AccountingPostingDomain::migrate",
+            "ok": true,
+            "ms": 22
+          },
+          {
+            "step": "ArSettlementDomain::migrate",
+            "ok": true,
+            "ms": 59
+          },
+          {
+            "step": "ApPostingDomain::migrate",
+            "ok": true,
+            "ms": 55
+          },
+          {
+            "step": "ApSettlementDomain::migrate",
+            "ok": true,
+            "ms": 20
+          },
+          {
+            "step": "BusinessProfileDomain::migrate",
+            "ok": true,
+            "ms": 6
+          },
+          {
+            "step": "CrmDomain::migrate",
+            "ok": true,
+            "ms": 60
+          },
+          {
+            "step": "ProductionDomain::migrate",
+            "ok": true,
+            "ms": 163
+          },
+          {
+            "step": "InventoryDomain::migrate",
+            "ok": true,
+            "ms": 33
+          },
+          {
+            "step": "ManufacturingExecutionDomain::migrate",
+            "ok": true,
+            "ms": 25
+          },
+          {
+            "step": "CostingAccountingDomain::migrate",
+            "ok": true,
+            "ms": 6
+          },
+          {
+            "step": "ErpSuiteDomain::migrate",
+            "ok": true,
+            "ms": 37
+          },
+          {
+            "step": "WorkflowDomain::migrate",
+            "ok": true,
+            "ms": 6
+          },
+          {
+            "step": "EnterpriseDomain::migrate",
+            "ok": true,
+            "ms": 594
+          },
+          {
+            "step": "PurchaseMatchingDomain::migrate",
+            "ok": true,
+            "ms": 41
+          },
+          {
+            "step": "AiSchema::migrate",
+            "ok": true,
+            "ms": 109
+          },
+          {
+            "step": "ModuleRegistry::ensureSchema",
+            "ok": true,
+            "ms": 1
+          },
+          {
+            "step": "RuntimeCache::markSchema",
+            "ok": true,
+            "ms": 19
+          }
+        ],
+        "agent_task_schema": "erpsmart.agent_task.v1"
+      },
+      "migrate_pass2": {
+        "ok": true,
+        "db": "erpsmart_agentic_legacy_ai_migrate",
+        "ms": 2005,
+        "tables": 184,
+        "ai_schema_version": null,
+        "ai_tables": [
+          "ai_action_proposals",
+          "ai_conversations",
+          "ai_feedback",
+          "ai_jobs",
+          "ai_rag_document_acl",
+          "ai_rag_documents",
+          "ai_rag_sources",
+          "ai_semantic_routes",
+          "ai_suggestions",
+          "ai_worker_nodes",
+          "ai_worker_tokens"
+        ],
+        "rc1_tables": {
+          "erp_ar_postings": true,
+          "erp_ap_postings": true,
+          "erp_mf_production_orders": true,
+          "erp_company_business_profiles": true,
+          "erp_p2p_vendor_bills": true,
+          "erp_o2c_invoice_links": true
+        },
+        "steps": [
+          {
+            "step": "Schema::migrate",
+            "ok": true,
+            "ms": 161
+          },
+          {
+            "step": "Tenant::ensureSchema",
+            "ok": true,
+            "ms": 797
+          },
+          {
+            "step": "ChoiceRegistry::ensureSchema",
+            "ok": true,
+            "ms": 100
+          },
+          {
+            "step": "Audit::ensureSchema",
+            "ok": true,
+            "ms": 5
+          },
+          {
+            "step": "FileLibrary::ensureSchema",
+            "ok": true,
+            "ms": 6
+          },
+          {
+            "step": "V5Schema::migrate",
+            "ok": true,
+            "ms": 159
+          },
+          {
+            "step": "AccountingSchema::migrate",
+            "ok": true,
+            "ms": 237
+          },
+          {
+            "step": "AccountingExtendedSchema::migrate",
+            "ok": true,
+            "ms": 122
+          },
+          {
+            "step": "SalesDomain::migrate",
+            "ok": true,
+            "ms": 3
+          },
+          {
+            "step": "OrderToCashDomain::migrate",
+            "ok": true,
+            "ms": 23
+          },
+          {
+            "step": "AccountingPostingDomain::migrate",
+            "ok": true,
+            "ms": 7
+          },
+          {
+            "step": "ArSettlementDomain::migrate",
+            "ok": true,
+            "ms": 17
+          },
+          {
+            "step": "ApPostingDomain::migrate",
+            "ok": true,
+            "ms": 14
+          },
+          {
+            "step": "ApSettlementDomain::migrate",
+            "ok": true,
+            "ms": 4
+          },
+          {
+            "step": "BusinessProfileDomain::migrate",
+            "ok": true,
+            "ms": 2
+          },
+          {
+            "step": "CrmDomain::migrate",
+            "ok": true,
+            "ms": 28
+          },
+          {
+            "step": "ProductionDomain::migrate",
+            "ok": true,
+            "ms": 24
+          },
+          {
+            "step": "InventoryDomain::migrate",
+            "ok": true,
+            "ms": 31
+          },
+          {
+            "step": "ManufacturingExecutionDomain::migrate",
+            "ok": true,
+            "ms": 10
+          },
+          {
+            "step": "CostingAccountingDomain::migrate",
+            "ok": true,
+            "ms": 1
+          },
+          {
+            "step": "ErpSuiteDomain::migrate",
+            "ok": true,
+            "ms": 13
+          },
+          {
+            "step": "WorkflowDomain::migrate",
+            "ok": true,
+            "ms": 4
+          },
+          {
+            "step": "EnterpriseDomain::migrate",
+            "ok": true,
+            "ms": 102
+          },
+          {
+            "step": "PurchaseMatchingDomain::migrate",
+            "ok": true,
+            "ms": 12
+          },
+          {
+            "step": "AiSchema::migrate",
+            "ok": true,
+            "ms": 94
+          },
+          {
+            "step": "ModuleRegistry::ensureSchema",
+            "ok": true,
+            "ms": 1
+          },
+          {
+            "step": "RuntimeCache::markSchema",
+            "ok": true,
+            "ms": 12
+          }
+        ],
+        "agent_task_schema": "erpsmart.agent_task.v1"
+      }
+    },
+    "recovery_clone": {
+      "name": "erpsmart_agentic_legacy_ai_recovery",
+      "migrate": {
+        "ok": true,
+        "db": "erpsmart_agentic_legacy_ai_recovery",
+        "ms": 3316,
+        "tables": 184,
+        "ai_schema_version": null,
+        "ai_tables": [
+          "ai_action_proposals",
+          "ai_conversations",
+          "ai_feedback",
+          "ai_jobs",
+          "ai_rag_document_acl",
+          "ai_rag_documents",
+          "ai_rag_sources",
+          "ai_semantic_routes",
+          "ai_suggestions",
+          "ai_worker_nodes",
+          "ai_worker_tokens"
+        ],
+        "rc1_tables": {
+          "erp_ar_postings": true,
+          "erp_ap_postings": true,
+          "erp_mf_production_orders": true,
+          "erp_company_business_profiles": true,
+          "erp_p2p_vendor_bills": true,
+          "erp_o2c_invoice_links": true
+        },
+        "steps": [
+          {
+            "step": "Schema::migrate",
+            "ok": true,
+            "ms": 96
+          },
+          {
+            "step": "Tenant::ensureSchema",
+            "ok": true,
+            "ms": 666
+          },
+          {
+            "step": "ChoiceRegistry::ensureSchema",
+            "ok": true,
+            "ms": 88
+          },
+          {
+            "step": "Audit::ensureSchema",
+            "ok": true,
+            "ms": 4
+          },
+          {
+            "step": "FileLibrary::ensureSchema",
+            "ok": true,
+            "ms": 6
+          },
+          {
+            "step": "V5Schema::migrate",
+            "ok": true,
+            "ms": 137
+          },
+          {
+            "step": "AccountingSchema::migrate",
+            "ok": true,
+            "ms": 282
+          },
+          {
+            "step": "AccountingExtendedSchema::migrate",
+            "ok": true,
+            "ms": 218
+          },
+          {
+            "step": "SalesDomain::migrate",
+            "ok": true,
+            "ms": 2
+          },
+          {
+            "step": "OrderToCashDomain::migrate",
+            "ok": true,
+            "ms": 46
+          },
+          {
+            "step": "AccountingPostingDomain::migrate",
+            "ok": true,
+            "ms": 22
+          },
+          {
+            "step": "ArSettlementDomain::migrate",
+            "ok": true,
+            "ms": 64
+          },
+          {
+            "step": "ApPostingDomain::migrate",
+            "ok": true,
+            "ms": 36
+          },
+          {
+            "step": "ApSettlementDomain::migrate",
+            "ok": true,
+            "ms": 17
+          },
+          {
+            "step": "BusinessProfileDomain::migrate",
+            "ok": true,
+            "ms": 6
+          },
+          {
+            "step": "CrmDomain::migrate",
+            "ok": true,
+            "ms": 30
+          },
+          {
+            "step": "ProductionDomain::migrate",
+            "ok": true,
+            "ms": 389
+          },
+          {
+            "step": "InventoryDomain::migrate",
+            "ok": true,
+            "ms": 81
+          },
+          {
+            "step": "ManufacturingExecutionDomain::migrate",
+            "ok": true,
+            "ms": 17
+          },
+          {
+            "step": "CostingAccountingDomain::migrate",
+            "ok": true,
+            "ms": 110
+          },
+          {
+            "step": "ErpSuiteDomain::migrate",
+            "ok": true,
+            "ms": 20
+          },
+          {
+            "step": "WorkflowDomain::migrate",
+            "ok": true,
+            "ms": 6
+          },
+          {
+            "step": "EnterpriseDomain::migrate",
+            "ok": true,
+            "ms": 702
+          },
+          {
+            "step": "PurchaseMatchingDomain::migrate",
+            "ok": true,
+            "ms": 62
+          },
+          {
+            "step": "AiSchema::migrate",
+            "ok": true,
+            "ms": 177
+          },
+          {
+            "step": "ModuleRegistry::ensureSchema",
+            "ok": true,
+            "ms": 1
+          },
+          {
+            "step": "RuntimeCache::markSchema",
+            "ok": true,
+            "ms": 11
+          }
+        ],
+        "agent_task_schema": "erpsmart.agent_task.v1"
+      },
+      "tables": 184
+    },
+    "rollback_restore": {
+      "name": "erpsmart_agentic_legacy_ai_rollback",
+      "tables": 110,
+      "ai_jobs": 169,
+      "status": "PASS"
+    }
+  },
+  "ai_schema": {
+    "version_before": "1.1.0",
+    "version_after": "1.2.0",
+    "tables_before": [
+      "ai_action_proposals",
+      "ai_conversations",
+      "ai_feedback",
+      "ai_jobs",
+      "ai_rag_sources",
+      "ai_semantic_routes",
+      "ai_suggestions",
+      "ai_worker_nodes",
+      "ai_worker_tokens"
+    ],
+    "tables_after": [
+      "ai_action_proposals",
+      "ai_conversations",
+      "ai_feedback",
+      "ai_jobs",
+      "ai_rag_document_acl",
+      "ai_rag_documents",
+      "ai_rag_sources",
+      "ai_semantic_routes",
+      "ai_suggestions",
+      "ai_worker_nodes",
+      "ai_worker_tokens"
+    ],
+    "has_rag_documents": true,
+    "has_rag_acl": true,
+    "has_idempotency_key": true,
+    "has_dedupe_key": true,
+    "permissions": [
+      "ai.actions.approve",
+      "ai.audit.view",
+      "ai.rag.manage",
+      "ai.rag.retrieve",
+      "ai.use",
+      "ai.workers.manage"
+    ],
+    "agent_task_schema": "erpsmart.agent_task.v1",
+    "unexpected_ai_table_deletes": []
+  },
+  "reconciliation": {
+    "erp": {
+      "ok": true,
+      "mismatch_count": 0,
+      "mismatches": [],
+      "counts_pre": {
+        "users": 1,
+        "companies": 6,
+        "workspaces": 1,
+        "acc_fiscal_years": 3,
+        "acc_vouchers": 47,
+        "acc_voucher_lines": 117,
+        "acc_parties": 10,
+        "acc_cash_accounts": 3,
+        "acc_cash_transactions": 9,
+        "acc_checks": 5,
+        "acc_sales_docs": 14,
+        "acc_sales_lines": 29,
+        "acc_purchase_docs": 8,
+        "acc_purchase_lines": 15,
+        "acc_stock_movements": 2,
+        "acc_inventory_docs": 4,
+        "acc_inventory_lines": 17,
+        "acc_items": 13,
+        "acc_warehouses": 2,
+        "acc_accounts": 22
+      },
+      "counts_post": {
+        "users": 1,
+        "companies": 6,
+        "workspaces": 1,
+        "acc_fiscal_years": 3,
+        "acc_vouchers": 47,
+        "acc_voucher_lines": 117,
+        "acc_parties": 10,
+        "acc_cash_accounts": 3,
+        "acc_cash_transactions": 9,
+        "acc_checks": 5,
+        "acc_sales_docs": 14,
+        "acc_sales_lines": 29,
+        "acc_purchase_docs": 8,
+        "acc_purchase_lines": 15,
+        "acc_stock_movements": 2,
+        "acc_inventory_docs": 4,
+        "acc_inventory_lines": 17,
+        "acc_items": 13,
+        "acc_warehouses": 2,
+        "acc_accounts": 22
+      }
+    },
+    "ai": {
+      "ok": true,
+      "mismatch_count": 0,
+      "mismatches": [],
+      "counts_pre": {
+        "ai_jobs": 169,
+        "ai_conversations": 110,
+        "ai_action_proposals": 15,
+        "ai_suggestions": 10,
+        "ai_worker_tokens": 4,
+        "ai_worker_nodes": 4,
+        "ai_feedback": 0,
+        "ai_semantic_routes": 1,
+        "ai_rag_sources": 0
+      },
+      "counts_post": {
+        "ai_jobs": 169,
+        "ai_conversations": 110,
+        "ai_action_proposals": 15,
+        "ai_suggestions": 10,
+        "ai_worker_tokens": 4,
+        "ai_worker_nodes": 4,
+        "ai_feedback": 0,
+        "ai_semantic_routes": 1,
+        "ai_rag_sources": 0
+      }
+    }
+  },
+  "elapsed_sec": 28.27
+}

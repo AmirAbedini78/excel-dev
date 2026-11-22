@@ -1,34 +1,20 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home3/zzflgmfd/excel2.bcsrp/
-    - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -R app $DEPLOYPATH
-    - /bin/cp -R assets $DEPLOYPATH
-    - /bin/cp -R storage $DEPLOYPATH
-    - /bin/cp -R sample_import $DEPLOYPATH
-    - /bin/cp .htaccess $DEPLOYPATH
-    - /bin/cp index.php $DEPLOYPATH
-    - /bin/cp openapi-v2.json $DEPLOYPATH
-    - /bin/cp API_V2_SAAS_FA.md $DEPLOYPATH
-    - /bin/cp api_tokens.php $DEPLOYPATH
-    - /bin/cp api_v2.php $DEPLOYPATH
-    - /bin/cp v5_api.php $DEPLOYPATH
-    - /bin/cp accounting_api.php $DEPLOYPATH
-    - /bin/cp file_download.php $DEPLOYPATH
-    - /bin/cp v4_files.php $DEPLOYPATH
-    - /bin/cp openapi.json $DEPLOYPATH
-    - /bin/cp api_docs.php $DEPLOYPATH
-    - /bin/cp api_token_admin.php $DEPLOYPATH
-    - /bin/cp api_v1.php $DEPLOYPATH
-    - /bin/cp io.php $DEPLOYPATH
-    - /bin/cp v3_2_api.php $DEPLOYPATH
-    - /bin/cp install.php $DEPLOYPATH
-    - /bin/cp cron.php $DEPLOYPATH
-    - /bin/cp api.php $DEPLOYPATH
-    - /bin/cp ai_api.php $DEPLOYPATH
-    - /bin/cp ai_live.php $DEPLOYPATH
-    - /bin/cp migrate_v2.php $DEPLOYPATH
-    - /bin/cp README_FA.md $DEPLOYPATH
-    - /bin/cp INSTALL_CPanel_FA.md $DEPLOYPATH
-    - /bin/cp DEPLOY_GIT_CPanel_FA.md $DEPLOYPATH
+    # FAIL-CLOSED: blind cPanel Git auto-deploy is NOT safe for Agentic AI release.
+    # P0 risks in prior revision: `cp -R storage` (user uploads/logs/cache overwrite)
+    # and missing copilot_api.php / mcp_api.php. Runtime app/config.php must never be
+    # overwritten from package.
+    #
+    # Authoritative method (operator-only, dry-run default):
+    #   python scripts/agentic_controlled_cpanel_sync.py --selftest
+    #   python scripts/agentic_controlled_cpanel_sync.py --src <pkg> --dest <verified> --manifest-out ...
+    #   # apply only after backup + identity marker + explicit flags:
+    #   python scripts/agentic_controlled_cpanel_sync.py --apply --i-understand-production-risk ...
+    #
+    # Reviewed destination identity (do not retarget): /home3/zzflgmfd/excel2.bcsrp/
+    # Worker/engine: separate package — never auto-deployed here.
+    # DB migrations: never automatic from this file.
+    # MCP: remains disabled by default (do not set mcp_enabled=1 here).
+    - /bin/echo "ERPSMART: .cpanel.yml auto-deploy DISABLED. Use scripts/agentic_controlled_cpanel_sync.py"
+    - /bin/false
