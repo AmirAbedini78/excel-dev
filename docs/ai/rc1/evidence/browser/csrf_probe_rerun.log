@@ -1,0 +1,7 @@
+RC1 Browser CSRF probe rerun — local disposable UAT
+Date: 2026-11-22T20:20:22Z
+URL: http://127.0.0.1:8765
+
+missing: HTTP 419 mismatch=True :: CSRF token mismatch
+bad: HTTP 419 mismatch=True :: CSRF token mismatch
+valid: HTTP 200 mismatch=True :: <!doctype html><html lang="fa" dir="rtl"><head>     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">     <title>تقویم کاری - ERPSMART</ti

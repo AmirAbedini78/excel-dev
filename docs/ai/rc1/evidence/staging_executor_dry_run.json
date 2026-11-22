@@ -1,7 +1,7 @@
 {
   "ok": true,
   "drill": "rc1_staging_schema_migrate",
-  "started_at": "2026-11-22T04:23:45+00:00",
+  "started_at": "2026-11-22T20:13:38+00:00",
   "repo_schema_version": "10.24.0-rc1",
   "mode": "disposable_sim",
   "dry_run": true,
@@ -39,13 +39,13 @@
   "cache_matches_web_root": true,
   "prod_cache_cleared": false,
   "db_config_fingerprint": "323cba39238d23e7",
-  "server_uuid": "ff0092ef-e5d1-11f1-9a87-2e6b1b469ce1",
+  "server_uuid": "c097f150-e6b0-11f1-84d8-9ad0ee01f487",
   "mysql_version": "8.0.46",
-  "tables_before": 181,
+  "tables_before": 0,
   "maintenance_lock": {
     "path": "/app/storage/maintenance/rc1_offline_migrate.lock",
     "engaged": true
   },
   "note": "Dry-run/preflight only — no migrate applied. Re-run without --dry-run / RC1_STAGING_DRY_RUN after review.",
-  "finished_at": "2026-11-22T04:23:47+00:00"
+  "finished_at": "2026-11-22T20:13:38+00:00"
 }

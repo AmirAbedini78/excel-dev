@@ -1,11 +1,15 @@
-﻿RC1 LOCAL browser UAT session
+﻿RC1 LOCAL browser UAT session (rerun on main tip)
 App: docker erpsmart-rc1-browser-uat php -S 0.0.0.0:8765 -t /app (image erpsmart-o2c-php:8.2)
-MySQL: erpsmart-p2p-mysql-test / 02eb215a87f6… / port 3307 / DB erpsmart_rc1_browser_uat
-Install: install.php -> admin rc1.uat@example.local (disposable)
-Modules enabled for UAT: production, service, p2p (via workspace_modules)
-Profiles seeded: company2 retail/IRR; company1 service/TOMAN
-Limited user: rc1.limited@example.local / role rc1_viewer (no accounting.purchase.manage)
-Tool: cursor-ide-browser MCP
-HEAD during run: 7455b7074c05c0ba63683fc8e435d3db6a069620
-Expected main SHA (campaign): 52fa7f12f465653d6e445d484f1a8dda48215f45
+MySQL: erpsmart-p2p-mysql-test / 9c00f40fc78a… / port 3307 / server_uuid=c097f150-e6b0-11f1-84d8-9ad0ee01f487 / DB erpsmart_rc1_browser_uat
+Host PHP CLI: absent — PHP via Docker only
+Seed: docs/ai/rc1/evidence/browser/_fresh_install_seed.php + _seed_limited_uat.php
+Admin (disposable): rc1.uat@example.local (platform admin + workspace owner)
+Limited: rc1.limited@example.local / role rc1_viewer (no accounting.purchase.manage)
+Modules enabled: production, service, p2p, procurement, inventory
+Profiles: company2 retail/IRR; company1 service/TOMAN
+Tool: Playwright (system Chrome channel) + python HTTP CSRF/RBAC
+Cursor ide-browser MCP: cannot reach host loopback (chrome-error) — not used for this rerun
+Playwright CDN browser download: geo-blocked — used channel=chrome instead
+HEAD during run: a53019c6531e9be29274a6159b725737cde64547 (origin/main)
 Classification: LOCAL_BROWSER_VERIFIED (not STAGING_VERIFIED — no staging URL)
+Offline staging migrate executor (disposable_sim): PASS (12/12) against erpsmart_rc1_staging_executor_test

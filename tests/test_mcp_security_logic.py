@@ -56,6 +56,7 @@ class McpSecurityLogic(unittest.TestCase):
             "execute_immediately blocked",
             "tools/approve blocked",
             "write path is proposal only",
+            "lookalike enabled flag",
             "MCP_SECURITY_PASS",
         ):
             self.assertIn(needle, suite)

@@ -26,6 +26,12 @@ $on = static fn(string $k, $d = '') => $k === 'mcp_enabled' ? '1' : '0';
 mcp_assert(McpFacade::isEnabled($off) === false, 'mcp disabled when setting=0');
 mcp_assert(McpFacade::isEnabled(static fn(string $k, $d = '') => $d) === false, 'mcp disabled when setting missing');
 mcp_assert(McpFacade::policySummary($off)['enabled_by_default'] === false, 'enabled_by_default false');
+// Adversarial: only exact string "1" enables — truthy lookalikes stay fail-closed
+foreach (['true', 'TRUE', 'yes', 'on', '1 ', ' 1', '01', '2'] as $lookalike) {
+    $getter = static fn(string $k, $d = '') => $k === 'mcp_enabled' ? $lookalike : '0';
+    mcp_assert(McpFacade::isEnabled($getter) === false, "mcp disabled for lookalike enabled flag={$lookalike}");
+}
+mcp_assert(McpFacade::isEnabled($on) === true, 'mcp enabled only when setting exactly 1');
 $disabled = McpFacade::handle(['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'], [
     'ok' => true, 'workspace_id' => 1, 'allowed_company_ids' => [10], 'permissions' => ['ai.use'],
 ], $off, $descriptors);
