@@ -5,11 +5,17 @@ app/config.php
 storage/logs/*.log
 storage/imports/*
 storage/exports/*
+storage/cache/**
+!storage/cache/.htaccess
+!storage/cache/.gitkeep
 
 # Keep folders in Git
 !storage/logs/.gitkeep
 !storage/imports/.gitkeep
 !storage/exports/.gitkeep
+
+# Local Playwright / npm install debris
+node_modules/
 
 # OS/editor files
 .DS_Store
@@ -26,8 +32,17 @@ accounting_v3_1_patch/
 engine/config.json
 engine/data/
 engine/.venv/
-engine/__pycache__/
-tests/__pycache__/
+**/__pycache__/
+
+# Ephemeral local UAT dumps (permanent tracked evidence under browser/ stays committed)
+docs/ai/rc1/evidence/browser/_tmp_*
+docs/ai/rc1/evidence/browser/_http_*
+docs/ai/rc1/evidence/browser/_analyze_tmp_*
+docs/ai/rc1/evidence/browser/_bootstrap_check.php
+docs/ai/rc1/evidence/browser/_debug_auth_pages.py
+docs/ai/rc1/evidence/browser/_session_rerun.txt
+docs/ai/rc1/evidence/lane_c_release_gate.log
+docs/ai/rc1/evidence/release_gate_closure*.log
 
 # Optional cloud-only Worker secret config
 engine/config.cloud.json
