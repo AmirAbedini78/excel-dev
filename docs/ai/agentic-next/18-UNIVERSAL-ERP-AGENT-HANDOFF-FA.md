@@ -2,6 +2,7 @@
 
 **تاریخ:** 2026-11-27  
 **پایه:** `171d4b17c376529ac4c779b257e5c1ca90444643`  
+**نوک:** `7a2e02719457bf26b78c259de3cdd8768a498326`  
 **شاخه:** `feature/universal-erp-agent`  
 **PR:** https://github.com/AmirAbedini78/excel-dev/pull/57  
 
