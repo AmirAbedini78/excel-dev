@@ -61,13 +61,14 @@ const ERPSMART_MIN_FREE_BYTES = 100_000_000;
 
 final class DeployError extends RuntimeException
 {
-    public string $code;
+    /** Machine-readable deploy refusal code (not Exception::$code). */
+    public string $deployCode;
     public string $detail;
 
-    public function __construct(string $code, string $detail = '')
+    public function __construct(string $deployCode, string $detail = '')
     {
-        parent::__construct($code);
-        $this->code = $code;
+        parent::__construct($deployCode);
+        $this->deployCode = $deployCode;
         $this->detail = $detail;
     }
 }
@@ -1020,7 +1021,7 @@ function erpsmart_selftest(string $work): array
         erpsmart_verify_dest_identity($prod);
         $checks['refuse_prod_identity'] = false;
     } catch (DeployError $e) {
-        $checks['refuse_prod_identity'] = in_array($e->code, [
+        $checks['refuse_prod_identity'] = in_array($e->deployCode, [
             'refused_production_web_root',
             'refused_production_dest',
             'refused_production_path_fragment',
@@ -1047,7 +1048,7 @@ function erpsmart_selftest(string $work): array
         erpsmart_safe_extract_zip($badZip, $work . '/extract_bad');
         $checks['zip_slip'] = false;
     } catch (DeployError $e) {
-        $checks['zip_slip'] = ($e->code === 'zip_slip_refused');
+        $checks['zip_slip'] = ($e->deployCode === 'zip_slip_refused');
     }
 
     $pkg = $work . '/pkg';
@@ -1089,7 +1090,7 @@ function erpsmart_selftest(string $work): array
         (new DeployLock($bootstrap))->acquire();
         $checks['concurrent_lock'] = false;
     } catch (DeployError $e) {
-        $checks['concurrent_lock'] = ($e->code === 'concurrent_lock');
+        $checks['concurrent_lock'] = ($e->deployCode === 'concurrent_lock');
     }
     $lock1->release();
 
@@ -1153,7 +1154,7 @@ function erpsmart_selftest(string $work): array
         erpsmart_verify_extracted_manifest($pkg, ['git_sha' => 'x', 'file_manifest' => []]);
         $checks['empty_manifest'] = false;
     } catch (DeployError $e) {
-        $checks['empty_manifest'] = ($e->code === 'manifest_empty');
+        $checks['empty_manifest'] = ($e->deployCode === 'manifest_empty');
     }
 
     $ok = !in_array(false, $checks, true);
@@ -1298,7 +1299,7 @@ $lock = new DeployLock($bootstrap);
 try {
     $lock->acquire();
 } catch (DeployError $e) {
-    erpsmart_print_json(['ok' => false, 'status' => 'REFUSED', 'error' => $e->code, 'detail' => $e->detail]);
+    erpsmart_print_json(['ok' => false, 'status' => 'REFUSED', 'error' => $e->deployCode, 'detail' => $e->detail]);
     exit(0); // concurrent: clean exit
 }
 
@@ -1330,8 +1331,8 @@ try {
     erpsmart_print_json($report);
     exit(!empty($report['ok']) ? 0 : 1);
 } catch (DeployError $e) {
-    $report = ['ok' => false, 'status' => 'REFUSED', 'error' => $e->code, 'detail' => $e->detail];
-    erpsmart_log($bootstrap, 'ERROR ' . $e->code . ' ' . $e->detail);
+    $report = ['ok' => false, 'status' => 'REFUSED', 'error' => $e->deployCode, 'detail' => $e->detail];
+    erpsmart_log($bootstrap, 'ERROR ' . $e->deployCode . ' ' . $e->detail);
     erpsmart_print_json($report);
     exit(1);
 } catch (Throwable $e) {
