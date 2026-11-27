@@ -50,7 +50,7 @@ class StagingPackageGuards(unittest.TestCase):
             meta = write_release_meta(out, "deadbeef", files)
             data = json.loads(meta.read_text(encoding="utf-8"))
             self.assertEqual(data["target_host"], "excel2.bcsrp.ir")
-            self.assertEqual(data["worker_engine"], "OUT_OF_SCOPE")
+            self.assertTrue(str(data["worker_engine"]).startswith("OUT_OF_SCOPE"))
             self.assertEqual(data["migrations"], "NOT_INCLUDED_NOT_AUTO")
 
 

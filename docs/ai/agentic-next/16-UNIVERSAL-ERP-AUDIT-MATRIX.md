@@ -53,7 +53,7 @@ Statuses: `IMPLEMENTED_AND_TESTED` | `IMPLEMENTED_NOT_TESTED` | `PARTIAL` | `NOT
 | MCP | facade | **DISABLED_BY_DEFAULT** | Wave3 contract |
 | Browser RTL proposal cards | Wave4 UX | **NOT_RUN** | staging code auto-deploy still PARTIAL (SSH secrets unset); login/MFA needs owner — no password ask |
 | Staging HTTPS smoke | `excel2.bcsrp.ir` | **PARTIAL** | TLS+login page HTTP 200 observed; full UAT NOT_RUN |
-| Staging auto-deploy | Actions + controlled sync | **PARTIAL** | package/gates/workflow landed; remote SSH apply blocked until `STAGING_SSH_*` |
+| Staging auto-deploy | Actions + controlled sync | **PARTIAL** | package/gates/workflow landed; SSH optional; **cron pull** path in `21-STAGING-CRON-PULL-EXCEL2.md` (host cron still owner one-time) |
 | PRODUCTION_VERIFIED | — | **NOT claimed** | production deploy forbidden |
 
 ### Suite entities exposed (typed)

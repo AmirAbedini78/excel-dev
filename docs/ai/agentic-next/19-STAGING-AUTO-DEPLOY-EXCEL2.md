@@ -13,6 +13,8 @@
 | `STAGING_AUTO_DEPLOY_PARTIAL` | Package/gates/artifact automation live; remote apply blocked (no SSH / no marker) |
 | `STAGING_AUTO_DEPLOY_BLOCKED` | Cannot safely automate |
 
+**Preferred when SSH unavailable:** Cron pull — see `21-STAGING-CRON-PULL-EXCEL2.md` (`STAGING_CRON_PULL_*`). GitHub Release Assets + `/home3/zzflgmfd/erpsmart-deploy/` bootstrap.
+
 ## Hardening (T0)
 
 1. Apply boolean: **never** `A && B || true` (that coerced `false→true`). Decision helper: `scripts/staging_apply_decision.py` + unit tests.
