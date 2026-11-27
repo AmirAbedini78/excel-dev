@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Controlled PHP sync for Agentic AI direct-production (NO live mutate by default).
+"""Controlled PHP sync for ErpSmart STAGING web root (NO live mutate by default).
+
+Target identity (staging only): excel2.bcsrp.ir → /home3/zzflgmfd/excel2.bcsrp/
+Production domain/path (excel.bcsrp) is permanently refused.
 
 Hard rules:
   - Default mode is non-mutating dry-run.
@@ -7,11 +10,13 @@ Hard rules:
   - Never delete unknown destination files.
   - Never run DB migrations.
   - Worker (engine/) is out of scope — separate package.
-  - Destination path must match the reviewed allowlist identity.
-  - --apply requires explicit --i-understand-production-risk and a destination marker check.
+  - Destination path must match the reviewed staging allowlist identity.
+  - --apply requires explicit --i-understand-production-risk and a destination marker check
+    (flag name retained for operator muscle-memory; scope remains staging identity only).
 
 This script does NOT connect to production. Operators copy artifacts offline or to a
-verified local mirror / disposable fixture first.
+verified local mirror / disposable fixture first. Prefer GitHub Actions staging-deploy
++ scripts/staging_remote_apply.py when SSH secrets are configured.
 """
 from __future__ import annotations
 
@@ -27,12 +32,34 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Reviewed production web root identity (do not silently retarget).
+# Reviewed STAGING web root identity (do not silently retarget).
 ALLOWED_DEST_MARKERS = {
     # Relative marker file written by operator on real host OR fixture.
     ".erpsmart_deploy_identity": "excel2.bcsrp:/home3/zzflgmfd/excel2.bcsrp/",
 }
 CANONICAL_DEST_HINT = "/home3/zzflgmfd/excel2.bcsrp/"
+
+# Production / non-staging destinations — hard refuse on apply.
+FORBIDDEN_DEST_SUBSTRINGS = (
+    "/home3/zzflgmfd/excel.bcsrp",  # production document root
+    "/excel.bcsrp/",  # production path fragment (excel2 is allowed separately)
+)
+
+
+def refuse_non_staging_dest(dest: str | Path) -> str | None:
+    """Return refusal reason if dest is not the reviewed staging web root."""
+    dest_s = str(dest).replace("\\", "/").rstrip("/")
+    # Explicit production refuse before staging allow.
+    if "/home3/zzflgmfd/excel.bcsrp" in dest_s and "/home3/zzflgmfd/excel2.bcsrp" not in dest_s:
+        return "refused_production_web_root"
+    if dest_s.endswith("/excel.bcsrp") or "/excel.bcsrp/" in dest_s + "/":
+        if "excel2.bcsrp" not in dest_s:
+            return "refused_production_path_fragment"
+    canonical = CANONICAL_DEST_HINT.rstrip("/")
+    # When path looks like the reviewed cPanel account, require exact staging root.
+    if "zzflgmfd" in dest_s and canonical not in dest_s:
+        return "refused_non_canonical_staging_dest"
+    return None
 
 # Top-level PHP/entry files allowed for sync (explicit allowlist).
 ROOT_FILE_ALLOWLIST = [
@@ -495,11 +522,10 @@ def main() -> int:
         print(f"REFUSED: destination identity failed: {identity}", file=sys.stderr)
         return 3
 
-    # Refuse if dest path string silently differs from reviewed hint when applying
-    # to a path that looks like production but marker missing/wrong.
-    dest_s = str(dest).replace("\\", "/")
-    if args.apply and "zzflgmfd" in dest_s and CANONICAL_DEST_HINT.rstrip("/") not in dest_s:
-        print("REFUSED: destination path does not match reviewed production identity", file=sys.stderr)
+    # Refuse production / non-canonical staging destinations on apply.
+    dest_refuse = refuse_non_staging_dest(dest)
+    if args.apply and dest_refuse:
+        print(f"REFUSED: {dest_refuse} (staging-only: {CANONICAL_DEST_HINT})", file=sys.stderr)
         return 3
 
     before_storage = snapshot_storage(dest)

@@ -1,0 +1,186 @@
+name: Staging Deploy (excel2.bcsrp.ir only)
+
+# Automates STAGING code sync for https://excel2.bcsrp.ir/ after main CI is green.
+# NEVER targets production (excel.bcsrp). NEVER auto-migrates DB. NEVER deploys engine/.
+#
+# Required GitHub Secrets (values never logged):
+#   STAGING_SSH_HOST
+#   STAGING_SSH_USER
+#   STAGING_SSH_PRIVATE_KEY
+#   STAGING_SSH_KNOWN_HOSTS   (pinned host key lines; StrictHostKeyChecking=yes)
+# Optional:
+#   STAGING_SSH_PORT          (default 22)
+#   STAGING_REMOTE_DEST       (must be /home3/zzflgmfd/excel2.bcsrp)
+#
+# Without SSH secrets the workflow stays PARTIAL: gates + package artifact only.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Apply code sync to staging (requires SSH secrets + identity marker)"
+        type: boolean
+        default: true
+      skip_await_ci:
+        description: "Skip waiting for Commercial/RC1 checks (emergency dispatch only)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: staging-deploy-excel2
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
+
+jobs:
+  package-and-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      git_sha: ${{ steps.meta.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Record commit
+        id: meta
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Controlled sync selftest
+        run: python scripts/agentic_controlled_cpanel_sync.py --selftest
+      - name: Staging health allowlist selftest
+        run: python scripts/staging_health_check.py --selftest
+      - name: Build exact-commit staging package + dry-run plan
+        run: |
+          python scripts/staging_package_build.py \
+            --out storage/cache/staging_pkg \
+            --dry-run-plan \
+            --manifest-out storage/cache/staging_pkg/build_manifest.json
+      - name: Staging package unit checks
+        run: python -m unittest tests.test_staging_package_guards -v
+      - name: Commercial release gate (unchanged strength)
+        run: python scripts/release_gate.py --require-php --require-node
+      - name: Upload staging package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-pkg-${{ steps.meta.outputs.sha }}
+          path: storage/cache/staging_pkg/
+          if-no-files-found: error
+          retention-days: 14
+
+  await-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: package-and-gates
+    if: ${{ github.event_name == 'push' || inputs.skip_await_ci != true }}
+    steps:
+      - name: Wait for required checks on exact SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.package-and-gates.outputs.git_sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          echo "Awaiting release-gate + rc1-mysql-php on $SHA"
+          python scripts/staging_await_ci.py --repo "$REPO" --sha "$SHA" --timeout-sec 2400
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [package-and-gates, await-ci]
+    if: always() && needs.package-and-gates.result == 'success' && (needs.await-ci.result == 'success' || needs.await-ci.result == 'skipped')
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download staging package
+        uses: actions/download-artifact@v4
+        with:
+          name: staging-pkg-${{ needs.package-and-gates.outputs.git_sha }}
+          path: storage/cache/staging_pkg
+      - name: Detect SSH secret presence (names only)
+        id: ssh
+        env:
+          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          STAGING_SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          STAGING_SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        run: |
+          python - <<'PY'
+          import os, json
+          names = ["STAGING_SSH_HOST","STAGING_SSH_USER","STAGING_SSH_PRIVATE_KEY","STAGING_SSH_KNOWN_HOSTS"]
+          present = {n: bool(os.environ.get(n)) for n in names}
+          ready = all(present.values())
+          print(json.dumps({"present": present, "ready": ready}))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"ready={'true' if ready else 'false'}\n")
+          PY
+      - name: Partial — SSH not configured
+        if: steps.ssh.outputs.ready != 'true'
+        run: |
+          echo "STAGING_AUTO_DEPLOY_PARTIAL: GitHub SSH secrets not configured."
+          echo "Package artifact built for exact SHA ${{ needs.package-and-gates.outputs.git_sha }}."
+          echo "Owner must add STAGING_SSH_* secrets + staging environment, OR use cPanel Git/manual sync per docs."
+          echo "Worker/engine remains OUT_OF_SCOPE. Migrations NOT_RUN."
+      - name: Materialize pinned SSH files
+        if: steps.ssh.outputs.ready == 'true'
+        env:
+          STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          STAGING_SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        run: |
+          umask 077
+          mkdir -p "$HOME/.ssh_staging"
+          printf '%s\n' "$STAGING_SSH_PRIVATE_KEY" > "$HOME/.ssh_staging/id_deploy"
+          printf '%s\n' "$STAGING_SSH_KNOWN_HOSTS" > "$HOME/.ssh_staging/known_hosts"
+          chmod 600 "$HOME/.ssh_staging/id_deploy" "$HOME/.ssh_staging/known_hosts"
+      - name: Remote dry-run / apply (staging only)
+        if: steps.ssh.outputs.ready == 'true'
+        env:
+          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          STAGING_SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          STAGING_SSH_PORT: ${{ secrets.STAGING_SSH_PORT }}
+          STAGING_REMOTE_DEST: ${{ secrets.STAGING_REMOTE_DEST }}
+          APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || true }}
+        run: |
+          set -euo pipefail
+          export STAGING_SSH_PRIVATE_KEY_PATH="$HOME/.ssh_staging/id_deploy"
+          export STAGING_SSH_KNOWN_HOSTS_PATH="$HOME/.ssh_staging/known_hosts"
+          DEST="${STAGING_REMOTE_DEST:-/home3/zzflgmfd/excel2.bcsrp}"
+          export STAGING_REMOTE_DEST="$DEST"
+          if [ "$APPLY" = "true" ]; then
+            python scripts/staging_remote_apply.py \
+              --package storage/cache/staging_pkg \
+              --apply --i-understand-staging-risk \
+              --manifest-out storage/cache/staging_remote_apply.json
+          else
+            python scripts/staging_remote_apply.py \
+              --package storage/cache/staging_pkg \
+              --manifest-out storage/cache/staging_remote_apply.json
+          fi
+      - name: Post-deploy staging health check
+        if: steps.ssh.outputs.ready == 'true'
+        run: |
+          python scripts/staging_health_check.py \
+            --url https://excel2.bcsrp.ir/ \
+            --manifest-out storage/cache/staging_health.json
+      - name: Upload deploy evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-deploy-evidence-${{ needs.package-and-gates.outputs.git_sha }}
+          path: |
+            storage/cache/staging_remote_apply.json
+            storage/cache/staging_health.json
+            storage/cache/staging_pkg/ERPSMART_STAGING_RELEASE.json
+          if-no-files-found: ignore
+          retention-days: 30

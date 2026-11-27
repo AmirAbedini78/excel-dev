@@ -1,0 +1,55 @@
+name: Staging Migrate (explicit only)
+
+# NEVER runs on push. NEVER targets production.
+# Requires explicit workflow_dispatch confirmation + staging DB identity gates
+# already enforced inside scripts/rc1_staging_schema_migrate.php.
+#
+# First staging code deploy must NOT run this workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type MIGRATE_STAGING_EXCEL2 to proceed"
+        required: true
+        type: string
+      db_name_ack:
+        description: "Staging DB name (must match secure config; never production)"
+        required: true
+        type: string
+
+concurrency:
+  group: staging-migrate-excel2
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  refuse-unless-confirmed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: staging
+    steps:
+      - name: Confirm explicit migrate intent
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          DB_ACK: ${{ inputs.db_name_ack }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != "MIGRATE_STAGING_EXCEL2" ]; then
+            echo "REFUSED: confirm must be exactly MIGRATE_STAGING_EXCEL2"
+            exit 3
+          fi
+          case "$DB_ACK" in
+            *prod*|*production*|*excel_bcsrp*|*"excel.bcsrp"*)
+              echo "REFUSED: db_name_ack looks production-like"
+              exit 3
+              ;;
+          esac
+          echo "ACK recorded for staging DB name length=${#DB_ACK} (value not printed)."
+          echo "Remote migrate remains operator-driven via scripts/rc1_staging_schema_migrate.php"
+          echo "with backup SHA + RC1_STAGING_AUTH_EXPECTED + identity gates."
+          echo "This workflow does NOT auto-run migrate over SSH in v1 (fail-closed)."
+          echo "STATUS=STAGING_MIGRATE_DISPATCH_ACK_ONLY"
+          exit 0
