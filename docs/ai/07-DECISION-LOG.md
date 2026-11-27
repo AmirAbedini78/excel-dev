@@ -230,3 +230,8 @@ Decision: planner semantics remain a hard preflight gate. Analyst preflight must
 - Corrected HTTP resource closure, wall-bounded inventory reads, legacy configured context/output preferences within capacity ceilings, and consistent Persian/Arabic FTS normalization.
 - Source release gate distinguishes skipped PHP/Node from a full pass. Model qualification is three production-contract selections; default known-route planning is deterministic auto mode. Neither mode is evidence of unrestricted reasoning.
 - Validation and remaining live gates: see 29-LOW-MEMORY-TEST-REPORT-FA.md. Roadmap remains semantic product acceptance, then MVP C.
+
+## ADR-033 — Universal ERP Agent via AiToolRegistry adapter (no parallel engine)
+Status: ACCEPTED — 2026-11-27
+
+Campaign goal is a Persian-capable universal ERP operator over real Domain services. Decision: expose Suite/Enterprise typed records through `AiUniversalOperations` as an **adapter only**, with tool authority remaining sole `AiToolRegistry`. Catalog/search/read/report/navigate/history are read tools; writes are only `propose_erp_operation` after human approval with company scope, permission re-check, snapshot/revision stale detection, and maker/checker on reviews. Core GL/stock/cash/trade posting stays on dedicated proposal tools — never generic CRUD. Payroll statutory, MF GL costing, bank reconciliation, and physical document binaries remain explicit BLOCKED until owner domain models exist. MCP stays disabled by default. Evidence: `docs/ai/agentic-next/15-UNIVERSAL-ERP-AGENT-IMPLEMENTATION.md`, `16-UNIVERSAL-ERP-AUDIT-MATRIX.md`.
