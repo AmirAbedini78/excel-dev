@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "github_repo": "AmirAbedini78/excel-dev",
+  "dest": "/home3/zzflgmfd/excel2.bcsrp",
+  "health_url": "https://excel2.bcsrp.ir/",
+  "backup_root": "/home3/zzflgmfd/erpsmart-deploy/backups",
+  "notes": [
+    "Staging excel2 ONLY. Never point dest at excel.bcsrp / production.",
+    "Set enabled=true only after dry-run succeeds and identity marker is present.",
+    "Migrations are NOT run by cron deploy.",
+    "API keys / DB passwords stay in app/config.php and private env — never in Release ZIP."
+  ]
+}

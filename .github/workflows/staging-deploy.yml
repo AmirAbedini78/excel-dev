@@ -3,17 +3,18 @@ name: Staging Deploy (excel2.bcsrp.ir only)
 # Automates STAGING code sync for https://excel2.bcsrp.ir/ after main CI is green.
 # NEVER targets production (excel.bcsrp). NEVER auto-migrates DB. NEVER deploys engine/.
 #
-# Required GitHub Secrets (values never logged):
-#   STAGING_SSH_HOST
-#   STAGING_SSH_USER
-#   STAGING_SSH_PRIVATE_KEY
-#   STAGING_SSH_KNOWN_HOSTS   (pinned host key lines; StrictHostKeyChecking=yes)
+# Primary path (no SSH / no PAT on host): after Commercial MVP + RC1 MySQL PHP succeed
+# on the exact main SHA, publish a downloadable GitHub Release package. cPanel cron
+# runs scripts/staging_cron_deploy.py under /home3/zzflgmfd/erpsmart-deploy/.
+#
+# Optional SSH path (legacy): STAGING_SSH_* secrets still supported for push-apply.
 # Optional:
 #   STAGING_SSH_PORT          (default 22)
 #   STAGING_REMOTE_DEST       (must be /home3/zzflgmfd/excel2.bcsrp)
 #
-# Without SSH secrets the workflow stays PARTIAL: gates + package artifact only.
+# Without cron on host AND without SSH secrets: PARTIAL (Release package only).
 # Real apply is main-branch only; CI gates cannot be bypassed on the apply path.
+# Never claim STAGING_DEPLOY_VERIFIED from ZIP build alone.
 
 on:
   push:
@@ -21,20 +22,24 @@ on:
   workflow_dispatch:
     inputs:
       apply:
-        description: "Apply code sync to staging (requires SSH secrets + identity marker + main + green CI)"
+        description: "SSH apply to staging (optional; cron pull is preferred when SSH unavailable)"
         type: boolean
         default: true
       dry_run_only:
         description: "Force dry-run even if apply would otherwise be true (package + remote plan only)"
         type: boolean
         default: false
+      publish_release:
+        description: "Publish GitHub Release assets after gates (default true on main)"
+        type: boolean
+        default: true
 
 concurrency:
   group: staging-deploy-excel2
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
   actions: read
   checks: read
 
@@ -96,18 +101,23 @@ jobs:
         run: python scripts/staging_health_check.py --selftest
       - name: Apply decision selftest (coercion guard)
         run: python scripts/staging_apply_decision.py
-      - name: Build exact-commit staging package + dry-run plan
+      - name: Build exact-commit staging package + ZIP + dry-run plan
         run: |
           python scripts/staging_package_build.py \
             --out storage/cache/staging_pkg \
             --dry-run-plan \
+            --zip \
             --manifest-out storage/cache/staging_pkg/build_manifest.json
+          python scripts/build_cron_bootstrap_zip.py \
+            --out storage/cache/staging_pkg/erpsmart-cron-bootstrap.zip
+          python scripts/staging_cron_deploy.py --selftest
       - name: Staging package + apply unit checks
         run: |
           python -m unittest \
             tests.test_staging_package_guards \
             tests.test_staging_apply_decision \
             tests.test_staging_remote_apply_adversarial \
+            tests.test_staging_cron_deploy_adversarial \
             tests.test_master_data_and_report_builder \
             tests.test_proposal_ui_local_uat \
             tests.test_universal_ai_agent_routing \
@@ -144,10 +154,126 @@ jobs:
           echo "Awaiting release-gate + rc1-mysql-php on $SHA"
           python scripts/staging_await_ci.py --repo "$REPO" --sha "$SHA" --timeout-sec 2400
 
+  publish-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [package-and-gates, await-ci]
+    if: >-
+      always()
+      && needs.package-and-gates.result == 'success'
+      && needs.await-ci.result == 'success'
+      && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download staging package
+        uses: actions/download-artifact@v4
+        with:
+          name: staging-pkg-${{ needs.package-and-gates.outputs.git_sha }}
+          path: storage/cache/staging_pkg
+      - name: Stamp gates success on public release meta
+        env:
+          SHA: ${{ needs.package-and-gates.outputs.git_sha }}
+        run: |
+          set -euo pipefail
+          python scripts/staging_package_build.py \
+            --out storage/cache/staging_pkg \
+            --stamp-gates-success \
+            --expected-sha "$SHA"
+          # Also stamp PUBLIC meta used by cron pull (authoritative checksum + gates).
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          sha = os.environ["SHA"]
+          pkg = Path("storage/cache/staging_pkg")
+          pub = pkg / "ERPSMART_STAGING_RELEASE_PUBLIC.json"
+          if not pub.is_file():
+              raise SystemExit("public_meta_missing")
+          data = json.loads(pub.read_text(encoding="utf-8"))
+          if data.get("git_sha") != sha:
+              raise SystemExit(f"sha_mismatch:{data.get('git_sha')}!={sha}")
+          # Sidecar checksum is authoritative for the ZIP bytes.
+          zips = sorted(pkg.glob("erpsmart-staging-php-*.zip"))
+          if not zips:
+              raise SystemExit("zip_missing")
+          z = zips[0]
+          sidecar = Path(str(z) + ".sha256")
+          if not sidecar.is_file():
+              raise SystemExit("sha256_sidecar_missing")
+          digest = sidecar.read_text(encoding="utf-8").split()[0].strip().lower()
+          data["package_zip"] = z.name
+          data["package_zip_sha256"] = digest
+          data["gates"] = {
+              "release-gate": "success",
+              "rc1-mysql-php": "success",
+              "verified_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+              "verified_on_sha": sha,
+          }
+          # Embed per-file hashes from inner release meta when present.
+          inner = pkg / "ERPSMART_STAGING_RELEASE.json"
+          if inner.is_file():
+              inn = json.loads(inner.read_text(encoding="utf-8"))
+              data["files_sha256"] = inn.get("files_sha256") or {}
+              data["file_manifest"] = inn.get("file_manifest") or sorted(data["files_sha256"])
+          pub.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+          print(json.dumps({"ok": True, "sha": sha, "zip": z.name, "zip_sha256": digest}, indent=2))
+          PY
+      - name: Publish GitHub Release assets (public download, no host PAT)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.package-and-gates.outputs.git_sha }}
+        run: |
+          set -euo pipefail
+          TAG="staging-excel2-${SHA}"
+          TITLE="Staging excel2 package ${SHA}"
+          NOTES="$(cat <<EOF
+          Staging-only release package for https://excel2.bcsrp.ir/
+
+          - git_sha: ${SHA}
+          - branch: main
+          - gates: release-gate + rc1-mysql-php = success (exact SHA)
+          - secrets/config/DB/uploads/logs: NOT included
+          - apply: cPanel cron → /home3/zzflgmfd/erpsmart-deploy/ (see deploy/erpsmart-cron-bootstrap/)
+          - NEVER production excel.bcsrp
+
+          Do not confuse Actions artifacts with these public Release assets.
+          EOF
+          )"
+          # Replace prior tag/release for same SHA if re-run; otherwise create.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --yes || true
+            git push origin ":refs/tags/$TAG" || true
+          fi
+          git tag -f "$TAG" "$SHA"
+          git push origin "$TAG" --force
+          gh release create "$TAG" \
+            --title "$TITLE" \
+            --notes "$NOTES" \
+            --target "$SHA" \
+            storage/cache/staging_pkg/erpsmart-staging-php-*.zip \
+            storage/cache/staging_pkg/erpsmart-staging-php-*.zip.sha256 \
+            storage/cache/staging_pkg/ERPSMART_STAGING_RELEASE_PUBLIC.json \
+            storage/cache/staging_pkg/erpsmart-cron-bootstrap.zip
+          echo "Published release $TAG"
+      - name: Upload publish evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-release-evidence-${{ needs.package-and-gates.outputs.git_sha }}
+          path: |
+            storage/cache/staging_pkg/ERPSMART_STAGING_RELEASE_PUBLIC.json
+            storage/cache/staging_pkg/ERPSMART_STAGING_RELEASE.json
+            storage/cache/staging_pkg/build_manifest.json
+          if-no-files-found: ignore
+          retention-days: 30
+
   deploy-staging:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [package-and-gates, await-ci]
+    # Optional SSH path — cron pull is preferred when owner has no SSH.
     # Real deploy requires package success AND await-ci success (never skipped).
     if: always() && needs.package-and-gates.result == 'success' && needs.await-ci.result == 'success'
     environment: staging
@@ -178,13 +304,14 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
               fh.write(f"ready={'true' if ready else 'false'}\n")
           PY
-      - name: Partial — SSH not configured
+      - name: Partial — SSH not configured (cron pull is primary)
         if: steps.ssh.outputs.ready != 'true'
         run: |
           echo "STAGING_AUTO_DEPLOY_PARTIAL: GitHub SSH secrets not configured."
-          echo "Package artifact built for exact SHA ${{ needs.package-and-gates.outputs.git_sha }}."
-          echo "Owner must add STAGING_SSH_* secrets + staging environment, OR use cPanel Git/manual sync per docs."
-          echo "Worker/engine remains OUT_OF_SCOPE until staging_worker_install.py. Migrations NOT_RUN."
+          echo "Primary path: GitHub Release assets + cPanel cron pull (erpsmart-deploy bootstrap)."
+          echo "Package/Release for exact SHA ${{ needs.package-and-gates.outputs.git_sha }}."
+          echo "One-time host setup: extract erpsmart-cron-bootstrap.zip under /home3/zzflgmfd/erpsmart-deploy/"
+          echo "Worker/engine remains PARTIAL until staging_worker_install.py. Migrations NOT_RUN."
       - name: Refuse apply off main
         if: steps.ssh.outputs.ready == 'true' && github.ref != 'refs/heads/main'
         run: |

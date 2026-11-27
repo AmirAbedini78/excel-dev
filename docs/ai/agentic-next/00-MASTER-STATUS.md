@@ -2,8 +2,8 @@
 
 **Authority:** T0 Chief Architect  
 **Campaign:** ENTERPRISE AI-NATIVE TRANSFORMATION  
-**Board updated:** 2026-11-27 (PR #57 Universal ERP merged; staging auto-deploy PARTIAL)  
-**Verified `origin/main` tip:** `a1d3d34e85c96f51e555bb24c20b96461f1634f5` (PR #57 Universal ERP Agent foundation)  
+**Board updated:** 2026-11-27 (staging cron-pull path landed; host cron still owner one-time)
+**Verified baseline tip (pre-cron-pull):** `d3d84a635a61b5e248661f31dc9e5a7a94f8074f`
 **Prior direct-production stabilization:** `5bb1e2739905a3280d47277a57427e88c964d7ab` (PR #55; Agentic freeze `e979766` + P0 blocker closure)  
 **Engineering Wave4 integrate SHA:** `092e9cc68435845f23b99a16a8fcea473e0c7514` (ancestor of tip)  
 **Direct-production package:** `14-DIRECT-PRODUCTION-RELEASE-PACKAGE.md` (operator Go/No-Go; **NOT_DEPLOYED**)  
@@ -85,7 +85,7 @@ Superseded closed: #43, #45, #46, #47.
 | Audit matrix | `16-UNIVERSAL-ERP-AUDIT-MATRIX.md` (updated post-merge) |
 | Static contracts | PHP + Python routing (release_gate wired) |
 | Disposable MySQL E2E | **PASS** — `tests/test_universal_ai_ops_php_e2e.py` (wired into RC1 CI gate) |
-| Staging auto-deploy | **PARTIAL** — `19-STAGING-AUTO-DEPLOY-EXCEL2.md`; SSH secrets unset |
+| Staging auto-deploy | **PARTIAL** — SSH optional; cron-pull docs `21-STAGING-CRON-PULL-EXCEL2.md` (host cron one-time still required → not READY) |
 | Browser UAT staging | **NOT_RUN** beyond HTTPS login page smoke — owner login/MFA required |
 | Payroll / MF GL / bank recon / file binaries | **BLOCKED** (explicit) |
 | Production | **NOT_DEPLOYED** |
