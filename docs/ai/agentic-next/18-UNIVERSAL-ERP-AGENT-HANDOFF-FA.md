@@ -2,9 +2,10 @@
 
 **تاریخ:** 2026-11-27  
 **پایه:** `171d4b17c376529ac4c779b257e5c1ca90444643`  
-**نوک:** `7a2e02719457bf26b78c259de3cdd8768a498326`  
+**نوک:** `b06e76dc54968095be0bb20956c9948e9ac27882`  
 **شاخه:** `feature/universal-erp-agent`  
 **PR:** https://github.com/AmirAbedini78/excel-dev/pull/57  
+**CI tip:** release-gate = SUCCESS · rc1-mysql-php = SUCCESS (شامل E2E universal)  
 
 ## انجام‌شده
 
@@ -19,12 +20,12 @@
 
 | Gate | نتیجه |
 |------|--------|
-| Commercial release-gate (PR tip قبلی) | PASS |
-| RC1 mysql-php (PR tip قبلی) | PASS |
+| Commercial release-gate @ `b06e76d` | **SUCCESS** |
+| RC1 mysql-php @ `b06e76d` | **SUCCESS** (شامل suite universal E2E) |
 | `php_universal_ai_agent_contract_test.php` | PASS |
 | `test_universal_ai_agent_routing` (6) | PASS |
-| `test_universal_ai_ops_php_e2e` (9) | **PASS / DATABASE_TESTED** (local disposable MySQL) |
-| Browser RTL/proposal | **NOT_RUN** (stack مرورگر محلی/UAT staging برای این مسیر موجود نیست) |
+| `test_universal_ai_ops_php_e2e` (9) | **PASS / DATABASE_TESTED** |
+| Browser RTL/proposal | **NOT_RUN** |
 | Staging subdomain | **NOT_DEPLOYED** |
 | PRODUCTION_VERIFIED | **نه** |
 
@@ -62,8 +63,10 @@ python -m unittest tests.test_universal_ai_ops_php_e2e -v
 4. **فایل باینری / OCR / e-sign** — BLOCKED  
 5. **Browser RTL/proposal UAT** — NOT_RUN  
 6. **STAGING_VERIFIED** روی ساب‌دامین — باز  
-7. CI روی tip جدید این push باید دوباره سبز شود (شامل E2E universal در RC1 gate)
+7. ~~CI tip~~ — **بسته شد** (هر دو gate سبز روی `b06e76d`)
+
+یادداشت ممیزی [Audit AI agent stack](bb003d00-c6f1-4be2-87e6-7986b94ab294): P0 maker/checker در `ErpSuiteDomain::review` + RBAC catalog + MySQL adversarial بسته شد. باقی‌مانده‌های P1 (evidence/`agent_task`/browser) عمداً باز.
 
 ## حکم
 
-**UNIVERSAL_ERP_AGENT_BLOCKED** — شکاف‌های مهندسی قابل‌بستن برای MySQL E2E/P0 بسته شد؛ staging/owner/browser و دامنه‌های BLOCKED باقی است. PR باز می‌ماند؛ merge فقط پس از سبز شدن CI tip + تصمیم مالک برای staging.
+**UNIVERSAL_ERP_AGENT_BLOCKED** — engineering CI+E2E سبز؛ staging/owner/browser و payroll/MF GL/bank recon/binaries باز. PR باز می‌ماند (بدون merge خودکار).
