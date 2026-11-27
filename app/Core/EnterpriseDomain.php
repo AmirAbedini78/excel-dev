@@ -229,7 +229,7 @@ final class EnterpriseDomain
         self::assertScope($wid,$cid);
         if($uid<1)throw new RuntimeException('کاربر نامعتبر.');
         $values=self::prepare($key,$wid,$cid,$input);
-        $db=pdo();$db->beginTransaction();
+        $db=pdo();$ownsTransaction=!$db->inTransaction();if($ownsTransaction)$db->beginTransaction();
         try {
             $table=$spec['table'];$columns=array_keys($values);$params=array_values($values);
             if($id>0){
@@ -252,9 +252,9 @@ final class EnterpriseDomain
                 $q->execute($valuesAll);$id=(int)$db->lastInsertId();
                 self::event($db,$key,$wid,$cid,$id,$uid,'create',null,'draft',1);
             }
-            $db->commit();Audit::log('enterprise.'.($expectedRevision?'update':'create'),$table,$id,$spec['title']);
+            if($ownsTransaction)$db->commit();Audit::log('enterprise.'.($expectedRevision?'update':'create'),$table,$id,$spec['title']);
             return $id;
-        } catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+        } catch(Throwable $e){if($ownsTransaction&&$db->inTransaction())$db->rollBack();throw $e;}
     }
 
     public static function find(string $key,int $wid,int $cid,int $id): ?array
@@ -303,7 +303,7 @@ final class EnterpriseDomain
         Tenant::requirePermission(self::permission($group,$review?'approve':'manage'));
         $note=self::nullableText($note,1000,$target==='rejected','شرح تصمیم');
         if($revision<1)throw new RuntimeException('نسخه رکورد لازم است.');
-        $db=pdo();$db->beginTransaction();
+        $db=pdo();$ownsTransaction=!$db->inTransaction();if($ownsTransaction)$db->beginTransaction();
         try{
             $table=$spec['table'];
             $q=$db->prepare("SELECT status,revision,created_by,is_archived FROM `$table` WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1 FOR UPDATE");
@@ -316,15 +316,15 @@ final class EnterpriseDomain
             $q->execute([$target,$review?1:0,$review?$uid:null,$id,$wid,$cid,$revision]);
             if($q->rowCount()!==1)throw new RuntimeException('تغییر هم‌زمان وضعیت.');
             self::event($db,$key,$wid,$cid,$id,$uid,'transition',$old['status'],$target,$revision+1,$note);
-            $db->commit();Audit::log('enterprise.transition',$table,$id,$old['status'].' > '.$target);
-        }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+            if($ownsTransaction)$db->commit();Audit::log('enterprise.transition',$table,$id,$old['status'].' > '.$target);
+        }catch(Throwable $e){if($ownsTransaction&&$db->inTransaction())$db->rollBack();throw $e;}
     }
 
     public static function archive(string $key,int $wid,int $cid,int $uid,int $id,int $revision): void
     {
         $spec=self::spec($key);Tenant::requirePermission(self::permission($spec['group'],'manage'));
         if($revision<1)throw new RuntimeException('نسخه نامعتبر.');
-        $db=pdo();$db->beginTransaction();
+        $db=pdo();$ownsTransaction=!$db->inTransaction();if($ownsTransaction)$db->beginTransaction();
         try{
             $table=$spec['table'];$q=$db->prepare("SELECT status,revision,is_archived FROM `$table` WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1 FOR UPDATE");
             $q->execute([$id,$wid,$cid]);$old=$q->fetch();
@@ -336,8 +336,8 @@ final class EnterpriseDomain
             $q=$db->prepare("UPDATE `$table` SET is_archived=1,revision=revision+1,updated_at=NOW() WHERE id=? AND workspace_id=? AND company_id=? AND revision=?");
             $q->execute([$id,$wid,$cid,$revision]);if($q->rowCount()!==1)throw new RuntimeException('تغییر هم‌زمان.');
             self::event($db,$key,$wid,$cid,$id,$uid,'archive',$old['status'],$old['status'],$revision+1);
-            $db->commit();Audit::log('enterprise.archive',$table,$id,'بایگانی بدون حذف');
-        }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+            if($ownsTransaction)$db->commit();Audit::log('enterprise.archive',$table,$id,'بایگانی بدون حذف');
+        }catch(Throwable $e){if($ownsTransaction&&$db->inTransaction())$db->rollBack();throw $e;}
     }
 
     public static function history(string $key,int $wid,int $cid,int $id): array

@@ -111,6 +111,14 @@ final class AiToolRegistry
             ['name'=>'manufacturing_material_readiness','mode'=>'read','risk'=>'low','required_permissions'=>['production.view'],'description'=>'آمادگی مواد BOM در برابر موجودی (MRP-lite)؛ کمبود و UNVALUED را صریح برمی‌گرداند؛ PO خودکار نمی‌سازد','parameters'=>['type'=>'object','properties'=>[
                 'bom_id'=>['type'=>'integer'],'planned_qty'=>['type'=>'number'],'warehouse_id'=>['type'=>'integer']
             ],'required'=>['bom_id','planned_qty','warehouse_id']]],
+            // UNIVERSAL_ERP_AGENT_PATCH_V1
+            ['name'=>'erp_entity_catalog','mode'=>'read','risk'=>'low','required_permissions'=>['ai.use'],'description'=>'کاتالوگ موجودیت‌ها و فیلدهای مجاز ERP در دامنه‌های Core، Suite و Enterprise','parameters'=>['type'=>'object','properties'=>['domain'=>['type'=>'string','enum'=>['all','core','suite','enterprise']],'include_schema'=>['type'=>'boolean']]]],
+            ['name'=>'erp_entity_search','mode'=>'read','risk'=>'low','required_permissions'=>['ai.use'],'description'=>'جست‌وجوی امن رکوردهای تایپ‌شده ERP در محدوده شرکت فعال','parameters'=>['type'=>'object','properties'=>['domain'=>['type'=>'string','enum'=>['core','suite','enterprise']],'entity'=>['type'=>'string'],'query'=>['type'=>'string'],'status'=>['type'=>'string'],'limit'=>['type'=>'integer']],'required'=>['domain','entity']]],
+            ['name'=>'erp_entity_read','mode'=>'read','risk'=>'low','required_permissions'=>['ai.use'],'description'=>'خواندن یک رکورد یکتا با نام یا کد؛ بدون حدس شناسه','parameters'=>['type'=>'object','properties'=>['domain'=>['type'=>'string','enum'=>['core','suite','enterprise']],'entity'=>['type'=>'string'],'query'=>['type'=>'string']],'required'=>['domain','entity','query']]],
+            ['name'=>'erp_entity_report','mode'=>'read','risk'=>'low','required_permissions'=>['ai.use'],'description'=>'گزارش عملیاتی نمونه‌برداری‌شده با فیلتر تاریخ، گروه‌بندی و جمع فیلدهای عددی مجاز؛ نه گزارش قطعی دفترکل','parameters'=>['type'=>'object','properties'=>['domain'=>['type'=>'string','enum'=>['suite','enterprise']],'entity'=>['type'=>'string'],'query'=>['type'=>'string'],'status'=>['type'=>'string'],'date_field'=>['type'=>'string'],'date_from'=>['type'=>'string'],'date_to'=>['type'=>'string'],'group_by'=>['type'=>'string'],'sum_field'=>['type'=>'string'],'limit'=>['type'=>'integer']],'required'=>['domain','entity']]],
+            ['name'=>'erp_navigation_resolve','mode'=>'read','risk'=>'low','required_permissions'=>['ai.use'],'description'=>'تولید مسیر داخلی امن به صفحه یا رکورد یکتای ERP','parameters'=>['type'=>'object','properties'=>['domain'=>['type'=>'string','enum'=>['core','suite','enterprise']],'entity'=>['type'=>'string'],'query'=>['type'=>'string']],'required'=>['domain','entity']]],
+            ['name'=>'erp_entity_history','mode'=>'read','risk'=>'low','required_permissions'=>['ai.use'],'description'=>'تاریخچه رویدادهای کنترل‌شده رکورد Enterprise (ایجاد/ویرایش/گذار/بایگانی)؛ نه لاگ مالی دفترکل','parameters'=>['type'=>'object','properties'=>['entity'=>['type'=>'string'],'query'=>['type'=>'string']],'required'=>['entity','query']]],
+            ['name'=>'propose_erp_operation','mode'=>'proposal','risk'=>'high','required_permissions'=>['ai.use'],'description'=>'پیشنهاد ایجاد، ویرایش، بایگانی یا تغییر وضعیت رکوردهای تایپ‌شده Suite/Enterprise؛ اجرا فقط با تأیید انسانی و اعتبارسنجی مجدد','parameters'=>['type'=>'object','properties'=>['domain'=>['type'=>'string','enum'=>['suite','enterprise']],'entity'=>['type'=>'string'],'operation'=>['type'=>'string','enum'=>['create','update','archive','transition','review']],'target_query'=>['type'=>'string'],'data'=>['type'=>'object'],'target_status'=>['type'=>'string'],'note'=>['type'=>'string']],'required'=>['domain','entity','operation']]],
         ];
     }
 
@@ -276,6 +284,12 @@ final class AiToolRegistry
             'manufacturing_bom_read'=>self::manufacturingBomRead($wid,$cid,$args),
             'manufacturing_order_read'=>self::manufacturingOrderRead($wid,$cid,$args),
             'manufacturing_material_readiness'=>self::manufacturingMaterialReadiness($wid,$cid,$args),
+            'erp_entity_catalog'=>AiUniversalOperations::catalog($wid,(int)$cid,(string)($args['domain']??'all'),!empty($args['include_schema'])),
+            'erp_entity_search'=>AiUniversalOperations::search($wid,(int)$cid,$args),
+            'erp_entity_read'=>AiUniversalOperations::read($wid,(int)$cid,$args),
+            'erp_entity_report'=>AiUniversalOperations::report($wid,(int)$cid,$args),
+            'erp_navigation_resolve'=>AiUniversalOperations::navigation($wid,(int)$cid,$args),
+            'erp_entity_history'=>AiUniversalOperations::history($wid,(int)$cid,$args),
             default=>throw new RuntimeException('tool_not_implemented')
         };
     }
@@ -547,6 +561,7 @@ final class AiToolRegistry
     public static function storeProposal(int $wid,?int $cid,int $jobId,string $tool,array $args,string $summary='',string $idempotencyKey=''): int
     {
         $d=self::descriptor($tool);if(!$d||($d['mode']??'')!=='proposal')throw new RuntimeException('proposal_tool_not_allowed');
+        if($tool==='propose_erp_operation'){$args=AiUniversalOperations::prepareProposal($wid,$cid,$args);$summary=self::proposalSummary($tool,$args);}
         self::validateProposalArgs($wid,$cid,$tool,$args);
         $summary=trim($summary)?:self::proposalSummary($tool,$args);$idempotencyKey=trim($idempotencyKey);
         $key=$idempotencyKey!==''?mb_substr($idempotencyKey,0,190):null;
@@ -568,6 +583,7 @@ final class AiToolRegistry
         $wid=(int)$proposal['workspace_id'];$cid=$proposal['company_id']?(int)$proposal['company_id']:null;if(!$cid)throw new RuntimeException('شرکت عملیات مشخص نیست.');
         self::validateProposalArgs($wid,$cid,(string)$proposal['tool_name'],$args);
         return match($proposal['tool_name']){
+            'propose_erp_operation'=>AiUniversalOperations::executeProposal($wid,$cid,$userId,$args),
             'create_sales_invoice_draft'=>self::createSalesDraft($wid,$cid,$userId,$args),
             'create_purchase_invoice_draft'=>self::createPurchaseDraft($wid,$cid,$userId,$args),
             'confirm_sales_order'=>self::confirmSalesOrderProposal($wid,$cid,$userId,$args),
@@ -1074,6 +1090,7 @@ final class AiToolRegistry
     private static function validateProposalArgs(int $wid,?int $cid,string $tool,array $args): void
     {
         if(!$cid)throw new RuntimeException('company_context_required');self::assertCompany($wid,$cid);
+        if($tool==='propose_erp_operation'){AiUniversalOperations::validateStoredProposal($wid,$cid,$args);return;}
         if($tool==='create_sales_invoice_draft'){
             self::assertOwned($wid,$cid,'acc_parties',(int)($args['party_id']??0));$lines=(array)($args['lines']??[]);if(!$lines)throw new RuntimeException('حداقل یک ردیف فاکتور لازم است.');
             foreach($lines as $l){self::assertOwned($wid,$cid,'acc_items',(int)($l['item_id']??0));if((float)($l['quantity']??0)<=0)throw new RuntimeException('مقدار فاکتور باید بیشتر از صفر باشد.');if((float)($l['unit_price']??0)<0)throw new RuntimeException('قیمت واحد نامعتبر است.');}
@@ -1145,6 +1162,7 @@ final class AiToolRegistry
             'create_crm_opportunity'=>'ثبت فرصت CRM برای طرف حساب #'.(int)($args['party_id']??0),
             'create_check'=>'ثبت چک '.((string)($args['direction']??'')==='payable'?'پرداختنی':'دریافتنی').' شماره '.(string)($args['check_no']??''),
             'create_voucher_draft'=>'ایجاد پیش‌نویس سند حسابداری با '.count((array)($args['lines']??[])).' آرتیکل',
+            'propose_erp_operation'=>(match((string)($args['operation']??'')){'create'=>'ایجاد','update'=>'ویرایش','archive'=>'بایگانی','transition'=>'تغییر وضعیت','review'=>'بررسی',default=>'عملیات'}).' '.(string)($args['entity_title']??$args['entity']??'رکورد').' — '.(string)($args['target_label']??'رکورد جدید'),
             default=>'عملیات پیشنهادی ایجنت'
         };
     }

@@ -120,6 +120,12 @@ final class AiCapabilityRegistry
                 'description'=>'فهرست مهارت‌ها و نمونه درخواست‌های محاوره‌ای (فاکتور، گزارش، موجودی، CRM).',
                 'entities'=>[],'example'=>'چه کارهایی می‌توانی انجام بدهی؟'
             ],
+            [
+                'id'=>'universal-erp-operations','title'=>'عملیات عمومی ERP','icon'=>'🧠','category'=>'operations',
+                'category_title'=>'عملیات سازمانی','permission'=>'ai.use','risk'=>'proposal',
+                'description'=>'جست‌وجو، خواندن، گزارش و پیشنهاد کنترل‌شده ایجاد/ویرایش/بایگانی رکوردهای تایپ‌شده Suite و Enterprise.',
+                'entities'=>['employee','project','task','ticket','asset','expense'],'example'=>'درخواست‌های مرخصی منتظر تأیید را گزارش کن'
+            ],
         ];
     }
 
