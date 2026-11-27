@@ -13,6 +13,7 @@ name: Staging Deploy (excel2.bcsrp.ir only)
 #   STAGING_REMOTE_DEST       (must be /home3/zzflgmfd/excel2.bcsrp)
 #
 # Without SSH secrets the workflow stays PARTIAL: gates + package artifact only.
+# Real apply is main-branch only; CI gates cannot be bypassed on the apply path.
 
 on:
   push:
@@ -20,11 +21,11 @@ on:
   workflow_dispatch:
     inputs:
       apply:
-        description: "Apply code sync to staging (requires SSH secrets + identity marker)"
+        description: "Apply code sync to staging (requires SSH secrets + identity marker + main + green CI)"
         type: boolean
         default: true
-      skip_await_ci:
-        description: "Skip waiting for Commercial/RC1 checks (emergency dispatch only)"
+      dry_run_only:
+        description: "Force dry-run even if apply would otherwise be true (package + remote plan only)"
         type: boolean
         default: false
 
@@ -43,6 +44,7 @@ jobs:
     timeout-minutes: 20
     outputs:
       git_sha: ${{ steps.meta.outputs.sha }}
+      apply_wanted: ${{ steps.applydec.outputs.apply }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -54,18 +56,64 @@ jobs:
       - name: Record commit
         id: meta
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Resolve apply decision (no false→true coercion)
+        id: applydec
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          # Fixed semantics: push → true; workflow_dispatch → inputs.apply; never `x && y || true`
+          INPUT_APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || github.event_name == 'push' }}
+          DRY_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run_only || false }}
+          REF: ${{ github.ref }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, "scripts")
+          from staging_apply_decision import resolve_apply, workflow_apply_env_value
+
+          event = os.environ.get("EVENT_NAME", "")
+          # INPUT_APPLY is already the corrected boolean expression from the workflow.
+          # Re-derive via helper for an independent unit-tested path.
+          if event == "workflow_dispatch":
+              # GitHub passes boolean inputs as the string 'true'/'false'
+              raw = os.environ.get("INPUT_APPLY", "false").strip().lower()
+              inputs_apply = raw in {"true", "1", "yes"}
+          else:
+              inputs_apply = False
+          apply = resolve_apply(event_name=event, inputs_apply=inputs_apply)
+          if os.environ.get("DRY_ONLY", "false").strip().lower() in {"true", "1", "yes"}:
+              apply = False
+          ref = os.environ.get("REF", "")
+          print(f"event={event} ref={ref} apply={apply}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"apply={'true' if apply else 'false'}\n")
+              fh.write(f"apply_env={workflow_apply_env_value(event, inputs_apply if event=='workflow_dispatch' else True)}\n")
+          PY
       - name: Controlled sync selftest
         run: python scripts/agentic_controlled_cpanel_sync.py --selftest
       - name: Staging health allowlist selftest
         run: python scripts/staging_health_check.py --selftest
+      - name: Apply decision selftest (coercion guard)
+        run: python scripts/staging_apply_decision.py
       - name: Build exact-commit staging package + dry-run plan
         run: |
           python scripts/staging_package_build.py \
             --out storage/cache/staging_pkg \
             --dry-run-plan \
             --manifest-out storage/cache/staging_pkg/build_manifest.json
-      - name: Staging package unit checks
-        run: python -m unittest tests.test_staging_package_guards -v
+      - name: Staging package + apply unit checks
+        run: |
+          python -m unittest \
+            tests.test_staging_package_guards \
+            tests.test_staging_apply_decision \
+            tests.test_staging_remote_apply_adversarial \
+            tests.test_master_data_and_report_builder \
+            tests.test_proposal_ui_local_uat \
+            tests.test_universal_ai_agent_routing \
+            -v
+          python scripts/staging_migrate_preflight.py --selftest
+          python scripts/staging_worker_install.py --print-provider-rebuild > /tmp/provider_rebuild.json
       - name: Commercial release gate (unchanged strength)
         run: python scripts/release_gate.py --require-php --require-node
       - name: Upload staging package artifact
@@ -80,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: package-and-gates
-    if: ${{ github.event_name == 'push' || inputs.skip_await_ci != true }}
+    # Always required — skip_await_ci removed; apply path cannot bypass gates.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -100,7 +148,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [package-and-gates, await-ci]
-    if: always() && needs.package-and-gates.result == 'success' && (needs.await-ci.result == 'success' || needs.await-ci.result == 'skipped')
+    # Real deploy requires package success AND await-ci success (never skipped).
+    if: always() && needs.package-and-gates.result == 'success' && needs.await-ci.result == 'success'
     environment: staging
     steps:
       - uses: actions/checkout@v4
@@ -135,9 +184,14 @@ jobs:
           echo "STAGING_AUTO_DEPLOY_PARTIAL: GitHub SSH secrets not configured."
           echo "Package artifact built for exact SHA ${{ needs.package-and-gates.outputs.git_sha }}."
           echo "Owner must add STAGING_SSH_* secrets + staging environment, OR use cPanel Git/manual sync per docs."
-          echo "Worker/engine remains OUT_OF_SCOPE. Migrations NOT_RUN."
+          echo "Worker/engine remains OUT_OF_SCOPE until staging_worker_install.py. Migrations NOT_RUN."
+      - name: Refuse apply off main
+        if: steps.ssh.outputs.ready == 'true' && github.ref != 'refs/heads/main'
+        run: |
+          echo "REFUSED: real staging apply is main-branch only (ref=${{ github.ref }})."
+          exit 3
       - name: Materialize pinned SSH files
-        if: steps.ssh.outputs.ready == 'true'
+        if: steps.ssh.outputs.ready == 'true' && github.ref == 'refs/heads/main'
         env:
           STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           STAGING_SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
@@ -148,35 +202,79 @@ jobs:
           printf '%s\n' "$STAGING_SSH_KNOWN_HOSTS" > "$HOME/.ssh_staging/known_hosts"
           chmod 600 "$HOME/.ssh_staging/id_deploy" "$HOME/.ssh_staging/known_hosts"
       - name: Remote dry-run / apply (staging only)
-        if: steps.ssh.outputs.ready == 'true'
+        if: steps.ssh.outputs.ready == 'true' && github.ref == 'refs/heads/main'
         env:
           STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
           STAGING_SSH_USER: ${{ secrets.STAGING_SSH_USER }}
           STAGING_SSH_PORT: ${{ secrets.STAGING_SSH_PORT }}
           STAGING_REMOTE_DEST: ${{ secrets.STAGING_REMOTE_DEST }}
-          APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || true }}
+          STAGING_GIT_REF: ${{ github.ref }}
+          STAGING_AWAIT_CI_RESULT: success
+          # Correct boolean: push applies; dispatch uses inputs.apply; dry_run_only forces false.
+          # NEVER use `A && B || true` (coerces false→true).
+          APPLY: ${{ needs.package-and-gates.outputs.apply_wanted }}
         run: |
           set -euo pipefail
           export STAGING_SSH_PRIVATE_KEY_PATH="$HOME/.ssh_staging/id_deploy"
           export STAGING_SSH_KNOWN_HOSTS_PATH="$HOME/.ssh_staging/known_hosts"
           DEST="${STAGING_REMOTE_DEST:-/home3/zzflgmfd/excel2.bcsrp}"
           export STAGING_REMOTE_DEST="$DEST"
+          echo "APPLY=${APPLY}"
           if [ "$APPLY" = "true" ]; then
             python scripts/staging_remote_apply.py \
               --package storage/cache/staging_pkg \
               --apply --i-understand-staging-risk \
+              --expected-sha "${{ needs.package-and-gates.outputs.git_sha }}" \
               --manifest-out storage/cache/staging_remote_apply.json
           else
             python scripts/staging_remote_apply.py \
               --package storage/cache/staging_pkg \
+              --expected-sha "${{ needs.package-and-gates.outputs.git_sha }}" \
               --manifest-out storage/cache/staging_remote_apply.json
           fi
-      - name: Post-deploy staging health check
-        if: steps.ssh.outputs.ready == 'true'
+      - name: Post-deploy staging health check (release identity required on apply)
+        if: steps.ssh.outputs.ready == 'true' && github.ref == 'refs/heads/main'
+        env:
+          APPLY: ${{ needs.package-and-gates.outputs.apply_wanted }}
+          SHA: ${{ needs.package-and-gates.outputs.git_sha }}
         run: |
-          python scripts/staging_health_check.py \
-            --url https://excel2.bcsrp.ir/ \
-            --manifest-out storage/cache/staging_health.json
+          set -euo pipefail
+          if [ "$APPLY" = "true" ]; then
+            python scripts/staging_health_check.py \
+              --url https://excel2.bcsrp.ir/ \
+              --require-release \
+              --expected-sha "$SHA" \
+              --manifest-out storage/cache/staging_health.json
+          else
+            python scripts/staging_health_check.py \
+              --url https://excel2.bcsrp.ir/ \
+              --manifest-out storage/cache/staging_health.json || true
+          fi
+      - name: Rollback on health failure
+        if: failure() && steps.ssh.outputs.ready == 'true' && github.ref == 'refs/heads/main' && needs.package-and-gates.outputs.apply_wanted == 'true'
+        env:
+          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          STAGING_SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          STAGING_SSH_PORT: ${{ secrets.STAGING_SSH_PORT }}
+          STAGING_REMOTE_DEST: ${{ secrets.STAGING_REMOTE_DEST }}
+        run: |
+          set -euo pipefail
+          export STAGING_SSH_PRIVATE_KEY_PATH="$HOME/.ssh_staging/id_deploy"
+          export STAGING_SSH_KNOWN_HOSTS_PATH="$HOME/.ssh_staging/known_hosts"
+          DEST="${STAGING_REMOTE_DEST:-/home3/zzflgmfd/excel2.bcsrp}"
+          # Restore is performed inside staging_remote_apply on verify failure; this step
+          # records evidence that health failed after apply so operators inspect backup dirs.
+          echo "HEALTH_FAILED_AFTER_APPLY — inspect remote _erpsmart_staging_code_bak_* under $(dirname "$DEST")"
+          if [ -f storage/cache/staging_remote_apply.json ]; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("storage/cache/staging_remote_apply.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          print(json.dumps({"backup_dir": (data.get("apply") or {}).get("backup_dir"), "status": data.get("status")}, indent=2))
+          PY
+          fi
+          exit 1
       - name: Upload deploy evidence
         if: always()
         uses: actions/upload-artifact@v4

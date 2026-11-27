@@ -17,8 +17,9 @@ class UniversalAgentRoutingContract(unittest.TestCase):
 
     def test_worker_exposes_only_generic_proposal_on_write_intent(self):
         source = (ROOT / "engine" / "worker.py").read_text(encoding="utf-8")
-        self.assertIn('write_intent and str(d.get("name") or "") == "propose_erp_operation"', source)
-        self.assertIn('wanted.update({"erp_entity_catalog", "erp_entity_search", "erp_entity_read", "propose_erp_operation"})', source)
+        self.assertIn('_write_proposals = {"propose_erp_operation", "propose_master_data_operation"}', source)
+        self.assertIn("propose_master_data_operation", source)
+        self.assertIn("master_data_search", source)
 
     def test_universal_skill_contains_operational_read_tools(self):
         source = (ROOT / "engine" / "business_skills.py").read_text(encoding="utf-8")
@@ -35,15 +36,16 @@ class UniversalAgentRoutingContract(unittest.TestCase):
 
     def test_financial_proposal_tools_stay_guarded(self):
         source = (ROOT / "engine" / "worker.py").read_text(encoding="utf-8")
-        # Only the generic Suite/Enterprise proposal may enter the LLM loop on write intent.
-        self.assertIn('str(d.get("name") or "") == "propose_erp_operation"', source)
+        # Only generic Suite/Enterprise + master-data proposals enter the LLM loop on write intent.
+        select_fn = source.split("def select_tool_descriptors")[1].split("def ")[0]
+        self.assertIn('_write_proposals = {"propose_erp_operation", "propose_master_data_operation"}', select_fn)
         for forbidden in (
             "create_sales_invoice_draft",
             "create_voucher_draft",
             "deliver_sales_stock",
             "create_warehouse_receipt",
         ):
-            self.assertNotIn(f'"{forbidden}"', source.split("def select_tool_descriptors")[1].split("def ")[0])
+            self.assertNotIn(f'"{forbidden}"', select_fn)
 
     def test_ops_adapter_forbids_destructive_sql(self):
         ops = (ROOT / "app" / "Core" / "AiUniversalOperations.php").read_text(encoding="utf-8")

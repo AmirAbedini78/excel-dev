@@ -60,6 +60,8 @@ require_once APP_ROOT . '/app/Core/AiRagAcl.php';
 require_once APP_ROOT . '/app/Core/AiPageContext.php';
 require_once APP_ROOT . '/app/Core/AiEntityRegistry.php';
 require_once APP_ROOT . '/app/Core/AiUniversalOperations.php';
+require_once APP_ROOT . '/app/Core/MasterDataDomain.php';
+require_once APP_ROOT . '/app/Core/AiReportBuilder.php';
 require_once APP_ROOT . '/app/Core/AiContextResolver.php';
 require_once APP_ROOT . '/app/Core/AiContextEnvelope.php';
 require_once APP_ROOT . '/app/Core/AiEnginePreferences.php';
