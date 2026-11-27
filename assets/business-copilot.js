@@ -143,11 +143,17 @@ function renderProposalActions(host,job){
     const pid=Number(job.proposal_id)||Number(proposals[0]?.id)||0;
     if(!pid&&!proposals.length)return;
     const box=document.createElement('div');box.className='copilot-proposal-actions';
-    const summary=proposals[0]?.summary||proposals[0]?.tool_name||'پیشنهاد عملیاتی';
-    box.innerHTML=`<p class="copilot-proposal-summary">${esc(summary)}</p><p class="ai-ws-proposal-note">این فقط پیشنهاد است و هنوز اجرا نشده است.</p><div class="copilot-proposal-buttons"><button type="button" class="btn tiny primary" data-proposal-approve="${pid||proposals[0].id}">تأیید و اجرا</button><button type="button" class="btn tiny" data-proposal-reject="${pid||proposals[0].id}">رد</button></div>`;
+    const list=proposals.length?proposals:[{id:pid,summary:job.proposal_summary||'پیشنهاد عملیاتی',tool_name:job.tool_name||''}];
+    const cards=list.map(p=>{
+        const id=Number(p.id)||pid;
+        const tool=esc(p.tool_name||'');
+        const summary=esc(p.summary||p.tool_name||'پیشنهاد عملیاتی');
+        return `<div class="copilot-proposal-card" data-proposal-id="${id}"><p class="copilot-proposal-tool">${tool?('ابزار: '+tool):''}</p><p class="copilot-proposal-summary">${summary}</p><p class="ai-ws-proposal-note">این فقط پیشنهاد است و هنوز اجرا نشده است. حذف فیزیکی اسناد مالی از این مسیر ممکن نیست.</p><div class="copilot-proposal-buttons"><button type="button" class="btn tiny primary" data-proposal-approve="${id}">تأیید و اجرا</button><button type="button" class="btn tiny" data-proposal-reject="${id}">رد</button></div></div>`;
+    }).join('');
+    box.innerHTML=cards;
     host.appendChild(box);
-    box.querySelector('[data-proposal-approve]')?.addEventListener('click',async()=>{const id=Number(box.querySelector('[data-proposal-approve]').getAttribute('data-proposal-approve'));await proposalAction('approve_proposal',id,box)});
-    box.querySelector('[data-proposal-reject]')?.addEventListener('click',async()=>{const id=Number(box.querySelector('[data-proposal-reject]').getAttribute('data-proposal-reject'));await proposalAction('reject_proposal',id,box)});
+    box.querySelectorAll('[data-proposal-approve]').forEach(btn=>btn.addEventListener('click',async()=>{await proposalAction('approve_proposal',Number(btn.getAttribute('data-proposal-approve')),btn.closest('.copilot-proposal-card')||box)}));
+    box.querySelectorAll('[data-proposal-reject]').forEach(btn=>btn.addEventListener('click',async()=>{await proposalAction('reject_proposal',Number(btn.getAttribute('data-proposal-reject')),btn.closest('.copilot-proposal-card')||box)}));
 }
 async function proposalAction(action,pid,box){
     if(!pid||!cfg.csrf)return;const fd=new FormData();fd.set('action',action);fd.set('csrf',cfg.csrf);fd.set('proposal_id',String(pid));

@@ -2,108 +2,115 @@
 
 **Scope:** `https://excel2.bcsrp.ir/` → `/home3/zzflgmfd/excel2.bcsrp/`  
 **Forbidden:** production `excel.bcsrp.ir` / `/home3/zzflgmfd/excel.bcsrp/`  
-**Primary branch:** `main`  
-**Authoritative sync:** `scripts/agentic_controlled_cpanel_sync.py` (+ remote apply wrapper)
+**Primary branch:** `main` only for real apply  
+**Authoritative sync:** `scripts/staging_remote_apply.py` + `scripts/agentic_controlled_cpanel_sync.py`
 
 ## Status model
 
 | Label | Meaning |
 |---|---|
-| `STAGING_AUTO_DEPLOY_READY` | SSH secrets + pinned known_hosts + identity marker on host; workflow apply succeeds + health OK |
-| `STAGING_AUTO_DEPLOY_PARTIAL` | Package/gates/artifact automation live; remote apply blocked (no SSH / no marker / no cPanel Git pull automation) |
-| `STAGING_AUTO_DEPLOY_BLOCKED` | Cannot safely automate (missing host access path and no operator alternative enabled) |
+| `STAGING_AUTO_DEPLOY_READY` | SSH secrets + pinned known_hosts + identity marker; apply + release health OK |
+| `STAGING_AUTO_DEPLOY_PARTIAL` | Package/gates/artifact automation live; remote apply blocked (no SSH / no marker) |
+| `STAGING_AUTO_DEPLOY_BLOCKED` | Cannot safely automate |
+
+## Hardening (T0)
+
+1. Apply boolean: **never** `A && B || true` (that coerced `false→true`). Decision helper: `scripts/staging_apply_decision.py` + unit tests.
+2. Real apply: `refs/heads/main` only + required CI gates (`release-gate`, `rc1-mysql-php`) — **no skip bypass**.
+3. Backup must succeed before any destination mutation; failure → zero dest changes.
+4. Scaffold/preserve decisions from **real** remote existence (not a fake dest).
+5. Preserve `app/config.php` + storage uploads/logs/cache/user data.
+6. Stage-then-publish; atomic file publish when same-FS rename works; else maintenance + backup + rollback.
+7. Post-publish verify SHA + `ERPSMART_STAGING_RELEASE.json` checksums; health requires release identity (login page alone ≠ success); failure restores backup.
+8. Concurrent deploy lock on host; adversarial unit tests cover SSH drop / backup fail / partial publish / wrong dest / dry-run.
+9. Worker: `scripts/staging_worker_install.py` (cron-compatible; no forced daemon).
+10. Migrations: preflight gates in `scripts/staging_migrate_preflight.py` — **no auto migrate**; no prod DB.
 
 ## GitHub Actions
 
 Workflow: `.github/workflows/staging-deploy.yml`
 
-Triggers: `push` to `main`, `workflow_dispatch`.
+Triggers: `push` to `main`, `workflow_dispatch` (`apply`, `dry_run_only`).
 
-Steps:
+### Exact SSH activation steps (owner)
 
-1. Controlled-sync selftest + health allowlist selftest + package build (exact commit) + dry-run plan  
-2. Commercial release gate (same strength)  
-3. Await `release-gate` + `rc1-mysql-php` SUCCESS on the **same SHA**  
-4. `environment: staging` deploy job:
-   - If `STAGING_SSH_*` secrets missing → **PARTIAL** (artifact retained; no mutate)
-   - If present → OpenSSH with **StrictHostKeyChecking=yes** + pinned `STAGING_SSH_KNOWN_HOSTS`
-   - Allowlisted file copy only; no `rm -rf`; no `rsync --delete`
-   - Preserve `app/config.php` + storage uploads/logs/cache
-   - Post HTTPS health to `https://excel2.bcsrp.ir/` only
-5. Migrations: **NOT_RUN** (see `staging-migrate.yml` — dispatch ACK only; CLI migrate remains operator-owned)
-6. Worker/`engine/`: **OUT_OF_SCOPE** (version-match separately or leave PARTIAL)
+1. Create GitHub Environment **`staging`** (not production).
+2. Add repository/environment secrets (values never logged/committed):
 
-### Secrets (names only)
+| Secret | Purpose |
+|---|---|
+| `STAGING_SSH_HOST` | cPanel SSH hostname/IP |
+| `STAGING_SSH_USER` | SSH user |
+| `STAGING_SSH_PRIVATE_KEY` | Deploy key (private) |
+| `STAGING_SSH_KNOWN_HOSTS` | Pinned host key line(s) for StrictHostKeyChecking=yes |
+| optional `STAGING_SSH_PORT` | default 22 |
+| optional `STAGING_REMOTE_DEST` | must be `/home3/zzflgmfd/excel2.bcsrp` |
 
-- `STAGING_SSH_HOST`
-- `STAGING_SSH_USER`
-- `STAGING_SSH_PRIVATE_KEY`
-- `STAGING_SSH_KNOWN_HOSTS`
-- optional `STAGING_SSH_PORT`, `STAGING_REMOTE_DEST`
-
-Create GitHub Environment `staging` (no production environment linkage).
-
-### Host precondition
-
-On the staging document root, operator must create:
-
-```text
-.erpsmart_deploy_identity
-```
-
-Content exactly:
+3. On the staging document root create marker file `.erpsmart_deploy_identity` with exact content:
 
 ```text
 excel2.bcsrp:/home3/zzflgmfd/excel2.bcsrp/
 ```
 
-## cPanel capabilities (shared hosting)
+4. Push to `main` (or dispatch with `apply=true`) after CI green → remote apply.
+5. Confirm artifact `staging-deploy-evidence-<sha>` contains apply + health JSON with matching `git_sha`.
 
-Do **not** assume Docker, Redis, Node daemon, rsync daemon, or unrestricted SSH.
+### If SSH secrets missing
 
-| Capability | Staging use |
-|---|---|
-| PHP web | Required |
-| MySQL | Staging DB only (verify name before migrate) |
-| Cron | Optional worker heartbeat — not auto-wired here |
-| Git Version Control | Optional manual Update/Deploy — **`.cpanel.yml` remains fail-closed** (`/bin/false`) so blind Git deploy cannot overwrite storage |
-| SSH/SFTP | Preferred automation path when owner enables + pins host key |
+Declare **Remote Deploy BLOCKED / PARTIAL** only — packaging + product work continue.  
+`.cpanel.yml` remains fail-closed (`/bin/false`). Do not re-enable blind Git sync.
 
-### If SSH unavailable
-
-1. Keep Actions packaging (PARTIAL).  
-2. Owner downloads `staging-pkg-<sha>` artifact.  
-3. On a verified mirror, dry-run:
+## Worker + provider rebuild (keys private env only)
 
 ```bash
-python scripts/agentic_controlled_cpanel_sync.py --src <pkg> --dest <mirror> --manifest-out dry.json
+# Dry-run worker sync plan (staging dest only)
+python scripts/staging_worker_install.py --dest /path/to/staging/engine --print-provider-rebuild
+
+# Apply code sync; preserves host .env* / config.json
+python scripts/staging_worker_install.py --src engine --dest /path/to/staging/engine \
+  --apply --i-understand-staging-risk
+
+# Install suggested cron (cPanel Cron UI) — no systemd required
+# */5 * * * * cd <dest> && python3 worker.py --once --callback https://excel2.bcsrp.ir/ai_live.php
 ```
 
-4. Apply only after backup + identity marker:
+### Gemini
 
-```bash
-python scripts/agentic_controlled_cpanel_sync.py --src <pkg> --dest <verified> --apply --i-understand-production-risk --require-identity-marker --manifest-out apply.json
+```text
+cd engine
+# keys ONLY in private engine/.env.gemini (never commit)
+cp -n config.gemini.example.json config.gemini.json
+python gemini_check.py
+python list_provider_models.py --provider gemini
 ```
 
-5. Or enable SSH + secrets to reach `STAGING_AUTO_DEPLOY_READY`.  
-6. Do **not** re-enable blind `.cpanel.yml` deploy.
+### Grok / xAI
+
+```text
+cd engine
+# keys ONLY in private engine/.env.xai (never commit)
+python -c "import provider_gateway as g; print('gateway_ok')"
+python list_provider_models.py --provider xai
+```
 
 ## Migrations
 
-Inventory (additive / first-request domains — not auto-run on deploy):
+See `20-STAGING-MIGRATION-INVENTORY.md`. Preflight:
 
-- `AiSchema::migrate` — AI tables / proposals  
-- `ErpSuiteDomain` schema paths — suite entities  
-- `EnterpriseDomain::migrate` — enterprise extension tables  
-- RC1 cumulative migrate CLI: `scripts/rc1_staging_schema_migrate.php` (auth + backup + prod-DB refuse)
+```bash
+python scripts/staging_migrate_preflight.py \
+  --db-name <staging_db_from_secure_config> \
+  --backup /secure/path/staging.sql.gz \
+  --ack MIGRATE_STAGING_EXCEL2
+```
 
-**First deploy after PR #57:** code-only. Migrate only after staging DB name/identity verified from secure config + restorable backup + explicit operator flag. Workflow `staging-migrate.yml` is fail-closed ACK (does not SSH-migrate in v1).
+Auto-migrate remains **DISABLED** until identity + backup gates pass. Never production DB.
 
 ## Rollback
 
-- Code: redeploy prior package SHA / restore `_erpsmart_staging_code_bak_*`  
-- DB: restore pre-migrate dump only (no automated down-migration)  
-- Never claim DB rollback from the deploy workflow
+- Code: restore `_erpsmart_staging_code_bak_*` (automatic on verify/health failure)
+- DB: restore pre-migrate dump only
+- Never claim DB rollback from deploy workflow
 
 ## Production
 

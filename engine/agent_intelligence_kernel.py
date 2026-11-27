@@ -41,10 +41,11 @@ ANALYST_CONTRACT = DB.CONTRACT
 AGENT_KERNEL_ROUTE_FILE = Path(__file__).resolve().parent / "data" / "agent_kernel_model_route.json"
 KERNEL_CONTRACT = "erpsmart.agent-kernel.v1"
 DECISION_CALL_SECONDS = 60
-MAX_TOOL_CALLS = 4
-MAX_PLANNER_CALLS = 3
+# Multi-step Agent execution budgets (bounded; no unbounded loops).
+MAX_TOOL_CALLS = 6
+MAX_PLANNER_CALLS = 4
 MAX_EVIDENCE = 48
-MAX_FINAL_EVIDENCE = 6
+MAX_FINAL_EVIDENCE = 8
 FINISH_ACTION = "finish"
 
 _SUPPLIER_TERMS = ("تامین کننده", "تأمین کننده", "تامین‌کننده", "تأمین‌کننده", "supplier")

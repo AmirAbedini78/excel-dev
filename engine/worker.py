@@ -380,12 +380,13 @@ class Worker:
             write_intent = bool(_bs.is_write_request(prompt))
         except Exception:
             write_intent = False
-        # Only the single generic proposal tool is exposed for explicit write intents.
+        # Generic Suite/Enterprise + master-data proposals only for write intents.
         # Existing financial/stock posting proposals remain behind their dedicated guards.
+        _write_proposals = {"propose_erp_operation", "propose_master_data_operation"}
         safe_descriptors = [
             d for d in descriptors
             if str(d.get("mode") or "read") != "proposal"
-            or (write_intent and str(d.get("name") or "") == "propose_erp_operation")
+            or (write_intent and str(d.get("name") or "") in _write_proposals)
         ]
         by_name = {str(d.get("name") or ""): d for d in safe_descriptors if str(d.get("name") or "")}
 
@@ -404,11 +405,17 @@ class Worker:
         if has("چه کار", "چه کارهایی", "راهنما", "مهارت", "help"):
             wanted.update({"copilot_capabilities", "company_snapshot", "erp_entity_catalog"})
         if write_intent:
-            wanted.update({"erp_entity_catalog", "erp_entity_search", "erp_entity_read", "propose_erp_operation"})
+            wanted.update({
+                "erp_entity_catalog", "erp_entity_search", "erp_entity_read",
+                "propose_erp_operation", "master_data_search", "propose_master_data_operation",
+                "search_parties", "search_items",
+            })
         elif has("کارمند", "مرخصی", "حضور", "غیاب", "پروژه", "وظیفه", "تیکت", "دارایی", "هزینه", "صندوق فروش", "سبد فروش", "قرارداد", "کمپین", "نظرسنجی", "انبارگردانی", "قفسه", "بچ", "سریال", "تعمیر", "نگهداری", "اسناد", "دانشنامه", "ناوگان", "مراجعه کننده", "شاخص پایداری", "گزارش عملیاتی", "تاریخچه رکورد", "رویداد سازمانی"):
             wanted.update({"erp_entity_catalog", "erp_entity_search", "erp_entity_read", "erp_entity_report", "erp_navigation_resolve", "erp_entity_history"})
-        if has("گزارش", "تحلیل مالی", "بریف", "dashboard"):
-            wanted.update({"periodic_business_report", "financial_analysis_bundle", "document_analytics", "trial_balance"})
+        if has("گزارش", "تحلیل مالی", "بریف", "dashboard", "خروجی اکسل", "excel"):
+            wanted.update({"periodic_business_report", "financial_analysis_bundle", "document_analytics", "trial_balance", "erp_report_export", "erp_entity_report"})
+        if has("اطلاعات پایه", "تعریف مشتری", "تعریف تامین", "تعریف تأمین", "طرف حساب"):
+            wanted.update({"master_data_search", "search_parties", "search_items"})
         if has("چک", "نقدینگی", "سررسید"):
             wanted.update({"check_analytics", "party_ledger", "search_cash_accounts"})
         if has("جزئیات", "بررسی کن", "نمایش", "detail") and has("فاکتور", "invoice"):
@@ -418,9 +425,9 @@ class Worker:
         elif has("سند حسابداری", "voucher"):
             wanted.update({"trial_balance", "financial_analysis_bundle"})
         elif has("مشتری", "تامین", "طرف حساب", "party"):
-            wanted.update({"search_parties", "party_ledger", "crm_customer_360"})
+            wanted.update({"search_parties", "party_ledger", "crm_customer_360", "master_data_search"})
         elif has("کالا", "خدمت", "item"):
-            wanted.update({"search_items", "inventory_position", "replenishment_risk"})
+            wanted.update({"search_items", "inventory_position", "replenishment_risk", "master_data_search"})
         elif has("تراز", "trial balance"):
             wanted.update({"trial_balance", "financial_analysis_bundle"})
         elif has("فروش", "sales"):
@@ -430,8 +437,11 @@ class Worker:
         elif not wanted:
             wanted = {"company_snapshot", "search_parties", "search_items", "recent_sales", "recent_purchases", "periodic_business_report"}
 
-        universal_priority = (["erp_entity_catalog", "erp_entity_search", "erp_entity_read", "propose_erp_operation"] if write_intent else
-                              ["erp_entity_catalog", "erp_entity_search", "erp_entity_read", "erp_entity_report", "erp_navigation_resolve", "erp_entity_history"])
+        universal_priority = (
+            ["erp_entity_catalog", "erp_entity_search", "erp_entity_read", "master_data_search", "propose_erp_operation", "propose_master_data_operation"]
+            if write_intent else
+            ["erp_entity_catalog", "erp_entity_search", "erp_entity_read", "erp_entity_report", "erp_report_export", "erp_navigation_resolve", "erp_entity_history"]
+        )
         selected = [by_name[name] for name in universal_priority if name in wanted and name in by_name]
         selected_names = {str(d.get("name") or "") for d in selected}
         selected.extend(by_name[name] for name in wanted if name in by_name and name not in selected_names)

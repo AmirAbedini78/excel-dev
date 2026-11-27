@@ -149,12 +149,24 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
             "erp_entity_report",
             "erp_navigation_resolve",
             "erp_entity_history",
+            "erp_report_export",
         },
         "entity_types": {"employee", "project", "task", "ticket", "asset", "expense", "campaign", "contract", "document"},
         "keywords": (
             "کارمند", "مرخصی", "حضور", "غیاب", "پروژه", "وظیفه", "تیکت", "دارایی", "هزینه",
             "صندوق فروش", "قرارداد", "کمپین", "نظرسنجی", "تعمیر", "نگهداری", "ناوگان",
             "دانشنامه", "گزارش عملیاتی", "تاریخچه رکورد", "رویداد سازمانی",
+            "خروجی اکسل", "خروجی excel", "اکسل گزارش", "export excel",
+        ),
+    },
+    "master-data-ops": {
+        "title": "اطلاعات پایه مشتری/تأمین‌کننده/کالا",
+        "tools": {"master_data_search", "search_parties", "search_items"},
+        "entity_types": {"party.customer", "party.supplier", "item"},
+        "keywords": (
+            "اطلاعات پایه", "طرف حساب", "تعریف مشتری", "تعریف تامین", "تعریف تأمین",
+            "کالای جدید", "محصول جدید", "ویرایش مشتری", "ویرایش تامین", "بایگانی مشتری",
+            "لیست کالا", "لیست مشتری", "لیست تامین کننده", "لیست تأمین‌کننده",
         ),
     },
 }
@@ -192,13 +204,26 @@ EXPLICIT_ALIASES = {
     "assistant-help": "assistant-help",
     "erp": "universal-erp-operations",
     "erp-operations": "universal-erp-operations",
+    "master-data": "master-data-ops",
+    "master-data-ops": "master-data-ops",
 }
 
 WRITE_WORDS = (
     "ثبت کن", "ایجاد کن", "بساز", "آماده کن", "رزرو کن", "تحویل کن",
     "پرداخت کن", "دریافت کن", "فاکتور بزن", "سند بزن", "اصلاح کن", "حذف کن",
     "ویرایش کن", "تغییر بده", "بایگانی کن", "تأیید کن", "رد کن", "به‌روزرسانی کن",
+    "تعریف کن", "اضافه کن", "غیرفعال کن", "آرشیو کن", "سافت آرکایو",
     "create", "add", "update", "edit", "archive", "delete", "approve", "reject", "record", "register",
+)
+
+# Persian multi-word write idioms that must route to proposal tools (not read-only).
+PERSIAN_WRITE_IDIOMS = (
+    "مشتری جدید", "تامین کننده جدید", "تأمین کننده جدید", "تأمین‌کننده جدید",
+    "کالای جدید", "محصول جدید", "طرف حساب جدید",
+    "ویرایش مشتری", "ویرایش تامین", "ویرایش تأمین", "ویرایش کالا",
+    "بایگانی مشتری", "بایگانی تامین", "بایگانی تأمین", "بایگانی کالا",
+    "پیش نویس خرید", "پیش‌نویس خرید", "پیش نویس فروش", "پیش‌نویس فروش",
+    "فاکتور خرید بساز", "فاکتور فروش بساز", "سفارش خرید ثبت",
 )
 
 
@@ -283,7 +308,9 @@ def explicit_skill(prompt: str) -> str:
 
 def is_write_request(prompt: str) -> bool:
     n = norm(prompt)
-    return any(word in n for word in WRITE_WORDS)
+    if any(word in n for word in WRITE_WORDS):
+        return True
+    return any(idiom in n for idiom in PERSIAN_WRITE_IDIOMS)
 
 
 STRONG_INTENT_PHRASES = {

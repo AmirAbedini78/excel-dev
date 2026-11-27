@@ -15,6 +15,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from agentic_controlled_cpanel_sync import refuse_non_staging_dest  # noqa: E402
 from staging_health_check import host_allowed, selftest as health_selftest  # noqa: E402
 from staging_package_build import materialize_package, write_release_meta  # noqa: E402
+from staging_migrate_preflight import refuse_db_name  # noqa: E402
+from staging_apply_decision import resolve_apply  # noqa: E402
 
 
 class StagingPackageGuards(unittest.TestCase):
@@ -22,6 +24,13 @@ class StagingPackageGuards(unittest.TestCase):
         self.assertTrue(host_allowed("excel2.bcsrp.ir"))
         self.assertFalse(host_allowed("excel.bcsrp.ir"))
         self.assertTrue(health_selftest()["ok"])
+
+    def test_apply_false_not_coerced(self) -> None:
+        self.assertFalse(resolve_apply(event_name="workflow_dispatch", inputs_apply=False))
+
+    def test_migrate_preflight_refuses_prod_db_name(self) -> None:
+        self.assertIsNotNone(refuse_db_name("excel_bcsrp_production"))
+        self.assertIsNone(refuse_db_name("erpsmart_excel2_staging"))
 
     def test_refuse_production_dest(self) -> None:
         self.assertEqual(
