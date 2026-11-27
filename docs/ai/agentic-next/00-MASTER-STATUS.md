@@ -72,3 +72,19 @@ Superseded closed: #43, #45, #46, #47.
 - MCP remains off until ops flips `mcp_enabled` on non-prod after secure path review  
 - Full 60/40/30 eval matrix expansion remains backlog  
 - Remote staging URL + checklist sign-off still required for `STAGING_VERIFIED`  
+
+---
+
+## Universal ERP Agent campaign (2026-11-27)
+
+| Item | Status |
+|------|--------|
+| Branch / PR | `feature/universal-erp-agent` · [#57](https://github.com/AmirAbedini78/excel-dev/pull/57) |
+| Architecture | AiToolRegistry authority + AiUniversalOperations adapter; MCP default OFF |
+| Audit matrix | `16-UNIVERSAL-ERP-AUDIT-MATRIX.md` |
+| Static contracts | PHP + Python routing (release_gate wired) |
+| Disposable MySQL E2E | **PASS** — `tests/test_universal_ai_ops_php_e2e.py` (wired into RC1 CI gate) |
+| Browser / staging / provider | **OPEN / NOT_RUN** — not PRODUCTION_VERIFIED |
+| Payroll / MF GL / bank recon / file binaries | **BLOCKED** (explicit) |
+| Production deploy | **NOT_AUTHORIZED** |
+| Campaign verdict | **UNIVERSAL_ERP_AGENT_BLOCKED** (staging/owner gaps) |  

@@ -206,7 +206,7 @@ final class ErpSuiteDomain
             if(!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$v) || !checkdate((int)substr($v,5,2),(int)substr($v,8,2),(int)substr($v,0,4)))throw new RuntimeException('تاریخ را میلادی YYYY-MM-DD وارد کنید: '.$meta['label']);
             return $v;
         }
-        if(in_array($type,['hours','quantity','money','percent','months'],true)){
+        if(in_array($type,['hours','estimate','quantity','money','percent','months'],true)){
             if(!is_numeric($v)||!is_finite((float)$v))throw new RuntimeException('عدد معتبر نیست: '.$meta['label']);
             $n=(float)$v;
             $max=match($type){'hours'=>24,'estimate'=>100000,'quantity'=>1000000,'percent'=>100,'months'=>1200,default=>100000000000000};
@@ -218,6 +218,44 @@ final class ErpSuiteDomain
         if($type==='code'&&!preg_match('/^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$/D',$v))throw new RuntimeException('کد باید لاتین و بدون فاصله باشد.');
         if(mb_strlen($v,'UTF-8')>$max)throw new RuntimeException('متن طولانی است: '.$meta['label']);
         return $v;
+    }
+
+    /** Search using only schema-declared columns; never accept SQL or arbitrary field names. */
+    public static function searchRecords(string $entity,int $wid,int $cid,string $query='',string $status='',int $limit=50): array
+    {
+        $spec=self::spec($entity);self::assertScope($wid,$cid);$table=$spec['table'];
+        $limit=max(1,min(200,$limit));$where=['workspace_id=?','company_id=?'];$params=[$wid,$cid];
+        $where[]=!empty($spec['canonical'])?'active=1':'is_archived=0';
+        if($status!==''){
+            if(!array_key_exists('status',(array)$spec['fields'])&&empty($spec['approval']))throw new RuntimeException('فیلتر وضعیت برای این نوع رکورد تعریف نشده است.');
+            $where[]='status=?';$params[]=$status;
+        }
+        $query=trim($query);
+        if($query!==''){
+            $columns=['CAST(id AS CHAR)'];
+            foreach((array)$spec['fields'] as $field=>$meta){
+                if(!preg_match('/^[a-z][a-z0-9_]{0,63}$/D',(string)$field))continue;
+                if(in_array((string)($meta['type']??''),['code','text','memo','choice','date'],true))$columns[]='`'.$field.'`';
+            }
+            $columns=array_values(array_unique($columns));
+            $where[]='('.implode(' OR ',array_map(static fn($column)=>$column.' LIKE ?', $columns)).')';
+            foreach($columns as $_)$params[]='%'.$query.'%';
+        }
+        $sql='SELECT * FROM `'.$table.'` WHERE '.implode(' AND ',$where).' ORDER BY id DESC LIMIT '.$limit;
+        $st=pdo()->prepare($sql);$st->execute($params);return$st->fetchAll();
+    }
+
+    /** Validate a complete AI draft using the same typed field validators as the UI. */
+    public static function prepareForAi(string $entity,int $wid,int $cid,array $input): array
+    {
+        $spec=self::spec($entity);self::assertScope($wid,$cid);$values=[];
+        foreach($spec['fields'] as $field=>$meta){
+            if(!array_key_exists($field,$input)&&!empty($meta['required']))throw new RuntimeException('فیلد ضروری خالی است: '.$meta['label']);
+            $values[$field]=self::validateValue($field,$meta,$input[$field]??null,$wid,$cid);
+        }
+        if(isset($values['starts_on'],$values['ends_on'])&&$values['ends_on']<$values['starts_on'])throw new RuntimeException('پایان پیش از شروع است.');
+        if(isset($values['start_date'],$values['end_date'])&&$values['end_date']<$values['start_date'])throw new RuntimeException('پایان پروژه پیش از شروع است.');
+        return $values;
     }
 
     public static function save(string $entity,int $wid,int $cid,int $uid,array $input,int $id=0): int
@@ -295,9 +333,26 @@ final class ErpSuiteDomain
     {
         $spec=self::spec($entity);
         if(empty($spec['approval'])||!in_array($decision,['approved','rejected'],true))throw new RuntimeException('تصمیم نامعتبر است.');
-        $s=pdo()->prepare('UPDATE `'.$spec['table'].'` SET status=?,updated_at=NOW() WHERE id=? AND workspace_id=? AND company_id=? AND is_archived=0 AND status=\'pending\'');
-        $s->execute([$decision,$id,$wid,$cid]);
-        if($s->rowCount()!==1)throw new RuntimeException('درخواست قبلاً بررسی شده یا خارج از محدوده است.');
+        $module=(string)($spec['module']??'');
+        if($module!=='')Tenant::requirePermission($module.'.approve');
+        $uid=(int)(Auth::user()['id']??0);
+        if($uid<1)throw new RuntimeException('کاربر تأییدکننده نامعتبر است.');
+        $lock=pdo()->prepare('SELECT id,created_by,status,is_archived FROM `'.$spec['table'].'` WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1 FOR UPDATE');
+        $ownsTransaction=!pdo()->inTransaction();
+        if($ownsTransaction)pdo()->beginTransaction();
+        try{
+            $lock->execute([$id,$wid,$cid]);
+            $row=$lock->fetch();
+            if(!$row||!empty($row['is_archived'])||(string)($row['status']??'')!=='pending')throw new RuntimeException('درخواست قبلاً بررسی شده یا خارج از محدوده است.');
+            if((int)($row['created_by']??0)===$uid)throw new RuntimeException('سازنده درخواست نمی‌تواند تأییدکننده همان درخواست باشد.');
+            $s=pdo()->prepare('UPDATE `'.$spec['table'].'` SET status=?,updated_at=NOW() WHERE id=? AND workspace_id=? AND company_id=? AND is_archived=0 AND status=\'pending\'');
+            $s->execute([$decision,$id,$wid,$cid]);
+            if($s->rowCount()!==1)throw new RuntimeException('درخواست قبلاً بررسی شده یا خارج از محدوده است.');
+            if($ownsTransaction)pdo()->commit();
+        }catch(Throwable $e){
+            if($ownsTransaction&&pdo()->inTransaction())pdo()->rollBack();
+            throw $e;
+        }
         Audit::log('erp.record.review',$spec['table'],$id,$decision);
     }
 

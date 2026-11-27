@@ -137,6 +137,9 @@ def php_lint(root: Path, required: bool) -> tuple[int, str]:
     behavior_test = root / "tests/php_live_observability_test.php"
     if behavior_test.is_file():
         run([php, "-n", str(behavior_test)], root)
+    universal_contract = root / "tests/php_universal_ai_agent_contract_test.php"
+    if universal_contract.is_file():
+        run([php, "-n", str(universal_contract)], root)
     return count, "PASS"
 
 

@@ -126,6 +126,7 @@ def main() -> int:
         [
             "erpsmart_mf1_test",
             "erpsmart_t3_trading_test",
+            "erpsmart_universal_ai_test",
             "erpsmart_rc1_staging_executor_test",
             "erpsmart_rc1_staging_backup_test",
         ]
@@ -158,6 +159,10 @@ def main() -> int:
         (
             "erpsmart_t3_trading_test",
             "tests.test_trading_cockpit_php_e2e_rc1.TradingCockpitPhpE2eRc1.test_tr1_exact_figures_and_cockpit_timeline",
+        ),
+        (
+            "erpsmart_universal_ai_test",
+            "tests.test_universal_ai_ops_php_e2e.UniversalAiOpsPhpE2e",
         ),
     ]
     # Staging safety suite (auth/cache/backup) — disposable DBs only.

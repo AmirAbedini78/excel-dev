@@ -136,9 +136,26 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
     },
     "assistant-help": {
         "title": "راهنمای دستیار",
-        "tools": {"copilot_capabilities"},
+        "tools": {"copilot_capabilities", "erp_entity_catalog"},
         "entity_types": set(),
         "keywords": ("چه کار", "چه کارهایی", "چیکار", "راهنما", "مهارت", "کمک", "help", "قابلیت"),
+    },
+    "universal-erp-operations": {
+        "title": "عملیات عمومی ERP",
+        "tools": {
+            "erp_entity_catalog",
+            "erp_entity_search",
+            "erp_entity_read",
+            "erp_entity_report",
+            "erp_navigation_resolve",
+            "erp_entity_history",
+        },
+        "entity_types": {"employee", "project", "task", "ticket", "asset", "expense", "campaign", "contract", "document"},
+        "keywords": (
+            "کارمند", "مرخصی", "حضور", "غیاب", "پروژه", "وظیفه", "تیکت", "دارایی", "هزینه",
+            "صندوق فروش", "قرارداد", "کمپین", "نظرسنجی", "تعمیر", "نگهداری", "ناوگان",
+            "دانشنامه", "گزارش عملیاتی", "تاریخچه رکورد", "رویداد سازمانی",
+        ),
     },
 }
 
@@ -173,11 +190,15 @@ EXPLICIT_ALIASES = {
     "create-sales-invoice": "create-sales-invoice",
     "help": "assistant-help",
     "assistant-help": "assistant-help",
+    "erp": "universal-erp-operations",
+    "erp-operations": "universal-erp-operations",
 }
 
 WRITE_WORDS = (
     "ثبت کن", "ایجاد کن", "بساز", "آماده کن", "رزرو کن", "تحویل کن",
     "پرداخت کن", "دریافت کن", "فاکتور بزن", "سند بزن", "اصلاح کن", "حذف کن",
+    "ویرایش کن", "تغییر بده", "بایگانی کن", "تأیید کن", "رد کن", "به‌روزرسانی کن",
+    "create", "add", "update", "edit", "archive", "delete", "approve", "reject", "record", "register",
 )
 
 
