@@ -60,13 +60,16 @@ def main() -> int:
         found = fetch_checks(args.repo, args.sha)
         print(json.dumps(found, indent=2), flush=True)
         if set(WANTED) <= set(found):
-            if all(found[n][0] == "completed" and found[n][1] == "SUCCESS" for n in WANTED):
+            def _ok(status: str, conclusion: str | None) -> bool:
+                return status == "completed" and (conclusion or "").lower() == "success"
+
+            if all(_ok(*found[n]) for n in WANTED):
                 print("REQUIRED_CHECKS_SUCCESS", flush=True)
                 return 0
             failed = {
                 n: found[n]
                 for n in WANTED
-                if found[n][0] == "completed" and found[n][1] != "SUCCESS"
+                if found[n][0] == "completed" and (found[n][1] or "").lower() != "success"
             }
             if failed:
                 print(json.dumps({"failed": failed}), flush=True)
