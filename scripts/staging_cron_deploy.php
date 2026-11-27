@@ -632,7 +632,10 @@ function erpsmart_backup_dest(string $dest, string $backupRoot, array $rels): st
 {
     $stamp = gmdate('Ymd\THis\Z');
     $bak = rtrim($backupRoot, '/\\') . '/_erpsmart_staging_code_bak_' . $stamp;
-    if (!is_dir($bak) && !mkdir($bak, 0755, true) && !is_dir($bak)) {
+    if (file_exists($backupRoot) && !is_dir($backupRoot)) {
+        throw new DeployError('backup_root_not_directory', $backupRoot);
+    }
+    if (!is_dir($bak) && !@mkdir($bak, 0755, true) && !is_dir($bak)) {
         throw new DeployError('backup_mkdir_failed');
     }
     $copied = 0;
@@ -1149,9 +1152,12 @@ function erpsmart_selftest(string $work): array
         $checks['backup_fail_no_change'] = file_get_contents($dest . '/keep.php') === "KEEP\n";
     }
 
-    // Empty manifest refuse
+    // Empty manifest refuse (dedicated dir without in-zip meta that could refill manifest)
+    $emptyPkg = $work . '/pkg_empty_manifest';
+    mkdir($emptyPkg, 0755, true);
+    file_put_contents($emptyPkg . '/index.php', "x\n");
     try {
-        erpsmart_verify_extracted_manifest($pkg, ['git_sha' => 'x', 'file_manifest' => []]);
+        erpsmart_verify_extracted_manifest($emptyPkg, ['git_sha' => 'x', 'file_manifest' => []]);
         $checks['empty_manifest'] = false;
     } catch (DeployError $e) {
         $checks['empty_manifest'] = ($e->deployCode === 'manifest_empty');
