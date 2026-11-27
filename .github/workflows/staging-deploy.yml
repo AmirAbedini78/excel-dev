@@ -82,6 +82,10 @@ jobs:
     needs: package-and-gates
     if: ${{ github.event_name == 'push' || inputs.skip_await_ci != true }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - name: Wait for required checks on exact SHA
         env:
           GH_TOKEN: ${{ github.token }}
