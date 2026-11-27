@@ -89,6 +89,7 @@ ROOT_FILE_ALLOWLIST = [
     "README_FA.md",
     "INSTALL_CPanel_FA.md",
     "DEPLOY_GIT_CPanel_FA.md",
+    "ERPSMART_STAGING_RELEASE.json",  # published SHA identity for health probe
 ]
 
 # Never ship as public overwrite from this release sync.
