@@ -38,15 +38,19 @@ Statuses: `IMPLEMENTED_AND_TESTED` | `IMPLEMENTED_NOT_TESTED` | `PARTIAL` | `NOT
 
 | Capability | Surface | Status | Evidence |
 |---|---|---|---|
-| catalog | `erp_entity_catalog` → AiUniversalOperations | **IMPLEMENTED_NOT_TESTED** (DB) / static PASS | `php_universal_ai_agent_contract_test.php`, routing unittest |
-| search | `erp_entity_search` (suite allowlisted columns / enterprise list / core registry) | same | above |
-| read | `erp_entity_read` + ambiguity ask | same | above |
-| report | `erp_entity_report` sampled allowlisted fields | same | above |
-| navigate | `erp_navigation_resolve` deep link `page+entity+edit` | same | above |
-| history | `erp_entity_history` → EnterpriseDomain::history | same | above |
-| create/update/archive/transition/review | `propose_erp_operation` → prepare → human approve → revalidate → Domain | **IMPLEMENTED_NOT_TESTED** (DB) | wiring + maker/checker + snapshot/revision |
+| catalog | `erp_entity_catalog` → AiUniversalOperations | **IMPLEMENTED_AND_TESTED** (disposable MySQL) | `test_universal_ai_ops_php_e2e` + RBAC-filtered ops |
+| search | `erp_entity_search` (suite allowlisted columns / enterprise list / core registry) | **IMPLEMENTED_AND_TESTED** | same |
+| read | `erp_entity_read` + ambiguity ask | **IMPLEMENTED_AND_TESTED** | same |
+| report | `erp_entity_report` sampled allowlisted fields | **IMPLEMENTED_AND_TESTED** | same |
+| navigate | `erp_navigation_resolve` deep link `page+entity+edit` | **IMPLEMENTED_AND_TESTED** (URL asserted; browser **NOT_RUN**) | same |
+| history | `erp_entity_history` → EnterpriseDomain::history | **IMPLEMENTED_AND_TESTED** | enterprise stale/history scenario |
+| create/update + approve/reject + idempotency | `propose_erp_operation` | **IMPLEMENTED_AND_TESTED** | propose_create_approve / reject_proposal |
+| review maker/checker | Suite leave review + `ErpSuiteDomain::review` | **IMPLEMENTED_AND_TESTED** | maker_checker_review |
+| stale snapshot/revision | suite hash + enterprise revision | **IMPLEMENTED_AND_TESTED** | stale_* scenarios |
+| cross-company / module-disabled | company scope + ModuleRegistry | **IMPLEMENTED_AND_TESTED** | cross_company / module_disabled |
 | Core financial writes via generic tool | — | **BLOCKED** (by design) | dedicated proposals only |
 | MCP | facade | **DISABLED_BY_DEFAULT** | Wave3 contract |
+| Browser RTL proposal cards | Wave4 UX | **NOT_RUN** | no local staging browser for this path |
 | PRODUCTION_VERIFIED | — | **NOT claimed** | staging gate open |
 
 ### Suite entities exposed (typed)

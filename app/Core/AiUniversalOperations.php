@@ -258,14 +258,16 @@ final class AiUniversalOperations
             foreach (ErpSuiteDomain::entities() as $key => $spec) {
                 $module = (string)($spec['module'] ?? '');
                 if ($module === '' || !ModuleRegistry::enabled($module) || !Tenant::can($module . '.view')) continue;
+                $ops = ['catalog', 'search', 'read', 'report', 'navigate'];
+                if (Tenant::can($module . '.manage')) {
+                    $ops = array_merge($ops, ['create', 'update']);
+                    if ($key !== 'projects') $ops[] = 'archive';
+                }
+                if (!empty($spec['approval']) && Tenant::can($module . '.approve')) $ops[] = 'review';
                 $entities[] = [
                     'domain' => 'suite', 'entity' => (string)$key, 'title' => (string)$spec['title'],
                     'module' => $module,
-                    'operations' => array_values(array_merge(
-                        ['catalog', 'search', 'read', 'report', 'navigate', 'create', 'update'],
-                        $key === 'projects' ? [] : ['archive'],
-                        !empty($spec['approval']) ? ['review'] : []
-                    )),
+                    'operations' => array_values($ops),
                     'fields' => $includeSchema ? (array)$spec['fields'] : array_keys((array)$spec['fields']),
                 ];
             }
@@ -274,10 +276,16 @@ final class AiUniversalOperations
             foreach (EnterpriseDomain::records() as $key => $spec) {
                 $group = (string)($spec['group'] ?? '');
                 if ($group === '' || !ModuleRegistry::enabled('enterprise_' . $group) || !Tenant::can(EnterpriseDomain::permission($group, 'view'))) continue;
+                $ops = ['catalog', 'search', 'read', 'report', 'navigate', 'history'];
+                if (Tenant::can(EnterpriseDomain::permission($group, 'manage'))) {
+                    $ops = array_merge($ops, ['create', 'update', 'archive', 'transition']);
+                } elseif (Tenant::can(EnterpriseDomain::permission($group, 'approve'))) {
+                    $ops[] = 'transition';
+                }
                 $entities[] = [
                     'domain' => 'enterprise', 'entity' => (string)$key, 'title' => (string)$spec['title'],
                     'module' => 'enterprise_' . $group, 'group' => $group,
-                    'operations' => ['catalog', 'search', 'read', 'report', 'navigate', 'history', 'create', 'update', 'archive', 'transition'],
+                    'operations' => array_values($ops),
                     'fields' => $includeSchema ? array_merge(['code' => ['label' => 'کد', 'type' => 'code', 'required' => true], 'title' => ['label' => 'عنوان', 'type' => 'text', 'required' => true]], (array)$spec['fields']) : array_merge(['code', 'title'], array_keys((array)$spec['fields'])),
                 ];
             }

@@ -333,9 +333,26 @@ final class ErpSuiteDomain
     {
         $spec=self::spec($entity);
         if(empty($spec['approval'])||!in_array($decision,['approved','rejected'],true))throw new RuntimeException('تصمیم نامعتبر است.');
-        $s=pdo()->prepare('UPDATE `'.$spec['table'].'` SET status=?,updated_at=NOW() WHERE id=? AND workspace_id=? AND company_id=? AND is_archived=0 AND status=\'pending\'');
-        $s->execute([$decision,$id,$wid,$cid]);
-        if($s->rowCount()!==1)throw new RuntimeException('درخواست قبلاً بررسی شده یا خارج از محدوده است.');
+        $module=(string)($spec['module']??'');
+        if($module!=='')Tenant::requirePermission($module.'.approve');
+        $uid=(int)(Auth::user()['id']??0);
+        if($uid<1)throw new RuntimeException('کاربر تأییدکننده نامعتبر است.');
+        $lock=pdo()->prepare('SELECT id,created_by,status,is_archived FROM `'.$spec['table'].'` WHERE id=? AND workspace_id=? AND company_id=? LIMIT 1 FOR UPDATE');
+        $ownsTransaction=!pdo()->inTransaction();
+        if($ownsTransaction)pdo()->beginTransaction();
+        try{
+            $lock->execute([$id,$wid,$cid]);
+            $row=$lock->fetch();
+            if(!$row||!empty($row['is_archived'])||(string)($row['status']??'')!=='pending')throw new RuntimeException('درخواست قبلاً بررسی شده یا خارج از محدوده است.');
+            if((int)($row['created_by']??0)===$uid)throw new RuntimeException('سازنده درخواست نمی‌تواند تأییدکننده همان درخواست باشد.');
+            $s=pdo()->prepare('UPDATE `'.$spec['table'].'` SET status=?,updated_at=NOW() WHERE id=? AND workspace_id=? AND company_id=? AND is_archived=0 AND status=\'pending\'');
+            $s->execute([$decision,$id,$wid,$cid]);
+            if($s->rowCount()!==1)throw new RuntimeException('درخواست قبلاً بررسی شده یا خارج از محدوده است.');
+            if($ownsTransaction)pdo()->commit();
+        }catch(Throwable $e){
+            if($ownsTransaction&&pdo()->inTransaction())pdo()->rollBack();
+            throw $e;
+        }
         Audit::log('erp.record.review',$spec['table'],$id,$decision);
     }
 

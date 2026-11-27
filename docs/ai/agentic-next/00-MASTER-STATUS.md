@@ -79,10 +79,12 @@ Superseded closed: #43, #45, #46, #47.
 
 | Item | Status |
 |------|--------|
-| Branch | `feature/universal-erp-agent` (from `171d4b17`) |
+| Branch / PR | `feature/universal-erp-agent` · [#57](https://github.com/AmirAbedini78/excel-dev/pull/57) |
 | Architecture | AiToolRegistry authority + AiUniversalOperations adapter; MCP default OFF |
 | Audit matrix | `16-UNIVERSAL-ERP-AUDIT-MATRIX.md` |
 | Static contracts | PHP + Python routing (release_gate wired) |
-| DB / browser / provider E2E for universal ops | **OPEN** — not PRODUCTION_VERIFIED |
+| Disposable MySQL E2E | **PASS** — `tests/test_universal_ai_ops_php_e2e.py` (wired into RC1 CI gate) |
+| Browser / staging / provider | **OPEN / NOT_RUN** — not PRODUCTION_VERIFIED |
 | Payroll / MF GL / bank recon / file binaries | **BLOCKED** (explicit) |
-| Production deploy | **NOT_AUTHORIZED** |  
+| Production deploy | **NOT_AUTHORIZED** |
+| Campaign verdict | **UNIVERSAL_ERP_AGENT_BLOCKED** (staging/owner gaps) |  
