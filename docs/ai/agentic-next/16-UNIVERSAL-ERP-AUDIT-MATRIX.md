@@ -1,8 +1,9 @@
 # Universal ERP Agent — Phase 1 Real Audit Matrix
 
 **Authority:** T0  
-**Base SHA:** `171d4b17c376529ac4c779b257e5c1ca90444643`  
-**Branch:** `feature/universal-erp-agent`  
+**Merged main SHA:** `a1d3d34e85c96f51e555bb24c20b96461f1634f5` (PR #57 squash)  
+**Pre-merge feature tip:** `544f4bff6b47e8a7c6ef4420fec2f0c76885e0ea`  
+**Branch going forward:** `main` (feature work via branches → main)  
 **Rule:** Menu/table ≠ complete cycle. Cell is complete only with Domain+DB+Permission+UI+test evidence, else explicit BLOCKED/PARTIAL.
 
 Statuses: `IMPLEMENTED_AND_TESTED` | `IMPLEMENTED_NOT_TESTED` | `PARTIAL` | `NOT_IMPLEMENTED` | `BLOCKED`
@@ -50,8 +51,10 @@ Statuses: `IMPLEMENTED_AND_TESTED` | `IMPLEMENTED_NOT_TESTED` | `PARTIAL` | `NOT
 | cross-company / module-disabled | company scope + ModuleRegistry | **IMPLEMENTED_AND_TESTED** | cross_company / module_disabled |
 | Core financial writes via generic tool | — | **BLOCKED** (by design) | dedicated proposals only |
 | MCP | facade | **DISABLED_BY_DEFAULT** | Wave3 contract |
-| Browser RTL proposal cards | Wave4 UX | **NOT_RUN** | no local staging browser for this path |
-| PRODUCTION_VERIFIED | — | **NOT claimed** | staging gate open |
+| Browser RTL proposal cards | Wave4 UX | **NOT_RUN** | staging code auto-deploy still PARTIAL (SSH secrets unset); login/MFA needs owner — no password ask |
+| Staging HTTPS smoke | `excel2.bcsrp.ir` | **PARTIAL** | TLS+login page HTTP 200 observed; full UAT NOT_RUN |
+| Staging auto-deploy | Actions + controlled sync | **PARTIAL** | package/gates/workflow landed; remote SSH apply blocked until `STAGING_SSH_*` |
+| PRODUCTION_VERIFIED | — | **NOT claimed** | production deploy forbidden |
 
 ### Suite entities exposed (typed)
 

@@ -1,11 +1,12 @@
 # تحویل فارسی — Universal ERP Agent (T0)
 
 **تاریخ:** 2026-11-27  
-**پایه:** `171d4b17c376529ac4c779b257e5c1ca90444643`  
-**نوک:** `b06e76dc54968095be0bb20956c9948e9ac27882`  
-**شاخه:** `feature/universal-erp-agent`  
-**PR:** https://github.com/AmirAbedini78/excel-dev/pull/57  
-**CI tip:** release-gate = SUCCESS · rc1-mysql-php = SUCCESS (شامل E2E universal)  
+**ادغام main:** `a1d3d34e85c96f51e555bb24c20b96461f1634f5` (squash PR #57)  
+**نوک پیش‌ادغام:** `544f4bff6b47e8a7c6ef4420fec2f0c76885e0ea`  
+**شاخه اصلی بعدی:** `main`  
+**PR:** https://github.com/AmirAbedini78/excel-dev/pull/57 (**MERGED**)  
+**CI pre-merge tip:** release-gate = SUCCESS · rc1-mysql-php = SUCCESS (شامل E2E universal)  
+**Staging auto-deploy:** `STAGING_AUTO_DEPLOY_PARTIAL` — رجوع به `19-STAGING-AUTO-DEPLOY-EXCEL2.md` 
 
 ## انجام‌شده
 
@@ -25,8 +26,10 @@
 | `php_universal_ai_agent_contract_test.php` | PASS |
 | `test_universal_ai_agent_routing` (6) | PASS |
 | `test_universal_ai_ops_php_e2e` (9) | **PASS / DATABASE_TESTED** |
-| Browser RTL/proposal | **NOT_RUN** |
-| Staging subdomain | **NOT_DEPLOYED** |
+| Browser RTL/proposal | **NOT_RUN** (لاگین/MFA نیاز به مالک؛ رمز خواسته نشد) |
+| Staging HTTPS login page | **PARTIAL** (TLS + 200 → login؛ UAT کامل نه) |
+| Staging auto-deploy | **PARTIAL** (workflow+package؛ SSH secrets نیست) |
+| Migrate روی اولین deploy | **NOT_RUN** (عمدی) |
 | PRODUCTION_VERIFIED | **نه** |
 
 ## دستور rebuild / تست
