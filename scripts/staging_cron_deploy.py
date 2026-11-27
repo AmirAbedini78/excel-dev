@@ -772,14 +772,19 @@ def main() -> int:
 
     if args.print_cron_line:
         boot = args.bootstrap
-        py = cfg_py = "/usr/bin/python3"
+        # cPanel jailshell: Python3 unavailable — primary host runtime is PHP CLI.
+        php = "/usr/bin/php"
         line = (
-            f"*/5 * * * * cd {boot} && {py} {boot}/bin/staging_cron_deploy.py "
+            f"*/5 * * * * cd {boot} && {php} {boot}/bin/staging_cron_deploy.php "
             f"--bootstrap {boot} --config {boot}/config.json --apply "
             f"--i-understand-staging-risk >> {boot}/logs/{LOG_NAME} 2>&1"
         )
         print(line)
-        _ = cfg_py
+        print(
+            "# Note: staging_cron_deploy.py is parity/CI only; "
+            "host cron must use staging_cron_deploy.php",
+            file=sys.stderr,
+        )
         return 0
 
     bootstrap = args.bootstrap

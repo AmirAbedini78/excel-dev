@@ -1,0 +1,59 @@
+name: Staging PHP Cron Compat
+
+# Host Deployment Manager must run on cPanel PHP 8.1+ (no Python3 in jailshell).
+# Does NOT change ERP app PHP requirements — only deploy manager + libs.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: staging-php-cron-compat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php-cron-deploy-compat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.1", "8.2", "8.3"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, zip
+          coverage: none
+      - name: PHP Deployment Manager selftest + adversarial
+        run: |
+          php -v
+          php -l scripts/staging_cron_deploy.php
+          php -l scripts/lib/erpsmart_controlled_sync.php
+          php -l scripts/lib/erpsmart_staging_health.php
+          php scripts/staging_cron_deploy.php --selftest
+          php tests/php_staging_cron_deploy_adversarial_test.php
+      - name: Bootstrap ZIP includes PHP entry
+        if: matrix.php == '8.1'
+        run: |
+          python scripts/build_cron_bootstrap_zip.py --out storage/cache/erpsmart-cron-bootstrap.zip
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          z = zipfile.ZipFile("storage/cache/erpsmart-cron-bootstrap.zip")
+          names = set(z.namelist())
+          required = {
+              "bin/staging_cron_deploy.php",
+              "lib/erpsmart_controlled_sync.php",
+              "lib/erpsmart_staging_health.php",
+              "config.example.json",
+              "README.md",
+          }
+          missing = sorted(required - names)
+          if missing:
+              raise SystemExit(f"bootstrap_missing:{missing}")
+          print("bootstrap_ok", sorted(required))
+          PY

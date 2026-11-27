@@ -13,7 +13,7 @@
 | `STAGING_AUTO_DEPLOY_PARTIAL` | Package/gates/artifact automation live; remote apply blocked (no SSH / no marker) |
 | `STAGING_AUTO_DEPLOY_BLOCKED` | Cannot safely automate |
 
-**Preferred when SSH unavailable:** Cron pull — see `21-STAGING-CRON-PULL-EXCEL2.md` (`STAGING_CRON_PULL_*`). GitHub Release Assets + `/home3/zzflgmfd/erpsmart-deploy/` bootstrap.
+**Preferred when SSH unavailable:** PHP cron pull — see `21-STAGING-CRON-PULL-EXCEL2.md` (`STAGING_PHP_CRON_*`). GitHub Release Assets + `/home3/zzflgmfd/erpsmart-deploy/` bootstrap (`staging_cron_deploy.php`; Python-host path superseded on cPanel jailshell).
 
 ## Hardening (T0)
 

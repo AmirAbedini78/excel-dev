@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Build the one-time private bootstrap ZIP for /home3/zzflgmfd/erpsmart-deploy/."""
+"""Build the one-time private bootstrap ZIP for /home3/zzflgmfd/erpsmart-deploy/.
+
+Primary host runtime is PHP CLI (cPanel jailshell has no Python3).
+Python helpers remain in lib/ for optional offline/operator use only.
+"""
 from __future__ import annotations
 
 import argparse
@@ -11,13 +15,22 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-SCRIPTS = [
+PHP_BIN = [
+    "staging_cron_deploy.php",
+]
+
+PHP_LIB = [
+    "erpsmart_controlled_sync.php",
+    "erpsmart_staging_health.php",
+]
+
+# Optional Python mirrors (not required on host cron).
+PY_LIB = [
     "staging_cron_deploy.py",
     "agentic_controlled_cpanel_sync.py",
     "staging_health_check.py",
     "staging_worker_install.py",
     "staging_migrate_preflight.py",
-    "staging_package_build.py",
 ]
 
 
@@ -43,10 +56,18 @@ def main() -> int:
     bin_dir = stage / "bin"
     lib.mkdir()
     bin_dir.mkdir()
-    for name in SCRIPTS:
+
+    for name in PHP_LIB:
+        shutil.copy2(ROOT / "scripts" / "lib" / name, lib / name)
+    for name in PHP_BIN:
+        shutil.copy2(ROOT / "scripts" / name, bin_dir / name)
+        # Also place deploy entry next to lib discovery paths
         shutil.copy2(ROOT / "scripts" / name, lib / name)
-    # Entry point also in bin for clarity
-    shutil.copy2(ROOT / "scripts" / "staging_cron_deploy.py", bin_dir / "staging_cron_deploy.py")
+
+    for name in PY_LIB:
+        src = ROOT / "scripts" / name
+        if src.is_file():
+            shutil.copy2(src, lib / name)
 
     for d in ("state", "locks", "backups", "work", "logs"):
         (stage / d).mkdir()
@@ -55,9 +76,13 @@ def main() -> int:
     meta = {
         "purpose": "one_time_private_bootstrap_outside_docroot",
         "install_path": "/home3/zzflgmfd/erpsmart-deploy/",
+        "host_runtime": "php_cli",
+        "php_min": "8.1",
+        "entry": "bin/staging_cron_deploy.php",
         "built_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "staging_only": "excel2.bcsrp",
         "never_production": "excel.bcsrp",
+        "python_host": "superseded_on_cpanel_jailshell",
     }
     (stage / "BOOTSTRAP_META.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
